@@ -2139,7 +2139,7 @@ export default function StitchBox() {
               }
             </div>
           )}
-          {view==="browse"&&<BrowseSitesView onSavePattern={handleAddPattern}/>
+          {view==="browse"&&<BrowseSitesView onSavePattern={handleAddPattern}/>}
           {view==="stash"&&<div style={{paddingTop:24}}><YarnStash/></div>}
           {view==="calculator"&&<div style={{paddingTop:24}}><Calculators/></div>}
           {view==="shopping"&&<div style={{paddingTop:24}}><ShoppingList patterns={patterns}/></div>}
