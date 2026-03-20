@@ -22,7 +22,7 @@ const PHOTOS = {
 const PILL = [PHOTOS.blanket, PHOTOS.cardigan, PHOTOS.granny, PHOTOS.tote, PHOTOS.pillow, PHOTOS.market];
 
 /* ─── VERSION ────────────────────────────────────────────────────────────── */
-const APP_VERSION = "v1.1 — Mar 19 2026";
+const APP_VERSION = "v1.2 — Mar 20 2026";
 
 /* ─── GEMINI API KEY ─────────────────────────────────────────────────────── */
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
@@ -86,7 +86,6 @@ const CSS = () => (
     @keyframes slideOutLeft { from{transform:translateX(0);opacity:1} to{transform:translateX(-100%);opacity:0} }
     @keyframes dimIn  { from{opacity:0} to{opacity:1} }
     @keyframes dimOut { from{opacity:1} to{opacity:0} }
-    @keyframes swipeHint { 0%{transform:translateX(0)} 30%{transform:translateX(-8px)} 60%{transform:translateX(4px)} 100%{transform:translateX(0)} }
     @keyframes fabPulse { 0%,100%{box-shadow:0 6px 24px rgba(184,90,60,.45)} 50%{box-shadow:0 6px 32px rgba(184,90,60,.7)} }
     @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
 
@@ -132,8 +131,24 @@ const CSS = () => (
 
 /* ─── HELPERS ────────────────────────────────────────────────────────────── */
 const pct = p => p.rows.length ? Math.round(p.rows.filter(r=>r.done).length/p.rows.length*100) : 0;
-const estYards = p => { if(p.yardage>0) return p.yardage; return (p.materials||[]).reduce((s,m)=>{ if(m.yardage>0) return s+m.yardage; const t=((m.name||"")+" "+(m.amount||"")).toLowerCase(); const b=t.match(/(\d+)\s*ball/),sk=t.match(/(\d+)\s*skein/); if(b) return s+parseInt(b[1])*200; if(sk) return s+parseInt(sk[1])*200; return s; },0); };
-const estSkeins = p => { const y=estYards(p); return y>0 ? Math.ceil(y/200) : 0; };
+
+const estYards = p => {
+  if (p.yardage > 0) return p.yardage;
+  return (p.materials || []).reduce((s, m) => {
+    if (m.yardage > 0) return s + m.yardage;
+    const t = ((m.name || "") + " " + (m.amount || "")).toLowerCase();
+    const b = t.match(/(\d+)\s*ball/);
+    const sk = t.match(/(\d+)\s*skein/);
+    if (b) return s + parseInt(b[1]) * 200;
+    if (sk) return s + parseInt(sk[1]) * 200;
+    return s;
+  }, 0);
+};
+
+const estSkeins = p => {
+  const y = estYards(p);
+  return y > 0 ? Math.ceil(y / 200) : 0;
+};
 
 const Bar = ({val, color=T.terra, h=3, bg=T.border}) => (
   <div style={{background:bg,borderRadius:99,height:h,overflow:"hidden"}}>
@@ -238,8 +253,8 @@ const SEED_PATTERNS = [
     ],
     rows:[
       {id:1,text:"Back panel: Ch 82, shell stitch 40 rows",done:true,note:""},
-      {id:2,text:"Front panels ×2: Ch 42 each, match back",done:true,note:""},
-      {id:3,text:"Sleeves ×2: Inc 1 st each side every 6th row",done:false,note:""},
+      {id:2,text:"Front panels x2: Ch 42 each, match back",done:true,note:""},
+      {id:3,text:"Sleeves x2: Inc 1 st each side every 6th row",done:false,note:""},
       {id:4,text:"Join shoulders with slip stitch seam",done:false,note:""},
       {id:5,text:"Set in sleeves, seam underarms",done:false,note:""},
       {id:6,text:"Neckline: 3 rounds sc, picot edge",done:false,note:""},
@@ -258,11 +273,11 @@ const SEED_PATTERNS = [
       {id:2,name:"4.0mm hook",amount:"1"},{id:3,name:"Yarn needle",amount:"1"},
     ],
     rows:[
-      {id:1,text:"Magic ring, [ch 3, 2 dc, ch 2] ×4, sl st",done:true,note:""},
+      {id:1,text:"Magic ring, [ch 3, 2 dc, ch 2] x4, sl st",done:true,note:""},
       {id:2,text:"Rnd 2: Corner clusters + ch-1 side spaces",done:true,note:""},
       {id:3,text:"Rnd 3: Larger corners, 2 side groups",done:true,note:""},
       {id:4,text:"Complete all 48 squares — 12 color combos",done:false,note:""},
-      {id:5,text:"Lay out 6×8 grid, photograph arrangement",done:false,note:""},
+      {id:5,text:"Lay out 6x8 grid, photograph arrangement",done:false,note:""},
       {id:6,text:"Join squares into rows — sc flat join",done:false,note:""},
       {id:7,text:"Join all rows together",done:false,note:""},
       {id:8,text:"Outer border: 3 rounds, picot finish",done:false,note:""},
@@ -322,7 +337,7 @@ const PaywallGate = ({onClose, onUpgrade, patternCount}) => (
 );
 
 /* ══════════════════════════════════════════════════════════════════════════
-   SNAP TO PATTERN — REAL GEMINI VISION IMPLEMENTATION
+   SNAP TO PATTERN
 ══════════════════════════════════════════════════════════════════════════ */
 
 const GEMINI_PROMPT = `Analyze this crochet object photograph and return ONLY a JSON object matching this exact schema. Do not explain. Do not add commentary. Return JSON only.
@@ -405,17 +420,13 @@ const buildStarterPattern = (analysis) => {
   if (!analysis?.components?.length) {
     return {
       title: "Snap to Pattern — Review Needed",
-      hook: "5.0mm",
-      weight: "Worsted",
-      yardage: 200,
+      hook: "5.0mm", weight: "Worsted", yardage: 200,
       notes: "Pattern needs more information. Try a clearer photo or better lighting.",
       materials: [
         { id: 1, name: "Worsted weight yarn", amount: "~200 yds", yardage: 200 },
         { id: 2, name: "5.0mm crochet hook", amount: "1" },
       ],
-      rows: [
-        { id: 1, text: "Review photo and retake for better results", done: false, note: "" },
-      ]
+      rows: [{ id: 1, text: "Review photo and retake for better results", done: false, note: "" }]
     };
   }
 
@@ -431,44 +442,30 @@ const buildStarterPattern = (analysis) => {
   let rowId = 1;
 
   if (isAmigurumi) {
-    rows.push({ id: rowId++, text: `BODY (${body?.primitive_type || "oval"}): Magic ring, 6 sc. (6)`, done: false, note: "" });
+    rows.push({ id: rowId++, text: "BODY (" + (body?.primitive_type || "oval") + "): Magic ring, 6 sc. (6)", done: false, note: "" });
     rows.push({ id: rowId++, text: "Rnd 2: 2 sc in each st around. (12)", done: false, note: "" });
     rows.push({ id: rowId++, text: "Rnd 3: [Sc, 2 sc in next] x6. (18)", done: false, note: "" });
     rows.push({ id: rowId++, text: "Rnd 4: [Sc x2, 2 sc in next] x6. (24)", done: false, note: "" });
     rows.push({ id: rowId++, text: "Rnd 5: [Sc x3, 2 sc in next] x6. (30)", done: false, note: "" });
-    rows.push({ id: rowId++, text: "Rnds 6–10: Sc in each st around. (30)", done: false, note: "" });
+    rows.push({ id: rowId++, text: "Rnds 6-10: Sc in each st around. (30)", done: false, note: "" });
     rows.push({ id: rowId++, text: "Rnd 11: [Sc x3, sc2tog] x6. (24) — begin decrease", done: false, note: "" });
     rows.push({ id: rowId++, text: "Stuff body firmly before closing.", done: false, note: "" });
     rows.push({ id: rowId++, text: "Rnd 12: [Sc x2, sc2tog] x6. (18)", done: false, note: "" });
     rows.push({ id: rowId++, text: "Rnd 13: [Sc, sc2tog] x6. (12)", done: false, note: "" });
     rows.push({ id: rowId++, text: "Rnd 14: [Sc2tog] x6. (6) — fasten off, sew closed.", done: false, note: "" });
-
     if (head) {
-      rows.push({ id: rowId++, text: `HEAD (${head.primitive_type || "sphere"}): Magic ring, 6 sc. (6)`, done: false, note: "" });
-      rows.push({ id: rowId++, text: "Rnds 2–5: Increase rounds to 30 sts following body pattern.", done: false, note: "" });
-      rows.push({ id: rowId++, text: "Rnds 6–8: Sc in each st around. (30)", done: false, note: "" });
-      rows.push({ id: rowId++, text: "Attach safety eyes between Rnds 9–10, 6 sts apart.", done: false, note: "" });
+      rows.push({ id: rowId++, text: "HEAD (" + (head.primitive_type || "sphere") + "): Magic ring, 6 sc. (6)", done: false, note: "" });
+      rows.push({ id: rowId++, text: "Rnds 2-5: Increase rounds to 30 sts following body pattern.", done: false, note: "" });
+      rows.push({ id: rowId++, text: "Rnds 6-8: Sc in each st around. (30)", done: false, note: "" });
+      rows.push({ id: rowId++, text: "Attach safety eyes between Rnds 9-10, 6 sts apart.", done: false, note: "" });
       rows.push({ id: rowId++, text: "Decrease rounds: mirror increase rounds in reverse. Stuff, sew closed.", done: false, note: "" });
     }
-
-    if (arms) {
-      const armCount = arms.count || 2;
-      rows.push({ id: rowId++, text: `ARMS (make ${armCount}): Magic ring, 6 sc. Sc around for 8 rounds. Fasten off, leave tail.`, done: false, note: "" });
-    }
-
-    if (legs) {
-      const legCount = legs.count || 2;
-      rows.push({ id: rowId++, text: `LEGS (make ${legCount}): Magic ring, 8 sc. Increase to 16 sts. Work 10 rounds even. Fasten off.`, done: false, note: "" });
-    }
-
-    if (ears) {
-      const earCount = ears.count || 2;
-      rows.push({ id: rowId++, text: `EARS (make ${earCount}): Magic ring, 6 sc. Rnd 2: 2 sc in each st (12). Fasten off, sew to head.`, done: false, note: "" });
-    }
-
-    rows.push({ id: rowId++, text: "ASSEMBLY: Sew head to body centered on top. Attach legs to base of body. Attach arms to sides. Embroider nose and mouth.", done: false, note: "" });
+    if (arms) rows.push({ id: rowId++, text: "ARMS (make " + (arms.count || 2) + "): Magic ring, 6 sc. Sc around for 8 rounds. Fasten off, leave tail.", done: false, note: "" });
+    if (legs) rows.push({ id: rowId++, text: "LEGS (make " + (legs.count || 2) + "): Magic ring, 8 sc. Increase to 16 sts. Work 10 rounds even. Fasten off.", done: false, note: "" });
+    if (ears) rows.push({ id: rowId++, text: "EARS (make " + (ears.count || 2) + "): Magic ring, 6 sc. Rnd 2: 2 sc in each st (12). Fasten off, sew to head.", done: false, note: "" });
+    rows.push({ id: rowId++, text: "ASSEMBLY: Sew head to body. Attach legs to base. Attach arms to sides. Embroider nose and mouth.", done: false, note: "" });
   } else {
-    rows.push({ id: rowId++, text: `Pattern identified as ${analysis.object_category}. Foundation: Chain to desired width.`, done: false, note: "" });
+    rows.push({ id: rowId++, text: "Pattern identified as " + analysis.object_category + ". Foundation: Chain to desired width.", done: false, note: "" });
     rows.push({ id: rowId++, text: "Row 1: Sc in 2nd ch from hook and across.", done: false, note: "" });
     rows.push({ id: rowId++, text: "Continue in pattern stitch to desired length.", done: false, note: "" });
     rows.push({ id: rowId++, text: "Fasten off and weave in ends.", done: false, note: "" });
@@ -478,13 +475,12 @@ const buildStarterPattern = (analysis) => {
   const colorCount = analysis.color_structure?.color_count || 1;
 
   return {
-    title: `Snap to Pattern — ${analysis.object_category === "amigurumi" ? "Amigurumi" : analysis.object_category || "Crochet Object"}`,
-    hook: "5.0mm",
-    weight: "Worsted",
-    yardage: isAmigurumi ? 150 * (components.length) : 400,
-    notes: `Snapped from photo. Primary color: ${colorInfo}. ${colorCount > 1 ? `${colorCount} colors used.` : ""} Stitch texture: ${analysis.stitch_texture || "smooth sc"}. Review and adjust stitch counts to match your gauge.`,
+    title: "Snap to Pattern — " + (analysis.object_category === "amigurumi" ? "Amigurumi" : analysis.object_category || "Crochet Object"),
+    hook: "5.0mm", weight: "Worsted",
+    yardage: isAmigurumi ? 150 * components.length : 400,
+    notes: "Snapped from photo. Primary color: " + colorInfo + ". " + (colorCount > 1 ? colorCount + " colors used." : "") + " Stitch texture: " + (analysis.stitch_texture || "smooth sc") + ". Review and adjust stitch counts to match your gauge.",
     materials: [
-      { id: 1, name: `Worsted yarn — ${colorInfo}`, amount: `~${isAmigurumi ? 150 * components.length : 400} yds`, yardage: isAmigurumi ? 150 * components.length : 400 },
+      { id: 1, name: "Worsted yarn — " + colorInfo, amount: "~" + (isAmigurumi ? 150 * components.length : 400) + " yds", yardage: isAmigurumi ? 150 * components.length : 400 },
       { id: 2, name: "5.0mm crochet hook", amount: "1" },
       { id: 3, name: "Yarn needle", amount: "1" },
       ...(isAmigurumi ? [
@@ -500,55 +496,44 @@ const buildStarterPattern = (analysis) => {
    SNAP TO PATTERN FORM
 ══════════════════════════════════════════════════════════════════════════ */
 const SnapToPatternForm = ({onSave}) => {
-  const [file, setFile]       = useState(null);
-  const [imgSrc, setImgSrc]   = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [file, setFile]         = useState(null);
+  const [imgSrc, setImgSrc]     = useState(null);
+  const [loading, setLoading]   = useState(false);
   const [analysis, setAnalysis] = useState(null);
   const [confidence, setConfidence] = useState(null);
-  const [preview, setPreview] = useState(null);
-  const [error, setError]     = useState(null);
+  const [preview, setPreview]   = useState(null);
+  const [error, setError]       = useState(null);
 
   const handleFile = async (e) => {
     const f = e.target.files?.[0];
     if (!f) return;
-    setFile(f);
-    setError(null);
-    setAnalysis(null);
-    setPreview(null);
-
+    setFile(f); setError(null); setAnalysis(null); setPreview(null);
     const reader = new FileReader();
     reader.onload = async (ev) => {
       const src = ev.target.result;
-      setImgSrc(src);
-      setLoading(true);
+      setImgSrc(src); setLoading(true);
       try {
         const result = await callGeminiVision(src);
         const conf = calculateConfidence(result);
         const pattern = buildStarterPattern(result);
-        setAnalysis(result);
-        setConfidence(conf);
-        setPreview(pattern);
+        setAnalysis(result); setConfidence(conf); setPreview(pattern);
       } catch (err) {
         setError("Couldn't read the photo clearly. Try better lighting or a closer shot.");
         console.error(err);
-      } finally {
-        setLoading(false);
-      }
+      } finally { setLoading(false); }
     };
     reader.readAsDataURL(f);
   };
 
   const reset = () => { setFile(null); setImgSrc(null); setAnalysis(null); setPreview(null); setError(null); setConfidence(null); };
-
   const confInfo = confidence ? confidenceLabel(confidence) : null;
 
   return (
     <div style={{paddingBottom:8}}>
       <div style={{background:`linear-gradient(135deg,${T.terraLt},#FFF8F5)`,borderRadius:12,padding:"12px 14px",marginBottom:14,border:`1px solid ${T.border}`}}>
-        <div style={{fontSize:12,color:T.terra,fontWeight:600,marginBottom:3}}>📸 Snap to Pattern</div>
+        <div style={{fontSize:12,color:T.terra,fontWeight:600,marginBottom:3}}>📸 Snap to Pattern — 3 free snaps/month</div>
         <div style={{fontSize:12,color:T.ink2,lineHeight:1.6}}>Photograph any finished crochet object. We identify the components and build a starter pattern to recreate it.</div>
       </div>
-
       {!file && (
         <label style={{display:"block",cursor:"pointer"}}>
           <div style={{border:`2px dashed ${T.border}`,borderRadius:16,padding:"36px 20px",textAlign:"center",background:T.linen}}>
@@ -560,7 +545,6 @@ const SnapToPatternForm = ({onSave}) => {
           <input type="file" accept="image/*" onChange={handleFile} style={{display:"none"}}/>
         </label>
       )}
-
       {imgSrc && loading && (
         <div style={{textAlign:"center",padding:"16px 0"}}>
           <div style={{width:"100%",height:180,borderRadius:14,overflow:"hidden",marginBottom:14,position:"relative"}}>
@@ -575,18 +559,15 @@ const SnapToPatternForm = ({onSave}) => {
           </div>
         </div>
       )}
-
       {error && (
-        <div style={{background:"#FFF0EE",borderRadius:12,padding:"14px 16px",marginBottom:14,border:`1px solid #F5C6BB`}}>
+        <div style={{background:"#FFF0EE",borderRadius:12,padding:"14px 16px",marginBottom:14,border:"1px solid #F5C6BB"}}>
           <div style={{fontSize:13,color:"#C0392B",fontWeight:600,marginBottom:4}}>Couldn't read this photo</div>
           <div style={{fontSize:12,color:T.ink2,lineHeight:1.6}}>{error}</div>
           <div style={{marginTop:10}}><Btn variant="secondary" onClick={reset} small full={false}>Try again</Btn></div>
         </div>
       )}
-
       {analysis && preview && !loading && (
         <div className="fu">
-          {/* Photo with confidence overlay */}
           <div style={{width:"100%",height:160,borderRadius:14,overflow:"hidden",marginBottom:14,position:"relative"}}>
             <img src={imgSrc} alt="source" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
             <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"10px 14px",background:"linear-gradient(to top, rgba(28,23,20,.85) 0%, transparent 100%)"}}>
@@ -597,47 +578,36 @@ const SnapToPatternForm = ({onSave}) => {
               <div style={{marginTop:4}}><Bar val={confidence} color="#fff" h={3} bg="rgba(255,255,255,.25)"/></div>
             </div>
           </div>
-
-          {/* Confidence message */}
           <div style={{background:T.linen,borderRadius:10,padding:"10px 14px",marginBottom:14,display:"flex",gap:8,alignItems:"flex-start"}}>
             <span style={{fontSize:14}}>🎯</span>
             <span style={{fontSize:12,color:confInfo?.color,lineHeight:1.5,fontWeight:500}}>{confInfo?.text}</span>
           </div>
-
-          {/* What we found */}
           <div style={{background:T.surface,borderRadius:12,border:`1px solid ${T.border}`,padding:"14px",marginBottom:14}}>
             <div style={{fontSize:11,color:T.ink3,textTransform:"uppercase",letterSpacing:".08em",marginBottom:10,fontWeight:600}}>What we identified</div>
             <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
               {analysis.components?.map((c, i) => (
                 <div key={i} style={{background:c.confidence >= 70 ? T.sageLt : T.terraLt,borderRadius:8,padding:"5px 10px",fontSize:11,fontWeight:500,color:c.confidence >= 70 ? T.sage : T.terra}}>
-                  {c.count > 1 ? `${c.count}x ` : ""}{c.role !== "unknown" ? c.role : c.primitive_type}
-                  {c.confidence < 70 ? " ?" : ""}
+                  {c.count > 1 ? c.count + "x " : ""}{c.role !== "unknown" ? c.role : c.primitive_type}{c.confidence < 70 ? " ?" : ""}
                 </div>
               ))}
               {analysis.color_structure && (
                 <div style={{background:T.linen,borderRadius:8,padding:"5px 10px",fontSize:11,color:T.ink2}}>
-                  {analysis.color_structure.primary_color}{analysis.color_structure.color_count > 1 ? ` +${analysis.color_structure.color_count - 1} more` : ""}
+                  {analysis.color_structure.primary_color}{analysis.color_structure.color_count > 1 ? " +" + (analysis.color_structure.color_count - 1) + " more" : ""}
                 </div>
               )}
             </div>
           </div>
-
-          {/* Pattern preview */}
           <div style={{background:T.linen,borderRadius:12,border:`1px solid ${T.border}`,padding:"14px",marginBottom:14}}>
             <div style={{fontFamily:T.serif,fontSize:16,color:T.ink,marginBottom:4}}>{preview.title}</div>
             <div style={{fontSize:12,color:T.ink3,marginBottom:10}}>Hook {preview.hook} · {preview.weight} · ~{preview.yardage} yds · {preview.rows.length} steps</div>
             <div style={{fontSize:12,color:T.ink2,lineHeight:1.6,marginBottom:12}}>{preview.notes}</div>
             <div style={{fontSize:11,color:T.ink3,fontStyle:"italic",marginBottom:12}}>Review the steps below after saving — adjust stitch counts to match your gauge and yarn weight.</div>
             <Btn onClick={() => onSave({
-              id: Date.now(),
-              photo: imgSrc || PILL[0],
-              source: "Snap to Pattern",
+              id: Date.now(), photo: imgSrc || PILL[0], source: "Snap to Pattern",
               cat: analysis.object_category === "amigurumi" ? "Amigurumi" : "Uncategorized",
               rating: 0, skeins: 2, skeinYards: 200,
-              gauge: {stitches: 16, rows: 20, size: 4},
-              dimensions: {width: 20, height: 20},
-              snapConfidence: confidence,
-              ...preview,
+              gauge: {stitches: 16, rows: 20, size: 4}, dimensions: {width: 20, height: 20},
+              snapConfidence: confidence, ...preview,
             })}>Save to My Collection</Btn>
             <div style={{marginTop:8}}><Btn variant="ghost" onClick={reset}>Try different photo</Btn></div>
           </div>
@@ -694,7 +664,7 @@ const ManualEntryForm = ({onSave}) => {
           <div style={{width:5,height:5,borderRadius:99,background:T.terra,flexShrink:0}}/>
           <span style={{flex:1,fontSize:13,color:T.ink2}}>{m.name}</span>
           <span style={{fontSize:12,color:T.ink3}}>{m.amount}</span>
-          <button onClick={()=>setMaterials(p=>p.filter((_,j)=>j!==i))} style={{background:"none",border:"none",color:T.ink3,cursor:"pointer",fontSize:15}}>×</button>
+          <button onClick={()=>setMaterials(p=>p.filter((_,j)=>j!==i))} style={{background:"none",border:"none",color:T.ink3,cursor:"pointer",fontSize:15}}>x</button>
         </div>
       ))}
       <div style={{display:"flex",gap:8,marginTop:8,marginBottom:18}}>
@@ -707,7 +677,7 @@ const ManualEntryForm = ({onSave}) => {
         <div key={r.id} style={{display:"flex",alignItems:"center",gap:10,padding:"7px 0",borderBottom:`1px solid ${T.border}`}}>
           <div style={{fontSize:10,color:T.ink3,minWidth:20,textAlign:"center",fontWeight:600}}>{i+1}</div>
           <span style={{flex:1,fontSize:13,color:T.ink2}}>{r.text}</span>
-          <button onClick={()=>setRows(p=>p.filter((_,j)=>j!==i))} style={{background:"none",border:"none",color:T.ink3,cursor:"pointer",fontSize:15}}>×</button>
+          <button onClick={()=>setRows(p=>p.filter((_,j)=>j!==i))} style={{background:"none",border:"none",color:T.ink3,cursor:"pointer",fontSize:15}}>x</button>
         </div>
       ))}
       <div style={{display:"flex",gap:8,marginTop:8,marginBottom:20}}>
@@ -722,59 +692,80 @@ const ManualEntryForm = ({onSave}) => {
 };
 
 const URLImportForm = ({onSave}) => {
-  const [url,setUrl]         = useState("");
-  const [loading,setLoading] = useState(false);
-  const [preview,setPreview] = useState(null);
-  const [error,setError]     = useState(null);
+  const [url,setUrl]           = useState("");
+  const [loading,setLoading]   = useState(false);
+  const [progress,setProgress] = useState(0);
+  const [phase,setPhase]       = useState("");
+  const [preview,setPreview]   = useState(null);
+  const [error,setError]       = useState(null);
 
   const doImport = async () => {
     if(!url.trim()) return;
-    setLoading(true);
-    setError(null);
-    setPreview(null);
+    setLoading(true); setError(null); setPreview(null); setProgress(0);
 
+    setPhase("Fetching pattern page…");
+    const p1 = setInterval(()=>setProgress(p=>Math.min(p+3,28)),120);
+
+    let data;
     try {
-      const res = await fetch("/api/fetch-pattern", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: url.trim() }),
+      const res = await fetch("/api/fetch-pattern",{
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({url:url.trim()}),
       });
-
-      const data = await res.json();
-
-      if (!res.ok || data.error) {
-        throw new Error(data.error || "Could not read that page");
-      }
-
-      const rows = (data.rows || []).map((r, i) => ({
-        id: Date.now() + i,
-        text: r.text || "",
-        done: false,
-        note: "",
-      }));
-
-      setPreview({
-        ...data,
-        rows,
-        photo: data.thumbnail_url || PILL[Math.floor(Math.random() * PILL.length)],
-        smartNote: `${rows.length} steps extracted and ready to track.`,
-      });
-
+      clearInterval(p1); setProgress(30);
+      setPhase("Reading and extracting pattern…");
+      const p2 = setInterval(()=>setProgress(p=>Math.min(p+1,84)),120);
+      data = await res.json();
+      clearInterval(p2);
+      if(!res.ok||data.error) throw new Error(data.error||"Could not read that page");
+      setPhase("Structuring your pattern…");
+      setProgress(90);
+      await new Promise(r=>setTimeout(r,400));
+      setProgress(100);
+      await new Promise(r=>setTimeout(r,300));
     } catch(err) {
       setError("Couldn't read that pattern. Try a different URL or use Manual Entry.");
-      console.error(err);
-    } finally {
-      setLoading(false);
+      setLoading(false); setProgress(0); return;
     }
+
+    const rows = (data.rows||[]).map((r,i)=>({id:Date.now()+i,text:r.text||"",done:false,note:""}));
+
+    const estimatedYardage = data.yardage > 0 ? data.yardage :
+      (data.materials||[]).reduce((sum,m)=>{
+        if(m.yardage>0) return sum+m.yardage;
+        const t=((m.name||"")+" "+(m.amount||"")).toLowerCase();
+        const b=t.match(/(\d+)\s*ball/); const s=t.match(/(\d+)\s*skein/);
+        if(b) return sum+parseInt(b[1])*200;
+        if(s) return sum+parseInt(s[1])*200;
+        return sum;
+      },0);
+
+    const found=[]; const missing=[];
+    if(data.hook) found.push("hook size"); else missing.push("hook size");
+    if(data.weight) found.push("yarn weight"); else missing.push("yarn weight");
+    if(data.yardage>0) found.push("yardage");
+    else if(estimatedYardage>0) missing.push("yardage (estimated ~" + estimatedYardage + " yds from materials)");
+    else missing.push("yardage");
+    if((data.materials||[]).length>0) found.push("materials list"); else missing.push("materials list");
+
+    const qualityNote = missing.length===0 ? null :
+      "Not found on source page: " + missing.join(", ") + ". Pattern quality depends on the source.";
+
+    setPreview({
+      ...data, rows,
+      yardage: estimatedYardage||data.yardage||0,
+      photo: data.thumbnail_url||PILL[Math.floor(Math.random()*PILL.length)],
+      smartNote: rows.length + " steps extracted and ready to track.",
+      qualityNote,
+    });
+    setLoading(false);
   };
 
   return (
     <div style={{paddingBottom:8}}>
       <div style={{fontSize:13,color:T.ink2,lineHeight:1.7,marginBottom:14}}>Paste any crochet pattern URL. We read the page and extract every step automatically.</div>
       <div style={{display:"flex",gap:8,marginBottom:16}}>
-        <div style={{flex:1,display:"flex",alignItems:"center",background:T.linen,border:`1.5px solid ${T.border}`,borderRadius:12,padding:"11px 14px",gap:10}}
-          onFocus={e=>e.currentTarget.style.borderColor=T.terra}
-          onBlur={e=>e.currentTarget.style.borderColor=T.border}>
+        <div style={{flex:1,display:"flex",alignItems:"center",background:T.linen,border:`1.5px solid ${T.border}`,borderRadius:12,padding:"11px 14px",gap:10}}>
           <span style={{color:T.ink3}}>🔗</span>
           <input value={url} onChange={e=>setUrl(e.target.value)} onKeyDown={e=>e.key==="Enter"&&doImport()} placeholder="https://www.allfreecrochet.com/…" style={{border:"none",background:"transparent",flex:1,fontSize:14,color:T.ink,outline:"none"}}/>
         </div>
@@ -782,10 +773,19 @@ const URLImportForm = ({onSave}) => {
       </div>
 
       {loading&&(
-        <div style={{textAlign:"center",padding:"32px 0"}}>
-          <div className="spinner" style={{width:36,height:36,border:`3px solid ${T.border}`,borderTop:`3px solid ${T.terra}`,borderRadius:"50%",margin:"0 auto 16px"}}/>
-          <div style={{fontFamily:T.serif,fontSize:16,color:T.ink2}}>Reading pattern…</div>
-          <div style={{fontSize:12,color:T.ink3,marginTop:6}}>Extracting rows and instructions</div>
+        <div style={{padding:"24px 0 32px"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+            <div style={{fontSize:13,color:T.ink2,fontWeight:500}}>{phase}</div>
+            <div style={{fontSize:13,color:T.terra,fontWeight:700}}>{progress}%</div>
+          </div>
+          <div style={{background:T.border,borderRadius:99,height:6,overflow:"hidden",marginBottom:10}}>
+            <div style={{width:progress+"%",height:6,background:"linear-gradient(90deg,"+T.terra+",#C97A5E)",borderRadius:99,transition:"width .3s ease"}}/>
+          </div>
+          <div style={{fontSize:11,color:T.ink3,textAlign:"center"}}>
+            {progress < 30 && "Connecting to pattern source…"}
+            {progress >= 30 && progress < 85 && "AI is reading every row and step…"}
+            {progress >= 85 && "Almost done — finalizing your pattern…"}
+          </div>
         </div>
       )}
 
@@ -803,11 +803,17 @@ const URLImportForm = ({onSave}) => {
             <div style={{fontSize:10,color:T.ink3,marginBottom:4}}>{preview.source}</div>
             <div style={{fontFamily:T.serif,fontSize:18,color:T.ink,marginBottom:4}}>{preview.title}</div>
             <div style={{fontSize:12,color:T.ink3,marginBottom:8}}>
-              {[preview.hook&&`Hook ${preview.hook}`,preview.weight,preview.yardage>0&&`~${preview.yardage} yds`].filter(Boolean).join(" · ")}
+              {[preview.hook&&"Hook "+preview.hook,preview.weight,preview.yardage>0&&"~"+preview.yardage+" yds"].filter(Boolean).join(" · ")}
             </div>
             {preview.smartNote&&(
-              <div style={{background:T.sageLt,borderRadius:8,padding:"8px 12px",marginBottom:12,display:"flex",gap:8}}>
+              <div style={{background:T.sageLt,borderRadius:8,padding:"8px 12px",marginBottom:10,display:"flex",gap:8}}>
                 <span>✨</span><span style={{fontSize:12,color:T.sage}}>{preview.smartNote}</span>
+              </div>
+            )}
+            {preview.qualityNote&&(
+              <div style={{background:"#FFF8EC",borderRadius:8,padding:"8px 12px",marginBottom:12,border:"1px solid #F0D9A8",display:"flex",gap:8,alignItems:"flex-start"}}>
+                <span style={{fontSize:13,flexShrink:0}}>⚠️</span>
+                <span style={{fontSize:11,color:"#8B6914",lineHeight:1.6}}>{preview.qualityNote}</span>
               </div>
             )}
             {preview.rows?.length>0&&(
@@ -886,12 +892,12 @@ const BrowserImport = ({onSave}) => {
     {name:"Yarnspirations",  desc:"Caron & Bernat free patterns", photo:PILL[3], note:"Most patterns extractable"},
     {name:"Sarah Maker",     desc:"Modern beginner patterns",     photo:PILL[2], note:"Full extraction supported"},
     {name:"Hopeful Honey",   desc:"Whimsical amigurumi",          photo:PILL[5], note:"Full extraction supported"},
-    {name:"Ravelry",         desc:"Requires login in-browser",   photo:PILL[1], note:"Browse then copy URL to import"},
+    {name:"Ravelry",         desc:"Requires login in-browser",    photo:PILL[1], note:"Browse then copy URL to import"},
   ];
   const doSave = (s) => {
     setSaving(true);
     setTimeout(()=>{
-      onSave({id:Date.now(),photo:s.photo,title:`Pattern from ${s.name}`,source:s.name,cat:"Uncategorized",hook:"",weight:"",rating:0,notes:"",materials:[],rows:[],yardage:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:50,height:60}});
+      onSave({id:Date.now(),photo:s.photo,title:"Pattern from "+s.name,source:s.name,cat:"Uncategorized",hook:"",weight:"",rating:0,notes:"",materials:[],rows:[],yardage:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:50,height:60}});
       setSaving(false); setActive(null);
     },900);
   };
@@ -907,7 +913,7 @@ const BrowserImport = ({onSave}) => {
         <div style={{padding:"16px"}}>
           <div style={{background:T.sageLt,borderRadius:8,padding:"8px 12px",marginBottom:12,display:"flex",gap:8}}><span>ℹ️</span><span style={{fontSize:12,color:T.sage}}>{active.note}</span></div>
           <div style={{fontSize:13,color:T.ink2,lineHeight:1.7,marginBottom:14}}>In the full version, an in-app browser opens {active.name} directly. Browse and tap Save — we handle the rest.</div>
-          <Btn onClick={()=>doSave(active)} disabled={saving}>{saving?"Saving…":`Save from ${active.name}`}</Btn>
+          <Btn onClick={()=>doSave(active)} disabled={saving}>{saving?"Saving…":"Save from "+active.name}</Btn>
         </div>
       </div>
     </div>
@@ -937,62 +943,56 @@ const AddPatternModal = ({onClose, onSave, isPro, patternCount}) => {
   const handleSave = (p) => { onSave(p); dismiss(); };
 
   const METHODS = [
-    {key:"manual",  icon:"✏️", label:"Manual Entry",       sub:"Type it in yourself"},
-    {key:"url",     icon:"🔗", label:"Smart Import",       sub:"Paste any pattern link"},
-    {key:"pdf",     icon:"📄", label:"PDF / Document",     sub:"Upload & extract"},
-    {key:"browser", icon:"🌐", label:"Browse Sites",       sub:"AllFreeCrochet, Drops & more"},
-    {key:"snap",    icon:"📸", label:"Snap to Pattern",    sub:"Photograph any finished object — 3 free snaps/mo"},
+    {key:"manual",  icon:"✏️", label:"Manual Entry",    sub:"Type it in yourself"},
+    {key:"url",     icon:"🔗", label:"Smart Import",    sub:"Paste any pattern link"},
+    {key:"pdf",     icon:"📄", label:"PDF / Document",  sub:"Upload & extract"},
+    {key:"browser", icon:"🌐", label:"Browse Sites",    sub:"AllFreeCrochet, Drops & more"},
+    {key:"snap",    icon:"📸", label:"Snap to Pattern", sub:"Photograph any finished object — 3 free snaps/mo"},
   ];
+
+  const MethodList = () => (
+    <>
+      <div style={{fontSize:12,color:T.ink3,marginBottom:14}}>
+        {isPro ? "Pro — unlimited patterns" : "Free plan · "+patternCount+"/"+TIER_CONFIG.free.patternCap+" patterns used — all import methods available"}
+      </div>
+      <div style={{display:"flex",flexDirection:"column",gap:10}}>
+        {METHODS.map(m=>(
+          <div key={m.key} className="method-card" onClick={()=>setMethod(m.key)}
+            style={{display:"flex",alignItems:"center",gap:14,padding:"14px 16px",background:m.key==="snap"?T.terraLt:T.linen,border:"1.5px solid "+(m.key==="snap"?T.terra:T.border),borderRadius:14,cursor:"pointer",transition:"all .15s"}}>
+            <div style={{width:44,height:44,borderRadius:12,background:m.key==="snap"?"rgba(184,90,60,.2)":T.terraLt,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>
+              {m.icon}
+            </div>
+            <div style={{flex:1}}>
+              <div style={{fontSize:15,fontWeight:600,color:m.key==="snap"?T.terra:T.ink,marginBottom:2}}>{m.label}</div>
+              <div style={{fontSize:12,color:T.ink3}}>{m.sub}</div>
+            </div>
+            {m.key==="snap"&&<div style={{background:T.sage,color:"#fff",borderRadius:8,padding:"3px 8px",fontSize:10,fontWeight:700,flexShrink:0}}>FREE</div>}
+            {m.key!=="snap"&&<span style={{color:T.ink3,fontSize:18}}>›</span>}
+          </div>
+        ))}
+      </div>
+    </>
+  );
 
   if(isDesktop) return (
     <div style={{position:"fixed",inset:0,zIndex:400,display:"flex",alignItems:"center",justifyContent:"center"}}>
-      <div className={closing?"dim-out":"dim-in"} onClick={dismiss}
-        style={{position:"absolute",inset:0,background:"rgba(28,23,20,.6)",backdropFilter:"blur(4px)"}}/>
-      <div className={closing?"":"fu"}
-        style={{position:"relative",background:T.surface,borderRadius:20,width:"100%",maxWidth:580,maxHeight:"85vh",display:"flex",flexDirection:"column",zIndex:1,boxShadow:"0 24px 64px rgba(28,23,20,.3)"}}>
+      <div className={closing?"dim-out":"dim-in"} onClick={dismiss} style={{position:"absolute",inset:0,background:"rgba(28,23,20,.6)",backdropFilter:"blur(4px)"}}/>
+      <div className={closing?"":"fu"} style={{position:"relative",background:T.surface,borderRadius:20,width:"100%",maxWidth:580,maxHeight:"85vh",display:"flex",flexDirection:"column",zIndex:1,boxShadow:"0 24px 64px rgba(28,23,20,.3)"}}>
         <div style={{flexShrink:0,padding:"24px 28px 0"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-            {method
-              ? <button onClick={()=>setMethod(null)} style={{background:"none",border:"none",color:T.terra,cursor:"pointer",fontSize:14,fontWeight:600,padding:0}}>← Back</button>
-              : <div style={{fontFamily:T.serif,fontSize:24,color:T.ink}}>Add Pattern</div>
-            }
+            {method ? <button onClick={()=>setMethod(null)} style={{background:"none",border:"none",color:T.terra,cursor:"pointer",fontSize:14,fontWeight:600,padding:0}}>← Back</button>
+              : <div style={{fontFamily:T.serif,fontSize:24,color:T.ink}}>Add Pattern</div>}
             <button onClick={dismiss} style={{background:T.linen,border:"none",borderRadius:99,width:32,height:32,cursor:"pointer",fontSize:18,color:T.ink3,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
           </div>
-          {method&&(
-            <div style={{fontSize:12,color:T.ink3,marginBottom:14,fontWeight:500}}>
-              {METHODS.find(m=>m.key===method)?.icon} {METHODS.find(m=>m.key===method)?.label}
-            </div>
-          )}
+          {method&&<div style={{fontSize:12,color:T.ink3,marginBottom:14,fontWeight:500}}>{METHODS.find(m=>m.key===method)?.icon} {METHODS.find(m=>m.key===method)?.label}</div>}
         </div>
         <div style={{flex:1,overflowY:"auto",padding:"0 28px 32px"}}>
-          {!method&&(
-            <>
-              <div style={{fontSize:12,color:T.ink3,marginBottom:14}}>
-                {isPro ? "Pro — unlimited patterns" : `Free plan · ${patternCount}/${TIER_CONFIG.free.patternCap} patterns used — all import methods available`}
-              </div>
-              <div style={{display:"flex",flexDirection:"column",gap:10}}>
-                {METHODS.map(m=>(
-                  <div key={m.key} className="method-card" onClick={()=>setMethod(m.key)}
-                    style={{display:"flex",alignItems:"center",gap:14,padding:"14px 16px",background:m.key==="snap"?T.terraLt:T.linen,border:`1.5px solid ${m.key==="snap"?T.terra:T.border}`,borderRadius:14,cursor:"pointer",transition:"all .15s"}}>
-                    <div style={{width:44,height:44,borderRadius:12,background:m.key==="snap"?"rgba(184,90,60,.2)":T.terraLt,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>
-                      {m.icon}
-                    </div>
-                    <div style={{flex:1}}>
-                      <div style={{fontSize:15,fontWeight:600,color:m.key==="snap"?T.terra:T.ink,marginBottom:2}}>{m.label}</div>
-                      <div style={{fontSize:12,color:T.ink3}}>{m.sub}</div>
-                    </div>
-                   {m.key==="snap"&&<div style={{background:T.sage,color:"#fff",borderRadius:8,padding:"3px 8px",fontSize:10,fontWeight:700,flexShrink:0}}>FREE</div>}
-                    {m.key!=="snap"&&<span style={{color:T.ink3,fontSize:18}}>›</span>}
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-          {method==="manual"  && <ManualEntryForm    onSave={handleSave}/>}
-          {method==="url"     && <URLImportForm      onSave={handleSave}/>}
-          {method==="pdf"     && <PDFUploadForm      onSave={handleSave}/>}
-          {method==="browser" && <BrowserImport      onSave={handleSave}/>}
-          {method==="snap"    && <SnapToPatternForm  onSave={handleSave}/>}
+          {!method&&<MethodList/>}
+          {method==="manual"  && <ManualEntryForm   onSave={handleSave}/>}
+          {method==="url"     && <URLImportForm     onSave={handleSave}/>}
+          {method==="pdf"     && <PDFUploadForm     onSave={handleSave}/>}
+          {method==="browser" && <BrowserImport     onSave={handleSave}/>}
+          {method==="snap"    && <SnapToPatternForm onSave={handleSave}/>}
         </div>
       </div>
     </div>
@@ -1000,54 +1000,24 @@ const AddPatternModal = ({onClose, onSave, isPro, patternCount}) => {
 
   return (
     <div style={{position:"fixed",inset:0,zIndex:400,display:"flex",alignItems:"flex-end"}}>
-      <div className={closing?"dim-out":"dim-in"} onClick={dismiss}
-        style={{position:"absolute",inset:0,background:"rgba(28,23,20,.6)",backdropFilter:"blur(4px)"}}/>
-      <div className={closing?"":"su"}
-        style={{position:"relative",background:T.surface,borderRadius:"24px 24px 0 0",width:"100%",maxHeight:"92vh",display:"flex",flexDirection:"column",zIndex:1}}>
+      <div className={closing?"dim-out":"dim-in"} onClick={dismiss} style={{position:"absolute",inset:0,background:"rgba(28,23,20,.6)",backdropFilter:"blur(4px)"}}/>
+      <div className={closing?"":"su"} style={{position:"relative",background:T.surface,borderRadius:"24px 24px 0 0",width:"100%",maxHeight:"92vh",display:"flex",flexDirection:"column",zIndex:1}}>
         <div style={{flexShrink:0,padding:"16px 22px 0"}}>
           <div style={{width:36,height:3,background:T.border,borderRadius:99,margin:"0 auto 18px"}}/>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-            {method
-              ? <button onClick={()=>setMethod(null)} style={{background:"none",border:"none",color:T.terra,cursor:"pointer",fontSize:14,fontWeight:600,padding:0}}>← Back</button>
-              : <div style={{fontFamily:T.serif,fontSize:22,color:T.ink}}>Add Pattern</div>
-            }
+            {method ? <button onClick={()=>setMethod(null)} style={{background:"none",border:"none",color:T.terra,cursor:"pointer",fontSize:14,fontWeight:600,padding:0}}>← Back</button>
+              : <div style={{fontFamily:T.serif,fontSize:22,color:T.ink}}>Add Pattern</div>}
             <button onClick={dismiss} style={{background:T.linen,border:"none",borderRadius:99,width:30,height:30,cursor:"pointer",fontSize:16,color:T.ink3,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
           </div>
-          {method&&(
-            <div style={{fontSize:12,color:T.ink3,marginBottom:12,fontWeight:500}}>
-              {METHODS.find(m=>m.key===method)?.icon} {METHODS.find(m=>m.key===method)?.label}
-            </div>
-          )}
+          {method&&<div style={{fontSize:12,color:T.ink3,marginBottom:12,fontWeight:500}}>{METHODS.find(m=>m.key===method)?.icon} {METHODS.find(m=>m.key===method)?.label}</div>}
         </div>
         <div style={{flex:1,overflowY:"auto",padding:"0 22px 40px"}}>
-          {!method&&(
-            <>
-              <div style={{fontSize:12,color:T.ink3,marginBottom:12}}>
-                {isPro ? "Pro — unlimited patterns" : `Free plan · ${patternCount}/${TIER_CONFIG.free.patternCap} patterns used — all import methods available`}
-              </div>
-              <div style={{display:"flex",flexDirection:"column",gap:10}}>
-                {METHODS.map(m=>(
-                  <div key={m.key} className="method-card" onClick={()=>setMethod(m.key)}
-                    style={{display:"flex",alignItems:"center",gap:14,padding:"14px 16px",background:m.key==="snap"?T.terraLt:T.linen,border:`1.5px solid ${m.key==="snap"?T.terra:T.border}`,borderRadius:14,cursor:"pointer",transition:"all .15s"}}>
-                    <div style={{width:44,height:44,borderRadius:12,background:m.key==="snap"?"rgba(184,90,60,.2)":T.terraLt,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>
-                      {m.icon}
-                    </div>
-                    <div style={{flex:1}}>
-                      <div style={{fontSize:15,fontWeight:600,color:m.key==="snap"?T.terra:T.ink,marginBottom:2}}>{m.label}</div>
-                      <div style={{fontSize:12,color:T.ink3}}>{m.sub}</div>
-                    </div>
-                   {m.key==="snap"&&<div style={{background:T.sage,color:"#fff",borderRadius:8,padding:"3px 8px",fontSize:10,fontWeight:700,flexShrink:0}}>FREE</div>}
-                    {m.key!=="snap"&&<span style={{color:T.ink3,fontSize:18}}>›</span>}
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-          {method==="manual"  && <ManualEntryForm    onSave={handleSave}/>}
-          {method==="url"     && <URLImportForm      onSave={handleSave}/>}
-          {method==="pdf"     && <PDFUploadForm      onSave={handleSave}/>}
-          {method==="browser" && <BrowserImport      onSave={handleSave}/>}
-          {method==="snap"    && <SnapToPatternForm  onSave={handleSave}/>}
+          {!method&&<MethodList/>}
+          {method==="manual"  && <ManualEntryForm   onSave={handleSave}/>}
+          {method==="url"     && <URLImportForm     onSave={handleSave}/>}
+          {method==="pdf"     && <PDFUploadForm     onSave={handleSave}/>}
+          {method==="browser" && <BrowserImport     onSave={handleSave}/>}
+          {method==="snap"    && <SnapToPatternForm onSave={handleSave}/>}
         </div>
       </div>
     </div>
@@ -1059,12 +1029,12 @@ const AddPatternModal = ({onClose, onSave, isPro, patternCount}) => {
 ══════════════════════════════════════════════════════════════════════════ */
 const SidebarNav = ({view, setView, count, isPro, onAddPattern}) => {
   const ITEMS = [
-    {key:"collection", label:"My Patterns",   sub:`${count} saved`,          icon:"🧶"},
-    {key:"wip",        label:"In Progress",   sub:"Currently making",        icon:"🪡"},
-    {key:"browse",     label:"Browse Sites",  sub:"Find free patterns",      icon:"🌐"},
-    {key:"stash",      label:"Yarn Stash",    sub:"Manage your yarn",        icon:"🎀"},
-    {key:"calculator", label:"Calculators",   sub:"Gauge, yardage & more",   icon:"🧮"},
-    {key:"shopping",   label:"Shopping List", sub:"Auto-generated",          icon:"🛒"},
+    {key:"collection", label:"My Patterns",   sub:count+" saved",          icon:"🧶"},
+    {key:"wip",        label:"In Progress",   sub:"Currently making",      icon:"🪡"},
+    {key:"browse",     label:"Browse Sites",  sub:"Find free patterns",    icon:"🌐"},
+    {key:"stash",      label:"Yarn Stash",    sub:"Manage your yarn",      icon:"🎀"},
+    {key:"calculator", label:"Calculators",   sub:"Gauge, yardage & more", icon:"🧮"},
+    {key:"shopping",   label:"Shopping List", sub:"Auto-generated",        icon:"🛒"},
   ];
   return (
     <div style={{width:260,background:T.surface,borderRight:`1px solid ${T.border}`,height:"100vh",position:"sticky",top:0,display:"flex",flexDirection:"column",flexShrink:0}}>
@@ -1086,7 +1056,7 @@ const SidebarNav = ({view, setView, count, isPro, onAddPattern}) => {
           const active = view===item.key;
           return (
             <div key={item.key} className="nav-item" onClick={()=>setView(item.key)}
-              style={{display:"flex",alignItems:"center",gap:12,padding:"12px 20px",borderLeft:`3px solid ${active?T.terra:"transparent"}`,background:active?T.terraLt:"transparent",cursor:"pointer",transition:"background .12s"}}>
+              style={{display:"flex",alignItems:"center",gap:12,padding:"12px 20px",borderLeft:"3px solid "+(active?T.terra:"transparent"),background:active?T.terraLt:"transparent",cursor:"pointer",transition:"background .12s"}}>
               <span style={{fontSize:18,width:24,textAlign:"center"}}>{item.icon}</span>
               <div style={{flex:1}}>
                 <div style={{fontSize:14,fontWeight:active?600:400,color:active?T.terra:T.ink}}>{item.label}</div>
@@ -1124,19 +1094,17 @@ const NavPanel = ({open, onClose, view, setView, count, isPro}) => {
   const go = v => { setView(v); dismiss(); };
   if(!open) return null;
   const ITEMS = [
-    {key:"collection", label:"My Patterns",   sub:`${count} patterns saved`, icon:"🧶"},
-    {key:"wip",        label:"In Progress",   sub:"Currently making",        icon:"🪡"},
-    {key:"browse",     label:"Browse Sites",  sub:"Find free patterns",      icon:"🌐"},
-    {key:"stash",      label:"Yarn Stash",    sub:"Manage your yarn",        icon:"🎀"},
-    {key:"calculator", label:"Calculators",   sub:"Gauge, yardage & more",   icon:"🧮"},
-    {key:"shopping",   label:"Shopping List", sub:"Auto-generated needs",    icon:"🛒"},
+    {key:"collection", label:"My Patterns",   sub:count+" patterns saved", icon:"🧶"},
+    {key:"wip",        label:"In Progress",   sub:"Currently making",      icon:"🪡"},
+    {key:"browse",     label:"Browse Sites",  sub:"Find free patterns",    icon:"🌐"},
+    {key:"stash",      label:"Yarn Stash",    sub:"Manage your yarn",      icon:"🎀"},
+    {key:"calculator", label:"Calculators",   sub:"Gauge, yardage & more", icon:"🧮"},
+    {key:"shopping",   label:"Shopping List", sub:"Auto-generated needs",  icon:"🛒"},
   ];
   return (
     <div style={{position:"fixed",inset:0,zIndex:100}}>
-      <div className={closing?"dim-out":"dim-in"} onClick={dismiss}
-        style={{position:"absolute",inset:0,background:"rgba(28,23,20,.52)",backdropFilter:"blur(3px)"}}/>
-      <div className={closing?"nav-close":"nav-open"}
-        style={{position:"absolute",top:0,left:0,bottom:0,width:"80%",maxWidth:320,background:T.surface,display:"flex",flexDirection:"column",boxShadow:"6px 0 40px rgba(28,23,20,.2)"}}>
+      <div className={closing?"dim-out":"dim-in"} onClick={dismiss} style={{position:"absolute",inset:0,background:"rgba(28,23,20,.52)",backdropFilter:"blur(3px)"}}/>
+      <div className={closing?"nav-close":"nav-open"} style={{position:"absolute",top:0,left:0,bottom:0,width:"80%",maxWidth:320,background:T.surface,display:"flex",flexDirection:"column",boxShadow:"6px 0 40px rgba(28,23,20,.2)"}}>
         <div style={{position:"relative",height:130,overflow:"hidden",flexShrink:0}}>
           <Photo src={PHOTOS.hero} alt="crochet" style={{width:"100%",height:"100%"}}/>
           <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(20,14,10,.8) 0%,rgba(20,14,10,.2) 100%)"}}/>
@@ -1150,7 +1118,7 @@ const NavPanel = ({open, onClose, view, setView, count, isPro}) => {
             const active = view===item.key;
             return (
               <div key={item.key} className="nav-item" onClick={()=>go(item.key)}
-                style={{display:"flex",alignItems:"center",gap:13,padding:"13px 20px",borderLeft:`3px solid ${active?T.terra:"transparent"}`,background:active?T.terraLt:"transparent",cursor:"pointer",transition:"background .12s"}}>
+                style={{display:"flex",alignItems:"center",gap:13,padding:"13px 20px",borderLeft:"3px solid "+(active?T.terra:"transparent"),background:active?T.terraLt:"transparent",cursor:"pointer",transition:"background .12s"}}>
                 <span style={{fontSize:20,width:26,textAlign:"center"}}>{item.icon}</span>
                 <div style={{flex:1}}>
                   <div style={{fontSize:14,fontWeight:active?600:400,color:active?T.terra:T.ink}}>{item.label}</div>
@@ -1190,7 +1158,6 @@ const Auth = ({onEnter, onEnterAsPro}) => {
   const [name,setName]     = useState("");
   const {isDesktop} = useBreakpoint();
 
-  /* ── DESKTOP LAYOUT — two column ── */
   if(isDesktop) {
     const isSignup = screen==="signup";
     const isSignin = screen==="signin";
@@ -1198,7 +1165,6 @@ const Auth = ({onEnter, onEnterAsPro}) => {
     return (
       <div style={{minHeight:"100vh",display:"flex",fontFamily:T.sans}}>
         <CSS/>
-        {/* Left — full height hero image */}
         <div style={{flex:"0 0 52%",position:"relative",overflow:"hidden"}}>
           <Photo src={PHOTOS.hero} alt="crochet" style={{position:"absolute",inset:0,width:"100%",height:"100%"}}/>
           <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(10,6,4,.88) 0%,rgba(10,6,4,.1) 60%,transparent 100%)"}}/>
@@ -1212,7 +1178,6 @@ const Auth = ({onEnter, onEnterAsPro}) => {
             </div>
           </div>
         </div>
-        {/* Right — form panel */}
         <div style={{flex:"0 0 48%",display:"flex",alignItems:"center",justifyContent:"center",background:T.bg,padding:"60px 40px"}}>
           <div style={{width:"100%",maxWidth:400}}>
             {!showForm&&(
@@ -1258,7 +1223,6 @@ const Auth = ({onEnter, onEnterAsPro}) => {
     );
   }
 
-  /* ── MOBILE LAYOUT ── */
   if(screen==="welcome") return (
     <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column"}}>
       <CSS/>
@@ -1267,7 +1231,7 @@ const Auth = ({onEnter, onEnterAsPro}) => {
         <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(15,10,8,.92) 0%,rgba(15,10,8,.15) 55%,transparent 100%)"}}/>
         <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"0 28px 36px"}}>
           <div style={{fontFamily:T.serif,fontSize:46,fontWeight:700,color:"#fff",lineHeight:1,marginBottom:10,letterSpacing:"-.02em"}}>Stitch Box</div>
-          <p style={{fontSize:16,color:"rgba(255,255,255,.72)",lineHeight:1.65,maxWidth:290}}>Save every pattern. Track every row.<br/>Scale, calculate, and create.</p>
+          <p style={{fontSize:16,color:"rgba(255,255,255,.72)",lineHeight:1.65,maxWidth:290}}>Save every pattern. Track every row. Scale, calculate, and create.</p>
         </div>
       </div>
       <div style={{background:T.surface,padding:"28px 22px 48px",display:"flex",flexDirection:"column",gap:12}}>
@@ -1277,9 +1241,7 @@ const Auth = ({onEnter, onEnterAsPro}) => {
         <div style={{borderTop:`1px solid ${T.border}`,paddingTop:12,marginTop:4}}>
           <Btn variant="sage" onClick={onEnterAsPro} small>🔑 Dev access — Pro unlocked</Btn>
         </div>
-        <p style={{fontSize:11,color:T.ink3,textAlign:"center",lineHeight:1.6,marginTop:4}}>
-          Free: up to 5 patterns, all features · Pro $9.99/mo or $74.99/yr: unlimited
-        </p>
+        <p style={{fontSize:11,color:T.ink3,textAlign:"center",lineHeight:1.6,marginTop:4}}>Free: up to 5 patterns, all features · Pro $9.99/mo or $74.99/yr: unlimited</p>
         <p style={{fontSize:10,color:T.ink3,textAlign:"center",opacity:.5,marginTop:4,letterSpacing:".06em"}}>{APP_VERSION}</p>
       </div>
     </div>
@@ -1311,8 +1273,6 @@ const Auth = ({onEnter, onEnterAsPro}) => {
 
 /* ══════════════════════════════════════════════════════════════════════════
    STITCH ABBREVIATION DICTIONARY
-   First occurrence of each abbreviation in a pattern links to a tutorial.
-   Long-term: swap YouTube URLs for Stitch Box original video content.
 ══════════════════════════════════════════════════════════════════════════ */
 const STITCH_DICT = {
   "SC":     { full: "Single Crochet",            url: "https://www.youtube.com/watch?v=JhBBqGBYAHo" },
@@ -1335,13 +1295,11 @@ const STITCH_DICT = {
   "SM":     { full: "Slip Marker",                url: "https://www.youtube.com/watch?v=kHhBaJFDmgE" },
 };
 
-// Build a regex that matches any abbreviation as a whole word, longest first
 const ABBR_PATTERN = new RegExp(
-  `\\b(${Object.keys(STITCH_DICT).sort((a,b)=>b.length-a.length).map(k=>k.replace(/\s+/g,"\\s+")).join("|")})\\b`,
+  "\\b(" + Object.keys(STITCH_DICT).sort((a,b)=>b.length-a.length).map(k=>k.replace(/\s+/g,"\\s+")).join("|") + ")\\b",
   "gi"
 );
 
-// Finds all NEW abbreviations in a row text and returns them
 const findNewAbbr = (text, seenAbbr) => {
   const found = [];
   const regex = new RegExp(ABBR_PATTERN.source, "gi");
@@ -1350,15 +1308,13 @@ const findNewAbbr = (text, seenAbbr) => {
     const raw = match[0].toUpperCase().replace(/\s+/g," ");
     const info = STITCH_DICT[raw];
     if (!info) continue;
-    if (!seenAbbr.has(raw)) {
-      seenAbbr.add(raw);
-      found.push({raw, ...info});
-    }
+    if (!seenAbbr.has(raw)) { seenAbbr.add(raw); found.push({raw, ...info}); }
   }
   return found;
 };
+
 /* ══════════════════════════════════════════════════════════════════════════
-   BROWSE SITES VIEW — with in-app browser
+   BROWSE SITES VIEW
 ══════════════════════════════════════════════════════════════════════════ */
 const BrowseSitesView = ({onSavePattern}) => {
   const {isDesktop} = useBreakpoint();
@@ -1368,86 +1324,52 @@ const BrowseSitesView = ({onSavePattern}) => {
   const [importErr, setImportErr]   = useState(null);
 
   const SITES = [
-    {name:"AllFreeCrochet",  desc:"The largest free crochet pattern library. Thousands of free patterns.", url:"https://www.allfreecrochet.com", tags:["Blankets","Amigurumi","Wearables"], free:true,  photo:PILL[4]},
-    {name:"Drops Design",    desc:"Free international patterns. Strong on garments and accessories.",       url:"https://www.garnstudio.com",     tags:["Garments","Accessories"],          free:true,  photo:PILL[0]},
-    {name:"Yarnspirations",  desc:"Official home of Caron and Bernat patterns. Great for beginners.",      url:"https://www.yarnspirations.com/collections/crochet-patterns", tags:["Beginner","Blankets"], free:true, photo:PILL[3]},
-    {name:"Sarah Maker",     desc:"Modern, well-photographed patterns with clear instructions.",            url:"https://sarahmaker.com/crochet-patterns/", tags:["Modern","Beginner","Amigurumi"], free:true, photo:PILL[2]},
-    {name:"Hopeful Honey",   desc:"Beloved amigurumi patterns. Best for whimsical creatures and toys.",    url:"https://www.hopefulhoney.com/p/free-crochet-patterns.html", tags:["Amigurumi","Toys"], free:true, photo:PILL[5]},
-    {name:"The Woobles",     desc:"Amigurumi kits and free beginner tutorials. Excellent stitch guides.",  url:"https://thewoobles.com/pages/free-crochet-patterns", tags:["Amigurumi","Beginner"], free:true, photo:PILL[1]},
-    {name:"Ravelry",         desc:"World's largest pattern database — 1M+ patterns, free and paid.",       url:"https://www.ravelry.com/patterns/library#craft=crochet", tags:["All categories","Free + Paid"], free:false, photo:PILL[0], note:"Log in on your device first, then copy any pattern URL below."},
-    {name:"LoveCrafts",      desc:"Quality free and paid patterns. Strong on modern garments.",             url:"https://www.lovecrafts.com/en-us/l/crochet/crochet-patterns?price=free", tags:["Garments","Modern"], free:false, photo:PILL[2]},
+    {name:"AllFreeCrochet",  desc:"The largest free crochet pattern library.",   url:"https://www.allfreecrochet.com",                                              tags:["Blankets","Amigurumi","Wearables"], free:true,  photo:PILL[4]},
+    {name:"Drops Design",    desc:"Free international patterns.",                url:"https://www.garnstudio.com",                                                  tags:["Garments","Accessories"],          free:true,  photo:PILL[0]},
+    {name:"Yarnspirations",  desc:"Official home of Caron and Bernat patterns.", url:"https://www.yarnspirations.com/collections/crochet-patterns",                 tags:["Beginner","Blankets"],             free:true,  photo:PILL[3]},
+    {name:"Sarah Maker",     desc:"Modern, well-photographed patterns.",         url:"https://sarahmaker.com/crochet-patterns/",                                    tags:["Modern","Beginner","Amigurumi"],    free:true,  photo:PILL[2]},
+    {name:"Hopeful Honey",   desc:"Beloved amigurumi patterns.",                 url:"https://www.hopefulhoney.com/p/free-crochet-patterns.html",                   tags:["Amigurumi","Toys"],                free:true,  photo:PILL[5]},
+    {name:"The Woobles",     desc:"Amigurumi kits and free beginner tutorials.", url:"https://thewoobles.com/pages/free-crochet-patterns",                          tags:["Amigurumi","Beginner"],            free:true,  photo:PILL[1]},
+    {name:"Ravelry",         desc:"World's largest pattern database.",           url:"https://www.ravelry.com/patterns/library#craft=crochet",                      tags:["All categories","Free + Paid"],    free:false, photo:PILL[0], note:"Log in on your device first, then copy any pattern URL below."},
+    {name:"LoveCrafts",      desc:"Quality free and paid patterns.",             url:"https://www.lovecrafts.com/en-us/l/crochet/crochet-patterns?price=free",      tags:["Garments","Modern"],               free:false, photo:PILL[2]},
   ];
 
   const doImport = async () => {
     if(!importUrl.trim()) return;
-    setImporting(true);
-    setImportErr(null);
+    setImporting(true); setImportErr(null);
     try {
-      const res = await fetch("/api/fetch-pattern", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: importUrl.trim() }),
-      });
+      const res = await fetch("/api/fetch-pattern",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url:importUrl.trim()})});
       const data = await res.json();
-      if (!res.ok || data.error) throw new Error(data.error || "Could not read that page");
+      if(!res.ok||data.error) throw new Error(data.error||"Could not read that page");
       const rows = (data.rows||[]).map((r,i)=>({id:Date.now()+i,text:r.text,done:false,note:""}));
-      onSavePattern&&onSavePattern({id:Date.now(),photo:PILL[Math.floor(Math.random()*PILL.length)],rating:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:50,height:60},...data,rows});
-      setActiveSite(null);
-      setImportUrl("");
+      onSavePattern&&onSavePattern({id:Date.now(),photo:data.thumbnail_url||PILL[Math.floor(Math.random()*PILL.length)],rating:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:50,height:60},...data,rows});
+      setActiveSite(null); setImportUrl("");
     } catch(e) {
       setImportErr("Couldn't read that pattern. Try copying the URL directly from your browser address bar.");
-    } finally {
-      setImporting(false);
-    }
+    } finally { setImporting(false); }
   };
 
-  // In-app browser modal
   if(activeSite) return (
     <div style={{position:"fixed",inset:0,zIndex:300,display:"flex",flexDirection:"column",background:T.bg}}>
-      {/* Top bar */}
       <div style={{background:T.surface,borderBottom:`1px solid ${T.border}`,padding:"12px 16px",display:"flex",alignItems:"center",gap:12,flexShrink:0}}>
         <button onClick={()=>{setActiveSite(null);setImportUrl("");setImportErr(null);}} style={{background:T.linen,border:`1px solid ${T.border}`,borderRadius:8,padding:"7px 14px",fontSize:13,fontWeight:600,color:T.ink,cursor:"pointer"}}>← Back</button>
         <div style={{flex:1,background:T.linen,borderRadius:10,padding:"8px 14px",fontSize:13,color:T.ink3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{activeSite.url}</div>
       </div>
-
-      {/* Iframe browser */}
       <div style={{flex:1,position:"relative",overflow:"hidden"}}>
-        <iframe
-          src={activeSite.url}
-          style={{width:"100%",height:"100%",border:"none"}}
-          title={activeSite.name}
-          sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-        />
-        {/* Overlay message for blocked iframes */}
+        <iframe src={activeSite.url} style={{width:"100%",height:"100%",border:"none"}} title={activeSite.name} sandbox="allow-scripts allow-same-origin allow-forms allow-popups"/>
         <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",pointerEvents:"none",background:"transparent"}}>
           <div style={{background:"rgba(28,23,20,.85)",backdropFilter:"blur(8px)",borderRadius:16,padding:"20px 24px",textAlign:"center",maxWidth:320,pointerEvents:"auto"}}>
-            <div style={{fontSize:13,color:"rgba(255,255,255,.9)",lineHeight:1.6,marginBottom:12}}>
-              If the site doesn't load above, open it in your browser, find a pattern you love, copy the URL, and paste it below.
-            </div>
-            <button onClick={()=>window.open(activeSite.url,"_blank","noopener,noreferrer")} style={{background:T.terra,color:"#fff",border:"none",borderRadius:10,padding:"9px 18px",fontSize:13,fontWeight:600,cursor:"pointer",marginBottom:8,width:"100%"}}>
-              🌐 Open {activeSite.name} in browser
-            </button>
+            <div style={{fontSize:13,color:"rgba(255,255,255,.9)",lineHeight:1.6,marginBottom:12}}>If the site doesn't load above, open it in your browser, find a pattern you love, copy the URL, and paste it below.</div>
+            <button onClick={()=>window.open(activeSite.url,"_blank","noopener,noreferrer")} style={{background:T.terra,color:"#fff",border:"none",borderRadius:10,padding:"9px 18px",fontSize:13,fontWeight:600,cursor:"pointer",marginBottom:8,width:"100%"}}>🌐 Open {activeSite.name} in browser</button>
           </div>
         </div>
       </div>
-
-      {/* Save bar at bottom */}
       <div style={{background:T.surface,borderTop:`1px solid ${T.border}`,padding:"14px 16px",flexShrink:0}}>
         <div style={{fontSize:12,color:T.ink3,marginBottom:8}}>Found a pattern? Paste its URL below and we'll import it.</div>
         {activeSite.note&&<div style={{fontSize:11,color:T.terra,marginBottom:8}}>ℹ️ {activeSite.note}</div>}
         <div style={{display:"flex",gap:8}}>
-          <input
-            value={importUrl}
-            onChange={e=>setImportUrl(e.target.value)}
-            onKeyDown={e=>e.key==="Enter"&&doImport()}
-            placeholder="Paste pattern URL here…"
-            style={{flex:1,padding:"10px 14px",background:T.linen,border:`1.5px solid ${T.border}`,borderRadius:10,fontSize:13,color:T.ink,outline:"none"}}
-            onFocus={e=>e.target.style.borderColor=T.terra}
-            onBlur={e=>e.target.style.borderColor=T.border}
-          />
-          <button onClick={doImport} disabled={!importUrl.trim()||importing} style={{background:T.terra,color:"#fff",border:"none",borderRadius:10,padding:"10px 18px",fontWeight:700,fontSize:13,cursor:"pointer",opacity:!importUrl.trim()||importing?0.6:1}}>
-            {importing ? "…" : "Save"}
-          </button>
+          <input value={importUrl} onChange={e=>setImportUrl(e.target.value)} onKeyDown={e=>e.key==="Enter"&&doImport()} placeholder="Paste pattern URL here…" style={{flex:1,padding:"10px 14px",background:T.linen,border:`1.5px solid ${T.border}`,borderRadius:10,fontSize:13,color:T.ink,outline:"none"}} onFocus={e=>e.target.style.borderColor=T.terra} onBlur={e=>e.target.style.borderColor=T.border}/>
+          <button onClick={doImport} disabled={!importUrl.trim()||importing} style={{background:T.terra,color:"#fff",border:"none",borderRadius:10,padding:"10px 18px",fontWeight:700,fontSize:13,cursor:"pointer",opacity:!importUrl.trim()||importing?0.6:1}}>{importing?"…":"Save"}</button>
         </div>
         {importErr&&<div style={{fontSize:12,color:"#C0392B",marginTop:8}}>{importErr}</div>}
         {importing&&<div style={{fontSize:12,color:T.ink3,marginTop:8}}>Reading pattern rows…</div>}
@@ -1455,7 +1377,6 @@ const BrowseSitesView = ({onSavePattern}) => {
     </div>
   );
 
-  // Site grid
   return (
     <div style={{padding:isDesktop?"24px 0 80px":"16px 18px 100px"}}>
       <div style={{marginBottom:20}}>
@@ -1487,10 +1408,14 @@ const BrowseSitesView = ({onSavePattern}) => {
     </div>
   );
 };
+
+/* ══════════════════════════════════════════════════════════════════════════
+   PATTERN CARDS
+══════════════════════════════════════════════════════════════════════════ */
 const PatternCard = ({p, onClick, delay=0}) => {
   const done = pct(p);
   return (
-    <div className="card fu" onClick={onClick} style={{background:T.surface,borderRadius:16,overflow:"hidden",border:`1px solid ${T.border}`,cursor:"pointer",animationDelay:`${delay}s`}}>
+    <div className="card fu" onClick={onClick} style={{background:T.surface,borderRadius:16,overflow:"hidden",border:`1px solid ${T.border}`,cursor:"pointer",animationDelay:delay+"s"}}>
       <div style={{position:"relative",height:160,overflow:"hidden",background:T.linen}}>
         <Photo src={p.photo} alt={p.title} style={{width:"100%",height:"100%"}}/>
         <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(28,23,20,.5) 0%,transparent 55%)"}}/>
@@ -1541,9 +1466,7 @@ const HScrollRow = ({children, itemCount}) => {
   }, []);
   return (
     <div style={{position:"relative",overflow:"hidden"}}>
-      <div ref={ref} className="h-scroll" style={{paddingLeft:18,paddingRight:18}}>
-        {children}
-      </div>
+      <div ref={ref} className="h-scroll" style={{paddingLeft:18,paddingRight:18}}>{children}</div>
       {showHint&&(
         <div style={{position:"absolute",right:0,top:0,bottom:8,width:80,background:"linear-gradient(to left, rgba(244,237,227,.98) 0%, transparent 100%)",pointerEvents:"none",display:"flex",alignItems:"center",justifyContent:"flex-end",paddingRight:12}}>
           <div style={{background:"rgba(28,23,20,.1)",borderRadius:99,padding:"4px 10px",fontSize:11,color:T.ink2,display:"flex",alignItems:"center",gap:3}}>
@@ -1592,12 +1515,19 @@ const ScaleModal = ({pattern, onClose}) => {
         <div style={{background:`linear-gradient(135deg,${T.terraLt},#fff)`,borderRadius:14,padding:"16px",marginBottom:20,border:`1px solid ${T.border}`}}>
           <div style={{fontFamily:T.serif,fontSize:14,color:T.ink,marginBottom:12}}>Scaled Results</div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-            {[["Starting stitches",Math.round((parseFloat(gSt)||12)/4*parseFloat(newW)||0)],["Total rows",Math.round((parseFloat(gRo)||16)/4*parseFloat(newH)||0)],["Yardage needed",`~${scaledYardage} yds`],["Skeins needed",`${scaledSkeins} skeins`],["Scale factor W",`${(scaleW*100).toFixed(0)}%`],["Scale factor H",`${(scaleH*100).toFixed(0)}%`]].map(([label,val])=>(
+            {[
+              ["Starting stitches",Math.round((parseFloat(gSt)||12)/4*parseFloat(newW)||0)],
+              ["Total rows",Math.round((parseFloat(gRo)||16)/4*parseFloat(newH)||0)],
+              ["Yardage needed","~"+scaledYardage+" yds"],
+              ["Skeins needed",scaledSkeins+" skeins"],
+              ["Scale factor W",(scaleW*100).toFixed(0)+"%"],
+              ["Scale factor H",(scaleH*100).toFixed(0)+"%"]
+            ].map(([label,val])=>(
               <div key={label} style={{background:"rgba(255,255,255,.8)",borderRadius:10,padding:"10px 12px"}}><div style={{fontSize:10,color:T.ink3,marginBottom:2}}>{label}</div><div style={{fontSize:18,fontWeight:700,fontFamily:T.serif,color:T.terra}}>{val}</div></div>
             ))}
           </div>
         </div>
-        <div style={{fontSize:12,color:T.ink3,textAlign:"center",marginBottom:16,lineHeight:1.6}}>Original: {orig.width}" × {orig.height}" · {pattern.yardage||1000} yards</div>
+        <div style={{fontSize:12,color:T.ink3,textAlign:"center",marginBottom:16,lineHeight:1.6}}>Original: {orig.width}" x {orig.height}" · {pattern.yardage||1000} yards</div>
         <Btn onClick={onClose} variant="secondary">Close</Btn>
       </div>
     </div>
@@ -1608,7 +1538,7 @@ const ScaleModal = ({pattern, onClose}) => {
    SHARE CARD MODAL
 ══════════════════════════════════════════════════════════════════════════ */
 const SHARE_PLATFORMS = [
-  {id:"native",  label:"Share",        icon:"📤", color:"#1C1714"},
+  {id:"native",   label:"Share",       icon:"📤", color:"#1C1714"},
   {id:"instagram",label:"Instagram",   icon:"📸", color:"#E1306C"},
   {id:"pinterest",label:"Pinterest",   icon:"📌", color:"#E60023"},
   {id:"facebook", label:"Facebook",    icon:"👥", color:"#1877F2"},
@@ -1619,41 +1549,25 @@ const ShareCardModal = ({pattern, onClose}) => {
   const done = pct(pattern);
   const isComplete = done === 100;
   const [caption, setCaption] = useState(
-    isComplete
-      ? `Just finished "${pattern.title}"! 🧶 So happy with how this turned out.`
-      : `Working on "${pattern.title}" — ${done}% done! 🪡 Making progress!`
+    isComplete ? "Just finished \"" + pattern.title + "\"! 🧶 So happy with how this turned out."
+               : "Working on \"" + pattern.title + "\" — " + done + "% done! 🪡 Making progress!"
   );
   const [shared, setShared] = useState(false);
-
-  const shareText = `${caption}\n\nMade with Stitch Box 📱 #crochet #stitchbox #crochetlife`;
+  const shareText = caption + "\n\nMade with Stitch Box 📱 #crochet #stitchbox #crochetlife";
 
   const doShare = async (platformId) => {
     if (platformId === "native") {
       if (navigator.share) {
-        try {
-          await navigator.share({
-            title: pattern.title,
-            text: shareText,
-            url: "https://stitch-box.vercel.app",
-          });
-          setShared(true);
-        } catch(e) {
-          // User cancelled — no action needed
-        }
-      } else {
-        // Fallback — copy to clipboard
-        navigator.clipboard?.writeText(shareText);
-        setShared(true);
-      }
+        try { await navigator.share({title:pattern.title,text:shareText,url:"https://stitch-box.vercel.app"}); setShared(true); } catch(e) {}
+      } else { navigator.clipboard?.writeText(shareText); setShared(true); }
     } else {
-      // Platform-specific deep links
       const encodedText = encodeURIComponent(shareText);
       const encodedUrl  = encodeURIComponent("https://stitch-box.vercel.app");
       const urls = {
-        twitter:  `https://twitter.com/intent/tweet?text=${encodedText}`,
-        facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}&quote=${encodedText}`,
-        pinterest:`https://pinterest.com/pin/create/button/?description=${encodedText}&url=${encodedUrl}`,
-        instagram:`https://www.instagram.com/`,
+        twitter:  "https://twitter.com/intent/tweet?text=" + encodedText,
+        facebook: "https://www.facebook.com/sharer/sharer.php?u=" + encodedUrl + "&quote=" + encodedText,
+        pinterest:"https://pinterest.com/pin/create/button/?description=" + encodedText + "&url=" + encodedUrl,
+        instagram:"https://www.instagram.com/",
       };
       window.open(urls[platformId], "_blank", "noopener,noreferrer,width=600,height=500");
       setShared(true);
@@ -1663,50 +1577,29 @@ const ShareCardModal = ({pattern, onClose}) => {
   return (
     <div style={{position:"fixed",inset:0,zIndex:500,display:"flex",alignItems:"flex-end"}} onClick={onClose}>
       <div className="dim-in" style={{position:"absolute",inset:0,background:"rgba(28,23,20,.65)",backdropFilter:"blur(4px)"}}/>
-      <div className="su" onClick={e=>e.stopPropagation()}
-        style={{position:"relative",background:T.surface,borderRadius:"24px 24px 0 0",width:"100%",padding:"24px 22px 48px",zIndex:1}}>
+      <div className="su" onClick={e=>e.stopPropagation()} style={{position:"relative",background:T.surface,borderRadius:"24px 24px 0 0",width:"100%",padding:"24px 22px 48px",zIndex:1}}>
         <div style={{width:36,height:3,background:T.border,borderRadius:99,margin:"0 auto 20px"}}/>
-
-        {/* Share card preview */}
         <div style={{background:`linear-gradient(135deg,${T.terra},#6B2A10)`,borderRadius:18,padding:"20px",marginBottom:16,position:"relative",overflow:"hidden"}}>
           <div style={{position:"absolute",top:-20,right:-20,width:100,height:100,borderRadius:"50%",background:"rgba(255,255,255,.06)"}}/>
-          <div style={{position:"absolute",bottom:-30,left:-10,width:140,height:140,borderRadius:"50%",background:"rgba(255,255,255,.04)"}}/>
           <div style={{position:"relative"}}>
             <div style={{fontSize:11,color:"rgba(255,255,255,.6)",textTransform:"uppercase",letterSpacing:".1em",marginBottom:6}}>
-              {isComplete ? "🎉 Finished Object" : `🪡 In Progress — ${done}%`}
+              {isComplete ? "🎉 Finished Object" : "🪡 In Progress — " + done + "%"}
             </div>
             <div style={{fontFamily:T.serif,fontSize:22,fontWeight:700,color:"#fff",marginBottom:4,lineHeight:1.2}}>{pattern.title}</div>
             <div style={{fontSize:12,color:"rgba(255,255,255,.65)",marginBottom:12}}>
-              {[pattern.hook&&`Hook ${pattern.hook}`,pattern.weight,pattern.cat].filter(Boolean).join(" · ")}
+              {[pattern.hook&&"Hook "+pattern.hook,pattern.weight,pattern.cat].filter(Boolean).join(" · ")}
             </div>
-            {!isComplete&&(
-              <div style={{background:"rgba(255,255,255,.15)",borderRadius:99,height:6,overflow:"hidden",marginBottom:10}}>
-                <div style={{width:`${done}%`,height:"100%",background:"#fff",borderRadius:99,transition:"width .5s"}}/>
-              </div>
-            )}
-            {isComplete&&(
-              <div style={{display:"inline-flex",alignItems:"center",gap:6,background:"rgba(255,255,255,.2)",borderRadius:99,padding:"5px 12px",fontSize:12,color:"#fff",fontWeight:600}}>
-                ✓ Complete
-              </div>
-            )}
+            {!isComplete&&<div style={{background:"rgba(255,255,255,.15)",borderRadius:99,height:6,overflow:"hidden",marginBottom:10}}><div style={{width:done+"%",height:"100%",background:"#fff",borderRadius:99}}/></div>}
+            {isComplete&&<div style={{display:"inline-flex",alignItems:"center",gap:6,background:"rgba(255,255,255,.2)",borderRadius:99,padding:"5px 12px",fontSize:12,color:"#fff",fontWeight:600}}>✓ Complete</div>}
             <div style={{marginTop:12,fontSize:10,color:"rgba(255,255,255,.4)",letterSpacing:".08em"}}>STITCH BOX · stitch-box.vercel.app</div>
           </div>
         </div>
-
-        {/* Caption editor */}
         <div style={{marginBottom:16}}>
           <div style={{fontSize:11,color:T.ink3,textTransform:"uppercase",letterSpacing:".08em",marginBottom:6}}>Your caption</div>
-          <textarea
-            value={caption}
-            onChange={e=>setCaption(e.target.value)}
-            rows={3}
+          <textarea value={caption} onChange={e=>setCaption(e.target.value)} rows={3}
             style={{width:"100%",padding:"12px 14px",background:T.linen,border:`1.5px solid ${T.border}`,borderRadius:12,fontSize:13,color:T.ink,resize:"none",outline:"none",lineHeight:1.6,fontFamily:T.sans}}
-            onFocus={e=>e.target.style.borderColor=T.terra}
-            onBlur={e=>e.target.style.borderColor=T.border}
-          />
+            onFocus={e=>e.target.style.borderColor=T.terra} onBlur={e=>e.target.style.borderColor=T.border}/>
         </div>
-
-        {/* Share buttons */}
         {shared ? (
           <div style={{textAlign:"center",padding:"16px 0"}}>
             <div style={{fontSize:28,marginBottom:8}}>🎉</div>
@@ -1718,15 +1611,12 @@ const ShareCardModal = ({pattern, onClose}) => {
           <>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
               {SHARE_PLATFORMS.slice(1).map(pl=>(
-                <button key={pl.id} onClick={()=>doShare(pl.id)}
-                  style={{display:"flex",alignItems:"center",gap:8,padding:"11px 14px",background:T.linen,border:`1.5px solid ${T.border}`,borderRadius:12,cursor:"pointer",fontSize:13,fontWeight:500,color:T.ink}}>
+                <button key={pl.id} onClick={()=>doShare(pl.id)} style={{display:"flex",alignItems:"center",gap:8,padding:"11px 14px",background:T.linen,border:`1.5px solid ${T.border}`,borderRadius:12,cursor:"pointer",fontSize:13,fontWeight:500,color:T.ink}}>
                   <span style={{fontSize:16}}>{pl.icon}</span>{pl.label}
                 </button>
               ))}
             </div>
-            <Btn onClick={()=>doShare("native")}>
-              📤 Share via...
-            </Btn>
+            <Btn onClick={()=>doShare("native")}>📤 Share via...</Btn>
             <div style={{marginTop:8}}><Btn variant="ghost" onClick={onClose}>Cancel</Btn></div>
           </>
         )}
@@ -1739,15 +1629,15 @@ const ShareCardModal = ({pattern, onClose}) => {
    DETAIL VIEW
 ══════════════════════════════════════════════════════════════════════════ */
 const Detail = ({p, onBack, onSave}) => {
-  const [rows,setRows]               = useState(p.rows);
-const [tab,setTab]                 = useState("materials");
-  const [newRow,setNewRow]           = useState("");
-  const [editing,setEditing]         = useState(false);
-  const [draft,setDraft]             = useState({...p});
-  const [showScale,setShowScale]     = useState(false);
-  const [noteEdit,setNoteEdit]       = useState(null);
-  const [showShare,setShowShare]     = useState(false);
-  const [milestone,setMilestone]     = useState(null);
+  const [rows,setRows]           = useState(p.rows);
+  const [tab,setTab]             = useState("materials");
+  const [newRow,setNewRow]       = useState("");
+  const [editing,setEditing]     = useState(false);
+  const [draft,setDraft]         = useState({...p});
+  const [showScale,setShowScale] = useState(false);
+  const [noteEdit,setNoteEdit]   = useState(null);
+  const [showShare,setShowShare] = useState(false);
+  const [milestone,setMilestone] = useState(null);
   const prevDone = useRef(pct({...p,rows:p.rows}));
   const {isDesktop} = useBreakpoint();
   const done = pct({...p,rows});
@@ -1755,18 +1645,10 @@ const [tab,setTab]                 = useState("materials");
 
   const toggle = id => {
     const next = rows.map(r=>r.id===id?{...r,done:!r.done}:r);
-    setRows(next);
-    onSave({...p,rows:next});
-    // Check for milestone
+    setRows(next); onSave({...p,rows:next});
     const newDone = pct({...p,rows:next});
     const prev = prevDone.current;
-    const milestones = [25,50,75,100];
-    for(const m of milestones) {
-      if(prev < m && newDone >= m) {
-        setMilestone(m);
-        break;
-      }
-    }
+    for(const m of [25,50,75,100]) { if(prev < m && newDone >= m) { setMilestone(m); break; } }
     prevDone.current = newDone;
   };
 
@@ -1774,18 +1656,24 @@ const [tab,setTab]                 = useState("materials");
   const save      = () => { onSave({...draft,rows}); setEditing(false); };
   const updateNote= (id,note) => { const next=rows.map(r=>r.id===id?{...r,note}:r); setRows(next); onSave({...p,rows:next}); };
 
+  const yardDisplay = estYards(p) > 0
+    ? "~" + estYards(p) + (p.yardage > 0 ? " yds" : " yds (est.)")
+    : "Not listed";
+  const skeinDisplay = estSkeins(p) > 0
+    ? "~" + estSkeins(p) + (p.skeins > 0 ? " skeins" : " skeins (est.)")
+    : "Not listed";
+
   return (
     <div style={{display:"flex",flexDirection:"column",height:"100vh",background:T.bg,overflow:"hidden"}}>
       <CSS/>
       {showScale&&<ScaleModal pattern={p} onClose={()=>setShowScale(false)}/>}
       {showShare&&<ShareCardModal pattern={{...p,rows}} onClose={()=>setShowShare(false)}/>}
 
-      {/* Milestone celebration banner */}
       {milestone&&(
-        <div className="su" style={{position:"fixed",top:0,left:0,right:0,zIndex:400,background:milestone===100?`linear-gradient(135deg,${T.sage},#2D4A2F)`:`linear-gradient(135deg,${T.terra},#8B3A22)`,padding:"14px 20px",display:"flex",alignItems:"center",gap:12}}>
+        <div className="su" style={{position:"fixed",top:0,left:0,right:0,zIndex:400,background:milestone===100?"linear-gradient(135deg,"+T.sage+",#2D4A2F)":"linear-gradient(135deg,"+T.terra+",#8B3A22)",padding:"14px 20px",display:"flex",alignItems:"center",gap:12}}>
           <div style={{fontSize:28}}>{milestone===100?"🎉":"🪡"}</div>
           <div style={{flex:1}}>
-            <div style={{fontSize:14,fontWeight:700,color:"#fff"}}>{milestone===100?"Pattern complete!":` ${milestone}% done — keep going!`}</div>
+            <div style={{fontSize:14,fontWeight:700,color:"#fff"}}>{milestone===100?"Pattern complete!":milestone+"% done — keep going!"}</div>
             <div style={{fontSize:12,color:"rgba(255,255,255,.75)",marginTop:2}}>Share your progress with your followers</div>
           </div>
           <button onClick={()=>{setShowShare(true);setMilestone(null);}} style={{background:"rgba(255,255,255,.2)",border:"none",borderRadius:10,padding:"8px 14px",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",flexShrink:0}}>Share 📤</button>
@@ -1801,13 +1689,15 @@ const [tab,setTab]                 = useState("materials");
           <div style={{display:"flex",gap:8}}>
             <button onClick={()=>setShowShare(true)} style={{background:"rgba(15,10,8,.4)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.15)",borderRadius:10,padding:"7px 14px",color:"#fff",cursor:"pointer",fontSize:12,fontWeight:600}}>📤 Share</button>
             <button onClick={()=>setShowScale(true)} style={{background:"rgba(15,10,8,.4)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.15)",borderRadius:10,padding:"7px 14px",color:"#fff",cursor:"pointer",fontSize:12,fontWeight:600}}>⚖️ Scale</button>
-            <button onClick={()=>editing?save():setEditing(true)} style={{background:editing?T.terra:"rgba(15,10,8,.4)",backdropFilter:"blur(8px)",border:`1px solid ${editing?T.terra:"rgba(255,255,255,.15)"}`,borderRadius:10,padding:"7px 16px",color:"#fff",cursor:"pointer",fontSize:13,fontWeight:600}}>{editing?"Save":"Edit"}</button>
+            <button onClick={()=>editing?save():setEditing(true)} style={{background:editing?T.terra:"rgba(15,10,8,.4)",backdropFilter:"blur(8px)",border:"1px solid "+(editing?T.terra:"rgba(255,255,255,.15)"),borderRadius:10,padding:"7px 16px",color:"#fff",cursor:"pointer",fontSize:13,fontWeight:600}}>{editing?"Save":"Edit"}</button>
           </div>
         </div>
         <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"0 20px 16px"}}>
           <div style={{fontSize:10,color:"rgba(255,255,255,.55)",textTransform:"uppercase",letterSpacing:".09em",marginBottom:4}}>{p.cat} · Hook {p.hook} · {p.weight}</div>
-          {editing?<input value={draft.title} onChange={e=>setDraft({...draft,title:e.target.value})} style={{width:"100%",background:"rgba(255,255,255,.12)",border:"1px solid rgba(255,255,255,.3)",borderRadius:8,padding:"6px 10px",color:"#fff",fontSize:19,fontFamily:T.serif,outline:"none"}}/>
-            :<div style={{fontFamily:T.serif,fontSize:21,fontWeight:700,color:"#fff",lineHeight:1.2}}>{p.title}</div>}
+          {editing
+            ? <input value={draft.title} onChange={e=>setDraft({...draft,title:e.target.value})} style={{width:"100%",background:"rgba(255,255,255,.12)",border:"1px solid rgba(255,255,255,.3)",borderRadius:8,padding:"6px 10px",color:"#fff",fontSize:19,fontFamily:T.serif,outline:"none"}}/>
+            : <div style={{fontFamily:T.serif,fontSize:21,fontWeight:700,color:"#fff",lineHeight:1.2}}>{p.title}</div>
+          }
           <div style={{marginTop:10,display:"flex",alignItems:"center",gap:10}}>
             <div style={{flex:1}}><Bar val={done} color={T.terra} h={4} bg="rgba(255,255,255,.25)"/></div>
             <span style={{color:"#fff",fontSize:13,fontWeight:600,minWidth:36}}>{done}%</span>
@@ -1815,111 +1705,107 @@ const [tab,setTab]                 = useState("materials");
           <div style={{fontSize:11,color:"rgba(255,255,255,.45)",marginTop:3}}>{rows.filter(r=>r.done).length} of {rows.length} rows complete</div>
         </div>
       </div>
+
       <div style={{display:"flex",background:T.surface,borderBottom:`1px solid ${T.border}`,flexShrink:0}}>
-       {[["materials","Materials"],["rows","Rows"],["notes","Notes"]].map(([key,label])=>(
-          <button key={key} onClick={()=>setTab(key)} style={{flex:1,padding:"13px 0",border:"none",background:"transparent",color:tab===key?T.terra:T.ink3,fontWeight:tab===key?600:400,fontSize:13,cursor:"pointer",borderBottom:`2px solid ${tab===key?T.terra:"transparent"}`,transition:"color .15s"}}>{label}</button>
+        {[["materials","Materials"],["rows","Rows"],["notes","Notes"]].map(([key,label])=>(
+          <button key={key} onClick={()=>setTab(key)} style={{flex:1,padding:"13px 0",border:"none",background:"transparent",color:tab===key?T.terra:T.ink3,fontWeight:tab===key?600:400,fontSize:13,cursor:"pointer",borderBottom:"2px solid "+(tab===key?T.terra:"transparent"),transition:"color .15s"}}>{label}</button>
         ))}
       </div>
+
       <div style={{flex:1,overflowY:"auto",padding:"4px 20px 36px",maxWidth:isDesktop?760:undefined,margin:isDesktop?"0 auto":undefined,width:"100%"}}>
-        {tab==="rows"&&<>
-          {(() => {
-            const seenAbbr = new Set();
-            return rows.map((r,i)=>{
-            const isCurrent = i===currentRowIdx;
-            const newAbbr = r.done ? [] : findNewAbbr(r.text, seenAbbr);
-            return (
-              <div key={r.id} style={{borderBottom:`1px solid ${T.border}`}}>
-                {/* Main row tap target */}
-                <div
-                  onClick={()=>toggle(r.id)}
-                  style={{display:"flex",gap:13,alignItems:"flex-start",cursor:"pointer",background:isCurrent?"rgba(184,90,60,.04)":"transparent",padding:"14px 8px",margin:"0 -8px"}}
-                >
-                  {/* Checkbox */}
-                  <div style={{width:26,height:26,borderRadius:7,flexShrink:0,marginTop:1,background:r.done?T.terra:T.surface,border:`1.5px solid ${r.done?T.terra:isCurrent?T.terra:T.border}`,display:"flex",alignItems:"center",justifyContent:"center",transition:"all .2s",boxShadow:r.done?"0 2px 8px rgba(184,90,60,.3)":isCurrent?"0 0 0 3px rgba(184,90,60,.15)":"none"}}>
-                    {r.done&&<span style={{color:"#fff",fontSize:13,fontWeight:700}}>✓</span>}
-                    {!r.done&&isCurrent&&<div style={{width:8,height:8,borderRadius:99,background:T.terra}}/>}
-                  </div>
-                  {/* Row text */}
-                  <div style={{flex:1,minWidth:0}}>
-                    {isCurrent&&<div style={{fontSize:10,color:T.terra,fontWeight:600,letterSpacing:".06em",marginBottom:2}}>CURRENT ROW</div>}
-                    {!isCurrent&&<div style={{fontSize:10,color:T.ink3,letterSpacing:".06em",marginBottom:2}}>ROW {i+1}</div>}
-                    <div style={{fontSize:14,lineHeight:1.6,color:r.done?T.ink3:T.ink,textDecoration:r.done?"line-through":"none"}}>{r.text}</div>
-                    {r.note&&<div style={{fontSize:12,color:T.ink3,fontStyle:"italic",marginTop:4}}>📝 {r.note}</div>}
-                  </div>
-                  {/* Note button */}
-                  <button
-                    onClick={e=>{e.stopPropagation();setNoteEdit(noteEdit===r.id?null:r.id);}}
-                    style={{background:"none",border:"none",fontSize:14,cursor:"pointer",padding:"4px",color:r.note?T.terra:T.border,flexShrink:0}}
-                  >📝</button>
-                </div>
 
-                {/* YouTube tutorial pills — completely separate from toggle */}
-                {newAbbr.length>0&&(
-                  <div style={{padding:"0 8px 10px 47px",display:"flex",flexWrap:"wrap",gap:6}} onClick={e=>e.stopPropagation()}>
-                    {newAbbr.map(a=>(
-                      <button
-                        key={a.raw}
-                        onClick={e=>{
-                          e.stopPropagation();
-                          window.open(a.url,"_blank","noopener,noreferrer");
-                        }}
-                        style={{display:"flex",alignItems:"center",gap:5,background:"#FF0000",color:"#fff",border:"none",borderRadius:8,padding:"5px 10px",fontSize:11,fontWeight:600,cursor:"pointer",boxShadow:"0 2px 8px rgba(255,0,0,.3)"}}
-                      >
-                        <span style={{fontSize:10}}>▶</span>
-                        <span>{a.raw}</span>
-                        <span style={{opacity:.8,fontWeight:400}}>— {a.full}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {/* Note input */}
-                {noteEdit===r.id&&(
-                  <div style={{padding:"0 8px 12px 47px"}}>
-                    <input
-                      value={r.note}
-                      onChange={e=>updateNote(r.id,e.target.value)}
-                      placeholder="Add a note for this row…"
-                      style={{width:"100%",padding:"9px 12px",background:T.linen,border:`1.5px solid ${T.terra}`,borderRadius:9,fontSize:13,color:T.ink,outline:"none"}}
-                    />
-                  </div>
-                )}
+        {tab==="materials"&&(
+          <>
+            {(editing?draft.materials:p.materials).map((m,i)=>(
+              <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 0",borderBottom:`1px solid ${T.border}`}}>
+                <div style={{width:6,height:6,borderRadius:99,background:T.terra,flexShrink:0}}/>
+                {editing
+                  ? <div style={{display:"flex",gap:8,flex:1}}>
+                      <input value={m.name} onChange={e=>{const a=[...draft.materials];a[i]={...a[i],name:e.target.value};setDraft({...draft,materials:a});}} style={{flex:1,border:`1px solid ${T.border}`,borderRadius:8,padding:"6px 10px",fontSize:13,background:T.linen,color:T.ink,outline:"none"}}/>
+                      <input value={m.amount} onChange={e=>{const a=[...draft.materials];a[i]={...a[i],amount:e.target.value};setDraft({...draft,materials:a});}} style={{width:80,border:`1px solid ${T.border}`,borderRadius:8,padding:"6px 10px",fontSize:13,background:T.linen,color:T.ink,outline:"none"}}/>
+                    </div>
+                  : <div style={{flex:1,display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontSize:14,color:T.ink2}}>{m.name}</span><span style={{fontSize:12,color:T.ink3,fontWeight:600}}>{m.amount}</span></div>
+                }
               </div>
-            );
-          })})()}
-          <div style={{display:"flex",gap:8,marginTop:16}}>
-            <input value={newRow} onChange={e=>setNewRow(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addRow()} placeholder="Add a row or step…"
-              style={{flex:1,border:`1.5px solid ${T.border}`,borderRadius:11,padding:"10px 14px",fontSize:13,color:T.ink,background:T.linen,outline:"none"}}
-              onFocus={e=>e.target.style.borderColor=T.terra} onBlur={e=>e.target.style.borderColor=T.border}/>
-            <button onClick={addRow} style={{background:T.terra,color:"#fff",border:"none",borderRadius:11,padding:"10px 18px",fontSize:22,cursor:"pointer",lineHeight:1,boxShadow:"0 4px 12px rgba(184,90,60,.35)"}}>+</button>
-          </div>
-        </>}
-        {tab==="materials"&&<>
-          {(editing?draft.materials:p.materials).map((m,i)=>(
-            <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 0",borderBottom:`1px solid ${T.border}`}}>
-              <div style={{width:6,height:6,borderRadius:99,background:T.terra,flexShrink:0}}/>
-              {editing?<div style={{display:"flex",gap:8,flex:1}}>
-                <input value={m.name} onChange={e=>{const a=[...draft.materials];a[i]={...a[i],name:e.target.value};setDraft({...draft,materials:a});}} style={{flex:1,border:`1px solid ${T.border}`,borderRadius:8,padding:"6px 10px",fontSize:13,background:T.linen,color:T.ink,outline:"none"}}/>
-                <input value={m.amount} onChange={e=>{const a=[...draft.materials];a[i]={...a[i],amount:e.target.value};setDraft({...draft,materials:a});}} style={{width:80,border:`1px solid ${T.border}`,borderRadius:8,padding:"6px 10px",fontSize:13,background:T.linen,color:T.ink,outline:"none"}}/>
-              </div>:<div style={{flex:1,display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontSize:14,color:T.ink2}}>{m.name}</span><span style={{fontSize:12,color:T.ink3,fontWeight:600}}>{m.amount}</span></div>}
+            ))}
+            {editing&&<button onClick={()=>setDraft({...draft,materials:[...draft.materials,{id:Date.now(),name:"",amount:"",yardage:0}]})} style={{marginTop:14,width:"100%",border:`1.5px dashed ${T.border}`,background:"none",borderRadius:11,padding:"10px",color:T.ink3,cursor:"pointer",fontSize:13}}>+ Add material</button>}
+            <div style={{marginTop:20,background:`linear-gradient(135deg,${T.terraLt},#fff)`,borderRadius:14,padding:"14px 16px",border:`1px solid ${T.border}`}}>
+              <div style={{fontFamily:T.serif,fontSize:14,color:T.ink,marginBottom:10}}>Yarn Summary</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                {[
+                  ["Total yardage", yardDisplay],
+                  ["Skeins needed", skeinDisplay],
+                  ["Hook size",     p.hook||"??"],
+                  ["Yarn weight",   p.weight||"??"]
+                ].map(([label,val])=>(
+                  <div key={label} style={{background:"rgba(255,255,255,.8)",borderRadius:9,padding:"9px 11px"}}>
+                    <div style={{fontSize:10,color:T.ink3,marginBottom:2}}>{label}</div>
+                    <div style={{fontSize:16,fontWeight:700,fontFamily:T.serif,color:T.ink}}>{val}</div>
+                  </div>
+                ))}
+              </div>
+              <button onClick={()=>setShowScale(true)} style={{marginTop:12,width:"100%",background:T.terra,color:"#fff",border:"none",borderRadius:10,padding:"10px",fontSize:13,fontWeight:600,cursor:"pointer"}}>⚖️ Scale pattern to different size →</button>
             </div>
-          ))}
-          {editing&&<button onClick={()=>setDraft({...draft,materials:[...draft.materials,{id:Date.now(),name:"",amount:"",yardage:0}]})} style={{marginTop:14,width:"100%",border:`1.5px dashed ${T.border}`,background:"none",borderRadius:11,padding:"10px",color:T.ink3,cursor:"pointer",fontSize:13}}>+ Add material</button>}
-          <div style={{marginTop:20,background:`linear-gradient(135deg,${T.terraLt},#fff)`,borderRadius:14,padding:"14px 16px",border:`1px solid ${T.border}`}}>
-            <div style={{fontFamily:T.serif,fontSize:14,color:T.ink,marginBottom:10}}>Yarn Summary</div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-              ["Total yardage",(()=>{if(p.yardage>0)return`~${p.yardage} yds`;const est=(p.materials||[]).reduce((s,m)=>{if(m.yardage>0)return s+m.yardage;const t=((m.name||"")+" "+(m.amount||"")).toLowerCase();const b=t.match(/(\d+)\s*ball/),sk=t.match(/(\d+)\s*skein/);if(b)return s+parseInt(b[1])*200;if(sk)return s+parseInt(sk[1])*200;return s;},0);return est>0?`~${est} yds (est.)`:"Not listed";})()],
-["Skeins needed",(()=>{if(p.skeins>0)return`${p.skeins} skeins`;const est=(p.materials||[]).reduce((s,m)=>{if(m.yardage>0)return s+m.yardage;const t=((m.name||"")+" "+(m.amount||"")).toLowerCase();const b=t.match(/(\d+)\s*ball/),sk=t.match(/(\d+)\s*skein/);if(b)return s+parseInt(b[1])*200;if(sk)return s+parseInt(sk[1])*200;return s;},0);return est>0?`~${Math.ceil(est/200)} skeins (est.)`:"Not listed";})()],["Hook size",p.hook||"??"],["Yarn weight",p.weight||"??"]].map(([label,val])=>(
-                <div key={label} style={{background:"rgba(255,255,255,.8)",borderRadius:9,padding:"9px 11px"}}><div style={{fontSize:10,color:T.ink3,marginBottom:2}}>{label}</div><div style={{fontSize:16,fontWeight:700,fontFamily:T.serif,color:T.ink}}>{val}</div></div>
-              ))}
+          </>
+        )}
+
+        {tab==="rows"&&(
+          <>
+            {(()=>{
+              const seenAbbr = new Set();
+              return rows.map((r,i)=>{
+                const isCurrent = i===currentRowIdx;
+                const newAbbr = r.done ? [] : findNewAbbr(r.text, seenAbbr);
+                return (
+                  <div key={r.id} style={{borderBottom:`1px solid ${T.border}`}}>
+                    <div onClick={()=>toggle(r.id)} style={{display:"flex",gap:13,alignItems:"flex-start",cursor:"pointer",background:isCurrent?"rgba(184,90,60,.04)":"transparent",padding:"14px 8px",margin:"0 -8px"}}>
+                      <div style={{width:26,height:26,borderRadius:7,flexShrink:0,marginTop:1,background:r.done?T.terra:T.surface,border:"1.5px solid "+(r.done?T.terra:isCurrent?T.terra:T.border),display:"flex",alignItems:"center",justifyContent:"center",transition:"all .2s",boxShadow:r.done?"0 2px 8px rgba(184,90,60,.3)":isCurrent?"0 0 0 3px rgba(184,90,60,.15)":"none"}}>
+                        {r.done&&<span style={{color:"#fff",fontSize:13,fontWeight:700}}>✓</span>}
+                        {!r.done&&isCurrent&&<div style={{width:8,height:8,borderRadius:99,background:T.terra}}/>}
+                      </div>
+                      <div style={{flex:1,minWidth:0}}>
+                        {isCurrent&&<div style={{fontSize:10,color:T.terra,fontWeight:600,letterSpacing:".06em",marginBottom:2}}>CURRENT ROW</div>}
+                        {!isCurrent&&<div style={{fontSize:10,color:T.ink3,letterSpacing:".06em",marginBottom:2}}>ROW {i+1}</div>}
+                        <div style={{fontSize:14,lineHeight:1.6,color:r.done?T.ink3:T.ink,textDecoration:r.done?"line-through":"none"}}>{r.text}</div>
+                        {r.note&&<div style={{fontSize:12,color:T.ink3,fontStyle:"italic",marginTop:4}}>📝 {r.note}</div>}
+                      </div>
+                      <button onClick={e=>{e.stopPropagation();setNoteEdit(noteEdit===r.id?null:r.id);}} style={{background:"none",border:"none",fontSize:14,cursor:"pointer",padding:"4px",color:r.note?T.terra:T.border,flexShrink:0}}>📝</button>
+                    </div>
+                    {newAbbr.length>0&&(
+                      <div style={{padding:"0 8px 10px 47px",display:"flex",flexWrap:"wrap",gap:6}} onClick={e=>e.stopPropagation()}>
+                        {newAbbr.map(a=>(
+                          <button key={a.raw} onClick={e=>{e.stopPropagation();window.open(a.url,"_blank","noopener,noreferrer");}}
+                            style={{display:"flex",alignItems:"center",gap:5,background:"#FF0000",color:"#fff",border:"none",borderRadius:8,padding:"5px 10px",fontSize:11,fontWeight:600,cursor:"pointer",boxShadow:"0 2px 8px rgba(255,0,0,.3)"}}>
+                            <span style={{fontSize:10}}>▶</span><span>{a.raw}</span><span style={{opacity:.8,fontWeight:400}}>— {a.full}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {noteEdit===r.id&&(
+                      <div style={{padding:"0 8px 12px 47px"}}>
+                        <input value={r.note} onChange={e=>updateNote(r.id,e.target.value)} placeholder="Add a note for this row…"
+                          style={{width:"100%",padding:"9px 12px",background:T.linen,border:`1.5px solid ${T.terra}`,borderRadius:9,fontSize:13,color:T.ink,outline:"none"}}/>
+                      </div>
+                    )}
+                  </div>
+                );
+              });
+            })()}
+            <div style={{display:"flex",gap:8,marginTop:16}}>
+              <input value={newRow} onChange={e=>setNewRow(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addRow()} placeholder="Add a row or step…"
+                style={{flex:1,border:`1.5px solid ${T.border}`,borderRadius:11,padding:"10px 14px",fontSize:13,color:T.ink,background:T.linen,outline:"none"}}
+                onFocus={e=>e.target.style.borderColor=T.terra} onBlur={e=>e.target.style.borderColor=T.border}/>
+              <button onClick={addRow} style={{background:T.terra,color:"#fff",border:"none",borderRadius:11,padding:"10px 18px",fontSize:22,cursor:"pointer",lineHeight:1,boxShadow:"0 4px 12px rgba(184,90,60,.35)"}}>+</button>
             </div>
-            <button onClick={()=>setShowScale(true)} style={{marginTop:12,width:"100%",background:T.terra,color:"#fff",border:"none",borderRadius:10,padding:"10px",fontSize:13,fontWeight:600,cursor:"pointer"}}>⚖️ Scale pattern to different size →</button>
-          </div>
-        </>}
+          </>
+        )}
+
         {tab==="notes"&&(
           <div style={{paddingTop:10}}>
-            {editing?<textarea value={draft.notes} onChange={e=>setDraft({...draft,notes:e.target.value})} style={{width:"100%",minHeight:140,border:`1.5px solid ${T.border}`,borderRadius:12,padding:14,fontSize:14,lineHeight:1.75,resize:"vertical",outline:"none",color:T.ink,background:T.linen}} onFocus={e=>e.target.style.borderColor=T.terra} onBlur={e=>e.target.style.borderColor=T.border}/>
-              :<p style={{fontFamily:T.serif,fontStyle:"italic",fontSize:15,color:T.ink2,lineHeight:1.9,paddingTop:4}}>{p.notes||"No notes yet. Tap Edit to add your thoughts."}</p>}
+            {editing
+              ? <textarea value={draft.notes} onChange={e=>setDraft({...draft,notes:e.target.value})} style={{width:"100%",minHeight:140,border:`1.5px solid ${T.border}`,borderRadius:12,padding:14,fontSize:14,lineHeight:1.75,resize:"vertical",outline:"none",color:T.ink,background:T.linen}} onFocus={e=>e.target.style.borderColor=T.terra} onBlur={e=>e.target.style.borderColor=T.border}/>
+              : <p style={{fontFamily:T.serif,fontStyle:"italic",fontSize:15,color:T.ink2,lineHeight:1.9,paddingTop:4}}>{p.notes||"No notes yet. Tap Edit to add your thoughts."}</p>
+            }
             <div style={{marginTop:20,display:"flex",alignItems:"center",gap:12}}>
               <span style={{fontSize:12,color:T.ink3}}>Rating</span>
               <Stars val={editing?draft.rating:p.rating} ro={!editing} onChange={v=>setDraft({...draft,rating:v})}/>
@@ -1927,6 +1813,7 @@ const [tab,setTab]                 = useState("materials");
             <div style={{marginTop:10,fontSize:12,color:T.ink3}}>Source: {p.source}</div>
           </div>
         )}
+
       </div>
     </div>
   );
@@ -1954,7 +1841,7 @@ const YarnStash = () => {
   return (
     <div style={{padding:isD?"0 0 100px":"0 18px 100px"}}>
       <div style={{display:"flex",gap:10,marginBottom:20}}>
-        {[{label:"Total Skeins",val:stash.reduce((a,y)=>a+y.skeins,0)},{label:"Total Yardage",val:`${totalYards.toLocaleString()} yds`},{label:"Yarn Types",val:stash.length}].map(s=>(
+        {[{label:"Total Skeins",val:stash.reduce((a,y)=>a+y.skeins,0)},{label:"Total Yardage",val:totalYards.toLocaleString()+" yds"},{label:"Yarn Types",val:stash.length}].map(s=>(
           <div key={s.label} style={{flex:1,background:T.surface,borderRadius:12,padding:"12px 10px",textAlign:"center",border:`1px solid ${T.border}`}}>
             <div style={{fontFamily:T.serif,fontSize:20,fontWeight:700,color:T.terra}}>{s.val}</div>
             <div style={{fontSize:10,color:T.ink3,marginTop:2}}>{s.label}</div>
@@ -2030,79 +1917,85 @@ const Calculators = () => {
       <div style={{fontSize:13,color:T.ink3,marginBottom:16}}>Essential tools for planning your projects.</div>
       <div style={{display:"flex",gap:6,marginBottom:20}}>
         {[["gauge","Gauge"],["yardage","Yardage"],["resize","Resize"]].map(([key,label])=>(
-          <button key={key} onClick={()=>setActive(key)} style={{flex:1,padding:"10px",border:`1.5px solid ${active===key?T.terra:T.border}`,background:active===key?T.terraLt:T.surface,color:active===key?T.terra:T.ink3,borderRadius:10,cursor:"pointer",fontSize:12,fontWeight:active===key?600:400}}>{label}</button>
+          <button key={key} onClick={()=>setActive(key)} style={{flex:1,padding:"10px",border:"1.5px solid "+(active===key?T.terra:T.border),background:active===key?T.terraLt:T.surface,color:active===key?T.terra:T.ink3,borderRadius:10,cursor:"pointer",fontSize:12,fontWeight:active===key?600:400}}>{label}</button>
         ))}
       </div>
-      {active==="gauge"&&<>
-        <div style={{background:T.linen,borderRadius:14,padding:"16px",marginBottom:16}}>
-          <div style={{fontFamily:T.serif,fontSize:15,color:T.ink,marginBottom:12}}>Gauge Swatch</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
-            {[["Stitches",stitches,setStitches],["Rows",rows,setRows],["Swatch (in)",swatchSize,setSwatchSize]].map(([label,val,set])=>(
-              <div key={label}><div style={{fontSize:10,color:T.ink3,marginBottom:4}}>{label}</div><input value={val} onChange={e=>set(e.target.value)} type="number" style={{width:"100%",padding:"10px",background:"#fff",border:`1px solid ${T.border}`,borderRadius:8,fontSize:15,fontWeight:600,color:T.ink,textAlign:"center",outline:"none"}}/></div>
-            ))}
+      {active==="gauge"&&(
+        <>
+          <div style={{background:T.linen,borderRadius:14,padding:"16px",marginBottom:16}}>
+            <div style={{fontFamily:T.serif,fontSize:15,color:T.ink,marginBottom:12}}>Gauge Swatch</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
+              {[["Stitches",stitches,setStitches],["Rows",rows,setRows],["Swatch (in)",swatchSize,setSwatchSize]].map(([label,val,set])=>(
+                <div key={label}><div style={{fontSize:10,color:T.ink3,marginBottom:4}}>{label}</div><input value={val} onChange={e=>set(e.target.value)} type="number" style={{width:"100%",padding:"10px",background:"#fff",border:`1px solid ${T.border}`,borderRadius:8,fontSize:15,fontWeight:600,color:T.ink,textAlign:"center",outline:"none"}}/></div>
+              ))}
+            </div>
           </div>
-        </div>
-        <div style={{background:T.linen,borderRadius:14,padding:"16px",marginBottom:16}}>
-          <div style={{fontFamily:T.serif,fontSize:15,color:T.ink,marginBottom:12}}>Target Dimensions</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-            {[["Width (in)",targetW,setTargetW],["Height (in)",targetH,setTargetH]].map(([label,val,set])=>(
-              <div key={label}><div style={{fontSize:10,color:T.ink3,marginBottom:4}}>{label}</div><input value={val} onChange={e=>set(e.target.value)} type="number" style={{width:"100%",padding:"10px",background:"#fff",border:`1px solid ${T.border}`,borderRadius:8,fontSize:15,fontWeight:600,color:T.ink,textAlign:"center",outline:"none"}}/></div>
-            ))}
+          <div style={{background:T.linen,borderRadius:14,padding:"16px",marginBottom:16}}>
+            <div style={{fontFamily:T.serif,fontSize:15,color:T.ink,marginBottom:12}}>Target Dimensions</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+              {[["Width (in)",targetW,setTargetW],["Height (in)",targetH,setTargetH]].map(([label,val,set])=>(
+                <div key={label}><div style={{fontSize:10,color:T.ink3,marginBottom:4}}>{label}</div><input value={val} onChange={e=>set(e.target.value)} type="number" style={{width:"100%",padding:"10px",background:"#fff",border:`1px solid ${T.border}`,borderRadius:8,fontSize:15,fontWeight:600,color:T.ink,textAlign:"center",outline:"none"}}/></div>
+              ))}
+            </div>
           </div>
-        </div>
-        <div style={{background:`linear-gradient(135deg,${T.terraLt},#fff)`,borderRadius:14,padding:"16px",border:`1px solid ${T.border}`}}>
-          <div style={{fontFamily:T.serif,fontSize:15,color:T.ink,marginBottom:12}}>Results</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-            {[["Cast on (sts)",castOn],["Total rows",totalRows],["Stitches/inch",stPerInch.toFixed(1)],["Rows/inch",roPerInch.toFixed(1)]].map(([label,val])=>(
-              <div key={label} style={{background:"rgba(255,255,255,.8)",borderRadius:9,padding:"10px 12px"}}><div style={{fontSize:10,color:T.ink3,marginBottom:2}}>{label}</div><div style={{fontSize:22,fontWeight:700,fontFamily:T.serif,color:T.terra}}>{val}</div></div>
-            ))}
+          <div style={{background:`linear-gradient(135deg,${T.terraLt},#fff)`,borderRadius:14,padding:"16px",border:`1px solid ${T.border}`}}>
+            <div style={{fontFamily:T.serif,fontSize:15,color:T.ink,marginBottom:12}}>Results</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+              {[["Cast on (sts)",castOn],["Total rows",totalRows],["Stitches/inch",stPerInch.toFixed(1)],["Rows/inch",roPerInch.toFixed(1)]].map(([label,val])=>(
+                <div key={label} style={{background:"rgba(255,255,255,.8)",borderRadius:9,padding:"10px 12px"}}><div style={{fontSize:10,color:T.ink3,marginBottom:2}}>{label}</div><div style={{fontSize:22,fontWeight:700,fontFamily:T.serif,color:T.terra}}>{val}</div></div>
+              ))}
+            </div>
           </div>
-        </div>
-      </>}
-      {active==="yardage"&&<>
-        <div style={{background:T.linen,borderRadius:14,padding:"16px",marginBottom:16}}>
-          <div style={{fontFamily:T.serif,fontSize:15,color:T.ink,marginBottom:12}}>Project Size</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-            {[["Width (in)",projW,setProjW],["Height (in)",projH,setProjH],["Sts per 4in",stPer4,setStPer4],["Yds per stitch",ydsPerSt,setYdsPerSt]].map(([label,val,set])=>(
-              <div key={label}><div style={{fontSize:10,color:T.ink3,marginBottom:4}}>{label}</div><input value={val} onChange={e=>set(e.target.value)} type="number" style={{width:"100%",padding:"10px",background:"#fff",border:`1px solid ${T.border}`,borderRadius:8,fontSize:15,fontWeight:600,color:T.ink,textAlign:"center",outline:"none"}}/></div>
-            ))}
+        </>
+      )}
+      {active==="yardage"&&(
+        <>
+          <div style={{background:T.linen,borderRadius:14,padding:"16px",marginBottom:16}}>
+            <div style={{fontFamily:T.serif,fontSize:15,color:T.ink,marginBottom:12}}>Project Size</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+              {[["Width (in)",projW,setProjW],["Height (in)",projH,setProjH],["Sts per 4in",stPer4,setStPer4],["Yds per stitch",ydsPerSt,setYdsPerSt]].map(([label,val,set])=>(
+                <div key={label}><div style={{fontSize:10,color:T.ink3,marginBottom:4}}>{label}</div><input value={val} onChange={e=>set(e.target.value)} type="number" style={{width:"100%",padding:"10px",background:"#fff",border:`1px solid ${T.border}`,borderRadius:8,fontSize:15,fontWeight:600,color:T.ink,textAlign:"center",outline:"none"}}/></div>
+              ))}
+            </div>
           </div>
-        </div>
-        <div style={{background:`linear-gradient(135deg,${T.terraLt},#fff)`,borderRadius:14,padding:"16px",border:`1px solid ${T.border}`}}>
-          <div style={{fontFamily:T.serif,fontSize:15,color:T.ink,marginBottom:12}}>Estimated Yardage</div>
-          <div style={{textAlign:"center",padding:"20px 0"}}>
-            <div style={{fontFamily:T.serif,fontSize:48,fontWeight:700,color:T.terra}}>{yardage.toLocaleString()}</div>
-            <div style={{fontSize:14,color:T.ink3,marginTop:4}}>yards needed</div>
-            <div style={{fontSize:13,color:T.ink2,marginTop:8}}>≈ {Math.ceil(yardage/200)} skeins at 200 yds each</div>
+          <div style={{background:`linear-gradient(135deg,${T.terraLt},#fff)`,borderRadius:14,padding:"16px",border:`1px solid ${T.border}`}}>
+            <div style={{fontFamily:T.serif,fontSize:15,color:T.ink,marginBottom:12}}>Estimated Yardage</div>
+            <div style={{textAlign:"center",padding:"20px 0"}}>
+              <div style={{fontFamily:T.serif,fontSize:48,fontWeight:700,color:T.terra}}>{yardage.toLocaleString()}</div>
+              <div style={{fontSize:14,color:T.ink3,marginTop:4}}>yards needed</div>
+              <div style={{fontSize:13,color:T.ink2,marginTop:8}}>approx. {Math.ceil(yardage/200)} skeins at 200 yds each</div>
+            </div>
           </div>
-        </div>
-      </>}
-      {active==="resize"&&<>
-        <div style={{background:T.linen,borderRadius:14,padding:"16px",marginBottom:16}}>
-          <div style={{fontFamily:T.serif,fontSize:15,color:T.ink,marginBottom:12}}>Original Size</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-            {[["Width (in)",origW,setOrigW],["Height (in)",origH,setOrigH]].map(([label,val,set])=>(
-              <div key={label}><div style={{fontSize:10,color:T.ink3,marginBottom:4}}>{label}</div><input value={val} onChange={e=>set(e.target.value)} type="number" style={{width:"100%",padding:"10px",background:"#fff",border:`1px solid ${T.border}`,borderRadius:8,fontSize:15,fontWeight:600,color:T.ink,textAlign:"center",outline:"none"}}/></div>
-            ))}
+        </>
+      )}
+      {active==="resize"&&(
+        <>
+          <div style={{background:T.linen,borderRadius:14,padding:"16px",marginBottom:16}}>
+            <div style={{fontFamily:T.serif,fontSize:15,color:T.ink,marginBottom:12}}>Original Size</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+              {[["Width (in)",origW,setOrigW],["Height (in)",origH,setOrigH]].map(([label,val,set])=>(
+                <div key={label}><div style={{fontSize:10,color:T.ink3,marginBottom:4}}>{label}</div><input value={val} onChange={e=>set(e.target.value)} type="number" style={{width:"100%",padding:"10px",background:"#fff",border:`1px solid ${T.border}`,borderRadius:8,fontSize:15,fontWeight:600,color:T.ink,textAlign:"center",outline:"none"}}/></div>
+              ))}
+            </div>
           </div>
-        </div>
-        <div style={{background:T.linen,borderRadius:14,padding:"16px",marginBottom:16}}>
-          <div style={{fontFamily:T.serif,fontSize:15,color:T.ink,marginBottom:12}}>New Size</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-            {[["Width (in)",newW,setNewW],["Height (in)",newH,setNewH]].map(([label,val,set])=>(
-              <div key={label}><div style={{fontSize:10,color:T.ink3,marginBottom:4}}>{label}</div><input value={val} onChange={e=>set(e.target.value)} type="number" style={{width:"100%",padding:"10px",background:"#fff",border:`1px solid ${T.border}`,borderRadius:8,fontSize:15,fontWeight:600,color:T.ink,textAlign:"center",outline:"none"}}/></div>
-            ))}
+          <div style={{background:T.linen,borderRadius:14,padding:"16px",marginBottom:16}}>
+            <div style={{fontFamily:T.serif,fontSize:15,color:T.ink,marginBottom:12}}>New Size</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+              {[["Width (in)",newW,setNewW],["Height (in)",newH,setNewH]].map(([label,val,set])=>(
+                <div key={label}><div style={{fontSize:10,color:T.ink3,marginBottom:4}}>{label}</div><input value={val} onChange={e=>set(e.target.value)} type="number" style={{width:"100%",padding:"10px",background:"#fff",border:`1px solid ${T.border}`,borderRadius:8,fontSize:15,fontWeight:600,color:T.ink,textAlign:"center",outline:"none"}}/></div>
+              ))}
+            </div>
           </div>
-        </div>
-        <div style={{background:`linear-gradient(135deg,${T.terraLt},#fff)`,borderRadius:14,padding:"16px",border:`1px solid ${T.border}`}}>
-          <div style={{fontFamily:T.serif,fontSize:15,color:T.ink,marginBottom:12}}>Scale Factors</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-            {[["Width scale",`×${scaleW.toFixed(2)}`],["Height scale",`×${scaleH.toFixed(2)}`],["Stitch mult.",`${(scaleW*100).toFixed(0)}%`],["Yardage mult.",`${(scaleW*scaleH*100).toFixed(0)}%`]].map(([label,val])=>(
-              <div key={label} style={{background:"rgba(255,255,255,.8)",borderRadius:9,padding:"10px 12px"}}><div style={{fontSize:10,color:T.ink3,marginBottom:2}}>{label}</div><div style={{fontSize:22,fontWeight:700,fontFamily:T.serif,color:T.terra}}>{val}</div></div>
-            ))}
+          <div style={{background:`linear-gradient(135deg,${T.terraLt},#fff)`,borderRadius:14,padding:"16px",border:`1px solid ${T.border}`}}>
+            <div style={{fontFamily:T.serif,fontSize:15,color:T.ink,marginBottom:12}}>Scale Factors</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+              {[["Width scale","x"+scaleW.toFixed(2)],["Height scale","x"+scaleH.toFixed(2)],["Stitch mult.",(scaleW*100).toFixed(0)+"%"],["Yardage mult.",(scaleW*scaleH*100).toFixed(0)+"%"]].map(([label,val])=>(
+                <div key={label} style={{background:"rgba(255,255,255,.8)",borderRadius:9,padding:"10px 12px"}}><div style={{fontSize:10,color:T.ink3,marginBottom:2}}>{label}</div><div style={{fontSize:22,fontWeight:700,fontFamily:T.serif,color:T.terra}}>{val}</div></div>
+              ))}
+            </div>
           </div>
-        </div>
-      </>}
+        </>
+      )}
     </div>
   );
 };
@@ -2125,19 +2018,20 @@ const ShoppingList = ({patterns}) => {
     <div style={{padding:isDsl?"0 0 100px":"0 18px 100px"}}>
       <div style={{fontFamily:T.serif,fontSize:18,color:T.ink,marginBottom:4}}>Shopping List</div>
       <div style={{fontSize:13,color:T.ink3,marginBottom:20}}>Auto-generated from your patterns, cross-referenced with your stash.</div>
-      {needs.length===0?(<div style={{textAlign:"center",padding:"60px 20px"}}><div style={{fontSize:48,marginBottom:14}}>✅</div><div style={{fontFamily:T.serif,fontSize:18,color:T.ink2,marginBottom:8}}>You're all stocked up</div><div style={{fontSize:13,color:T.ink3,lineHeight:1.6}}>Your stash covers all current pattern needs.</div></div>):(
-        <>{needs.map((n,i)=>(
+      {needs.length===0
+        ? <div style={{textAlign:"center",padding:"60px 20px"}}><div style={{fontSize:48,marginBottom:14}}>✅</div><div style={{fontFamily:T.serif,fontSize:18,color:T.ink2,marginBottom:8}}>You're all stocked up</div><div style={{fontSize:13,color:T.ink3,lineHeight:1.6}}>Your stash covers all current pattern needs.</div></div>
+        : needs.map((n,i)=>(
           <div key={i} style={{background:T.surface,borderRadius:14,padding:"14px 16px",marginBottom:10,border:`1px solid ${T.border}`}}>
             <div style={{fontSize:10,color:T.ink3,textTransform:"uppercase",letterSpacing:".07em",marginBottom:4}}>{n.pattern}</div>
             <div style={{fontSize:14,fontWeight:600,color:T.ink,marginBottom:8}}>{n.material}</div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
-              {[["Need",`${n.need} yds`],["Have",`${n.have} yds`],["Buy",`~${n.skeins} skein${n.skeins!==1?"s":""}`]].map(([label,val])=>(
+              {[["Need",n.need+" yds"],["Have",n.have+" yds"],["Buy","~"+n.skeins+" skein"+(n.skeins!==1?"s":"")]].map(([label,val])=>(
                 <div key={label} style={{background:label==="Buy"?T.terraLt:T.linen,borderRadius:8,padding:"8px 10px",textAlign:"center"}}><div style={{fontSize:10,color:T.ink3,marginBottom:2}}>{label}</div><div style={{fontSize:13,fontWeight:700,color:label==="Buy"?T.terra:T.ink}}>{val}</div></div>
               ))}
             </div>
           </div>
-        ))}</>
-      )}
+        ))
+      }
     </div>
   );
 };
@@ -2153,7 +2047,7 @@ const CollectionView = ({patterns, cat, setCat, search, setSearch, openDetail, o
     <>
       {inProgress.length>0&&(
         <div style={{background:T.linen,borderBottom:`1px solid ${T.border}`,padding:"16px 0 18px",marginBottom:8}}>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:`0 ${isDesktop?"0":"18px"}`,marginBottom:12}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 "+(isDesktop?"0":"18px"),marginBottom:12}}>
             <div style={{fontSize:10,color:T.ink3,textTransform:"uppercase",letterSpacing:".09em",fontWeight:600}}>Continue Working</div>
             {inProgress.length>2&&<div style={{fontSize:11,color:T.ink3,display:"flex",alignItems:"center",gap:4}}>swipe <span style={{fontSize:14}}>→</span></div>}
           </div>
@@ -2162,7 +2056,6 @@ const CollectionView = ({patterns, cat, setCat, search, setSearch, openDetail, o
           </HScrollRow>
         </div>
       )}
-
       <div style={{padding:isDesktop?"24px 0 10px":"16px 18px 10px"}}>
         <div style={{display:"flex",alignItems:"center",background:T.surface,border:`1.5px solid ${T.border}`,borderRadius:12,padding:"10px 14px",gap:9}}>
           <span style={{color:T.ink3,fontSize:15}}>🔍</span>
@@ -2172,13 +2065,11 @@ const CollectionView = ({patterns, cat, setCat, search, setSearch, openDetail, o
             onBlur={e=>e.currentTarget.parentNode.style.borderColor=T.border}/>
         </div>
       </div>
-
       <div style={{display:"flex",gap:7,overflowX:"auto",padding:isDesktop?"0 0 16px":"0 18px 16px",WebkitOverflowScrolling:"touch"}}>
         {CATS.map(c=>(
-          <button key={c} onClick={()=>setCat(c)} style={{background:cat===c?T.terra:T.surface,color:cat===c?"#fff":T.ink2,border:`1.5px solid ${cat===c?T.terra:T.border}`,borderRadius:99,padding:"6px 14px",fontSize:12,fontWeight:500,cursor:"pointer",whiteSpace:"nowrap",transition:"all .15s",flexShrink:0,boxShadow:cat===c?"0 2px 10px rgba(184,90,60,.28)":"none"}}>{c}</button>
+          <button key={c} onClick={()=>setCat(c)} style={{background:cat===c?T.terra:T.surface,color:cat===c?"#fff":T.ink2,border:"1.5px solid "+(cat===c?T.terra:T.border),borderRadius:99,padding:"6px 14px",fontSize:12,fontWeight:500,cursor:"pointer",whiteSpace:"nowrap",transition:"all .15s",flexShrink:0,boxShadow:cat===c?"0 2px 10px rgba(184,90,60,.28)":"none"}}>{c}</button>
         ))}
       </div>
-
       {!isPro&&(
         <div style={{margin:isDesktop?"0 0 16px":"0 18px 16px",background:T.linen,borderRadius:12,padding:"10px 14px",border:`1px solid ${T.border}`,display:"flex",alignItems:"center",gap:12}}>
           <div style={{flex:1}}>
@@ -2188,16 +2079,15 @@ const CollectionView = ({patterns, cat, setCat, search, setSearch, openDetail, o
           {tier.atCap&&<button onClick={onAddPattern} style={{background:T.terra,color:"#fff",border:"none",borderRadius:8,padding:"7px 12px",fontSize:11,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>Upgrade</button>}
         </div>
       )}
-
       <div className="pattern-grid" style={{padding:isDesktop?"0 0 80px":"0 18px 120px"}}>
         {filtered.length===0
-          ?<div style={{gridColumn:"1/-1",textAlign:"center",padding:"60px 20px"}}>
+          ? <div style={{gridColumn:"1/-1",textAlign:"center",padding:"60px 20px"}}>
               <div style={{fontSize:48,marginBottom:14}}>🧶</div>
               <div style={{fontFamily:T.serif,fontSize:18,color:T.ink2,marginBottom:8}}>No patterns yet</div>
               <div style={{fontSize:13,color:T.ink3,lineHeight:1.6,marginBottom:20}}>Tap + to add your first pattern.</div>
               <button onClick={onAddPattern} style={{background:T.terra,color:"#fff",border:"none",borderRadius:12,padding:"12px 24px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.3)"}}>+ Add Your First Pattern</button>
             </div>
-          :filtered.map((p,i)=><PatternCard key={p.id} p={p} delay={i*.04} onClick={()=>openDetail(p)}/>)
+          : filtered.map((p,i)=><PatternCard key={p.id} p={p} delay={i*.04} onClick={()=>openDetail(p)}/>)
         }
       </div>
     </>
@@ -2222,38 +2112,25 @@ export default function StitchBox() {
   const tier = useTier(isPro, patterns.length);
 
   if(!authed) return (
-    <>
-      <CSS/>
-      <Auth
-        onEnter={()=>setAuthed(true)}
-        onEnterAsPro={()=>{ setIsPro(true); setAuthed(true); }}
-      />
-    </>
+    <><CSS/><Auth onEnter={()=>setAuthed(true)} onEnterAsPro={()=>{setIsPro(true);setAuthed(true);}}/></>
   );
 
   if(view==="detail"&&selected) return (
-    <>
-      <CSS/>
-      <Detail p={selected} onBack={()=>setView("collection")}
-        onSave={u=>{setPatterns(prev=>prev.map(p=>p.id===u.id?u:p));setSelected(u);}}/>
-    </>
+    <><CSS/><Detail p={selected} onBack={()=>setView("collection")} onSave={u=>{setPatterns(prev=>prev.map(p=>p.id===u.id?u:p));setSelected(u);}}/></>
   );
 
-  const openDetail    = p => { setSelected(p); setView("detail"); };
-  const handleAddPattern = (p) => { setPatterns(prev=>[p,...prev]); setView("collection"); };
-  const openAddModal  = () => { if(tier.atCap){setShowPaywall(true);return;} setAddOpen(true); };
-  const inProgress    = patterns.filter(p=>{ const v=pct(p); return v>0&&v<100; });
-  const TITLE_MAP     = {collection:"My Patterns",wip:"In Progress",browse:"Browse Sites",stash:"Yarn Stash",calculator:"Calculators",shopping:"Shopping List"};
+  const openDetail       = p => { setSelected(p); setView("detail"); };
+  const handleAddPattern = p => { setPatterns(prev=>[p,...prev]); setView("collection"); };
+  const openAddModal     = () => { if(tier.atCap){setShowPaywall(true);return;} setAddOpen(true); };
+  const inProgress       = patterns.filter(p=>{ const v=pct(p); return v>0&&v<100; });
+  const TITLE_MAP        = {collection:"My Patterns",wip:"In Progress",browse:"Browse Sites",stash:"Yarn Stash",calculator:"Calculators",shopping:"Shopping List"};
 
-  // ── DESKTOP ──
   if(isDesktop) return (
     <div style={{display:"flex",minHeight:"100vh",width:"100%",background:T.bg,fontFamily:T.sans}}>
       <CSS/>
       {showPaywall&&<PaywallGate patternCount={patterns.length} onClose={()=>setShowPaywall(false)} onUpgrade={()=>setShowPaywall(false)}/>}
       {addOpen&&<AddPatternModal onClose={()=>setAddOpen(false)} onSave={handleAddPattern} isPro={isPro} patternCount={patterns.length}/>}
-
       <SidebarNav view={view} setView={setView} count={patterns.length} isPro={isPro} onAddPattern={openAddModal}/>
-
       <div style={{flex:1,minWidth:0,overflowY:"auto",display:"flex",flexDirection:"column"}}>
         <div style={{background:T.surface,borderBottom:`1px solid ${T.border}`,padding:"0 40px",height:64,display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:20,flexShrink:0}}>
           <div style={{fontFamily:T.serif,fontSize:24,fontWeight:700,color:T.ink}}>{TITLE_MAP[view]||"Stitch Box"}</div>
@@ -2264,14 +2141,13 @@ export default function StitchBox() {
             </button>
           </div>
         </div>
-
         <div style={{flex:1,padding:"0 40px"}}>
           {view==="collection"&&<CollectionView patterns={patterns} cat={cat} setCat={setCat} search={search} setSearch={setSearch} openDetail={openDetail} onAddPattern={openAddModal} isPro={isPro} tier={tier}/>}
           {view==="wip"&&(
             <div style={{padding:"24px 0 80px"}}>
               {inProgress.length===0
-                ?<div style={{textAlign:"center",padding:"80px 20px"}}><div style={{fontSize:48,marginBottom:14}}>🪡</div><div style={{fontFamily:T.serif,fontSize:20,color:T.ink2,marginBottom:8}}>Nothing in progress</div><div style={{fontSize:14,color:T.ink3}}>Open a pattern and start checking off rows.</div></div>
-                :<div className="pattern-grid">{inProgress.map((p,i)=><PatternCard key={p.id} p={p} delay={i*.06} onClick={()=>openDetail(p)}/>)}</div>
+                ? <div style={{textAlign:"center",padding:"80px 20px"}}><div style={{fontSize:48,marginBottom:14}}>🪡</div><div style={{fontFamily:T.serif,fontSize:20,color:T.ink2,marginBottom:8}}>Nothing in progress</div><div style={{fontSize:14,color:T.ink3}}>Open a pattern and start checking off rows.</div></div>
+                : <div className="pattern-grid">{inProgress.map((p,i)=><PatternCard key={p.id} p={p} delay={i*.06} onClick={()=>openDetail(p)}/>)}</div>
               }
             </div>
           )}
@@ -2284,14 +2160,12 @@ export default function StitchBox() {
     </div>
   );
 
-  // ── MOBILE / TABLET ──
   return (
     <div style={{fontFamily:T.sans,background:T.bg,minHeight:"100vh",maxWidth:isTablet?680:430,margin:"0 auto",display:"flex",flexDirection:"column",position:"relative"}}>
       <CSS/>
       <NavPanel open={navOpen} onClose={()=>setNavOpen(false)} view={view} setView={setView} count={patterns.length} isPro={isPro}/>
       {showPaywall&&<PaywallGate patternCount={patterns.length} onClose={()=>setShowPaywall(false)} onUpgrade={()=>setShowPaywall(false)}/>}
       {addOpen&&<AddPatternModal onClose={()=>setAddOpen(false)} onSave={handleAddPattern} isPro={isPro} patternCount={patterns.length}/>}
-
       <div style={{background:T.surface,borderBottom:`1px solid ${T.border}`,padding:"0 18px",height:56,display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:20,flexShrink:0}}>
         <button onClick={()=>setNavOpen(true)} style={{background:"none",border:"none",cursor:"pointer",padding:"8px 8px 8px 0",display:"flex",flexDirection:"column",gap:5}}>
           <div style={{width:22,height:1.5,background:T.ink,borderRadius:99}}/>
@@ -2301,14 +2175,13 @@ export default function StitchBox() {
         <div style={{fontFamily:T.serif,fontSize:20,fontWeight:700,color:T.ink}}>{TITLE_MAP[view]||"Stitch Box"}</div>
         <button onClick={openAddModal} style={{background:T.terra,border:"none",borderRadius:9,width:34,height:34,cursor:"pointer",color:"#fff",fontSize:20,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 10px rgba(184,90,60,.4)"}}>+</button>
       </div>
-
       <div style={{flex:1,overflowY:"auto",paddingBottom:100}}>
         {view==="collection"&&<CollectionView patterns={patterns} cat={cat} setCat={setCat} search={search} setSearch={setSearch} openDetail={openDetail} onAddPattern={openAddModal} isPro={isPro} tier={tier}/>}
         {view==="wip"&&(
           <div style={{padding:"16px 18px 80px"}}>
             {inProgress.length===0
-              ?<div style={{textAlign:"center",padding:"60px 20px"}}><div style={{fontSize:48,marginBottom:14}}>🪡</div><div style={{fontFamily:T.serif,fontSize:18,color:T.ink2,marginBottom:8}}>Nothing in progress</div><div style={{fontSize:13,color:T.ink3,lineHeight:1.6}}>Open a pattern and start checking off rows.</div></div>
-              :<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>{inProgress.map((p,i)=><PatternCard key={p.id} p={p} delay={i*.06} onClick={()=>openDetail(p)}/>)}</div>
+              ? <div style={{textAlign:"center",padding:"60px 20px"}}><div style={{fontSize:48,marginBottom:14}}>🪡</div><div style={{fontFamily:T.serif,fontSize:18,color:T.ink2,marginBottom:8}}>Nothing in progress</div><div style={{fontSize:13,color:T.ink3,lineHeight:1.6}}>Open a pattern and start checking off rows.</div></div>
+              : <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>{inProgress.map((p,i)=><PatternCard key={p.id} p={p} delay={i*.06} onClick={()=>openDetail(p)}/>)}</div>
             }
           </div>
         )}
@@ -2317,16 +2190,8 @@ export default function StitchBox() {
         {view==="calculator"&&<div style={{paddingTop:18}}><Calculators/></div>}
         {view==="shopping"&&<div style={{paddingTop:18}}><ShoppingList patterns={patterns}/></div>}
       </div>
-
       <div style={{position:"fixed",bottom:28,left:"50%",transform:"translateX(-50%)",zIndex:30,pointerEvents:"none"}}>
-        <button onClick={openAddModal} style={{
-          background:`linear-gradient(135deg,${T.terra},#8B3A22)`,
-          color:"#fff",border:"none",borderRadius:99,padding:"13px 26px",
-          fontSize:14,fontWeight:700,cursor:"pointer",pointerEvents:"auto",
-          boxShadow:"0 8px 28px rgba(184,90,60,.55)",
-          display:"flex",alignItems:"center",gap:8,
-          animation:"fabPulse 3s ease infinite",
-        }}>
+        <button onClick={openAddModal} style={{background:`linear-gradient(135deg,${T.terra},#8B3A22)`,color:"#fff",border:"none",borderRadius:99,padding:"13px 26px",fontSize:14,fontWeight:700,cursor:"pointer",pointerEvents:"auto",boxShadow:"0 8px 28px rgba(184,90,60,.55)",display:"flex",alignItems:"center",gap:8,animation:"fabPulse 3s ease infinite"}}>
           <span style={{fontSize:17}}>+</span> Add Pattern
         </button>
       </div>
