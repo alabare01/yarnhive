@@ -132,6 +132,8 @@ const CSS = () => (
 
 /* ─── HELPERS ────────────────────────────────────────────────────────────── */
 const pct = p => p.rows.length ? Math.round(p.rows.filter(r=>r.done).length/p.rows.length*100) : 0;
+const estYards = p => { if(p.yardage>0) return p.yardage; return (p.materials||[]).reduce((s,m)=>{ if(m.yardage>0) return s+m.yardage; const t=((m.name||"")+" "+(m.amount||"")).toLowerCase(); const b=t.match(/(\d+)\s*ball/),sk=t.match(/(\d+)\s*skein/); if(b) return s+parseInt(b[1])*200; if(sk) return s+parseInt(sk[1])*200; return s; },0); };
+const estSkeins = p => { const y=estYards(p); return y>0 ? Math.ceil(y/200) : 0; };
 
 const Bar = ({val, color=T.terra, h=3, bg=T.border}) => (
   <div style={{background:bg,borderRadius:99,height:h,overflow:"hidden"}}>
