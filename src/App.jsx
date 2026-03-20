@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 
 /* ─── FONT ───────────────────────────────────────────────────────────────── */
 if (typeof document !== "undefined" && !document.getElementById("sb-font")) {
@@ -22,7 +22,7 @@ const PHOTOS = {
 const PILL = [PHOTOS.blanket, PHOTOS.cardigan, PHOTOS.granny, PHOTOS.tote, PHOTOS.pillow, PHOTOS.market];
 
 /* ─── VERSION ────────────────────────────────────────────────────────────── */
-const APP_VERSION = "v1.2 — Mar 20 2026";
+const APP_VERSION = "v1.3 — Mar 20 2026";
 
 /* ─── GEMINI API KEY ─────────────────────────────────────────────────────── */
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
@@ -88,6 +88,11 @@ const CSS = () => (
     @keyframes dimOut { from{opacity:1} to{opacity:0} }
     @keyframes fabPulse { 0%,100%{box-shadow:0 6px 24px rgba(184,90,60,.45)} 50%{box-shadow:0 6px 32px rgba(184,90,60,.7)} }
     @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+    @keyframes progressShimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    @keyframes confidencePop { 0%{transform:scale(0.8);opacity:0} 60%{transform:scale(1.05)} 100%{transform:scale(1);opacity:1} }
 
     .fu { animation:fadeUp .4s ease both; }
     .su { animation:slideUp .35s cubic-bezier(.22,.68,0,1.05) both; }
@@ -96,6 +101,7 @@ const CSS = () => (
     .dim-in  { animation:dimIn  .25s ease both; }
     .dim-out { animation:dimOut .2s  ease both; }
     .spinner { animation:spin .8s linear infinite; }
+    .conf-pop { animation:confidencePop .5s cubic-bezier(.22,.68,0,1.05) both; }
 
     .card { transition:transform .18s,box-shadow .18s; box-shadow:0 2px 10px rgba(28,23,20,.06); }
     .card:hover { transform:translateY(-4px) !important; box-shadow:0 16px 36px rgba(28,23,20,.14) !important; }
@@ -103,6 +109,14 @@ const CSS = () => (
     .tap:hover { opacity:.85; }
     .method-card { transition:all .15s; }
     .method-card:hover { background:#F5E2DA !important; border-color:#B85A3C !important; transform:translateY(-1px); }
+
+    .progress-bar-fill {
+      background: linear-gradient(90deg, #B85A3C 0%, #C97A5E 50%, #B85A3C 100%);
+      background-size: 200% 100%;
+      animation: progressShimmer 1.5s ease infinite;
+    }
+
+    .wireframe-container canvas { touch-action: none; }
 
     .h-scroll {
       display: flex; gap: 12px; overflow-x: auto;
@@ -150,9 +164,10 @@ const estSkeins = p => {
   return y > 0 ? Math.ceil(y / 200) : 0;
 };
 
-const Bar = ({val, color=T.terra, h=3, bg=T.border}) => (
+const Bar = ({val, color=T.terra, h=3, bg=T.border, animated=false}) => (
   <div style={{background:bg,borderRadius:99,height:h,overflow:"hidden"}}>
-    <div style={{width:`${val}%`,height:h,background:color,borderRadius:99,transition:"width .5s"}}/>
+    <div className={animated ? "progress-bar-fill" : ""}
+      style={{width:`${val}%`,height:h,background:animated?"":color,borderRadius:99,transition:"width .4s ease"}}/>
   </div>
 );
 
@@ -295,6 +310,308 @@ const SEED_STASH = [
 const CATS = ["All","Blankets","Wearables","Accessories","Amigurumi","Home Décor"];
 
 /* ══════════════════════════════════════════════════════════════════════════
+   WIREFRAME VIEWER — Three.js 3D component visualization
+══════════════════════════════════════════════════════════════════════════ */
+const WireframeViewer = ({ components, labeled = false, height = 220 }) => {
+  const mountRef = useRef(null);
+  const sceneRef = useRef(null);
+  const rendererRef = useRef(null);
+  const frameRef = useRef(null);
+  const isDragging = useRef(false);
+  const lastMouse = useRef({ x: 0, y: 0 });
+  const rotationRef = useRef({ x: 0.3, y: 0.4 });
+  const groupRef = useRef(null);
+  const [threeLoaded, setThreeLoaded] = useState(false);
+  const [error, setError] = useState(false);
+
+  // Load Three.js from CDN
+  useEffect(() => {
+    if (window.THREE) { setThreeLoaded(true); return; }
+    const script = document.createElement("script");
+    script.src = "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js";
+    script.onload = () => setThreeLoaded(true);
+    script.onerror = () => setError(true);
+    document.head.appendChild(script);
+  }, []);
+
+  // Primitive color palette — warm neutrals matching app tokens
+  const PRIM_COLORS = {
+    head:   0xC97A5E,
+    body:   0xB85A3C,
+    arm:    0xD4956E,
+    leg:    0xD4956E,
+    ear:    0xE8B49A,
+    tail:   0xE8B49A,
+    nose:   0xC07050,
+    eye:    0x3A2A20,
+    base:   0xA04828,
+    detail: 0xD4956E,
+    unknown:0xB89A80,
+  };
+
+  const buildGeometry = useCallback((THREE, primitive, sizeRatio) => {
+    const s = sizeRatio * 0.8;
+    switch (primitive) {
+      case "sphere":
+        return new THREE.SphereGeometry(s, 14, 10);
+      case "oval":
+        const og = new THREE.SphereGeometry(s, 14, 10);
+        og.scale(1, 1.4, 1);
+        return og;
+      case "flat_disc":
+        return new THREE.CylinderGeometry(s, s, s * 0.2, 16);
+      case "cylinder":
+        return new THREE.CylinderGeometry(s * 0.45, s * 0.45, s * 1.4, 14);
+      case "tapered_cylinder":
+        return new THREE.CylinderGeometry(s * 0.25, s * 0.5, s * 1.4, 14);
+      case "cone":
+        return new THREE.ConeGeometry(s * 0.55, s * 1.4, 14);
+      case "flat_square":
+        return new THREE.BoxGeometry(s * 1.2, s * 0.15, s * 1.2);
+      case "flat_circle":
+        return new THREE.CylinderGeometry(s, s, s * 0.12, 20);
+      default:
+        return new THREE.SphereGeometry(s * 0.5, 10, 8);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!threeLoaded || !mountRef.current || !components?.length) return;
+    const THREE = window.THREE;
+    const el = mountRef.current;
+    const W = el.clientWidth || 300;
+    const H = height;
+
+    // Scene
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xFAF7F3);
+    sceneRef.current = scene;
+
+    // Camera
+    const camera = new THREE.PerspectiveCamera(42, W / H, 0.1, 100);
+    camera.position.set(0, 0, 5.5);
+
+    // Renderer
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(W, H);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    el.innerHTML = "";
+    el.appendChild(renderer.domElement);
+    rendererRef.current = renderer;
+
+    // Lighting
+    const ambient = new THREE.AmbientLight(0xfff5ee, 0.7);
+    scene.add(ambient);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
+    dirLight.position.set(3, 4, 5);
+    scene.add(dirLight);
+    const fillLight = new THREE.DirectionalLight(0xffe8d8, 0.4);
+    fillLight.position.set(-3, -2, -3);
+    scene.add(fillLight);
+
+    // Build component group
+    const group = new THREE.Group();
+    groupRef.current = group;
+
+    // Sort components: body first (dominant/largest), then others
+    const sorted = [...components].sort((a, b) => {
+      if (a.role === "body" || a.size_relative === "dominant") return -1;
+      if (b.role === "body" || b.size_relative === "dominant") return 1;
+      return (b.size_ratio_to_dominant || 0.5) - (a.size_ratio_to_dominant || 0.5);
+    });
+
+    // Position map for logical assembly
+    const ROLE_OFFSETS = {
+      body:   { y:  0,    x: 0 },
+      head:   { y:  1.3,  x: 0 },
+      arm:    { y:  0.3,  x: 1.1, mirror: true },
+      leg:    { y: -1.1,  x: 0.7, mirror: true },
+      ear:    { y:  1.9,  x: 0.5, mirror: true },
+      tail:   { y: -0.8,  x: 0, zOff: -0.8 },
+      nose:   { y:  1.3,  x: 0, zOff: 0.6 },
+      base:   { y: -1.4,  x: 0 },
+      detail: { y:  0,    x: 0 },
+      unknown:{ y:  0,    x: 0 },
+    };
+
+    const roleCounts = {};
+
+    sorted.forEach((comp) => {
+      const role = comp.role || "unknown";
+      const primitive = comp.primitive_type || "sphere";
+      const ratio = comp.size_ratio_to_dominant || 0.5;
+      const count = comp.count || 1;
+      const color = PRIM_COLORS[role] || PRIM_COLORS.unknown;
+      const offset = ROLE_OFFSETS[role] || ROLE_OFFSETS.unknown;
+
+      roleCounts[role] = (roleCounts[role] || 0) + 1;
+
+      const geo = buildGeometry(THREE, primitive, Math.max(0.2, ratio));
+      const mat = new THREE.MeshPhongMaterial({
+        color,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.75,
+      });
+      const solidMat = new THREE.MeshPhongMaterial({
+        color,
+        transparent: true,
+        opacity: 0.12,
+      });
+
+      const placeCount = Math.min(count, 4); // cap render at 4 instances
+      for (let i = 0; i < placeCount; i++) {
+        const wireframeMesh = new THREE.Mesh(geo, mat);
+        const solidMesh = new THREE.Mesh(geo, solidMat);
+
+        let xPos = offset.x || 0;
+        let yPos = offset.y || 0;
+        let zPos = offset.zOff || 0;
+
+        // Mirror paired parts (arms, legs, ears)
+        if (offset.mirror && placeCount > 1) {
+          xPos = i === 0 ? offset.x : -offset.x;
+        }
+        // Stack multiple of same role vertically
+        if (placeCount > 1 && !offset.mirror) {
+          yPos += i * 0.6;
+        }
+
+        wireframeMesh.position.set(xPos, yPos, zPos);
+        solidMesh.position.set(xPos, yPos, zPos);
+
+        // Rotate limbs to face outward
+        if (role === "arm" || role === "leg") {
+          wireframeMesh.rotation.z = i === 0 ? -0.4 : 0.4;
+          solidMesh.rotation.z = i === 0 ? -0.4 : 0.4;
+        }
+        if (role === "tail") {
+          wireframeMesh.rotation.x = 0.5;
+          solidMesh.rotation.x = 0.5;
+        }
+        if (role === "nose") {
+          wireframeMesh.rotation.x = Math.PI / 2;
+          solidMesh.rotation.x = Math.PI / 2;
+        }
+
+        group.add(solidMesh);
+        group.add(wireframeMesh);
+
+        // Labels (labeled mode only)
+        if (labeled) {
+          const canvas2d = document.createElement("canvas");
+          canvas2d.width = 256; canvas2d.height = 64;
+          const ctx = canvas2d.getContext("2d");
+          ctx.fillStyle = "rgba(28,23,20,0.0)";
+          ctx.fillRect(0, 0, 256, 64);
+          ctx.fillStyle = "#B85A3C";
+          ctx.font = "bold 22px Inter, sans-serif";
+          ctx.textAlign = "center";
+          const labelText = role !== "unknown" ? role.toUpperCase() : primitive.toUpperCase();
+          ctx.fillText(labelText, 128, 38);
+
+          const tex = new THREE.CanvasTexture(canvas2d);
+          const labelMat = new THREE.SpriteMaterial({ map: tex, transparent: true });
+          const sprite = new THREE.Sprite(labelMat);
+          sprite.scale.set(1.4, 0.35, 1);
+          sprite.position.set(xPos + 0.05, yPos + ratio * 0.8 + 0.4, zPos + 0.1);
+          group.add(sprite);
+        }
+      }
+    });
+
+    // Auto-scale group to fit view
+    const box = new THREE.Box3().setFromObject(group);
+    const size = box.getSize(new THREE.Vector3());
+    const center = box.getCenter(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z);
+    if (maxDim > 0) {
+      const scale = 3.2 / maxDim;
+      group.scale.setScalar(scale);
+      group.position.sub(center.multiplyScalar(scale));
+    }
+
+    group.rotation.x = rotationRef.current.x;
+    group.rotation.y = rotationRef.current.y;
+    scene.add(group);
+
+    // Grid floor
+    const gridHelper = new THREE.GridHelper(6, 10, 0xEAE0D5, 0xEAE0D5);
+    gridHelper.position.y = -2;
+    gridHelper.material.transparent = true;
+    gridHelper.material.opacity = 0.4;
+    scene.add(gridHelper);
+
+    // Animate
+    let animFrame;
+    const animate = () => {
+      animFrame = requestAnimationFrame(animate);
+      if (!isDragging.current && group) {
+        group.rotation.y += 0.003; // slow auto-rotate when not dragging
+      }
+      renderer.render(scene, camera);
+    };
+    animate();
+    frameRef.current = animFrame;
+
+    return () => {
+      cancelAnimationFrame(animFrame);
+      renderer.dispose();
+    };
+  }, [threeLoaded, components, labeled, height, buildGeometry]);
+
+  // Drag to rotate
+  const onPointerDown = (e) => {
+    isDragging.current = true;
+    lastMouse.current = { x: e.clientX || e.touches?.[0]?.clientX, y: e.clientY || e.touches?.[0]?.clientY };
+  };
+  const onPointerMove = (e) => {
+    if (!isDragging.current || !groupRef.current) return;
+    const x = e.clientX || e.touches?.[0]?.clientX;
+    const y = e.clientY || e.touches?.[0]?.clientY;
+    const dx = x - lastMouse.current.x;
+    const dy = y - lastMouse.current.y;
+    groupRef.current.rotation.y += dx * 0.012;
+    groupRef.current.rotation.x += dy * 0.012;
+    rotationRef.current = { x: groupRef.current.rotation.x, y: groupRef.current.rotation.y };
+    lastMouse.current = { x, y };
+  };
+  const onPointerUp = () => { isDragging.current = false; };
+
+  if (error) return (
+    <div style={{height,display:"flex",alignItems:"center",justifyContent:"center",background:T.linen,borderRadius:12}}>
+      <div style={{fontSize:12,color:T.ink3}}>3D preview unavailable</div>
+    </div>
+  );
+
+  if (!threeLoaded) return (
+    <div style={{height,display:"flex",alignItems:"center",justifyContent:"center",background:T.linen,borderRadius:12}}>
+      <div className="spinner" style={{width:24,height:24,border:`2px solid ${T.border}`,borderTop:`2px solid ${T.terra}`,borderRadius:"50%"}}/>
+    </div>
+  );
+
+  return (
+    <div style={{position:"relative"}}>
+      <div
+        ref={mountRef}
+        className="wireframe-container"
+        style={{width:"100%",height,borderRadius:12,overflow:"hidden",cursor:"grab",userSelect:"none"}}
+        onMouseDown={onPointerDown}
+        onMouseMove={onPointerMove}
+        onMouseUp={onPointerUp}
+        onMouseLeave={onPointerUp}
+        onTouchStart={onPointerDown}
+        onTouchMove={onPointerMove}
+        onTouchEnd={onPointerUp}
+      />
+      <div style={{position:"absolute",bottom:8,right:10,fontSize:10,color:T.ink3,pointerEvents:"none",display:"flex",alignItems:"center",gap:4}}>
+        <span>⟳</span> drag to rotate
+      </div>
+    </div>
+  );
+};
+
+/* ══════════════════════════════════════════════════════════════════════════
    PAYWALL GATE
 ══════════════════════════════════════════════════════════════════════════ */
 const PaywallGate = ({onClose, onUpgrade, patternCount}) => (
@@ -410,10 +727,10 @@ const calculateConfidence = (analysis) => {
 };
 
 const confidenceLabel = (score) => {
-  if (score >= 90) return { text: "Strong match — we're confident in this pattern", color: T.sage };
-  if (score >= 75) return { text: "Good match — review highlighted components", color: T.terra };
-  if (score >= 60) return { text: "Partial match — a few pieces need your input", color: T.gold };
-  return { text: "Rough estimate — use this as a starting point and adjust", color: T.ink3 };
+  if (score >= 90) return { text: "Strong match — we're confident in this pattern", color: T.sage, emoji: "✅" };
+  if (score >= 75) return { text: "Good match — review highlighted components", color: T.terra, emoji: "🎯" };
+  if (score >= 60) return { text: "Partial match — a few pieces need your input", color: T.gold, emoji: "⚠️" };
+  return { text: "Rough estimate — use this as a starting point and adjust", color: T.ink3, emoji: "🔍" };
 };
 
 const buildStarterPattern = (analysis) => {
@@ -493,6 +810,59 @@ const buildStarterPattern = (analysis) => {
 };
 
 /* ══════════════════════════════════════════════════════════════════════════
+   SNAP PROGRESS BAR — never stalls
+══════════════════════════════════════════════════════════════════════════ */
+const useSnapProgress = (active) => {
+  const [progress, setProgress] = useState(0);
+  const [phase, setPhase] = useState("");
+  const intervalRef = useRef(null);
+  const stageRef = useRef(0);
+
+  const PHASES = [
+    { label: "Preparing image…",            target: 20, speed: 80  },
+    { label: "Sending to vision AI…",       target: 35, speed: 120 },
+    { label: "Identifying components…",     target: 70, speed: 200 },
+    { label: "Calculating stitch math…",    target: 88, speed: 300 },
+    { label: "Assembling pattern…",         target: 96, speed: 400 },
+  ];
+
+  useEffect(() => {
+    if (!active) {
+      clearInterval(intervalRef.current);
+      return;
+    }
+    stageRef.current = 0;
+    setProgress(0);
+    setPhase(PHASES[0].label);
+
+    const tick = () => {
+      setProgress(prev => {
+        const stage = stageRef.current;
+        if (stage >= PHASES.length) return prev;
+        const target = PHASES[stage].target;
+        if (prev >= target) {
+          stageRef.current = Math.min(stage + 1, PHASES.length - 1);
+          if (stageRef.current < PHASES.length) setPhase(PHASES[stageRef.current].label);
+          return prev;
+        }
+        return Math.min(prev + 0.8, target);
+      });
+    };
+
+    intervalRef.current = setInterval(tick, 80);
+    return () => clearInterval(intervalRef.current);
+  }, [active]);
+
+  const complete = () => {
+    clearInterval(intervalRef.current);
+    setPhase("Pattern ready!");
+    setProgress(100);
+  };
+
+  return { progress, phase, complete };
+};
+
+/* ══════════════════════════════════════════════════════════════════════════
    SNAP TO PATTERN FORM
 ══════════════════════════════════════════════════════════════════════════ */
 const SnapToPatternForm = ({onSave}) => {
@@ -503,6 +873,8 @@ const SnapToPatternForm = ({onSave}) => {
   const [confidence, setConfidence] = useState(null);
   const [preview, setPreview]   = useState(null);
   const [error, setError]       = useState(null);
+  const [wireframeMode, setWireframeMode] = useState("labeled"); // "labeled" | "clean"
+  const { progress, phase, complete } = useSnapProgress(loading);
 
   const handleFile = async (e) => {
     const f = e.target.files?.[0];
@@ -511,29 +883,43 @@ const SnapToPatternForm = ({onSave}) => {
     const reader = new FileReader();
     reader.onload = async (ev) => {
       const src = ev.target.result;
-      setImgSrc(src); setLoading(true);
+      setImgSrc(src);
+      setLoading(true);
       try {
         const result = await callGeminiVision(src);
         const conf = calculateConfidence(result);
         const pattern = buildStarterPattern(result);
-        setAnalysis(result); setConfidence(conf); setPreview(pattern);
+        complete();
+        await new Promise(r => setTimeout(r, 400));
+        setAnalysis(result);
+        setConfidence(conf);
+        setPreview(pattern);
       } catch (err) {
         setError("Couldn't read the photo clearly. Try better lighting or a closer shot.");
         console.error(err);
-      } finally { setLoading(false); }
+      } finally {
+        setLoading(false);
+      }
     };
     reader.readAsDataURL(f);
   };
 
-  const reset = () => { setFile(null); setImgSrc(null); setAnalysis(null); setPreview(null); setError(null); setConfidence(null); };
+  const reset = () => {
+    setFile(null); setImgSrc(null); setAnalysis(null);
+    setPreview(null); setError(null); setConfidence(null);
+  };
+
   const confInfo = confidence ? confidenceLabel(confidence) : null;
 
   return (
     <div style={{paddingBottom:8}}>
+      {/* Header banner */}
       <div style={{background:`linear-gradient(135deg,${T.terraLt},#FFF8F5)`,borderRadius:12,padding:"12px 14px",marginBottom:14,border:`1px solid ${T.border}`}}>
         <div style={{fontSize:12,color:T.terra,fontWeight:600,marginBottom:3}}>📸 Snap to Pattern — 3 free snaps/month</div>
         <div style={{fontSize:12,color:T.ink2,lineHeight:1.6}}>Photograph any finished crochet object. We identify the components and build a starter pattern to recreate it.</div>
       </div>
+
+      {/* Upload prompt */}
       {!file && (
         <label style={{display:"block",cursor:"pointer"}}>
           <div style={{border:`2px dashed ${T.border}`,borderRadius:16,padding:"36px 20px",textAlign:"center",background:T.linen}}>
@@ -545,20 +931,39 @@ const SnapToPatternForm = ({onSave}) => {
           <input type="file" accept="image/*" onChange={handleFile} style={{display:"none"}}/>
         </label>
       )}
+
+      {/* Loading state with phased progress bar */}
       {imgSrc && loading && (
-        <div style={{textAlign:"center",padding:"16px 0"}}>
-          <div style={{width:"100%",height:180,borderRadius:14,overflow:"hidden",marginBottom:14,position:"relative"}}>
+        <div>
+          <div style={{width:"100%",height:160,borderRadius:14,overflow:"hidden",marginBottom:16,position:"relative"}}>
             <img src={imgSrc} alt="analyzing" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
-            <div style={{position:"absolute",inset:0,background:"rgba(28,23,20,.55)",display:"flex",alignItems:"center",justifyContent:"center",backdropFilter:"blur(2px)"}}>
+            <div style={{position:"absolute",inset:0,background:"rgba(28,23,20,.5)",backdropFilter:"blur(2px)"}}/>
+            <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
               <div style={{textAlign:"center"}}>
-                <div className="spinner" style={{width:36,height:36,border:"3px solid rgba(255,255,255,.3)",borderTop:"3px solid #fff",borderRadius:"50%",margin:"0 auto 12px"}}/>
-                <div style={{fontSize:14,color:"#fff",fontWeight:600}}>Identifying components…</div>
-                <div style={{fontSize:12,color:"rgba(255,255,255,.7)",marginTop:4}}>Analyzing stitch patterns and construction</div>
+                <div style={{fontSize:13,color:"#fff",fontWeight:600,marginBottom:4}}>{phase}</div>
+                <div style={{fontSize:11,color:"rgba(255,255,255,.6)"}}>Analyzing stitch structure…</div>
               </div>
+            </div>
+          </div>
+          <div style={{padding:"0 2px",marginBottom:8}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+              <div style={{fontSize:12,color:T.ink2,fontWeight:500}}>{phase}</div>
+              <div style={{fontSize:12,color:T.terra,fontWeight:700}}>{Math.round(progress)}%</div>
+            </div>
+            <div style={{background:T.border,borderRadius:99,height:6,overflow:"hidden",marginBottom:6}}>
+              <div className="progress-bar-fill" style={{width:progress+"%",height:6,borderRadius:99,transition:"width .3s ease"}}/>
+            </div>
+            <div style={{fontSize:11,color:T.ink3,textAlign:"center"}}>
+              {progress < 35 && "Reading image data…"}
+              {progress >= 35 && progress < 70 && "AI is identifying components…"}
+              {progress >= 70 && progress < 90 && "Running stitch count math…"}
+              {progress >= 90 && "Finalizing your pattern…"}
             </div>
           </div>
         </div>
       )}
+
+      {/* Error */}
       {error && (
         <div style={{background:"#FFF0EE",borderRadius:12,padding:"14px 16px",marginBottom:14,border:"1px solid #F5C6BB"}}>
           <div style={{fontSize:13,color:"#C0392B",fontWeight:600,marginBottom:4}}>Couldn't read this photo</div>
@@ -566,48 +971,100 @@ const SnapToPatternForm = ({onSave}) => {
           <div style={{marginTop:10}}><Btn variant="secondary" onClick={reset} small full={false}>Try again</Btn></div>
         </div>
       )}
+
+      {/* Results: side-by-side photo + wireframe */}
       {analysis && preview && !loading && (
         <div className="fu">
-          <div style={{width:"100%",height:160,borderRadius:14,overflow:"hidden",marginBottom:14,position:"relative"}}>
-            <img src={imgSrc} alt="source" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
-            <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"10px 14px",background:"linear-gradient(to top, rgba(28,23,20,.85) 0%, transparent 100%)"}}>
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                <div style={{fontSize:11,color:"rgba(255,255,255,.8)"}}>Match confidence</div>
-                <div style={{fontFamily:T.serif,fontSize:20,fontWeight:700,color:"#fff"}}>{confidence}%</div>
+
+          {/* Confidence score — prominent, pre-accept */}
+          <div className="conf-pop" style={{background:T.surface,borderRadius:14,border:`2px solid ${confInfo?.color || T.border}`,padding:"16px",marginBottom:14,textAlign:"center"}}>
+            <div style={{fontSize:11,color:T.ink3,textTransform:"uppercase",letterSpacing:".09em",marginBottom:6}}>Pattern Confidence</div>
+            <div style={{fontFamily:T.serif,fontSize:52,fontWeight:700,color:confInfo?.color,lineHeight:1,marginBottom:4}}>{confidence}%</div>
+            <div style={{fontSize:12,color:T.ink2,marginBottom:10}}>{confInfo?.emoji} {confInfo?.text}</div>
+            <Bar val={confidence} color={confInfo?.color} h={5}/>
+            <div style={{fontSize:11,color:T.ink3,marginTop:8,lineHeight:1.5}}>Review the wireframe below before saving. You can still adjust stitch counts after saving.</div>
+          </div>
+
+          {/* Side-by-side: photo vs wireframe */}
+          <div style={{marginBottom:10}}>
+            <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:8}}>
+              <div style={{flex:1,fontSize:12,fontWeight:600,color:T.ink2,textAlign:"center"}}>Your Photo</div>
+              <div style={{width:1,height:16,background:T.border}}/>
+              <div style={{flex:1,fontSize:12,fontWeight:600,color:T.ink2,textAlign:"center"}}>3D Component Map</div>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+              {/* Photo panel */}
+              <div style={{position:"relative",borderRadius:12,overflow:"hidden",border:`1px solid ${T.border}`}}>
+                <img src={imgSrc} alt="source" style={{width:"100%",height:200,objectFit:"cover",display:"block"}}/>
+                <div style={{position:"absolute",bottom:0,left:0,right:0,background:"linear-gradient(to top,rgba(28,23,20,.7) 0%,transparent 100%)",padding:"10px 10px 8px"}}>
+                  <div style={{fontSize:10,color:"rgba(255,255,255,.7)"}}>Source image</div>
+                </div>
               </div>
-              <div style={{marginTop:4}}><Bar val={confidence} color="#fff" h={3} bg="rgba(255,255,255,.25)"/></div>
+              {/* Wireframe panel */}
+              <div style={{borderRadius:12,overflow:"hidden",border:`1px solid ${T.border}`,background:T.linen,position:"relative"}}>
+                <WireframeViewer
+                  components={analysis.components}
+                  labeled={wireframeMode === "labeled"}
+                  height={200}
+                />
+              </div>
             </div>
-          </div>
-          <div style={{background:T.linen,borderRadius:10,padding:"10px 14px",marginBottom:14,display:"flex",gap:8,alignItems:"flex-start"}}>
-            <span style={{fontSize:14}}>🎯</span>
-            <span style={{fontSize:12,color:confInfo?.color,lineHeight:1.5,fontWeight:500}}>{confInfo?.text}</span>
-          </div>
-          <div style={{background:T.surface,borderRadius:12,border:`1px solid ${T.border}`,padding:"14px",marginBottom:14}}>
-            <div style={{fontSize:11,color:T.ink3,textTransform:"uppercase",letterSpacing:".08em",marginBottom:10,fontWeight:600}}>What we identified</div>
-            <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-              {analysis.components?.map((c, i) => (
-                <div key={i} style={{background:c.confidence >= 70 ? T.sageLt : T.terraLt,borderRadius:8,padding:"5px 10px",fontSize:11,fontWeight:500,color:c.confidence >= 70 ? T.sage : T.terra}}>
-                  {c.count > 1 ? c.count + "x " : ""}{c.role !== "unknown" ? c.role : c.primitive_type}{c.confidence < 70 ? " ?" : ""}
-                </div>
+            {/* Wireframe mode toggle */}
+            <div style={{display:"flex",gap:6,marginTop:8,justifyContent:"center"}}>
+              {[["labeled","Labeled"],["clean","Clean"]].map(([mode,label])=>(
+                <button key={mode} onClick={()=>setWireframeMode(mode)}
+                  style={{background:wireframeMode===mode?T.terra:T.linen,color:wireframeMode===mode?"#fff":T.ink3,border:`1px solid ${wireframeMode===mode?T.terra:T.border}`,borderRadius:8,padding:"5px 14px",fontSize:11,fontWeight:600,cursor:"pointer",transition:"all .15s"}}>
+                  {label}
+                </button>
               ))}
-              {analysis.color_structure && (
-                <div style={{background:T.linen,borderRadius:8,padding:"5px 10px",fontSize:11,color:T.ink2}}>
-                  {analysis.color_structure.primary_color}{analysis.color_structure.color_count > 1 ? " +" + (analysis.color_structure.color_count - 1) + " more" : ""}
-                </div>
-              )}
+            </div>
+            {/* Component legend */}
+            <div style={{marginTop:10,background:T.surface,borderRadius:10,border:`1px solid ${T.border}`,padding:"10px 12px"}}>
+              <div style={{fontSize:10,color:T.ink3,textTransform:"uppercase",letterSpacing:".08em",marginBottom:8,fontWeight:600}}>Components Identified</div>
+              <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
+                {analysis.components?.map((c, i) => (
+                  <div key={i} style={{
+                    background:c.confidence >= 70 ? T.sageLt : T.terraLt,
+                    borderRadius:8,padding:"4px 10px",fontSize:11,fontWeight:500,
+                    color:c.confidence >= 70 ? T.sage : T.terra,
+                    display:"flex",alignItems:"center",gap:4
+                  }}>
+                    {c.count > 1 && <span style={{fontWeight:700}}>{c.count}×</span>}
+                    {c.role !== "unknown" ? c.role : c.primitive_type}
+                    <span style={{opacity:.6,fontWeight:400}}>({c.primitive_type})</span>
+                    {c.confidence < 70 && <span style={{color:T.gold}}>?</span>}
+                  </div>
+                ))}
+                {analysis.color_structure && (
+                  <div style={{background:T.linen,borderRadius:8,padding:"4px 10px",fontSize:11,color:T.ink2}}>
+                    {analysis.color_structure.primary_color}
+                    {analysis.color_structure.color_count > 1 && ` +${analysis.color_structure.color_count - 1} colors`}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
+
+          {/* Pattern preview card */}
           <div style={{background:T.linen,borderRadius:12,border:`1px solid ${T.border}`,padding:"14px",marginBottom:14}}>
             <div style={{fontFamily:T.serif,fontSize:16,color:T.ink,marginBottom:4}}>{preview.title}</div>
-            <div style={{fontSize:12,color:T.ink3,marginBottom:10}}>Hook {preview.hook} · {preview.weight} · ~{preview.yardage} yds · {preview.rows.length} steps</div>
+            <div style={{fontSize:12,color:T.ink3,marginBottom:10}}>
+              Hook {preview.hook} · {preview.weight} · ~{preview.yardage} yds · {preview.rows.length} steps
+            </div>
             <div style={{fontSize:12,color:T.ink2,lineHeight:1.6,marginBottom:12}}>{preview.notes}</div>
-            <div style={{fontSize:11,color:T.ink3,fontStyle:"italic",marginBottom:12}}>Review the steps below after saving — adjust stitch counts to match your gauge and yarn weight.</div>
+            <div style={{fontSize:11,color:T.ink3,fontStyle:"italic",marginBottom:12}}>
+              Review the steps below after saving — adjust stitch counts to match your gauge and yarn weight.
+            </div>
             <Btn onClick={() => onSave({
-              id: Date.now(), photo: imgSrc || PILL[0], source: "Snap to Pattern",
+              id: Date.now(),
+              photo: imgSrc || PILL[0],
+              source: "Snap to Pattern",
               cat: analysis.object_category === "amigurumi" ? "Amigurumi" : "Uncategorized",
               rating: 0, skeins: 2, skeinYards: 200,
-              gauge: {stitches: 16, rows: 20, size: 4}, dimensions: {width: 20, height: 20},
-              snapConfidence: confidence, ...preview,
+              gauge: {stitches: 16, rows: 20, size: 4},
+              dimensions: {width: 20, height: 20},
+              snapConfidence: confidence,
+              ...preview,
             })}>Save to My Collection</Btn>
             <div style={{marginTop:8}}><Btn variant="ghost" onClick={reset}>Try different photo</Btn></div>
           </div>
@@ -779,7 +1236,7 @@ const URLImportForm = ({onSave}) => {
             <div style={{fontSize:13,color:T.terra,fontWeight:700}}>{progress}%</div>
           </div>
           <div style={{background:T.border,borderRadius:99,height:6,overflow:"hidden",marginBottom:10}}>
-            <div style={{width:progress+"%",height:6,background:"linear-gradient(90deg,"+T.terra+",#C97A5E)",borderRadius:99,transition:"width .3s ease"}}/>
+            <div className="progress-bar-fill" style={{width:progress+"%",height:6,borderRadius:99,transition:"width .3s ease"}}/>
           </div>
           <div style={{fontSize:11,color:T.ink3,textAlign:"center"}}>
             {progress < 30 && "Connecting to pattern source…"}
