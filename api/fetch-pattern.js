@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   const { url } = req.body || {};
   if (!url) return res.status(400).json({ error: "URL required" });
 
- const GEMINI_KEY = process.env.GEMINI_API_KEY;
+  const GEMINI_KEY = process.env.GEMINI_API_KEY;
   if (!GEMINI_KEY) return res.status(500).json({ error: "API key not configured on server" });
 
   try {
@@ -27,6 +27,12 @@ export default async function handler(req, res) {
 
     if (!pageRes.ok) throw new Error(`Could not load that page (${pageRes.status})`);
     const html = await pageRes.text();
+
+    // Extract hero image before stripping HTML
+    let thumbnail_url = "";
+    const ogImage = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i)
+                 || html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:image["']/i);
+    if (ogImage?.[1]) thumbnail_url = ogImage[1];
 
     const text = html
       .replace(/<script[\s\S]*?<\/script>/gi, " ")
@@ -70,7 +76,7 @@ Page content:
 ${text}`;
 
     const geminiRes = await fetch(
-     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -88,20 +94,18 @@ ${text}`;
 
     const geminiData = await geminiRes.json();
     const rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "";
-let cleanJson = rawText.replace(/```json|```/g, "").trim();
+    let cleanJson = rawText.replace(/```json|```/g, "").trim();
 
-// If JSON is truncated, attempt to salvage what we have
-if (!cleanJson.endsWith("}")) {
-  // Find the last complete row entry
-  const lastCompleteRow = cleanJson.lastIndexOf('{"id"');
-  if (lastCompleteRow > 0) {
-    cleanJson = cleanJson.substring(0, lastCompleteRow);
-    // Close off the rows array and the object
-    cleanJson = cleanJson.replace(/,\s*$/, "") + "]}";
-  }
-}
+    // If JSON is truncated, attempt to salvage what we have
+    if (!cleanJson.endsWith("}")) {
+      const lastCompleteRow = cleanJson.lastIndexOf('{"id"');
+      if (lastCompleteRow > 0) {
+        cleanJson = cleanJson.substring(0, lastCompleteRow);
+        cleanJson = cleanJson.replace(/,\s*$/, "") + "]}";
+      }
+    }
 
-const parsed = JSON.parse(cleanJson);
+    const parsed = JSON.parse(cleanJson);
 
     if (parsed.error) return res.status(422).json({ error: parsed.error });
 
@@ -112,7 +116,7 @@ const parsed = JSON.parse(cleanJson);
       note: "",
     }));
 
-    return res.status(200).json({ ...parsed, rows });
+    return res.status(200).json({ ...parsed, rows, thumbnail_url });
 
   } catch (err) {
     console.error("[fetch-pattern]", err.message);
