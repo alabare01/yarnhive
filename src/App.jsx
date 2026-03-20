@@ -1997,10 +1997,12 @@ const findNewAbbr = (text, seenAbbr) => {
 ══════════════════════════════════════════════════════════════════════════ */
 const BrowseSitesView = ({onSavePattern}) => {
   const {isDesktop} = useBreakpoint();
-  const [activeSite, setActiveSite] = useState(null);
-  const [importUrl, setImportUrl]   = useState("");
-  const [importing, setImporting]   = useState(false);
-  const [importErr, setImportErr]   = useState(null);
+  const [activeSite, setActiveSite]   = useState(null);
+  const [currentUrl, setCurrentUrl]   = useState("");
+  const [importing, setImporting]     = useState(false);
+  const [importErr, setImportErr]     = useState(null);
+  const [importOk, setImportOk]       = useState(false);
+  const iframeRef                     = useRef(null);
 
   const SITES = [
     {name:"AllFreeCrochet",  desc:"The largest free crochet pattern library.",   url:"https://www.allfreecrochet.com",                                              tags:["Blankets","Amigurumi","Wearables"], free:true,  photo:PILL[4]},
@@ -2009,49 +2011,141 @@ const BrowseSitesView = ({onSavePattern}) => {
     {name:"Sarah Maker",     desc:"Modern, well-photographed patterns.",         url:"https://sarahmaker.com/crochet-patterns/",                                    tags:["Modern","Beginner","Amigurumi"],    free:true,  photo:PILL[2]},
     {name:"Hopeful Honey",   desc:"Beloved amigurumi patterns.",                 url:"https://www.hopefulhoney.com/p/free-crochet-patterns.html",                   tags:["Amigurumi","Toys"],                free:true,  photo:PILL[5]},
     {name:"The Woobles",     desc:"Amigurumi kits and free beginner tutorials.", url:"https://thewoobles.com/pages/free-crochet-patterns",                          tags:["Amigurumi","Beginner"],            free:true,  photo:PILL[1]},
-    {name:"Ravelry",         desc:"World's largest pattern database.",           url:"https://www.ravelry.com/patterns/library#craft=crochet",                      tags:["All categories","Free + Paid"],    free:false, photo:PILL[0], note:"Log in on your device first, then copy any pattern URL below."},
+    {name:"Ravelry",         desc:"World's largest pattern database.",           url:"https://www.ravelry.com/patterns/library#craft=crochet",                      tags:["All categories","Free + Paid"],    free:false, photo:PILL[0], note:"Log in on your device, then browse and save any pattern."},
     {name:"LoveCrafts",      desc:"Quality free and paid patterns.",             url:"https://www.lovecrafts.com/en-us/l/crochet/crochet-patterns?price=free",      tags:["Garments","Modern"],               free:false, photo:PILL[2]},
   ];
 
-  const doImport = async () => {
-    if(!importUrl.trim()) return;
-    setImporting(true); setImportErr(null);
+  // Try to read iframe URL on each load event — works for same-origin, gracefully fails cross-origin
+  const handleIframeLoad = () => {
     try {
-      const res = await fetch("/api/fetch-pattern",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url:importUrl.trim()})});
+      const iframeUrl = iframeRef.current?.contentWindow?.location?.href;
+      if (iframeUrl && iframeUrl !== "about:blank") {
+        setCurrentUrl(iframeUrl);
+        setImportErr(null);
+        setImportOk(false);
+      }
+    } catch (e) {
+      // Cross-origin block — keep last known URL, that's fine
+    }
+  };
+
+  const openSite = (site) => {
+    setActiveSite(site);
+    setCurrentUrl(site.url);
+    setImportErr(null);
+    setImportOk(false);
+  };
+
+  const closeSite = () => {
+    setActiveSite(null);
+    setCurrentUrl("");
+    setImportErr(null);
+    setImportOk(false);
+  };
+
+  const doImport = async () => {
+    const urlToImport = currentUrl || activeSite?.url;
+    if (!urlToImport) return;
+    setImporting(true); setImportErr(null); setImportOk(false);
+    try {
+      const res = await fetch("/api/fetch-pattern", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({url: urlToImport}),
+      });
       const data = await res.json();
-      if(!res.ok||data.error) throw new Error(data.error||"Could not read that page");
+      if (!res.ok || data.error) throw new Error(data.error || "Could not read that page");
       const rows = (data.rows||[]).map((r,i)=>({id:Date.now()+i,text:r.text,done:false,note:""}));
-      onSavePattern&&onSavePattern({id:Date.now(),photo:data.thumbnail_url||PILL[Math.floor(Math.random()*PILL.length)],rating:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:50,height:60},...data,rows});
-      setActiveSite(null); setImportUrl("");
+      onSavePattern&&onSavePattern({
+        id:Date.now(),photo:data.thumbnail_url||PILL[Math.floor(Math.random()*PILL.length)],
+        rating:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},
+        dimensions:{width:50,height:60},...data,rows
+      });
+      setImportOk(true);
+      setTimeout(closeSite, 1800);
     } catch(e) {
-      setImportErr("Couldn't read that pattern. Try copying the URL directly from your browser address bar.");
+      setImportErr("Couldn't read this page. Try navigating directly to the pattern and tapping Save again.");
     } finally { setImporting(false); }
   };
 
-  if(activeSite) return (
+  if (activeSite) return (
     <div style={{position:"fixed",inset:0,zIndex:300,display:"flex",flexDirection:"column",background:T.bg}}>
-      <div style={{background:T.surface,borderBottom:`1px solid ${T.border}`,padding:"12px 16px",display:"flex",alignItems:"center",gap:12,flexShrink:0}}>
-        <button onClick={()=>{setActiveSite(null);setImportUrl("");setImportErr(null);}} style={{background:T.linen,border:`1px solid ${T.border}`,borderRadius:8,padding:"7px 14px",fontSize:13,fontWeight:600,color:T.ink,cursor:"pointer"}}>← Back</button>
-        <div style={{flex:1,background:T.linen,borderRadius:10,padding:"8px 14px",fontSize:13,color:T.ink3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{activeSite.url}</div>
-      </div>
-      <div style={{flex:1,position:"relative",overflow:"hidden"}}>
-        <iframe src={activeSite.url} style={{width:"100%",height:"100%",border:"none"}} title={activeSite.name} sandbox="allow-scripts allow-same-origin allow-forms allow-popups"/>
-        <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",pointerEvents:"none",background:"transparent"}}>
-          <div style={{background:"rgba(28,23,20,.85)",backdropFilter:"blur(8px)",borderRadius:16,padding:"20px 24px",textAlign:"center",maxWidth:320,pointerEvents:"auto"}}>
-            <div style={{fontSize:13,color:"rgba(255,255,255,.9)",lineHeight:1.6,marginBottom:12}}>If the site doesn't load above, open it in your browser, find a pattern you love, copy the URL, and paste it below.</div>
-            <button onClick={()=>window.open(activeSite.url,"_blank","noopener,noreferrer")} style={{background:T.terra,color:"#fff",border:"none",borderRadius:10,padding:"9px 18px",fontSize:13,fontWeight:600,cursor:"pointer",marginBottom:8,width:"100%"}}>🌐 Open {activeSite.name} in browser</button>
+
+      {/* Top nav bar — back button + live URL display */}
+      <div style={{background:T.surface,borderBottom:`1px solid ${T.border}`,padding:"10px 14px",display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
+        <button onClick={closeSite}
+          style={{background:T.linen,border:`1px solid ${T.border}`,borderRadius:8,padding:"8px 14px",fontSize:13,fontWeight:600,color:T.ink,cursor:"pointer",flexShrink:0}}>
+          ← Back
+        </button>
+        {/* URL bar — updates as user navigates */}
+        <div style={{flex:1,background:T.linen,border:`1px solid ${T.border}`,borderRadius:10,padding:"8px 12px",display:"flex",alignItems:"center",gap:8,minWidth:0}}>
+          <span style={{fontSize:11,color:T.ink3,flexShrink:0}}>🌐</span>
+          <div style={{fontSize:11,color:T.ink2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1}}>
+            {currentUrl || activeSite.url}
           </div>
         </div>
+        {/* Open in real browser */}
+        <button onClick={()=>window.open(currentUrl||activeSite.url,"_blank","noopener,noreferrer")}
+          style={{background:"none",border:`1px solid ${T.border}`,borderRadius:8,padding:"8px 10px",fontSize:16,cursor:"pointer",flexShrink:0,color:T.ink3}}>
+          ↗
+        </button>
       </div>
-      <div style={{background:T.surface,borderTop:`1px solid ${T.border}`,padding:"14px 16px",flexShrink:0}}>
-        <div style={{fontSize:12,color:T.ink3,marginBottom:8}}>Found a pattern? Paste its URL below and we'll import it.</div>
-        {activeSite.note&&<div style={{fontSize:11,color:T.terra,marginBottom:8}}>ℹ️ {activeSite.note}</div>}
-        <div style={{display:"flex",gap:8}}>
-          <input value={importUrl} onChange={e=>setImportUrl(e.target.value)} onKeyDown={e=>e.key==="Enter"&&doImport()} placeholder="Paste pattern URL here…" style={{flex:1,padding:"10px 14px",background:T.linen,border:`1.5px solid ${T.border}`,borderRadius:10,fontSize:13,color:T.ink,outline:"none"}} onFocus={e=>e.target.style.borderColor=T.terra} onBlur={e=>e.target.style.borderColor=T.border}/>
-          <button onClick={doImport} disabled={!importUrl.trim()||importing} style={{background:T.terra,color:"#fff",border:"none",borderRadius:10,padding:"10px 18px",fontWeight:700,fontSize:13,cursor:"pointer",opacity:!importUrl.trim()||importing?0.6:1}}>{importing?"…":"Save"}</button>
-        </div>
-        {importErr&&<div style={{fontSize:12,color:"#C0392B",marginTop:8}}>{importErr}</div>}
-        {importing&&<div style={{fontSize:12,color:T.ink3,marginTop:8}}>Reading pattern rows…</div>}
+
+      {/* Iframe — fills available space */}
+      <div style={{flex:1,position:"relative",overflow:"hidden"}}>
+        <iframe
+          ref={iframeRef}
+          src={activeSite.url}
+          onLoad={handleIframeLoad}
+          style={{width:"100%",height:"100%",border:"none"}}
+          title={activeSite.name}
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
+        />
+      </div>
+
+      {/* Bottom action bar — one tap to save */}
+      <div style={{background:T.surface,borderTop:`1px solid ${T.border}`,padding:"12px 16px",flexShrink:0}}>
+        {activeSite.note && (
+          <div style={{fontSize:11,color:T.terra,marginBottom:8,display:"flex",gap:6,alignItems:"flex-start"}}>
+            <span style={{flexShrink:0}}>ℹ️</span>
+            <span>{activeSite.note}</span>
+          </div>
+        )}
+
+        {importOk ? (
+          <div style={{background:T.sageLt,borderRadius:12,padding:"12px 16px",display:"flex",alignItems:"center",gap:10}}>
+            <span style={{fontSize:18}}>✅</span>
+            <div style={{fontSize:13,fontWeight:600,color:T.sage}}>Pattern saved to your collection!</div>
+          </div>
+        ) : (
+          <>
+            {/* Main save button — always shows current page URL */}
+            <button onClick={doImport} disabled={importing}
+              style={{width:"100%",background:importing?T.ink3:`linear-gradient(135deg,${T.terra},#8B3A22)`,color:"#fff",border:"none",borderRadius:14,padding:"15px 20px",fontSize:15,fontWeight:700,cursor:importing?"not-allowed":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:10,boxShadow:importing?"none":"0 4px 20px rgba(184,90,60,.4)",transition:"all .15s",marginBottom:6}}>
+              {importing ? (
+                <>
+                  <div className="spinner" style={{width:16,height:16,border:"2px solid rgba(255,255,255,.3)",borderTop:"2px solid #fff",borderRadius:"50%"}}/>
+                  Reading pattern…
+                </>
+              ) : (
+                <>
+                  <span style={{fontSize:18}}>🧶</span>
+                  Save This Pattern
+                </>
+              )}
+            </button>
+            {/* Current URL hint — so user knows what page will be imported */}
+            <div style={{fontSize:10,color:T.ink3,textAlign:"center",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",padding:"0 8px"}}>
+              {currentUrl && currentUrl !== activeSite.url
+                ? "Will import: " + currentUrl
+                : "Navigate to a pattern page, then tap Save"}
+            </div>
+            {importErr && (
+              <div style={{marginTop:8,background:"#FFF0EE",borderRadius:8,padding:"8px 12px",border:"1px solid #F5C6BB"}}>
+                <div style={{fontSize:12,color:"#C0392B"}}>{importErr}</div>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );
