@@ -88,8 +88,20 @@ ${text}`;
 
     const geminiData = await geminiRes.json();
     const rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    const cleanJson = rawText.replace(/```json|```/g, "").trim();
-    const parsed = JSON.parse(cleanJson);
+let cleanJson = rawText.replace(/```json|```/g, "").trim();
+
+// If JSON is truncated, attempt to salvage what we have
+if (!cleanJson.endsWith("}")) {
+  // Find the last complete row entry
+  const lastCompleteRow = cleanJson.lastIndexOf('{"id"');
+  if (lastCompleteRow > 0) {
+    cleanJson = cleanJson.substring(0, lastCompleteRow);
+    // Close off the rows array and the object
+    cleanJson = cleanJson.replace(/,\s*$/, "") + "]}";
+  }
+}
+
+const parsed = JSON.parse(cleanJson);
 
     if (parsed.error) return res.status(422).json({ error: parsed.error });
 
