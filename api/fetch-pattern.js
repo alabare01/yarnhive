@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   const { url } = req.body || {};
   if (!url) return res.status(400).json({ error: "URL required" });
 
-  const GEMINI_KEY = process.env.VITE_GEMINI_API_KEY;
+ const GEMINI_KEY = process.env.GEMINI_API_KEY;
   if (!GEMINI_KEY) return res.status(500).json({ error: "API key not configured on server" });
 
   try {
