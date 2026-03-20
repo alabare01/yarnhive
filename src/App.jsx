@@ -22,7 +22,7 @@ const PHOTOS = {
 const PILL = [PHOTOS.blanket, PHOTOS.cardigan, PHOTOS.granny, PHOTOS.tote, PHOTOS.pillow, PHOTOS.market];
 
 /* ─── VERSION ────────────────────────────────────────────────────────────── */
-const APP_VERSION = "v1.3.3 — Mar 20 2026";
+const APP_VERSION = "v1.3.7 — Mar 20 2026";
 
 /* ─── GEMINI API KEY ─────────────────────────────────────────────────────── */
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
@@ -2070,27 +2070,36 @@ const BrowseSitesView = ({onSavePattern}) => {
   if (activeSite) return (
     <div style={{position:"fixed",inset:0,zIndex:300,display:"flex",flexDirection:"column",background:T.bg}}>
 
-      {/* Top nav bar — back button + live URL display */}
-      <div style={{background:T.surface,borderBottom:`1px solid ${T.border}`,padding:"10px 14px",display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
+      {/* Top chrome — dark background so it reads unmistakably as YarnHive shell, not the site */}
+      <div style={{background:"#1C1714",padding:"10px 14px",display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
+        {/* Back button */}
         <button onClick={closeSite}
-          style={{background:T.linen,border:`1px solid ${T.border}`,borderRadius:8,padding:"8px 14px",fontSize:13,fontWeight:600,color:T.ink,cursor:"pointer",flexShrink:0}}>
+          style={{background:"rgba(255,255,255,.12)",border:"1px solid rgba(255,255,255,.2)",borderRadius:8,padding:"8px 14px",fontSize:13,fontWeight:600,color:"#fff",cursor:"pointer",flexShrink:0,display:"flex",alignItems:"center",gap:6}}>
           ← Back
         </button>
-        {/* URL bar — updates as user navigates */}
-        <div style={{flex:1,background:T.linen,border:`1px solid ${T.border}`,borderRadius:10,padding:"8px 12px",display:"flex",alignItems:"center",gap:8,minWidth:0}}>
-          <span style={{fontSize:11,color:T.ink3,flexShrink:0}}>🌐</span>
-          <div style={{fontSize:11,color:T.ink2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1}}>
+        {/* Live URL bar */}
+        <div style={{flex:1,background:"rgba(255,255,255,.08)",border:"1px solid rgba(255,255,255,.15)",borderRadius:10,padding:"7px 12px",display:"flex",alignItems:"center",gap:7,minWidth:0}}>
+          <span style={{fontSize:10,color:"rgba(255,255,255,.4)",flexShrink:0}}>🌐</span>
+          <div style={{fontSize:11,color:"rgba(255,255,255,.75)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1,fontFamily:"monospace"}}>
             {currentUrl || activeSite.url}
           </div>
         </div>
-        {/* Open in real browser */}
+        {/* Open in real browser — safety valve for login-required sites */}
         <button onClick={()=>window.open(currentUrl||activeSite.url,"_blank","noopener,noreferrer")}
-          style={{background:"none",border:`1px solid ${T.border}`,borderRadius:8,padding:"8px 10px",fontSize:16,cursor:"pointer",flexShrink:0,color:T.ink3}}>
+          style={{background:"rgba(255,255,255,.08)",border:"1px solid rgba(255,255,255,.2)",borderRadius:8,padding:"8px 10px",fontSize:15,cursor:"pointer",flexShrink:0,color:"rgba(255,255,255,.7)"}}>
           ↗
         </button>
       </div>
 
-      {/* Iframe — fills available space */}
+      {/* Site name label — thin strip so user always knows where they are */}
+      <div style={{background:"rgba(28,23,20,.06)",borderBottom:`1px solid ${T.border}`,padding:"5px 14px",display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
+        <div style={{width:6,height:6,borderRadius:99,background:T.terra,flexShrink:0}}/>
+        <div style={{fontSize:10,color:T.ink3,fontWeight:500}}>Browsing {activeSite.name} inside YarnHive</div>
+        <div style={{flex:1}}/>
+        <div style={{fontSize:10,color:T.ink3,opacity:.6}}>Tap "Save This Pattern" when ready</div>
+      </div>
+
+      {/* Iframe — trap all navigation inside, no escape to new tabs */}
       <div style={{flex:1,position:"relative",overflow:"hidden"}}>
         <iframe
           ref={iframeRef}
@@ -2098,19 +2107,18 @@ const BrowseSitesView = ({onSavePattern}) => {
           onLoad={handleIframeLoad}
           style={{width:"100%",height:"100%",border:"none"}}
           title={activeSite.name}
-          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
         />
       </div>
 
-      {/* Bottom action bar — one tap to save */}
-      <div style={{background:T.surface,borderTop:`1px solid ${T.border}`,padding:"12px 16px",flexShrink:0}}>
+      {/* Bottom action bar */}
+      <div style={{background:T.surface,borderTop:`2px solid ${T.terra}`,padding:"12px 16px",flexShrink:0}}>
         {activeSite.note && (
           <div style={{fontSize:11,color:T.terra,marginBottom:8,display:"flex",gap:6,alignItems:"flex-start"}}>
             <span style={{flexShrink:0}}>ℹ️</span>
             <span>{activeSite.note}</span>
           </div>
         )}
-
         {importOk ? (
           <div style={{background:T.sageLt,borderRadius:12,padding:"12px 16px",display:"flex",alignItems:"center",gap:10}}>
             <span style={{fontSize:18}}>✅</span>
@@ -2118,22 +2126,14 @@ const BrowseSitesView = ({onSavePattern}) => {
           </div>
         ) : (
           <>
-            {/* Main save button — always shows current page URL */}
             <button onClick={doImport} disabled={importing}
               style={{width:"100%",background:importing?T.ink3:`linear-gradient(135deg,${T.terra},#8B3A22)`,color:"#fff",border:"none",borderRadius:14,padding:"15px 20px",fontSize:15,fontWeight:700,cursor:importing?"not-allowed":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:10,boxShadow:importing?"none":"0 4px 20px rgba(184,90,60,.4)",transition:"all .15s",marginBottom:6}}>
               {importing ? (
-                <>
-                  <div className="spinner" style={{width:16,height:16,border:"2px solid rgba(255,255,255,.3)",borderTop:"2px solid #fff",borderRadius:"50%"}}/>
-                  Reading pattern…
-                </>
+                <><div className="spinner" style={{width:16,height:16,border:"2px solid rgba(255,255,255,.3)",borderTop:"2px solid #fff",borderRadius:"50%"}}/> Reading pattern…</>
               ) : (
-                <>
-                  <span style={{fontSize:18}}>🧶</span>
-                  Save This Pattern
-                </>
+                <><span style={{fontSize:18}}>🧶</span> Save This Pattern</>
               )}
             </button>
-            {/* Current URL hint — so user knows what page will be imported */}
             <div style={{fontSize:10,color:T.ink3,textAlign:"center",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",padding:"0 8px"}}>
               {currentUrl && currentUrl !== activeSite.url
                 ? "Will import: " + currentUrl
