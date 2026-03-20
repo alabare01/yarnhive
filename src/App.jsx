@@ -1034,7 +1034,7 @@ const AddPatternModal = ({onClose, onSave, isPro, patternCount}) => {
                       <div style={{fontSize:15,fontWeight:600,color:m.key==="snap"?T.terra:T.ink,marginBottom:2}}>{m.label}</div>
                       <div style={{fontSize:12,color:T.ink3}}>{m.sub}</div>
                     </div>
-                    {m.key==="snap"&&<div style={{background:T.terra,color:"#fff",borderRadius:8,padding:"3px 8px",fontSize:10,fontWeight:700,flexShrink:0}}>NEW</div>}
+                   {m.key==="snap"&&<div style={{background:T.sage,color:"#fff",borderRadius:8,padding:"3px 8px",fontSize:10,fontWeight:700,flexShrink:0}}>FREE</div>}
                     {m.key!=="snap"&&<span style={{color:T.ink3,fontSize:18}}>›</span>}
                   </div>
                 ))}
