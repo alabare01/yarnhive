@@ -1039,14 +1039,15 @@ const useSnapProgress = (active) => {
    SNAP TO PATTERN FORM
 ══════════════════════════════════════════════════════════════════════════ */
 const SnapToPatternForm = ({onSave}) => {
-  const [file, setFile]         = useState(null);
-  const [imgSrc, setImgSrc]     = useState(null);
-  const [loading, setLoading]   = useState(false);
-  const [analysis, setAnalysis] = useState(null);
+  const [file, setFile]             = useState(null);
+  const [imgSrc, setImgSrc]         = useState(null);
+  const [loading, setLoading]       = useState(false);
+  const [analysis, setAnalysis]     = useState(null);
   const [confidence, setConfidence] = useState(null);
-  const [preview, setPreview]   = useState(null);
-  const [error, setError]       = useState(null);
-  const [wireframeMode, setWireframeMode] = useState("labeled"); // "labeled" | "clean"
+  const [preview, setPreview]       = useState(null);
+  const [error, setError]           = useState(null);
+  const [wireframeMode, setWireframeMode] = useState("labeled");
+  const [lightbox, setLightbox]     = useState(null); // null | "photo" | "wireframe"
   const { progress, phase, complete } = useSnapProgress(loading);
 
   const handleFile = async (e) => {
@@ -1056,23 +1057,18 @@ const SnapToPatternForm = ({onSave}) => {
     const reader = new FileReader();
     reader.onload = async (ev) => {
       const src = ev.target.result;
-      setImgSrc(src);
-      setLoading(true);
+      setImgSrc(src); setLoading(true);
       try {
         const result = await callGeminiVision(src);
         const conf = calculateConfidence(result);
         const pattern = buildStarterPattern(result);
         complete();
         await new Promise(r => setTimeout(r, 400));
-        setAnalysis(result);
-        setConfidence(conf);
-        setPreview(pattern);
+        setAnalysis(result); setConfidence(conf); setPreview(pattern);
       } catch (err) {
         setError("Couldn't read the photo clearly. Try better lighting or a closer shot.");
         console.error(err);
-      } finally {
-        setLoading(false);
-      }
+      } finally { setLoading(false); }
     };
     reader.readAsDataURL(f);
   };
@@ -1086,6 +1082,40 @@ const SnapToPatternForm = ({onSave}) => {
 
   return (
     <div style={{paddingBottom:8}}>
+
+      {/* Lightbox overlay — photo or wireframe fullscreen */}
+      {lightbox && (
+        <div style={{position:"fixed",inset:0,zIndex:999,background:"rgba(0,0,0,.92)",display:"flex",flexDirection:"column"}}
+          onClick={()=>setLightbox(null)}>
+          <div style={{padding:"16px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
+            <div style={{fontSize:13,color:"rgba(255,255,255,.7)",fontWeight:500}}>
+              {lightbox==="photo" ? (analysis?.object_name || "Source Photo") : "3D Component Map"}
+            </div>
+            <button onClick={()=>setLightbox(null)}
+              style={{background:"rgba(255,255,255,.15)",border:"none",borderRadius:99,width:32,height:32,color:"#fff",fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
+          </div>
+          <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 16px 32px"}}
+            onClick={e=>e.stopPropagation()}>
+            {lightbox==="photo" ? (
+              <img src={imgSrc} alt="source" style={{maxWidth:"100%",maxHeight:"100%",objectFit:"contain",borderRadius:12}}/>
+            ) : (
+              <div style={{width:"100%",maxWidth:600,height:"70vh"}}>
+                <WireframeViewer
+                  components={analysis?.components}
+                  labeled={wireframeMode==="labeled"}
+                  height={window.innerHeight * 0.65}
+                />
+              </div>
+            )}
+          </div>
+          {lightbox==="wireframe" && (
+            <div style={{textAlign:"center",paddingBottom:24,fontSize:12,color:"rgba(255,255,255,.5)"}}>
+              ⟳ drag to rotate · scroll/pinch to zoom
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Header banner */}
       <div style={{background:`linear-gradient(135deg,${T.terraLt},#FFF8F5)`,borderRadius:12,padding:"12px 14px",marginBottom:14,border:`1px solid ${T.border}`}}>
         <div style={{fontSize:12,color:T.terra,fontWeight:600,marginBottom:3}}>📸 Snap to Pattern — 3 free snaps/month</div>
@@ -1105,7 +1135,7 @@ const SnapToPatternForm = ({onSave}) => {
         </label>
       )}
 
-      {/* Loading state with phased progress bar */}
+      {/* Loading */}
       {imgSrc && loading && (
         <div>
           <div style={{width:"100%",height:160,borderRadius:14,overflow:"hidden",marginBottom:16,position:"relative"}}>
@@ -1145,20 +1175,20 @@ const SnapToPatternForm = ({onSave}) => {
         </div>
       )}
 
-      {/* Results: side-by-side photo + wireframe */}
+      {/* Results */}
       {analysis && preview && !loading && (
         <div className="fu">
 
-          {/* Confidence score */}
+          {/* Confidence */}
           <div className="conf-pop" style={{background:T.surface,borderRadius:14,border:`2px solid ${confInfo?.color || T.border}`,padding:"16px",marginBottom:14,textAlign:"center"}}>
             <div style={{fontSize:11,color:T.ink3,textTransform:"uppercase",letterSpacing:".09em",marginBottom:6}}>Pattern Confidence</div>
             <div style={{fontFamily:T.serif,fontSize:52,fontWeight:700,color:confInfo?.color,lineHeight:1,marginBottom:4}}>{confidence}%</div>
             <div style={{fontSize:12,color:T.ink2,marginBottom:10}}>{confInfo?.emoji} {confInfo?.text}</div>
             <Bar val={confidence} color={confInfo?.color} h={5}/>
-            <div style={{fontSize:11,color:T.ink3,marginTop:8,lineHeight:1.5}}>Review the wireframe. Stitch counts are estimated from photo — adjust after saving.</div>
+            <div style={{fontSize:11,color:T.ink3,marginTop:8,lineHeight:1.5}}>Tap either panel to view fullscreen. Stitch counts are estimated — adjust after saving.</div>
           </div>
 
-          {/* Side-by-side: photo vs wireframe */}
+          {/* Side-by-side: photo + wireframe — explicit fixed height, no aspectRatio fighting Three.js */}
           <div style={{marginBottom:10}}>
             <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:8}}>
               <div style={{flex:1,fontSize:12,fontWeight:600,color:T.ink2,textAlign:"center"}}>Your Photo</div>
@@ -1166,26 +1196,32 @@ const SnapToPatternForm = ({onSave}) => {
               <div style={{flex:1,fontSize:12,fontWeight:600,color:T.ink2,textAlign:"center"}}>3D Component Map</div>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-              {/* Photo — square aspect ratio, always fits modal */}
-              <div style={{position:"relative",borderRadius:12,overflow:"hidden",border:`1px solid ${T.border}`,aspectRatio:"1/1",background:T.linen}}>
-                <img src={imgSrc} alt="source" style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top",display:"block"}}/>
-                <div style={{position:"absolute",bottom:0,left:0,right:0,background:"linear-gradient(to top,rgba(28,23,20,.75) 0%,transparent 100%)",padding:"8px 10px 6px"}}>
-                  <div style={{fontSize:10,color:"rgba(255,255,255,.8)"}}>
-                    {analysis.object_name ? (analysis.object_name.charAt(0).toUpperCase() + analysis.object_name.slice(1)) : "Source"}
+
+              {/* Photo panel — clickable */}
+              <div onClick={()=>setLightbox("photo")} style={{position:"relative",borderRadius:12,overflow:"hidden",border:`1px solid ${T.border}`,height:240,background:T.linen,cursor:"zoom-in"}}>
+                <img src={imgSrc} alt="source" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top",display:"block"}}/>
+                <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(28,23,20,.75) 0%,transparent 60%)"}}/>
+                <div style={{position:"absolute",bottom:8,left:10,right:10,display:"flex",justifyContent:"space-between",alignItems:"flex-end"}}>
+                  <div style={{fontSize:10,color:"rgba(255,255,255,.85)"}}>
+                    {analysis.object_name ? (analysis.object_name.charAt(0).toUpperCase()+analysis.object_name.slice(1)) : "Source"}
                   </div>
+                  <div style={{background:"rgba(0,0,0,.4)",borderRadius:6,padding:"2px 7px",fontSize:9,color:"rgba(255,255,255,.8)"}}>⤢ expand</div>
                 </div>
               </div>
-              {/* Wireframe — same square aspect ratio */}
-              <div style={{borderRadius:12,overflow:"hidden",border:`1px solid ${T.border}`,background:"#FAF7F3",position:"relative",aspectRatio:"1/1",minHeight:160}}>
-                <div style={{position:"absolute",inset:0}}>
-                  <WireframeViewer
-                    components={analysis.components}
-                    labeled={wireframeMode === "labeled"}
-                    height={-1}
-                  />
-                </div>
+
+              {/* Wireframe panel — explicit 240px height, no CSS layout fights */}
+              <div style={{borderRadius:12,overflow:"hidden",border:`1px solid ${T.border}`,height:240,background:"#FAF7F3",position:"relative",cursor:"zoom-in"}}
+                onClick={()=>setLightbox("wireframe")}>
+                <WireframeViewer
+                  components={analysis.components}
+                  labeled={wireframeMode==="labeled"}
+                  height={240}
+                />
+                <div style={{position:"absolute",bottom:8,right:10,background:"rgba(0,0,0,.35)",borderRadius:6,padding:"2px 7px",fontSize:9,color:"rgba(255,255,255,.8)",pointerEvents:"none"}}>⤢ expand</div>
               </div>
+
             </div>
+
             {/* Toggle */}
             <div style={{display:"flex",gap:6,marginTop:8,justifyContent:"center"}}>
               {[["labeled","Labeled"],["clean","Clean"]].map(([mode,label])=>(
@@ -1195,10 +1231,11 @@ const SnapToPatternForm = ({onSave}) => {
                 </button>
               ))}
             </div>
-            {/* Component legend — now shows construction notes */}
+
+            {/* Component legend — numbered, maps to build steps */}
             <div style={{marginTop:10,background:T.surface,borderRadius:10,border:`1px solid ${T.border}`,padding:"10px 12px"}}>
               <div style={{fontSize:10,color:T.ink3,textTransform:"uppercase",letterSpacing:".08em",marginBottom:8,fontWeight:600}}>
-                {analysis.components?.length} Components · {(analysis.object_name || analysis.object_category || "").charAt(0).toUpperCase() + (analysis.object_name || analysis.object_category || "").slice(1)}
+                Build Order · {analysis.components?.length} Components · {(analysis.object_name||analysis.object_category||"").charAt(0).toUpperCase()+(analysis.object_name||analysis.object_category||"").slice(1)}
               </div>
               <div style={{display:"flex",flexDirection:"column",gap:5}}>
                 {analysis.components?.map((c, i) => {
@@ -1208,16 +1245,20 @@ const SnapToPatternForm = ({onSave}) => {
                     c.construction?.technique?.replace(/_/g," "),
                     c.construction?.increase_to ? "~"+c.construction.increase_to+" sts" : null,
                     c.construction?.even_rounds ? c.construction.even_rounds+" rnds" : null,
-                    c.color ? c.color : null,
+                    c.color ? c.color+" yarn" : null,
                   ].filter(Boolean).join(" · ");
+                  const joinNote = c.join_to ? "Joins to: "+c.join_to : null;
                   return (
-                    <div key={i} style={{display:"flex",gap:8,alignItems:"flex-start",padding:"6px 8px",background:conf?T.sageLt:T.terraLt,borderRadius:8}}>
-                      <div style={{flexShrink:0}}>
-                        <div style={{fontSize:10,fontWeight:700,color:conf?T.sage:T.terra,textTransform:"uppercase"}}>{label}</div>
-                        <div style={{fontSize:9,color:T.ink3}}>{c.primitive_type}</div>
+                    <div key={i} style={{display:"flex",gap:8,alignItems:"flex-start",padding:"8px 10px",background:conf?T.sageLt:T.terraLt,borderRadius:8,border:`1px solid ${conf?"rgba(92,122,94,.2)":"rgba(184,90,60,.2)"}`}}>
+                      <div style={{width:22,height:22,borderRadius:99,background:conf?T.sage:T.terra,color:"#fff",fontSize:11,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                        {i+1}
                       </div>
-                      <div style={{flex:1,fontSize:11,color:T.ink2,lineHeight:1.5}}>{notes || "—"}</div>
-                      <div style={{fontSize:10,color:T.ink3,flexShrink:0}}>{c.confidence}%</div>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontSize:11,fontWeight:700,color:conf?T.sage:T.terra,textTransform:"uppercase",marginBottom:2}}>{label} <span style={{fontWeight:400,opacity:.6}}>({c.primitive_type})</span></div>
+                        <div style={{fontSize:11,color:T.ink2,lineHeight:1.5}}>{notes || "—"}</div>
+                        {joinNote && <div style={{fontSize:10,color:T.ink3,marginTop:2}}>→ {joinNote}</div>}
+                      </div>
+                      <div style={{fontSize:10,color:T.ink3,flexShrink:0,marginTop:1}}>{c.confidence}%</div>
                     </div>
                   );
                 })}
@@ -1225,7 +1266,7 @@ const SnapToPatternForm = ({onSave}) => {
             </div>
           </div>
 
-          {/* Pattern preview card */}
+          {/* Pattern preview */}
           <div style={{background:T.linen,borderRadius:12,border:`1px solid ${T.border}`,padding:"14px",marginBottom:14}}>
             <div style={{fontFamily:T.serif,fontSize:16,color:T.ink,marginBottom:4}}>{preview.title}</div>
             <div style={{fontSize:12,color:T.ink3,marginBottom:10}}>
@@ -1233,7 +1274,7 @@ const SnapToPatternForm = ({onSave}) => {
             </div>
             <div style={{fontSize:12,color:T.ink2,lineHeight:1.6,marginBottom:12}}>{preview.notes}</div>
             <div style={{fontSize:11,color:T.ink3,fontStyle:"italic",marginBottom:12}}>
-              Review the steps below after saving — adjust stitch counts to match your gauge and yarn weight.
+              Review the steps after saving — adjust stitch counts to match your gauge and yarn weight.
             </div>
             <Btn onClick={() => onSave({
               id: Date.now(),
@@ -1253,6 +1294,7 @@ const SnapToPatternForm = ({onSave}) => {
     </div>
   );
 };
+
 
 /* ══════════════════════════════════════════════════════════════════════════
    ADD PATTERN MODAL
@@ -2054,7 +2096,7 @@ const PatternCard = ({p, onClick, delay=0}) => {
   return (
     <div className="card fu" onClick={onClick} style={{background:T.surface,borderRadius:16,overflow:"hidden",border:`1px solid ${T.border}`,cursor:"pointer",animationDelay:delay+"s"}}>
       <div style={{position:"relative",height:160,overflow:"hidden",background:T.linen}}>
-        <Photo src={p.photo} alt={p.title} style={{width:"100%",height:"100%"}}/>
+        <Photo src={p.photo} alt={p.title} style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center center"}}/>
         <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(28,23,20,.5) 0%,transparent 55%)"}}/>
         {done===100&&<div style={{position:"absolute",top:10,right:10,background:T.sage,color:"#fff",fontSize:9,fontWeight:700,padding:"3px 8px",borderRadius:99,letterSpacing:".07em"}}>DONE</div>}
         {done>0&&done<100&&<div style={{position:"absolute",top:10,right:10,background:"rgba(28,23,20,.65)",backdropFilter:"blur(4px)",color:"#fff",fontSize:10,fontWeight:600,padding:"3px 8px",borderRadius:99}}>{done}%</div>}
@@ -2081,7 +2123,7 @@ const ShelfCard = ({p, onClick}) => {
       onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 8px 20px rgba(28,23,20,.12)";}}
       onMouseLeave={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="0 2px 8px rgba(28,23,20,.06)";}}>
       <div style={{height:100,position:"relative",background:T.linen,overflow:"hidden"}}>
-        <Photo src={p.photo} alt={p.title} style={{width:"100%",height:"100%"}}/>
+        <Photo src={p.photo} alt={p.title} style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center center"}}/>
         <div style={{position:"absolute",bottom:0,left:0,right:0}}><Bar val={v} color={T.terra} h={3} bg="rgba(0,0,0,.2)"/></div>
       </div>
       <div style={{padding:"9px 12px 11px"}}>
@@ -2319,7 +2361,7 @@ const Detail = ({p, onBack, onSave}) => {
       )}
 
       <div style={{position:"relative",flexShrink:0,height:isDesktop?280:230,overflow:"hidden",background:T.linen,marginTop:milestone?56:0,transition:"margin .3s"}}>
-        <Photo src={p.photo} alt={p.title} style={{width:"100%",height:"100%"}}/>
+        <Photo src={p.photo} alt={p.title} style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center center"}}/>
         <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(20,14,10,.9) 0%,rgba(20,14,10,.2) 55%,transparent 100%)"}}/>
         <div style={{position:"absolute",top:0,left:0,right:0,padding:"16px 18px",display:"flex",justifyContent:"space-between"}}>
           <button onClick={onBack} style={{background:"rgba(15,10,8,.4)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.15)",borderRadius:10,padding:"7px 16px",color:"#fff",cursor:"pointer",fontSize:13,fontWeight:500}}>← Back</button>
