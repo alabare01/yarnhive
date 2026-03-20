@@ -1906,7 +1906,8 @@ const [tab,setTab]                 = useState("materials");
           <div style={{marginTop:20,background:`linear-gradient(135deg,${T.terraLt},#fff)`,borderRadius:14,padding:"14px 16px",border:`1px solid ${T.border}`}}>
             <div style={{fontFamily:T.serif,fontSize:14,color:T.ink,marginBottom:10}}>Yarn Summary</div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-              {[["Total yardage",`~${p.yardage||"??"} yds`],["Skeins needed",`${p.skeins||"??"} skeins`],["Hook size",p.hook||"??"],["Yarn weight",p.weight||"??"]].map(([label,val])=>(
+              ["Total yardage",(()=>{if(p.yardage>0)return`~${p.yardage} yds`;const est=(p.materials||[]).reduce((s,m)=>{if(m.yardage>0)return s+m.yardage;const t=((m.name||"")+" "+(m.amount||"")).toLowerCase();const b=t.match(/(\d+)\s*ball/),sk=t.match(/(\d+)\s*skein/);if(b)return s+parseInt(b[1])*200;if(sk)return s+parseInt(sk[1])*200;return s;},0);return est>0?`~${est} yds (est.)`:"Not listed";})()],
+["Skeins needed",(()=>{if(p.skeins>0)return`${p.skeins} skeins`;const est=(p.materials||[]).reduce((s,m)=>{if(m.yardage>0)return s+m.yardage;const t=((m.name||"")+" "+(m.amount||"")).toLowerCase();const b=t.match(/(\d+)\s*ball/),sk=t.match(/(\d+)\s*skein/);if(b)return s+parseInt(b[1])*200;if(sk)return s+parseInt(sk[1])*200;return s;},0);return est>0?`~${Math.ceil(est/200)} skeins (est.)`:"Not listed";})()],["Hook size",p.hook||"??"],["Yarn weight",p.weight||"??"]].map(([label,val])=>(
                 <div key={label} style={{background:"rgba(255,255,255,.8)",borderRadius:9,padding:"9px 11px"}}><div style={{fontSize:10,color:T.ink3,marginBottom:2}}>{label}</div><div style={{fontSize:16,fontWeight:700,fontFamily:T.serif,color:T.ink}}>{val}</div></div>
               ))}
             </div>
