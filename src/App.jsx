@@ -939,7 +939,7 @@ const AddPatternModal = ({onClose, onSave, isPro, patternCount}) => {
     {key:"url",     icon:"🔗", label:"Smart Import",       sub:"Paste any pattern link"},
     {key:"pdf",     icon:"📄", label:"PDF / Document",     sub:"Upload & extract"},
     {key:"browser", icon:"🌐", label:"Browse Sites",       sub:"AllFreeCrochet, Drops & more"},
-    {{key:"snap",    icon:"📸", label:"Snap to Pattern",    sub:"Photograph any finished object — 3 free snaps/mo"},
+    {key:"snap",    icon:"📸", label:"Snap to Pattern",    sub:"Photograph any finished object — 3 free snaps/mo"},
   ];
 
   if(isDesktop) return (
