@@ -976,7 +976,7 @@ const NavPanel = ({open,onClose,view,setView,count,isPro}) => {
   );
 };
 
-const BeeAnimator = ({show, isDesktop}) => {
+const BeeAnimator = ({show, hide, isDesktop}) => {
   const canvasRef = useRef(null);
   const rafRef = useRef(null);
   const imgRef = useRef(null);
@@ -1130,11 +1130,13 @@ const BeeAnimator = ({show, isDesktop}) => {
       ref={canvasRef} width={W} height={H}
       style={{
         display: hasRunRef.current ? 'block' : 'none',
+        opacity: hide ? 0 : 1,
         width:W, height:H,
         marginBottom:-(H-26),
         position:'relative', zIndex:2,
         pointerEvents:'none',
         background:'transparent',
+        transition:'opacity .2s ease',
       }}
     />
   );
@@ -1304,8 +1306,13 @@ const Auth = ({onEnter,onEnterAsPro}) => {
   const handleNotifySubmit = async () => {
     if (!notifyEmail.trim() || !notifyEmail.includes('@')) return;
     setNotifyLoading(true);
-    // Store in Supabase leads table when auth is wired — for now simulate success
-    await new Promise(r => setTimeout(r, 800));
+    try {
+      await fetch('https://vbtsdyxvqqwxjzpuseaf.supabase.co/functions/v1/waitlist', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({email: notifyEmail.trim().toLowerCase(), platform: activeModal}),
+      });
+    } catch(e) { console.error('Waitlist:', e); }
     setNotifyLoading(false);
     setNotifySubmitted(true);
   };
@@ -1394,7 +1401,7 @@ const Auth = ({onEnter,onEnterAsPro}) => {
         }}/>
       </div>
       <div style={{position:"relative",zIndex:1,minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"24px 16px"}}>
-        <BeeAnimator show={!showForm && !activeModal} isDesktop={isDesktop}/>
+        <BeeAnimator show={!showForm} hide={!!activeModal || showForm} isDesktop={isDesktop}/>
         <div className="card-rise" style={{width:"100%",maxWidth:isDesktop?420:360}}>
           {showForm ? <FormCard/> : <WelcomeCard/>}
         </div>
@@ -1433,14 +1440,18 @@ const Auth = ({onEnter,onEnterAsPro}) => {
               {/* Header */}
               <div style={{display:"flex",alignItems:"flex-start",gap:14,marginBottom:22}}>
                 <div style={{
-                  width:52,height:52,borderRadius:16,flexShrink:0,
+                  width:56,height:56,borderRadius:16,flexShrink:0,
                   background:modal.iconBg||"rgba(184,90,60,0.12)",
                   display:"flex",alignItems:"center",justifyContent:"center",
                   color:modal.iconColor||"#B85A3C",
                   border: modal.iconBg==="#fff" ? "1px solid rgba(28,23,20,0.1)" : "none",
-                  boxShadow: modal.iconBg==="black"||modal.iconBg==="#000" ? "0 4px 14px rgba(0,0,0,0.25)" : "0 4px 14px rgba(184,90,60,0.2)",
+                  boxShadow: (modal.iconBg==="#000") ? "0 6px 20px rgba(0,0,0,0.4)" : "0 6px 20px rgba(184,90,60,0.25)",
+                  overflow:"hidden",
                 }}>
-                  {modal.icon}
+                  {typeof modal.icon === 'string'
+                    ? <span style={{fontSize:28}}>{modal.icon}</span>
+                    : <span style={{display:"flex",alignItems:"center",justifyContent:"center",width:"100%",height:"100%"}}>{modal.icon}</span>
+                  }
                 </div>
                 <div style={{flex:1,minWidth:0,paddingTop:2}}>
                   {modal.badge&&(
