@@ -982,8 +982,8 @@ const BeeAnimator = ({visible, isDesktop}) => {
   const H = isDesktop ? 200 : 170;
 
   // Landing: bottom-left, well below headline text
-  const lx = Math.round(W * 0.12);
-  const ly = Math.round(H * 0.82);
+  const lx = Math.round(W * 0.08);
+  const ly = Math.round(H * 0.92);
 
   // Path waypoints: enter right, arc high, descend to bottom-left
   const x0 = W + size;   const y0 = Math.round(H * 0.6);
@@ -1003,15 +1003,15 @@ const BeeAnimator = ({visible, isDesktop}) => {
     }}>
       <style>{`
         @keyframes beepath {
-          0%   { transform: translate(${x0}px, ${y0}px) scaleX(-1); opacity: 0; }
+          0%   { transform: translate(${x0}px, ${y0}px); opacity: 0; }
           3%   { opacity: 1; }
-          28%  { transform: translate(${x1}px, ${y1}px) scaleX(-1) rotate(-12deg); }
-          62%  { transform: translate(${x2}px, ${y2}px) scaleX(-1) rotate(-6deg); }
-          82%  { transform: translate(${Math.round(lx + 20)}px, ${Math.round(ly - 22)}px) scaleX(-1) rotate(8deg); }
-          90%  { transform: translate(${lx}px, ${ly}px) scaleX(-1) rotate(0deg); opacity: 1; }
-          94%  { transform: translate(${lx}px, ${Math.round(ly - 3)}px) scaleX(-1); opacity: 1; }
-          97%  { transform: translate(${lx}px, ${ly}px) scaleX(-1); opacity: 1; }
-          100% { transform: translate(${x0}px, ${y0}px) scaleX(-1); opacity: 0; }
+          28%  { transform: translate(${x1}px, ${y1}px) rotate(-12deg); }
+          62%  { transform: translate(${x2}px, ${y2}px) rotate(-6deg); }
+          82%  { transform: translate(${Math.round(lx + 20)}px, ${Math.round(ly - 22)}px) rotate(8deg); }
+          90%  { transform: translate(${lx}px, ${ly}px) rotate(0deg); opacity: 1; }
+          94%  { transform: translate(${lx}px, ${Math.round(ly - 3)}px); opacity: 1; }
+          97%  { transform: translate(${lx}px, ${ly}px); opacity: 1; }
+          100% { transform: translate(${x0}px, ${y0}px); opacity: 0; }
         }
         .bee-anim {
           position: absolute;
