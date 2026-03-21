@@ -977,72 +977,60 @@ const NavPanel = ({open,onClose,view,setView,count,isPro}) => {
 };
 
 const BeeAnimator = ({visible, isDesktop}) => {
-  const [pos, setPos] = useState({x: -60, y: 0.7});
-  const [landed, setLanded] = useState(false);
-  const rafRef = useRef(null);
-  const startRef = useRef(null);
-
+  const size = isDesktop ? 52 : 44;
   const W = isDesktop ? 440 : 370;
   const H = isDesktop ? 180 : 155;
-  const SIZE = isDesktop ? 48 : 40;
-
-  const LX = W * 0.76;
-  const LY = H - SIZE * 0.5 - 8;
-
-  const p0 = {x:-SIZE,  y:H*0.7};
-  const p1 = {x:W*0.12, y:H*0.04};
-  const p2 = {x:W*0.76, y:H*0.02};
-  const p3 = {x:LX,     y:LY};
-
-  const FLIGHT_MS = 3200;
-  const ease = t => {
-    if (t < 0.1) return 0.5*Math.pow(t/0.1,2);
-    if (t < 0.8) return 0.05+0.85*((t-0.1)/0.7);
-    return 0.9+0.1*(1-Math.pow(1-(t-0.8)/0.2,3));
-  };
-  const bez = t => {
-    const u=1-t;
-    return {
-      x: u*u*u*p0.x+3*u*u*t*p1.x+3*u*t*t*p2.x+t*t*t*p3.x,
-      y: u*u*u*p0.y+3*u*u*t*p1.y+3*u*t*t*p2.y+t*t*t*p3.y
-    };
-  };
-
-  useEffect(() => {
-    const frame = ts => {
-      if (!startRef.current) startRef.current = ts;
-      const elapsed = ts - startRef.current;
-      const rawT = Math.min(elapsed / FLIGHT_MS, 1);
-      const t = ease(rawT);
-      const p = bez(t);
-      setPos(p);
-      if (rawT >= 1) { setLanded(true); return; }
-      rafRef.current = requestAnimationFrame(frame);
-    };
-    rafRef.current = requestAnimationFrame(frame);
-    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
-  }, []);
-
-  const bob = landed ? Math.sin(Date.now() * 0.0016) * 2 : 0;
 
   return (
     <div style={{
       width: W, height: H,
-      marginBottom: -(H-26),
+      marginBottom: -(H - 26),
       position: 'relative', zIndex: 2,
       pointerEvents: 'none',
-      opacity: visible ? 1 : 0,
-      transition: 'opacity .25s ease',
       flexShrink: 0,
+      opacity: visible ? 1 : 0,
+      transition: 'opacity .3s ease',
     }}>
-      <div style={{
-        position: 'absolute',
-        left: pos.x - SIZE/2,
-        top: pos.y + bob - SIZE/2,
-        fontSize: SIZE,
-        lineHeight: 1,
-        userSelect: 'none',
-      }}>🐝</div>
+      <style>{`
+        @keyframes beefly {
+          0%   { transform: translate(${-size}px, ${isDesktop ? 130 : 108}px) rotate(-8deg); opacity: 0; }
+          4%   { opacity: 1; }
+          30%  { transform: translate(${Math.round(W*0.18)}px, ${Math.round(H*0.08)}px) rotate(-22deg); }
+          65%  { transform: translate(${Math.round(W*0.58)}px, ${Math.round(H*0.06)}px) rotate(-10deg); }
+          88%  { transform: translate(${Math.round(W*0.72)}px, ${Math.round(H*0.52)}px) rotate(4deg); }
+          100% { transform: translate(${Math.round(W*0.72)}px, ${Math.round(H*0.64)}px) rotate(0deg); opacity: 1; }
+        }
+        @keyframes beebob {
+          0%, 100% { transform: translate(${Math.round(W*0.72)}px, ${Math.round(H*0.64)}px) rotate(0deg); }
+          50%       { transform: translate(${Math.round(W*0.72)}px, ${Math.round(H*0.64) - 4}px) rotate(0deg); }
+        }
+        @keyframes trailFade {
+          0%   { opacity: 0.7; transform: scale(1); }
+          100% { opacity: 0; transform: scale(0.3); }
+        }
+        .bee-fly {
+          position: absolute;
+          top: 0; left: 0;
+          font-size: ${size}px;
+          line-height: 1;
+          animation:
+            beefly 3.2s cubic-bezier(.25,.46,.45,.94) 0.9s both,
+            beebob 2.2s ease-in-out ${0.9 + 3.2}s infinite;
+          will-change: transform;
+          user-select: none;
+        }
+        .bee-trail {
+          position: absolute;
+          top: 0; left: 0;
+          pointer-events: none;
+        }
+        .bee-trail span {
+          position: absolute;
+          border-radius: 50%;
+          animation: trailFade .8s ease-out forwards;
+        }
+      `}</style>
+      <div className="bee-fly">🐝</div>
     </div>
   );
 };
