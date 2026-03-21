@@ -979,205 +979,170 @@ const NavPanel = ({open,onClose,view,setView,count,isPro}) => {
 const BeeAnimator = ({show, isDesktop}) => {
   const canvasRef = useRef(null);
   const rafRef = useRef(null);
+  const imgRef = useRef(null);
+  const readyRef = useRef(false);
+
+  useEffect(() => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => { imgRef.current = img; readyRef.current = true; };
+    img.src = "https://res.cloudinary.com/dmaupzhcx/image/upload/v1774117344/yarnhive_bee_clean.png";
+  }, []);
 
   useEffect(() => {
     if (!show) { if (rafRef.current) cancelAnimationFrame(rafRef.current); return; }
+    const tryStart = () => {
+      if (!readyRef.current || !canvasRef.current) { setTimeout(tryStart, 80); return; }
+      startAnim();
+    };
+    tryStart();
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+  }, [show, isDesktop]);
+
+  const startAnim = () => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    const W = canvas.width;
-    const H = canvas.height;
+    const W = canvas.width, H = canvas.height;
+    const img = imgRef.current;
 
-    // All positions as fractions of canvas dimensions so nothing clips
-    // Bee enters from LEFT, off-screen, arcs UP across full width, 
-    // then descends smoothly to land at bottom-right of canvas
-    // Landing = where bee sits perched on top of the glass card
-    const LX = W * 0.72;
-    const LY = H - 30; // 30px from bottom so bee is fully visible
+    // Bee size — consistent regardless of device
+    const BEE_W = isDesktop ? 90 : 74;
+    const BEE_H = BEE_W * (img.height / img.width);
 
-    // Cubic bezier control points
-    // Start: off-screen left, vertically centered
-    const p0 = { x: -50,      y: H * 0.55 };
-    // CP1: pull up and right — creates the upswing
-    const p1 = { x: W * 0.05, y: -H * 0.8 };
-    // CP2: pull across and down toward landing
-    const p2 = { x: W * 0.95, y: -H * 0.1 };
-    // End: landing spot
-    const p3 = { x: LX,       y: LY };
+    // Landing spot: right-center of canvas bottom
+    const LX = W * 0.73, LY = H - BEE_H * 0.5;
 
-    const FLIGHT_MS = 3200; // slower = smoother feeling
-    const SETTLE_MS = 400;  // extra deceleration at end
+    // Bezier: enter from LEFT off-screen, wide arc up and across, descend to land
+    const p0 = { x: -BEE_W,   y: H * 0.6   };   // start: left off-screen
+    const p1 = { x: W * 0.08, y: -H * 0.5  };   // CP1: swoop up
+    const p2 = { x: W * 0.92, y: -H * 0.05 };   // CP2: across the top
+    const p3 = { x: LX,       y: LY         };   // land
 
-    // Custom ease: starts at medium speed, gentle S-curve, very slow landing
+    const FLIGHT_MS = 3000;
+
+    // Ease: cubic — fast in middle, slow at start and very slow at end
     const ease = t => {
-      // Slow-in, slow-out with extra lingering at the end
-      if (t < 0.15) {
-        // Gentle start
-        return 0.08 * (t / 0.15);
-      } else if (t < 0.75) {
-        // Main flight — smooth through
-        const s = (t - 0.15) / 0.6;
-        return 0.08 + 0.76 * (s < 0.5 ? 2*s*s : -1+(4-2*s)*s);
-      } else {
-        // Long deceleration into landing
-        const s = (t - 0.75) / 0.25;
-        return 0.84 + 0.16 * (1 - Math.pow(1 - s, 4));
-      }
+      if (t < 0.1) return t * 0.5; // slow start
+      if (t < 0.8) return 0.05 + 0.85 * ((t-0.1)/0.7);
+      return 0.9 + 0.1 * (1 - Math.pow(1-(t-0.8)/0.2, 3)); // decelerate to land
     };
 
-    const bezier = t => {
-      const u = 1 - t;
+    const bez = t => {
+      const u = 1-t;
       return {
         x: u*u*u*p0.x + 3*u*u*t*p1.x + 3*u*t*t*p2.x + t*t*t*p3.x,
         y: u*u*u*p0.y + 3*u*u*t*p1.y + 3*u*t*t*p2.y + t*t*t*p3.y,
       };
     };
-    const bezierTangent = t => {
-      const u = 1 - t;
+    const bezD = t => {
+      const u = 1-t;
       return {
-        x: 3*(u*u*(p1.x-p0.x) + 2*u*t*(p2.x-p1.x) + t*t*(p3.x-p2.x)),
-        y: 3*(u*u*(p1.y-p0.y) + 2*u*t*(p2.y-p1.y) + t*t*(p3.y-p2.y)),
+        x: 3*(u*u*(p1.x-p0.x)+2*u*t*(p2.x-p1.x)+t*t*(p3.x-p2.x)),
+        y: 3*(u*u*(p1.y-p0.y)+2*u*t*(p2.y-p1.y)+t*t*(p3.y-p2.y)),
       };
     };
 
-    const TRAIL_COLORS = [
-      'rgba(255,210,60,',
-      'rgba(184,90,60,',
-      'rgba(255,245,160,',
-      'rgba(92,122,94,',
-      'rgba(255,170,60,',
-    ];
+    const COLORS = ['rgba(255,210,60,','rgba(184,90,60,','rgba(255,245,140,','rgba(92,122,94,','rgba(255,170,60,'];
     const trail = [];
-    let lastTrailTs = 0;
-    const TRAIL_GAP = 35; // ms between trail dot emissions
+    let lastTrail = 0;
 
-    let startTs = null;
-    let landed = false;
+    let startTs = null, landed = false;
 
     const frame = ts => {
       if (!startTs) startTs = ts;
       const elapsed = ts - startTs;
       ctx.clearRect(0, 0, W, H);
 
-      // ── Position ──
-      let pos, angle = 0;
+      let pos, angle;
       if (!landed) {
         const rawT = Math.min(elapsed / FLIGHT_MS, 1);
         const t = ease(rawT);
-        pos = bezier(t);
-        const tang = bezierTangent(t);
-        // Very subtle rotation — just enough to feel alive, not spin
-        angle = Math.atan2(tang.y, tang.x) * 0.18;
+        pos = bez(t);
+        const d = bezD(t);
+        // Angle faces direction of travel
+        angle = Math.atan2(d.y, d.x);
         if (rawT >= 1) landed = true;
+
+        // Emit trail
+        if (ts - lastTrail > 32) {
+          lastTrail = ts;
+          trail.push({
+            x: pos.x, y: pos.y,
+            born: ts, life: 650 + Math.random()*250,
+            r: 2.5 + Math.random()*3,
+            color: COLORS[Math.floor(Math.random()*COLORS.length)],
+          });
+        }
       } else {
-        // Gentle bob after landing
-        pos = { x: LX, y: LY + Math.sin(ts * 0.0018) * 2.2 };
+        pos = { x: LX, y: LY + Math.sin(ts*0.0016)*2 };
         angle = 0;
       }
 
-      // ── Emit trail dots from current position ──
-      if (!landed && ts - lastTrailTs > TRAIL_GAP) {
-        lastTrailTs = ts;
-        trail.push({
-          x: pos.x + (Math.random() - 0.5) * 4,
-          y: pos.y + (Math.random() - 0.5) * 4,
-          born: ts,
-          life: 600 + Math.random() * 300,
-          r: 2.2 + Math.random() * 3,
-          color: TRAIL_COLORS[Math.floor(Math.random() * TRAIL_COLORS.length)],
-        });
-      }
-
-      // ── Draw trail ──
-      for (let i = trail.length - 1; i >= 0; i--) {
+      // Draw trail
+      for (let i = trail.length-1; i >= 0; i--) {
         const dot = trail[i];
         const age = ts - dot.born;
-        if (age > dot.life) { trail.splice(i, 1); continue; }
-        const progress = age / dot.life;
-        const alpha = Math.pow(1 - progress, 1.4);
-        const r = Math.max(0.5, dot.r * (1 - progress * 0.45));
-
-        // Outer glow
+        if (age > dot.life) { trail.splice(i,1); continue; }
+        const p = age / dot.life;
+        const a = Math.pow(1-p, 1.3);
+        const r = dot.r * (1 - p*0.4);
         ctx.save();
-        ctx.globalAlpha = alpha * 0.28;
-        ctx.shadowColor = dot.color + '1)';
-        ctx.shadowBlur = 10;
-        ctx.fillStyle = dot.color + '1)';
-        ctx.beginPath();
-        ctx.arc(dot.x, dot.y, r * 2, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.globalAlpha = a * 0.25;
+        ctx.shadowColor = dot.color+'1)'; ctx.shadowBlur = 10;
+        ctx.fillStyle = dot.color+'1)';
+        ctx.beginPath(); ctx.arc(dot.x, dot.y, r*2.2, 0, Math.PI*2); ctx.fill();
         ctx.restore();
-
-        // Core dot
         ctx.save();
-        ctx.globalAlpha = alpha * 0.9;
-        ctx.fillStyle = dot.color + '1)';
-        ctx.beginPath();
-        ctx.arc(dot.x, dot.y, r, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.globalAlpha = a * 0.88;
+        ctx.fillStyle = dot.color+'1)';
+        ctx.beginPath(); ctx.arc(dot.x, dot.y, r, 0, Math.PI*2); ctx.fill();
         ctx.restore();
       }
 
-      // ── Shadow on landing ──
-      const rawProgress = Math.min(elapsed / FLIGHT_MS, 1);
-      if (rawProgress > 0.8 || landed) {
-        const fade = landed ? 1 : (rawProgress - 0.8) / 0.2;
+      // Shadow on landing
+      const rawProgress = Math.min(elapsed/FLIGHT_MS, 1);
+      if (rawProgress > 0.78 || landed) {
+        const fade = landed ? 1 : (rawProgress-0.78)/0.22;
         ctx.save();
         ctx.globalAlpha = 0.2 * fade;
         ctx.filter = 'blur(5px)';
-        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+        ctx.fillStyle = 'rgba(0,0,0,0.55)';
         ctx.beginPath();
-        ctx.ellipse(LX + 2, LY + 14, 18, 4, 0, 0, Math.PI * 2);
+        ctx.ellipse(LX + BEE_W*0.05, LY + BEE_H*0.55, BEE_W*0.38, BEE_H*0.1, 0, 0, Math.PI*2);
         ctx.fill();
         ctx.restore();
       }
 
-      // ── Draw bee ──
-      const SIZE = isDesktop ? 56 : 48;
-      const flutterSpeed = landed ? 0.007 : 0.028;
-      const flutterAmp = landed ? 1.2 : 2.8;
-      const flutter = Math.sin(ts * flutterSpeed) * flutterAmp;
-
+      // Draw bee PNG — rotated to face direction of travel
       ctx.save();
-      ctx.translate(pos.x, pos.y + flutter);
-      ctx.rotate(angle);
-      ctx.font = `${SIZE}px serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      // Drop shadow on the bee itself
-      ctx.shadowColor = 'rgba(0,0,0,0.35)';
-      ctx.shadowBlur = 8;
-      ctx.shadowOffsetY = 4;
-      ctx.fillText('🐝', 0, 0);
+      ctx.translate(pos.x, pos.y);
+      // Only tilt during flight, snap to level on land
+      const tilt = landed ? 0 : angle * 0.4;
+      ctx.rotate(tilt);
+      // Subtle wing bob — very small, vertical only, slow
+      const bob = landed ? Math.sin(ts*0.0016)*1.5 : Math.sin(ts*0.022)*1.8;
+      ctx.translate(0, bob);
+      ctx.drawImage(img, -BEE_W/2, -BEE_H/2, BEE_W, BEE_H);
       ctx.restore();
 
       rafRef.current = requestAnimationFrame(frame);
     };
 
     rafRef.current = requestAnimationFrame(frame);
-    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
-  }, [show, isDesktop]);
+  };
 
   if (!show) return null;
-
-  // Canvas tall enough that the full arc is visible above the card
-  const W = isDesktop ? 420 : 360;
-  const H = isDesktop ? 160 : 140;
-
+  const W = isDesktop ? 440 : 370;
+  const H = isDesktop ? 180 : 150;
   return (
     <canvas
       ref={canvasRef}
-      width={W}
-      height={H}
+      width={W} height={H}
       style={{
-        display: 'block',
-        width: W,
-        height: H,
-        // Overlap the card by (H - 30px) so bee appears to sit ON the card top
-        marginBottom: -(H - 30),
-        position: 'relative',
-        zIndex: 2,
-        pointerEvents: 'none',
+        display:'block', width:W, height:H,
+        marginBottom:-(H-22),
+        position:'relative', zIndex:2,
+        pointerEvents:'none',
       }}
     />
   );
@@ -1829,7 +1794,9 @@ export default function YarnHive() {
   const TITLE_MAP={collection:"Your Hive",wip:"In Progress",browse:"Browse Sites",stash:"Yarn Stash",calculator:"Calculators",shopping:"Shopping List"};
 
   if(isDesktop) return (
-    <div style={{display:"flex",minHeight:"100vh",width:"100%",background:T.bg,fontFamily:T.sans}}>
+    <div style={{display:"flex",minHeight:"100vh",width:"100%",background:T.bg,fontFamily:T.sans,position:"relative"}}>
+      {/* Subtle world bg tint behind entire app */}
+      <div style={{position:"fixed",inset:0,zIndex:0,pointerEvents:"none",backgroundImage:`url(${PHOTOS.world})`,backgroundSize:"cover",backgroundPosition:"center",opacity:0.04,filter:"saturate(1.2)"}}/>  
       <CSS/>
       {showPaywall&&<PaywallGate patternCount={patterns.length} onClose={()=>setShowPaywall(false)} onUpgrade={()=>setShowPaywall(false)}/>}
       {addOpen&&<AddPatternModal onClose={()=>setAddOpen(false)} onSave={handleAddPattern} isPro={isPro} patternCount={patterns.length}/>}
@@ -1856,6 +1823,7 @@ export default function YarnHive() {
 
   return (
     <div style={{fontFamily:T.sans,background:T.bg,minHeight:"100vh",maxWidth:isTablet?680:430,margin:"0 auto",display:"flex",flexDirection:"column",position:"relative"}}>
+      <div style={{position:"fixed",inset:0,zIndex:0,pointerEvents:"none",backgroundImage:`url(${PHOTOS.world})`,backgroundSize:"cover",backgroundPosition:"center",opacity:0.045,filter:"saturate(1.2)"}}/>  
       <CSS/>
       <NavPanel open={navOpen} onClose={()=>setNavOpen(false)} view={view} setView={setView} count={patterns.length} isPro={isPro}/>
       {showPaywall&&<PaywallGate patternCount={patterns.length} onClose={()=>setShowPaywall(false)} onUpgrade={()=>setShowPaywall(false)}/>}
