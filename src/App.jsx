@@ -976,60 +976,74 @@ const NavPanel = ({open,onClose,view,setView,count,isPro}) => {
   );
 };
 
-const BeeAnimator = ({show, cardWidth}) => {
+const BeeAnimator = ({show, isDesktop}) => {
   const canvasRef = useRef(null);
   const rafRef = useRef(null);
   const startRef = useRef(null);
-  const DURATION = 2600; // ms total flight
-  const BEE_SRC = "https://res.cloudinary.com/dmaupzhcx/image/upload/v1774114006/Gemini_Generated_Image_ek61x5ek61x5ek61_ukkaaa.png";
-  const [img, setImg] = useState(null);
-  const [particles, setParticles] = useState([]);
+  const imgRef = useRef(null);
   const particleRef = useRef([]);
   const lastPosRef = useRef(null);
+  const imgLoadedRef = useRef(false);
+  const DURATION = 2600;
+  const BEE_SRC = "https://res.cloudinary.com/dmaupzhcx/image/upload/v1774114006/Gemini_Generated_Image_ek61x5ek61x5ek61_ukkaaa.png";
 
   useEffect(() => {
-    const i = new window.Image();
-    i.onload = () => setImg(i);
-    i.src = BEE_SRC;
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => { imgRef.current = img; imgLoadedRef.current = true; };
+    img.src = BEE_SRC;
   }, []);
 
   useEffect(() => {
-    if (!show || !img || !canvasRef.current) return;
+    if (!show) { if(rafRef.current) cancelAnimationFrame(rafRef.current); return; }
+
+    const tryStart = () => {
+      if (!imgLoadedRef.current || !canvasRef.current) {
+        setTimeout(tryStart, 100);
+        return;
+      }
+      startAnimation();
+    };
+    tryStart();
+
+    return () => { if(rafRef.current) cancelAnimationFrame(rafRef.current); };
+  }, [show, isDesktop]);
+
+  const startAnimation = () => {
     const canvas = canvasRef.current;
+    if(!canvas) return;
     const ctx = canvas.getContext('2d');
     const W = canvas.width, H = canvas.height;
+    const img = imgRef.current;
 
-    // Bezier path: start upper-right, arc across, land center-right of card
-    const p0 = { x: W + 80, y: -60 };            // start off-screen right
-    const p1 = { x: W * 0.55, y: -40 };           // first control — pull left high
-    const p2 = { x: W * 0.62, y: H * 0.35 };     // second control — dip down
-    const p3 = { x: W * 0.72, y: H - 8 };        // land right side top of card
+    const p0 = { x: W + 90, y: -70 };
+    const p1 = { x: W * 0.7, y: -50 };
+    const p2 = { x: W * 0.65, y: H * 0.3 };
+    const p3 = { x: W * 0.74, y: H - 6 };
 
-    const bezier = (t) => {
+    const bezier = t => {
       const mt = 1 - t;
       return {
         x: mt*mt*mt*p0.x + 3*mt*mt*t*p1.x + 3*mt*t*t*p2.x + t*t*t*p3.x,
         y: mt*mt*mt*p0.y + 3*mt*mt*t*p1.y + 3*mt*t*t*p2.y + t*t*t*p3.y,
       };
     };
-    // derivative for rotation
-    const bezierD = (t) => {
+    const bezierD = t => {
       const mt = 1 - t;
       return {
-        x: 3*(mt*mt*(p1.x-p0.x) + 2*mt*t*(p2.x-p1.x) + t*t*(p3.x-p2.x)),
-        y: 3*(mt*mt*(p1.y-p0.y) + 2*mt*t*(p2.y-p1.y) + t*t*(p3.y-p2.y)),
+        x: 3*(mt*mt*(p1.x-p0.x)+2*mt*t*(p2.x-p1.x)+t*t*(p3.x-p2.x)),
+        y: 3*(mt*mt*(p1.y-p0.y)+2*mt*t*(p2.y-p1.y)+t*t*(p3.y-p2.y)),
       };
     };
+    const ease = t => t < 0.7
+      ? 1 - Math.pow(1 - t/0.7, 2.4)
+      : 0.88 + 0.12*(1 - Math.pow(1-(t-0.7)/0.3, 3));
 
-    // Ease: fast approach, decelerate to land
-    const ease = (t) => t < 0.7
-      ? 1 - Math.pow(1 - t/0.7, 2.2)
-      : 0.88 + 0.12 * (1 - Math.pow(1 - (t - 0.7)/0.3, 3));
-
+    const COLORS = ['rgba(184,144,44,.85)','rgba(184,90,60,.75)','rgba(255,210,80,.85)','rgba(92,122,94,.75)','rgba(255,240,180,.9)'];
     startRef.current = null;
     particleRef.current = [];
 
-    const frame = (ts) => {
+    const frame = ts => {
       if (!startRef.current) startRef.current = ts;
       const elapsed = ts - startRef.current;
       const raw = Math.min(elapsed / DURATION, 1);
@@ -1037,69 +1051,65 @@ const BeeAnimator = ({show, cardWidth}) => {
 
       ctx.clearRect(0, 0, W, H);
 
-      // Update + draw particles
+      // Age + draw particles
       particleRef.current = particleRef.current
         .filter(p => p.life > 0)
-        .map(p => ({ ...p, x: p.x + p.vx, y: p.y + p.vy, life: p.life - 1, r: p.r * 0.92 }));
+        .map(p => ({...p, x:p.x+p.vx, y:p.y+p.vy, life:p.life-1, r:p.r*0.93}));
 
-      particleRef.current.forEach(p => {
+      for(const p of particleRef.current) {
         ctx.save();
-        ctx.globalAlpha = p.life / p.maxLife * 0.75;
+        ctx.globalAlpha = (p.life/p.maxLife)*0.8;
         ctx.fillStyle = p.color;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+        ctx.arc(p.x, p.y, Math.max(0,p.r), 0, Math.PI*2);
         ctx.fill();
         ctx.restore();
-      });
+      }
 
       const pos = bezier(t);
       const d = bezierD(t);
-      const angle = Math.atan2(d.y, d.x) * 0.35; // gentle tilt
+      const angle = Math.atan2(d.y, d.x) * 0.3;
+      const size = isDesktop ? 70 : 56;
 
-      // Spawn particles from bee position every few frames while flying
-      if (raw < 0.92 && Math.random() < 0.55 && lastPosRef.current) {
-        const colors = ['rgba(184,144,44,0.8)','rgba(184,90,60,0.7)','rgba(255,210,80,0.8)','rgba(92,122,94,0.7)','rgba(255,255,220,0.9)'];
+      // Emit particles from current bee pos while flying
+      if (raw < 0.9 && lastPosRef.current && Math.random() < 0.6) {
         particleRef.current.push({
-          x: lastPosRef.current.x + (Math.random()-0.5)*10,
-          y: lastPosRef.current.y + (Math.random()-0.5)*10,
-          vx: (Math.random()-0.5)*1.8,
-          vy: Math.random()*-1.2 - 0.3,
-          r: Math.random()*4 + 2,
-          life: Math.floor(Math.random()*22 + 14),
-          maxLife: 36,
-          color: colors[Math.floor(Math.random()*colors.length)]
+          x: lastPosRef.current.x + (Math.random()-0.5)*8,
+          y: lastPosRef.current.y + (Math.random()-0.5)*8,
+          vx: (Math.random()-0.5)*2,
+          vy: Math.random()*-1.5 - 0.2,
+          r: Math.random()*4+2,
+          life: Math.floor(Math.random()*20+12),
+          maxLife: 32,
+          color: COLORS[Math.floor(Math.random()*COLORS.length)]
         });
       }
-      lastPosRef.current = pos;
+      lastPosRef.current = {x:pos.x, y:pos.y};
 
-      const size = isDesktop ? 72 : 58;
-      const shadowScale = 0.2 + 0.8 * t; // shadow grows as bee descends
-      const shadowAlpha = 0.1 + 0.35 * t;
-
-      // Draw shadow on ground (flat ellipse)
-      if (t > 0.3) {
+      // Ground shadow grows as bee descends
+      if (t > 0.25) {
+        const shadowProgress = Math.min((t-0.25)/0.6, 1);
         ctx.save();
-        ctx.globalAlpha = shadowAlpha * Math.min((t - 0.3)/0.5, 1);
-        ctx.fillStyle = 'rgba(0,0,0,0.35)';
+        ctx.globalAlpha = 0.28 * shadowProgress;
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
         ctx.beginPath();
-        ctx.ellipse(p3.x, p3.y + 4, size * 0.38 * shadowScale, size * 0.08 * shadowScale, 0, 0, Math.PI*2);
+        ctx.ellipse(p3.x, p3.y+5, size*0.4*shadowProgress, size*0.09*shadowProgress, 0, 0, Math.PI*2);
         ctx.fill();
         ctx.restore();
       }
 
-      // Draw bee drop shadow (blur via filter)
+      // Bee blur shadow
       ctx.save();
-      ctx.globalAlpha = 0.3 * t;
+      ctx.globalAlpha = 0.25 * t;
       ctx.filter = 'blur(6px)';
-      ctx.drawImage(img, pos.x - size/2 + 4, pos.y - size/2 + 10, size, size);
+      ctx.drawImage(img, pos.x-size/2+5, pos.y-size/2+12, size, size);
       ctx.restore();
 
-      // Draw bee
+      // Bee body with rotation + wing flutter
       ctx.save();
       ctx.translate(pos.x, pos.y);
       ctx.rotate(angle);
-      // Wing flutter: subtle vertical oscillation
-      const flutter = Math.sin(elapsed * 0.028) * (raw < 0.9 ? 2.5 : 0.6);
+      const flutter = Math.sin(elapsed*0.03) * (raw < 0.88 ? 2.8 : 0.5);
       ctx.translate(0, flutter);
       ctx.drawImage(img, -size/2, -size/2, size, size);
       ctx.restore();
@@ -1107,48 +1117,45 @@ const BeeAnimator = ({show, cardWidth}) => {
       if (raw < 1) {
         rafRef.current = requestAnimationFrame(frame);
       } else {
-        // Final settled position with gentle bob
-        const bobFrame = (ts2) => {
+        // Landed: continuous gentle bob
+        const bob = ts2 => {
+          if(!canvasRef.current) return;
           ctx.clearRect(0, 0, W, H);
-          const bob = Math.sin(ts2 * 0.002) * 1.8;
+          const b = Math.sin(ts2*0.0018)*2.2;
 
-          // Ground shadow
           ctx.save();
-          ctx.globalAlpha = 0.35;
-          ctx.fillStyle = 'rgba(0,0,0,0.35)';
+          ctx.globalAlpha = 0.3;
+          ctx.fillStyle = 'rgba(0,0,0,0.5)';
           ctx.beginPath();
-          ctx.ellipse(p3.x, p3.y + 4, size*0.38, size*0.08, 0, 0, Math.PI*2);
+          ctx.ellipse(p3.x, p3.y+5, size*0.4, size*0.09, 0, 0, Math.PI*2);
           ctx.fill();
           ctx.restore();
 
-          // Bee shadow
           ctx.save();
-          ctx.globalAlpha = 0.25;
+          ctx.globalAlpha = 0.22;
           ctx.filter = 'blur(5px)';
-          ctx.drawImage(img, p3.x - size/2 + 3, p3.y - size/2 + 8 + bob, size, size);
+          ctx.drawImage(img, p3.x-size/2+4, p3.y-size/2+10+b, size, size);
           ctx.restore();
 
-          // Bee
-          ctx.drawImage(img, p3.x - size/2, p3.y - size/2 + bob, size, size);
-          rafRef.current = requestAnimationFrame(bobFrame);
+          ctx.drawImage(img, p3.x-size/2, p3.y-size/2+b, size, size);
+          rafRef.current = requestAnimationFrame(bob);
         };
-        rafRef.current = requestAnimationFrame(bobFrame);
+        rafRef.current = requestAnimationFrame(bob);
       }
     };
 
     rafRef.current = requestAnimationFrame(frame);
-    return () => rafRef.current && cancelAnimationFrame(rafRef.current);
-  }, [show, img, isDesktop]);
+  };
 
-  if (!show || !img) return null;
+  if (!show) return null;
   const W = isDesktop ? 420 : 360;
-  const H = 90;
+  const H = 88;
   return (
     <canvas
       ref={canvasRef}
       width={W}
       height={H}
-      style={{display:"block",width:W,height:H,marginBottom:-H+12,position:"relative",zIndex:2,pointerEvents:"none"}}
+      style={{display:"block",width:W,height:H,marginBottom:-H+14,position:"relative",zIndex:2,pointerEvents:"none"}}
     />
   );
 };
