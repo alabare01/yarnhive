@@ -1191,36 +1191,46 @@ const Auth = ({onEnter,onEnterAsPro}) => {
   );
 
   /* ── Tier / App Store info modals ── */
+  const ICON = {
+    yarn: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 6.5 17.5M2.5 8.5A10 10 0 0 1 19 19M2 12h4M18 12h4M12 2v4M12 18v4"/></svg>,
+    sparkle: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>,
+    apple: <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>,
+    googleplay: <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4.5 21.5L13.5 12L4.5 2.5C4 2.8 3.5 3.4 3.5 4.2v15.6c0 .8.5 1.4 1 1.7z" fill="#4285F4"/><path d="M17 15.5L14 13.8 13.5 12 14 10.2 17 8.5 20.5 10.5c1 .6 1 1.4 0 2L17 15.5z" fill="#FBBC05"/><path d="M4.5 21.5L13.5 12 17 15.5 6.5 21.2c-.8.4-1.6.3-2-.3z" fill="#EA4335"/><path d="M4.5 2.5L13.5 12 17 8.5 6.5 2.8c-.8-.4-1.6-.3-2 .3-.1.1-.1.2 0 .4z" fill="#34A853"/></svg>,
+  };
+
   const MODALS = {
     free: {
-      icon:"🧶",
+      icon: ICON.yarn,
+      iconBg: T.terraLt,
+      iconColor: T.terra,
       title:"Start for Free",
       subtitle:"Everything you need to get started — no credit card required.",
-      color: T.terra,
+      gradient: null,
       features:[
-        {icon:"📚",label:"5 pattern slots",sub:"Save your favorite patterns and track progress"},
-        {icon:"🐝",label:"Hive Vision scans",sub:"3 free photo-to-pattern scans per month"},
-        {icon:"⚖️",label:"Full calculator suite",sub:"Gauge, yardage, resize — all unlocked"},
-        {icon:"🎀",label:"Yarn stash tracker",sub:"Know exactly what you have before you buy"},
-        {icon:"🔗",label:"All import methods",sub:"URL, PDF, manual entry — use them all"},
+        {label:"5 pattern slots",sub:"Save your favorite patterns and track progress"},
+        {label:"Hive Vision scans",sub:"3 free photo-to-pattern scans per month"},
+        {label:"Full calculator suite",sub:"Gauge, yardage, resize — all unlocked"},
+        {label:"Yarn stash tracker",sub:"Know exactly what you have before you buy"},
+        {label:"All import methods",sub:"URL, PDF, manual entry — use them all"},
       ],
       cta:"Create free account",
       ctaAction: "signup",
       footnote:"Upgrade to Pro anytime — your patterns come with you.",
     },
     pro: {
-      icon:"✨",
+      icon: ICON.sparkle,
+      iconBg: `linear-gradient(145deg,${T.terra},#6B2410)`,
+      iconColor: "#fff",
       title:"YarnHive Pro",
       subtitle:"Unlimited everything. Built for makers who are serious about their craft.",
-      color: T.terra,
       gradient: `linear-gradient(145deg,${T.terra},#6B2410)`,
       features:[
-        {icon:"♾️",label:"Unlimited patterns",sub:"No cap. Save every pattern you'll ever make"},
-        {icon:"🐝",label:"Unlimited Hive Vision",sub:"Scan as many finished objects as you want"},
-        {icon:"☁️",label:"Cloud sync",sub:"Access your hive on every device, always in sync"},
-        {icon:"📖",label:"Pattern Help AI",sub:"Get AI-powered help for any row you're stuck on"},
-        {icon:"📊",label:"Advanced analytics",sub:"Track your making history and stash usage"},
-        {icon:"🏆",label:"Early access",sub:"First to get every new feature we ship"},
+        {label:"Unlimited patterns",sub:"No cap. Save every pattern you'll ever make"},
+        {label:"Unlimited Hive Vision",sub:"Scan as many finished objects as you want"},
+        {label:"Cloud sync",sub:"Access your hive on every device, always in sync"},
+        {label:"Pattern Help AI",sub:"Get AI-powered help for any row you're stuck on"},
+        {label:"Advanced analytics",sub:"Track your making history and stash usage"},
+        {label:"Early access",sub:"First to get every new feature we ship"},
       ],
       cta:"Get Pro — $9.99/mo",
       ctaAlt:"$74.99/yr — save 37%",
@@ -1228,15 +1238,17 @@ const Auth = ({onEnter,onEnterAsPro}) => {
       footnote:"Cancel anytime. No questions asked.",
     },
     ios: {
-      icon:"🍎",
+      icon: ICON.apple,
+      iconBg: "#000",
+      iconColor: "#fff",
       title:"YarnHive for iPhone",
-      subtitle:"The full YarnHive experience in your pocket — coming soon to the App Store.",
-      color:"#000",
+      subtitle:"The full YarnHive experience in your pocket — coming to the App Store.",
+      gradient: null,
       features:[
-        {icon:"📸",label:"Camera-first Hive Vision",sub:"Point, tap, get a pattern — right from your camera"},
-        {icon:"🔔",label:"Row reminders",sub:"Never lose your place with smart row notifications"},
-        {icon:"📶",label:"Offline mode",sub:"Access your patterns anywhere, no signal needed"},
-        {icon:"🔄",label:"Seamless sync",sub:"Start on web, continue on mobile — everything syncs"},
+        {label:"Camera-first Hive Vision",sub:"Point, tap, get a pattern — right from your camera"},
+        {label:"Row reminders",sub:"Never lose your place with smart row notifications"},
+        {label:"Offline mode",sub:"Access your patterns anywhere, no signal needed"},
+        {label:"Seamless sync",sub:"Start on web, continue on mobile — everything syncs"},
       ],
       cta:"Notify me when it's live",
       ctaAction: "notify",
@@ -1244,15 +1256,17 @@ const Auth = ({onEnter,onEnterAsPro}) => {
       footnote:"Be first in line — we'll email you the day it launches.",
     },
     android: {
-      icon:"▶",
+      icon: ICON.googleplay,
+      iconBg: "#fff",
+      iconColor: "#000",
       title:"YarnHive for Android",
       subtitle:"Everything iPhone gets, built natively for Android — coming to Google Play.",
-      color:"#1a73e8",
+      gradient: null,
       features:[
-        {icon:"📸",label:"Native camera scanner",sub:"Hive Vision built right into the Android experience"},
-        {icon:"🔔",label:"Row reminders",sub:"Smart notifications keep you on track"},
-        {icon:"📶",label:"Offline mode",sub:"Your patterns are always available, signal or not"},
-        {icon:"🔄",label:"Cross-device sync",sub:"Web, iOS, Android — one hive everywhere"},
+        {label:"Native camera scanner",sub:"Hive Vision built right into the Android experience"},
+        {label:"Row reminders",sub:"Smart notifications keep you on track"},
+        {label:"Offline mode",sub:"Your patterns are always available, signal or not"},
+        {label:"Cross-device sync",sub:"Web, iOS, Android — one hive everywhere"},
       ],
       cta:"Notify me when it's live",
       ctaAction: "notify",
@@ -1302,102 +1316,6 @@ const Auth = ({onEnter,onEnterAsPro}) => {
 
   const WelcomeCard = () => (
     <div style={CARD_STYLE}>
-      {/* Modal — renders at fixed position, OUTSIDE card stacking context */}
-      {modal && (
-        <div style={{position:"fixed",inset:0,zIndex:500,display:"flex",alignItems:"flex-end"}} onClick={closeModal}>
-          <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.7)",backdropFilter:"blur(8px)"}}/>
-          <div
-            ref={sheetRef}
-            className="su"
-            onClick={e=>e.stopPropagation()}
-            onTouchStart={handleSwipeStart}
-            onTouchMove={handleSwipeMove}
-            onTouchEnd={handleSwipeEnd}
-            style={{position:"relative",background:T.surface,borderRadius:"22px 22px 0 0",width:"100%",maxHeight:"90vh",display:"flex",flexDirection:"column",zIndex:1,boxShadow:"0 -8px 40px rgba(0,0,0,0.3)",overflow:"hidden"}}
-          >
-            {/* Drag handle + close button */}
-            <div style={{flexShrink:0,padding:"14px 18px 0",display:"flex",alignItems:"center",justifyContent:"center",position:"relative"}}>
-              <div style={{width:36,height:3,background:T.border,borderRadius:99}}/>
-              <button onClick={closeModal} style={{position:"absolute",right:16,top:10,width:28,height:28,borderRadius:"50%",background:T.linen,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,color:T.ink3}}>×</button>
-            </div>
-
-            {/* Scrollable content */}
-            <div style={{flex:1,overflowY:"auto",padding:"16px 20px 40px"}}>
-              {/* Header */}
-              <div style={{display:"flex",alignItems:"flex-start",gap:14,marginBottom:20,paddingTop:4}}>
-                <div style={{
-                  width:48,height:48,borderRadius:14,flexShrink:0,
-                  background:modal.gradient||`linear-gradient(135deg,${T.terra},#7A2E14)`,
-                  display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,
-                  boxShadow:`0 6px 16px rgba(184,90,60,0.35)`,
-                }}>
-                  {modal.icon}
-                </div>
-                <div style={{flex:1,minWidth:0}}>
-                  {modal.badge&&(
-                    <div style={{display:"inline-block",background:T.terraLt,borderRadius:6,padding:"2px 8px",fontSize:9,fontWeight:700,color:T.terra,textTransform:"uppercase",letterSpacing:".1em",marginBottom:5}}>
-                      {modal.badge}
-                    </div>
-                  )}
-                  <div style={{fontFamily:T.serif,fontSize:20,fontWeight:700,color:T.ink,lineHeight:1.15,marginBottom:3}}>{modal.title}</div>
-                  <div style={{fontSize:12,color:T.ink3,lineHeight:1.55,fontWeight:300}}>{modal.subtitle}</div>
-                </div>
-              </div>
-
-              {/* Features */}
-              <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:20}}>
-                {modal.features.map((f,i)=>(
-                  <div key={i} style={{padding:"11px 14px",background:T.linen,borderRadius:12,borderLeft:`3px solid ${T.terra}`,border:`1px solid ${T.border}`,borderLeftWidth:3,borderLeftColor:T.terra}}>
-                    <div style={{fontSize:13,fontWeight:600,color:T.ink,lineHeight:1.2,marginBottom:2}}>{f.label}</div>
-                    <div style={{fontSize:11,color:T.ink3,lineHeight:1.5}}>{f.sub}</div>
-                  </div>
-                ))}
-              </div>
-
-              {/* CTA — signup or notify lead gen */}
-              {modal.ctaAction === 'notify' ? (
-                notifySubmitted ? (
-                  <div style={{background:T.sageLt,borderRadius:14,padding:"18px 16px",textAlign:"center",border:`1px solid rgba(92,122,94,.2)`}}>
-                    <div style={{fontSize:22,marginBottom:8}}>🎉</div>
-                    <div style={{fontFamily:T.serif,fontSize:17,fontWeight:700,color:T.sage,marginBottom:4}}>You're on the list!</div>
-                    <div style={{fontSize:12,color:T.ink3,lineHeight:1.6}}>We'll email you the day it launches.<br/>Thanks for your interest in YarnHive.</div>
-                  </div>
-                ) : (
-                  <div>
-                    <div style={{fontFamily:T.serif,fontSize:15,color:T.ink,marginBottom:10,fontWeight:600}}>Get notified when we launch</div>
-                    <div style={{display:"flex",gap:8,marginBottom:8}}>
-                      <input
-                        value={notifyEmail}
-                        onChange={e=>setNotifyEmail(e.target.value)}
-                        onKeyDown={e=>e.key==='Enter'&&handleNotifySubmit()}
-                        placeholder="your@email.com"
-                        type="email"
-                        style={{flex:1,padding:"13px 14px",background:T.linen,border:`1.5px solid ${T.border}`,borderRadius:12,fontSize:14,color:T.ink,outline:"none"}}
-                        onFocus={e=>e.target.style.borderColor=T.terra}
-                        onBlur={e=>e.target.style.borderColor=T.border}
-                      />
-                      <button
-                        onClick={handleNotifySubmit}
-                        disabled={notifyLoading||!notifyEmail.includes('@')}
-                        style={{background:`linear-gradient(135deg,${T.terra},#7A2E14)`,color:"#fff",border:"none",borderRadius:12,padding:"13px 16px",fontSize:14,fontWeight:600,cursor:notifyLoading?"not-allowed":"pointer",opacity:notifyEmail.includes('@')?1:0.5,transition:"opacity .15s",whiteSpace:"nowrap"}}
-                      >
-                        {notifyLoading ? '...' : 'Notify me'}
-                      </button>
-                    </div>
-                    <div style={{fontSize:11,color:T.ink3,lineHeight:1.5}}>{modal.footnote}</div>
-                  </div>
-                )
-              ) : (
-                <>
-                  <button onClick={handleModalCTA} style={{width:"100%",background:`linear-gradient(135deg,${T.terra},#7A2E14)`,color:"#fff",border:"none",borderRadius:14,padding:"15px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:`0 8px 24px rgba(184,90,60,.35)`,marginBottom:modal.ctaAlt?8:0}}>{modal.cta}</button>
-                  {modal.ctaAlt&&<button onClick={()=>{closeModal();setScreen('signup');}} style={{width:"100%",background:T.linen,border:`1.5px solid ${T.border}`,borderRadius:14,padding:"13px",fontSize:13,fontWeight:500,color:T.ink2,cursor:"pointer"}}>{modal.ctaAlt}</button>}
-                  {modal.footnote&&<div style={{textAlign:"center",marginTop:10,fontSize:11,color:T.ink3}}>{modal.footnote}</div>}
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
       <div style={{textAlign:"center",marginBottom:24}}>
         <div style={{display:"inline-flex",alignItems:"center",gap:9,background:"rgba(184,90,60,.09)",borderRadius:14,padding:"7px 16px",border:"1px solid rgba(184,90,60,.18)"}}>
@@ -1462,6 +1380,7 @@ const Auth = ({onEnter,onEnterAsPro}) => {
     <div style={{minHeight:"100vh",fontFamily:T.sans,position:"relative",overflow:"hidden",background:"#0A0804"}}>
       <CSS/>
       <style>{`
+        @keyframes sheetUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
         @keyframes worldPan { from{transform:scale(1.06) translateY(-8px)} to{transform:scale(1) translateY(0)} }
         @keyframes cardRise { from{opacity:0;transform:translateY(28px) scale(.98)} to{opacity:1;transform:translateY(0) scale(1)} }
         .world-bg  { animation: worldPan 1.6s cubic-bezier(.22,.68,0,1.05) both; }
@@ -1475,11 +1394,117 @@ const Auth = ({onEnter,onEnterAsPro}) => {
         }}/>
       </div>
       <div style={{position:"relative",zIndex:1,minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"24px 16px"}}>
-        <BeeAnimator show={!showForm} isDesktop={isDesktop}/>
+        <BeeAnimator show={!showForm && !activeModal} isDesktop={isDesktop}/>
         <div className="card-rise" style={{width:"100%",maxWidth:isDesktop?420:360}}>
           {showForm ? <FormCard/> : <WelcomeCard/>}
         </div>
       </div>
+      {/* Modal rendered HERE — outside card stacking context, true viewport fixed */}
+      {modal && (
+        <div style={{position:"fixed",inset:0,zIndex:600,display:"flex",alignItems:"flex-end"}} onClick={closeModal}>
+          <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.72)",backdropFilter:"blur(10px)"}}/>
+          <div
+            ref={sheetRef}
+            onClick={e=>e.stopPropagation()}
+            onTouchStart={handleSwipeStart}
+            onTouchMove={handleSwipeMove}
+            onTouchEnd={handleSwipeEnd}
+            style={{
+              position:"relative",
+              background:"#FDFAF7",
+              borderRadius:"24px 24px 0 0",
+              width:"100%",
+              maxHeight:"88vh",
+              display:"flex",
+              flexDirection:"column",
+              zIndex:1,
+              boxShadow:"0 -12px 48px rgba(0,0,0,0.28)",
+              overflow:"hidden",
+              animation:"sheetUp .3s cubic-bezier(.22,.68,0,1.05) both",
+            }}
+          >
+            {/* Handle row */}
+            <div style={{flexShrink:0,height:44,display:"flex",alignItems:"center",justifyContent:"center",position:"relative",borderBottom:`1px solid rgba(28,23,20,0.06)`}}>
+              <div style={{width:36,height:4,background:"rgba(28,23,20,0.15)",borderRadius:99}}/>
+              <button onClick={closeModal} style={{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",width:30,height:30,borderRadius:"50%",background:"rgba(28,23,20,0.07)",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,color:"rgba(28,23,20,0.45)",lineHeight:1}}>×</button>
+            </div>
+            {/* Content */}
+            <div style={{flex:1,overflowY:"auto",padding:"20px 20px 48px"}}>
+              {/* Header */}
+              <div style={{display:"flex",alignItems:"flex-start",gap:14,marginBottom:22}}>
+                <div style={{
+                  width:52,height:52,borderRadius:16,flexShrink:0,
+                  background:modal.iconBg||"rgba(184,90,60,0.12)",
+                  display:"flex",alignItems:"center",justifyContent:"center",
+                  color:modal.iconColor||"#B85A3C",
+                  border: modal.iconBg==="#fff" ? "1px solid rgba(28,23,20,0.1)" : "none",
+                  boxShadow: modal.iconBg==="black"||modal.iconBg==="#000" ? "0 4px 14px rgba(0,0,0,0.25)" : "0 4px 14px rgba(184,90,60,0.2)",
+                }}>
+                  {modal.icon}
+                </div>
+                <div style={{flex:1,minWidth:0,paddingTop:2}}>
+                  {modal.badge&&(
+                    <div style={{display:"inline-flex",alignItems:"center",background:"rgba(184,90,60,0.1)",borderRadius:6,padding:"3px 8px",fontSize:9,fontWeight:700,color:"#B85A3C",textTransform:"uppercase",letterSpacing:".1em",marginBottom:6}}>
+                      {modal.badge}
+                    </div>
+                  )}
+                  <div style={{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:700,color:"#1C1714",lineHeight:1.15,marginBottom:4}}>{modal.title}</div>
+                  <div style={{fontSize:13,color:"rgba(28,23,20,0.5)",lineHeight:1.55,fontWeight:300}}>{modal.subtitle}</div>
+                </div>
+              </div>
+              {/* Features — clean iOS grouped list style */}
+              <div style={{background:"rgba(244,237,227,0.6)",borderRadius:14,overflow:"hidden",border:"1px solid rgba(28,23,20,0.07)",marginBottom:20}}>
+                {modal.features.map((f,i)=>(
+                  <div key={i} style={{padding:"12px 16px",borderBottom: i<modal.features.length-1 ? "1px solid rgba(28,23,20,0.07)" : "none"}}>
+                    <div style={{fontSize:14,fontWeight:600,color:"#1C1714",lineHeight:1.2,marginBottom:2}}>{f.label}</div>
+                    <div style={{fontSize:12,color:"rgba(28,23,20,0.48)",lineHeight:1.5}}>{f.sub}</div>
+                  </div>
+                ))}
+              </div>
+              {/* CTA */}
+              {modal.ctaAction === 'notify' ? (
+                notifySubmitted ? (
+                  <div style={{background:"rgba(92,122,94,0.1)",borderRadius:14,padding:"20px 16px",textAlign:"center"}}>
+                    <div style={{fontSize:28,marginBottom:8}}>🎉</div>
+                    <div style={{fontFamily:"'Playfair Display',serif",fontSize:18,fontWeight:700,color:"#5C7A5E",marginBottom:4}}>You're on the list!</div>
+                    <div style={{fontSize:12,color:"rgba(28,23,20,0.5)",lineHeight:1.6}}>We'll email you the day it launches. Thanks for your support.</div>
+                  </div>
+                ) : (
+                  <div>
+                    <div style={{fontSize:13,fontWeight:600,color:"#1C1714",marginBottom:10}}>Get notified when we launch</div>
+                    <div style={{display:"flex",gap:8,marginBottom:8}}>
+                      <input
+                        value={notifyEmail}
+                        onChange={e=>setNotifyEmail(e.target.value)}
+                        onKeyDown={e=>e.key==='Enter'&&handleNotifySubmit()}
+                        placeholder="your@email.com"
+                        type="email"
+                        style={{flex:1,padding:"13px 14px",background:"rgba(244,237,227,0.8)",border:"1.5px solid rgba(28,23,20,0.12)",borderRadius:12,fontSize:14,color:"#1C1714",outline:"none",fontFamily:"inherit"}}
+                        onFocus={e=>e.target.style.borderColor="#B85A3C"}
+                        onBlur={e=>e.target.style.borderColor="rgba(28,23,20,0.12)"}
+                      />
+                      <button
+                        onClick={handleNotifySubmit}
+                        disabled={notifyLoading||!notifyEmail.includes('@')}
+                        style={{background:"linear-gradient(135deg,#B85A3C,#7A2E14)",color:"#fff",border:"none",borderRadius:12,padding:"0 18px",fontSize:14,fontWeight:600,cursor:notifyEmail.includes('@')?"pointer":"not-allowed",opacity:notifyEmail.includes('@')?1:0.45,transition:"opacity .15s",whiteSpace:"nowrap",height:48}}
+                      >
+                        {notifyLoading ? '...' : 'Notify me'}
+                      </button>
+                    </div>
+                    {modal.footnote&&<div style={{fontSize:11,color:"rgba(28,23,20,0.4)",lineHeight:1.5}}>{modal.footnote}</div>}
+                  </div>
+                )
+              ) : (
+                <>
+                  <button onClick={handleModalCTA} style={{width:"100%",background:"linear-gradient(135deg,#B85A3C,#7A2E14)",color:"#fff",border:"none",borderRadius:14,padding:"15px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 8px 24px rgba(184,90,60,0.35)",marginBottom:modal.ctaAlt?8:0}}>{modal.cta}</button>
+                  {modal.ctaAlt&&<button onClick={()=>{closeModal();setScreen('signup');}} style={{width:"100%",background:"rgba(244,237,227,0.8)",border:"1.5px solid rgba(28,23,20,0.1)",borderRadius:14,padding:"13px",fontSize:13,fontWeight:500,color:"rgba(28,23,20,0.7)",cursor:"pointer"}}>{modal.ctaAlt}</button>}
+                  {modal.footnote&&<div style={{textAlign:"center",marginTop:10,fontSize:11,color:"rgba(28,23,20,0.4)"}}>{modal.footnote}</div>}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
