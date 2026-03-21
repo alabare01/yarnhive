@@ -981,95 +981,109 @@ const BeeAnimator = ({visible, isDesktop}) => {
   const rafRef = useRef(null);
 
   useEffect(() => {
+    // Preload image first — nothing starts until image is fully decoded
     const img = new Image();
     img.crossOrigin = 'anonymous';
 
     img.onload = () => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-      const W = canvas.width, H = canvas.height;
-      const BEE_W = isDesktop ? 110 : 88;
-      const BEE_H = Math.round(BEE_W * img.height / img.width);
-      const LX = W * 0.76, LY = H - BEE_H * 0.5 - 8;
-
-      const p0 = {x:-BEE_W,   y:H*0.7 };
-      const p1 = {x:W*0.12,   y:H*0.04};
-      const p2 = {x:W*0.76,   y:H*0.02};
-      const p3 = {x:LX,       y:LY    };
-
-      const FLIGHT_MS = 3200;
-      const ease = t => {
-        if (t < 0.1) return 0.5*Math.pow(t/0.1,2);
-        if (t < 0.8) return 0.05+0.85*((t-0.1)/0.7);
-        return 0.9+0.1*(1-Math.pow(1-(t-0.8)/0.2,3));
-      };
-      const bez = t => {
-        const u=1-t;
-        return {x:u*u*u*p0.x+3*u*u*t*p1.x+3*u*t*t*p2.x+t*t*t*p3.x,
-                y:u*u*u*p0.y+3*u*u*t*p1.y+3*u*t*t*p2.y+t*t*t*p3.y};
-      };
-      const bezD = t => {
-        const u=1-t;
-        return {x:3*(u*u*(p1.x-p0.x)+2*u*t*(p2.x-p1.x)+t*t*(p3.x-p2.x)),
-                y:3*(u*u*(p1.y-p0.y)+2*u*t*(p2.y-p1.y)+t*t*(p3.y-p2.y))};
-      };
-
-      const COLORS = ['rgba(255,210,60,','rgba(184,90,60,','rgba(255,245,140,','rgba(92,122,94,','rgba(255,170,60,'];
-      const trail = []; let lastTrail = 0;
-      let startTs = null, landed = false;
-
-      const frame = ts => {
-        if (!startTs) startTs = ts;
-        const elapsed = ts - startTs;
-        ctx.clearRect(0,0,W,H);
-
-        let pos, angle=0;
-        if (!landed) {
-          const rawT = Math.min(elapsed/FLIGHT_MS,1);
-          const t = ease(rawT);
-          pos = bez(t);
-          const d = bezD(t);
-          angle = Math.atan2(d.y,d.x);
-          if (rawT>=1) landed=true;
-          if (pos.x>0 && ts-lastTrail>32) {
-            lastTrail=ts;
-            trail.push({x:pos.x+(Math.random()-.5)*4,y:pos.y+(Math.random()-.5)*4,
-              born:ts,life:600+Math.random()*280,r:2.5+Math.random()*3,
-              color:COLORS[Math.floor(Math.random()*COLORS.length)]});
-          }
-        } else {
-          pos={x:LX,y:LY+Math.sin(ts*0.0016)*2};
-        }
-
-        for (let i=trail.length-1;i>=0;i--) {
-          const dot=trail[i]; const age=ts-dot.born;
-          if (age>dot.life){trail.splice(i,1);continue;}
-          const p=age/dot.life; const a=Math.pow(1-p,1.3); const r=Math.max(.4,dot.r*(1-p*.4));
-          ctx.save(); ctx.globalAlpha=a*.22; ctx.fillStyle=dot.color+'1)';
-          ctx.beginPath(); ctx.arc(dot.x,dot.y,r*2.2,0,Math.PI*2); ctx.fill(); ctx.restore();
-          ctx.save(); ctx.globalAlpha=a*.88; ctx.fillStyle=dot.color+'1)';
-          ctx.beginPath(); ctx.arc(dot.x,dot.y,r,0,Math.PI*2); ctx.fill(); ctx.restore();
-        }
-
-        if (pos.x > -BEE_W*.3) {
-          const bob = Math.sin(ts*(landed?.0016:.024))*(landed?1.5:2.0);
-          const rawP = Math.min(elapsed/FLIGHT_MS,1);
-          const tilt = landed ? 0 : angle*.3*Math.max(0,1-rawP*1.8);
-          ctx.save();
-          ctx.translate(pos.x, pos.y+bob);
-          ctx.rotate(tilt);
-          ctx.drawImage(img,-BEE_W/2,-BEE_H/2,BEE_W,BEE_H);
-          ctx.restore();
-        }
-        rafRef.current = requestAnimationFrame(frame);
-      };
-      rafRef.current = requestAnimationFrame(frame);
+      // Wait 2 rAF ticks so browser finishes painting the card before we start
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const canvas = canvasRef.current;
+          if (!canvas) return;
+          startAnim(canvas, img, isDesktop);
+        });
+      });
     };
 
     img.src = "https://res.cloudinary.com/dmaupzhcx/image/upload/v1774117620/yarnhive_bee_large.png";
     return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
-  }, []); // run ONCE on mount, never again
+  }, []); // strictly once on mount
+
+  const startAnim = (canvas, img, desktop) => {
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    const BEE_W = desktop ? 110 : 88;
+    const BEE_H = Math.round(BEE_W * img.height / img.width);
+    const LX = W * 0.76, LY = H - BEE_H * 0.5 - 8;
+
+    const p0 = {x:-BEE_W,  y:H*0.7 };
+    const p1 = {x:W*0.12,  y:H*0.04};
+    const p2 = {x:W*0.76,  y:H*0.02};
+    const p3 = {x:LX,      y:LY    };
+
+    const FLIGHT_MS = 3200;
+    const ease = t => {
+      if (t < 0.1) return 0.5*Math.pow(t/0.1,2);
+      if (t < 0.8) return 0.05+0.85*((t-0.1)/0.7);
+      return 0.9+0.1*(1-Math.pow(1-(t-0.8)/0.2,3));
+    };
+    const bez = t => {
+      const u=1-t;
+      return {x:u*u*u*p0.x+3*u*u*t*p1.x+3*u*t*t*p2.x+t*t*t*p3.x,
+              y:u*u*u*p0.y+3*u*u*t*p1.y+3*u*t*t*p2.y+t*t*t*p3.y};
+    };
+    const bezD = t => {
+      const u=1-t;
+      return {x:3*(u*u*(p1.x-p0.x)+2*u*t*(p2.x-p1.x)+t*t*(p3.x-p2.x)),
+              y:3*(u*u*(p1.y-p0.y)+2*u*t*(p2.y-p1.y)+t*t*(p3.y-p2.y))};
+    };
+
+    const COLORS = ['rgba(255,210,60,','rgba(184,90,60,','rgba(255,245,140,','rgba(92,122,94,','rgba(255,170,60,'];
+    const trail = []; let lastTrail = 0;
+    let startTs = null, landed = false;
+
+    const frame = ts => {
+      if (!startTs) startTs = ts;
+      const elapsed = ts - startTs;
+      ctx.clearRect(0,0,W,H);
+
+      let pos, angle=0;
+      if (!landed) {
+        const rawT = Math.min(elapsed/FLIGHT_MS,1);
+        const t = ease(rawT);
+        pos = bez(t);
+        const d = bezD(t);
+        angle = Math.atan2(d.y,d.x);
+        if (rawT>=1) landed=true;
+        if (pos.x>0 && ts-lastTrail>32) {
+          lastTrail=ts;
+          trail.push({x:pos.x+(Math.random()-.5)*4,y:pos.y+(Math.random()-.5)*4,
+            born:ts,life:600+Math.random()*280,r:2.5+Math.random()*3,
+            color:COLORS[Math.floor(Math.random()*COLORS.length)]});
+        }
+      } else {
+        pos={x:LX,y:LY+Math.sin(ts*0.0016)*2};
+      }
+
+      for (let i=trail.length-1;i>=0;i--) {
+        const dot=trail[i]; const age=ts-dot.born;
+        if (age>dot.life){trail.splice(i,1);continue;}
+        const p=age/dot.life;
+        const a=Math.pow(1-p,1.3);
+        const r=Math.max(.4,dot.r*(1-p*.4));
+        ctx.save(); ctx.globalAlpha=a*.22; ctx.fillStyle=dot.color+'1)';
+        ctx.beginPath(); ctx.arc(dot.x,dot.y,r*2.2,0,Math.PI*2); ctx.fill(); ctx.restore();
+        ctx.save(); ctx.globalAlpha=a*.88; ctx.fillStyle=dot.color+'1)';
+        ctx.beginPath(); ctx.arc(dot.x,dot.y,r,0,Math.PI*2); ctx.fill(); ctx.restore();
+      }
+
+      if (pos.x > -BEE_W*.3) {
+        const bob = Math.sin(ts*(landed?.0016:.024))*(landed?1.5:2.0);
+        const rawP = Math.min(elapsed/FLIGHT_MS,1);
+        const tilt = landed ? 0 : angle*.3*Math.max(0,1-rawP*1.8);
+        ctx.save();
+        ctx.translate(pos.x, pos.y+bob);
+        ctx.rotate(tilt);
+        ctx.drawImage(img,-BEE_W/2,-BEE_H/2,BEE_W,BEE_H);
+        ctx.restore();
+      }
+
+      rafRef.current = requestAnimationFrame(frame);
+    };
+
+    rafRef.current = requestAnimationFrame(frame);
+  };
 
   const W = isDesktop ? 440 : 370;
   const H = isDesktop ? 180 : 155;
