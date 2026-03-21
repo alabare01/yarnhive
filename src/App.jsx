@@ -980,29 +980,23 @@ const BeeAnimator = ({show, isDesktop}) => {
   const canvasRef = useRef(null);
   const rafRef = useRef(null);
   const imgRef = useRef(null);
+  const hasRunRef = useRef(false); // never re-animate once played
 
-  // Preload image eagerly on mount — not tied to show state
   useEffect(() => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.src = "https://res.cloudinary.com/dmaupzhcx/image/upload/v1774117620/yarnhive_bee_large.png";
-    // Store immediately — onload fires when ready
     img.onload = () => { imgRef.current = img; };
   }, []);
 
   useEffect(() => {
-    if (!show) {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      return;
-    }
+    // Only ever run once — if already ran, do nothing
+    if (!show || hasRunRef.current) return;
 
-    // Wait until BOTH canvas exists AND image is loaded
-    // Use rAF polling so we sync to the browser paint cycle — no setTimeout jitter
     let waitRaf;
     const waitForReady = () => {
       if (canvasRef.current && imgRef.current && imgRef.current.complete && imgRef.current.naturalWidth > 0) {
-        // Image fully loaded and canvas mounted — start on NEXT paint
-        // This guarantees no flash from mid-frame starts
+        hasRunRef.current = true;
         requestAnimationFrame(() => startAnim());
       } else {
         waitRaf = requestAnimationFrame(waitForReady);
@@ -1012,9 +1006,13 @@ const BeeAnimator = ({show, isDesktop}) => {
 
     return () => {
       cancelAnimationFrame(waitRaf);
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [show, isDesktop]);
+  }, [show]);
+
+  // Cleanup only on unmount
+  useEffect(() => {
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+  }, []);
 
   const startAnim = () => {
     const canvas = canvasRef.current;
@@ -1033,13 +1031,11 @@ const BeeAnimator = ({show, isDesktop}) => {
     const p3 = { x: LX,       y: LY       };
 
     const FLIGHT_MS = 3200;
-
     const ease = t => {
       if (t < 0.1) return 0.5 * Math.pow(t / 0.1, 2);
       if (t < 0.8) return 0.05 + 0.85 * ((t - 0.1) / 0.7);
       return 0.9 + 0.1 * (1 - Math.pow(1 - (t - 0.8) / 0.2, 3));
     };
-
     const bez = t => {
       const u = 1-t;
       return {
@@ -1055,19 +1051,12 @@ const BeeAnimator = ({show, isDesktop}) => {
       };
     };
 
-    const COLORS = [
-      'rgba(255,210,60,',
-      'rgba(184,90,60,',
-      'rgba(255,245,140,',
-      'rgba(92,122,94,',
-      'rgba(255,170,60,',
-    ];
+    const COLORS = ['rgba(255,210,60,','rgba(184,90,60,','rgba(255,245,140,','rgba(92,122,94,','rgba(255,170,60,'];
     const trail = [];
     let lastTrail = 0;
     let startTs = null, landed = false;
 
     const frame = ts => {
-      // Anchor start timestamp to first actual paint frame
       if (!startTs) startTs = ts;
       const elapsed = ts - startTs;
       ctx.clearRect(0, 0, W, H);
@@ -1081,7 +1070,6 @@ const BeeAnimator = ({show, isDesktop}) => {
         angle = Math.atan2(d.y, d.x);
         if (rawT >= 1) landed = true;
 
-        // Only emit trail once bee is on screen
         if (pos.x > 0 && ts - lastTrail > 32) {
           lastTrail = ts;
           trail.push({
@@ -1098,7 +1086,6 @@ const BeeAnimator = ({show, isDesktop}) => {
         angle = 0;
       }
 
-      // Draw trail
       for (let i = trail.length-1; i >= 0; i--) {
         const dot = trail[i];
         const age = ts - dot.born;
@@ -1118,7 +1105,6 @@ const BeeAnimator = ({show, isDesktop}) => {
         ctx.restore();
       }
 
-      // Draw bee — only when entering from left
       if (pos.x > -BEE_W * 0.3) {
         const bob = Math.sin(ts*(landed?0.0016:0.024)) * (landed?1.5:2.0);
         const rawP = Math.min(elapsed/FLIGHT_MS, 1);
@@ -1136,14 +1122,15 @@ const BeeAnimator = ({show, isDesktop}) => {
     rafRef.current = requestAnimationFrame(frame);
   };
 
-  if (!show) return null;
+  if (!show && !hasRunRef.current) return null;
   const W = isDesktop ? 440 : 370;
   const H = isDesktop ? 180 : 155;
   return (
     <canvas
       ref={canvasRef} width={W} height={H}
       style={{
-        display:'block', width:W, height:H,
+        display: hasRunRef.current ? 'block' : 'none',
+        width:W, height:H,
         marginBottom:-(H-26),
         position:'relative', zIndex:2,
         pointerEvents:'none',
@@ -1326,7 +1313,7 @@ const Auth = ({onEnter,onEnterAsPro}) => {
             onTouchStart={handleSwipeStart}
             onTouchMove={handleSwipeMove}
             onTouchEnd={handleSwipeEnd}
-            style={{position:"relative",background:T.surface,borderRadius:"22px 22px 0 0",width:"100%",maxHeight:"90vh",display:"flex",flexDirection:"column",zIndex:1,boxShadow:"0 -8px 40px rgba(0,0,0,0.3)"}}
+            style={{position:"relative",background:T.surface,borderRadius:"22px 22px 0 0",width:"100%",maxHeight:"90vh",display:"flex",flexDirection:"column",zIndex:1,boxShadow:"0 -8px 40px rgba(0,0,0,0.3)",overflow:"hidden"}}
           >
             {/* Drag handle + close button */}
             <div style={{flexShrink:0,padding:"14px 18px 0",display:"flex",alignItems:"center",justifyContent:"center",position:"relative"}}>
@@ -1358,14 +1345,11 @@ const Auth = ({onEnter,onEnterAsPro}) => {
               </div>
 
               {/* Features */}
-              <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:20}}>
+              <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:20}}>
                 {modal.features.map((f,i)=>(
-                  <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 12px",background:T.linen,borderRadius:12,border:`1px solid ${T.border}`}}>
-                    <div style={{fontSize:20,width:28,textAlign:"center",flexShrink:0}}>{f.icon}</div>
-                    <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontSize:13,fontWeight:600,color:T.ink,lineHeight:1.2}}>{f.label}</div>
-                      <div style={{fontSize:11,color:T.ink3,lineHeight:1.45,marginTop:1}}>{f.sub}</div>
-                    </div>
+                  <div key={i} style={{padding:"11px 14px",background:T.linen,borderRadius:12,borderLeft:`3px solid ${T.terra}`,border:`1px solid ${T.border}`,borderLeftWidth:3,borderLeftColor:T.terra}}>
+                    <div style={{fontSize:13,fontWeight:600,color:T.ink,lineHeight:1.2,marginBottom:2}}>{f.label}</div>
+                    <div style={{fontSize:11,color:T.ink3,lineHeight:1.5}}>{f.sub}</div>
                   </div>
                 ))}
               </div>
@@ -1491,7 +1475,7 @@ const Auth = ({onEnter,onEnterAsPro}) => {
         }}/>
       </div>
       <div style={{position:"relative",zIndex:1,minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"24px 16px"}}>
-        <BeeAnimator show={!showForm && !activeModal} isDesktop={isDesktop}/>
+        <BeeAnimator show={!showForm} isDesktop={isDesktop}/>
         <div className="card-rise" style={{width:"100%",maxWidth:isDesktop?420:360}}>
           {showForm ? <FormCard/> : <WelcomeCard/>}
         </div>
