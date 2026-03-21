@@ -3,7 +3,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 if (typeof document !== "undefined" && !document.getElementById("sb-font")) {
   const l = document.createElement("link");
   l.id = "sb-font"; l.rel = "stylesheet";
-  l.href = "https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Inter:wght@300;400;500;600&display=swap";
+  l.href = "https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap";
   document.head.appendChild(l);
 }
 
@@ -37,7 +37,7 @@ const useTier = (isPro, patternCount) => {
 const T = {
   bg:"#FAF7F3", surface:"#FFFFFF", linen:"#F4EDE3", ink:"#1C1714", ink2:"#5C4F44", ink3:"#9E8E82",
   border:"#EAE0D5", terra:"#B85A3C", terraLt:"#F5E2DA", sage:"#5C7A5E", sageLt:"#D8EAD8", gold:"#B8902C",
-  serif:'"Playfair Display", Georgia, serif', sans:'"Inter", -apple-system, sans-serif',
+  serif:'"Playfair Display", Georgia, serif', sans:'"DM Sans", -apple-system, sans-serif',
 };
 
 const useBreakpoint = () => {
@@ -58,7 +58,7 @@ const CSS = () => (
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #EAE0D5; border-radius: 99px; }
     body { background: #FAF7F3; }
-    input, textarea, button, select { font-family: "Inter", -apple-system, sans-serif; }
+    input, textarea, button, select { font-family: "DM Sans", -apple-system, sans-serif; }
     @keyframes fadeUp    { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
     @keyframes slideUp   { from{opacity:0;transform:translateY(40px)} to{opacity:1;transform:translateY(0)} }
     @keyframes slideInLeft  { from{transform:translateX(-100%);opacity:0} to{transform:translateX(0);opacity:1} }
@@ -976,118 +976,210 @@ const NavPanel = ({open,onClose,view,setView,count,isPro}) => {
 };
 
 const Auth = ({onEnter,onEnterAsPro}) => {
-  const [screen,setScreen]=useState("welcome"),[email,setEmail]=useState(""),[pass,setPass]=useState(""),[name,setName]=useState("");
+  const [screen,setScreen]=useState("welcome"),[email,setEmail]=useState(""),[pass,setPass]=useState(""),[name,setName]=useState(""),[mounted,setMounted]=useState(false);
   const{isDesktop}=useBreakpoint();
+  useEffect(()=>{ const t=setTimeout(()=>setMounted(true),60); return()=>clearTimeout(t); },[]);
+
+  const FEATURES=[
+    {icon:"🐝",label:"Hive Vision",sub:"Scan any crochet object"},
+    {icon:"🧶",label:"Pattern Library",sub:"Save & track everything"},
+    {icon:"⚖️",label:"Scale & Calculate",sub:"Gauge, yardage, resize"},
+    {icon:"🎀",label:"Yarn Stash",sub:"Know what you have"},
+  ];
+
+  const AppBadges = () => (
+    <div style={{marginTop:20}}>
+      <div style={{fontSize:10,color:T.ink3,textTransform:"uppercase",letterSpacing:".12em",marginBottom:10,fontWeight:600}}>Coming to Mobile</div>
+      <div style={{display:"flex",gap:8}}>
+        {[{icon:"🍎",line1:"Download on the",line2:"App Store"},{icon:"▶",line1:"Get it on",line2:"Google Play"}].map(b=>(
+          <div key={b.line2} style={{flex:1,background:"#0D0D0D",borderRadius:12,padding:"11px 14px",display:"flex",alignItems:"center",gap:10,border:"1px solid rgba(255,255,255,.06)"}}>
+            <span style={{fontSize:20,lineHeight:1}}>{b.icon}</span>
+            <div style={{flex:1}}>
+              <div style={{fontSize:8,color:"rgba(255,255,255,.4)",letterSpacing:".08em",marginBottom:1}}>{b.line1.toUpperCase()}</div>
+              <div style={{fontSize:13,fontWeight:600,color:"#fff",lineHeight:1.1}}>{b.line2}</div>
+            </div>
+            <div style={{fontSize:9,color:"rgba(255,255,255,.35)",fontWeight:500,border:"1px solid rgba(255,255,255,.12)",borderRadius:6,padding:"2px 8px"}}>Soon</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  /* ── DESKTOP ── */
   if(isDesktop){
-    const isSignup=screen==="signup",showForm=screen==="signup"||screen==="signin";
+    const showForm=screen==="signup"||screen==="signin";
+    const isSignup=screen==="signup";
     return (
-      <div style={{minHeight:"100vh",display:"flex",fontFamily:T.sans}}>
+      <div style={{minHeight:"100vh",display:"flex",fontFamily:T.sans,background:"#0E0A08"}}>
         <CSS/>
+        <style>{`
+          @keyframes authFadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+          @keyframes authImgReveal { from{transform:scale(1.06)} to{transform:scale(1)} }
+          .auth-reveal { animation: authFadeUp .6s cubic-bezier(.22,.68,0,1.05) both; }
+          .auth-img { animation: authImgReveal 1.2s cubic-bezier(.22,.68,0,1.05) both; }
+          .auth-input:focus { border-color: #B85A3C !important; box-shadow: 0 0 0 3px rgba(184,90,60,.12) !important; }
+          .auth-pill { transition: all .2s; }
+          .auth-pill:hover { background: rgba(255,255,255,.06) !important; }
+        `}</style>
+
+        {/* LEFT: full-height editorial photo */}
         <div style={{flex:"0 0 52%",position:"relative",overflow:"hidden"}}>
-          <Photo src={PHOTOS.hero} alt="crochet" style={{position:"absolute",inset:0,width:"100%",height:"100%"}}/>
-          <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(10,6,4,.88) 0%,rgba(10,6,4,.1) 60%,transparent 100%)"}}/>
-          <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"0 52px 56px"}}>
-            <div style={{fontFamily:T.serif,fontSize:56,fontWeight:700,color:"#fff",lineHeight:1,marginBottom:14,letterSpacing:"-.02em"}}>YarnHive</div>
-            <p style={{fontSize:17,color:"rgba(255,255,255,.7)",lineHeight:1.7,maxWidth:340}}>Save every pattern. Track every row. Scale, calculate, and create.</p>
-            <div style={{marginTop:32,display:"flex",gap:16}}>
-              {["Pattern tracking","Gauge calculator","Hive Vision","Yarn stash"].map(f=><div key={f} style={{background:"rgba(255,255,255,.12)",backdropFilter:"blur(8px)",borderRadius:10,padding:"8px 14px",fontSize:12,color:"rgba(255,255,255,.85)",fontWeight:500}}>{f}</div>)}
+          <div className="auth-img" style={{position:"absolute",inset:0}}>
+            <Photo src={PHOTOS.hero} alt="crochet" style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 30%"}}/>
+          </div>
+          <div style={{position:"absolute",inset:0,background:"linear-gradient(135deg,rgba(10,6,4,.3) 0%,transparent 50%,rgba(10,6,4,.7) 100%)"}}/>
+          <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(8,4,2,.95) 0%,rgba(8,4,2,.1) 45%,transparent 70%)"}}/>
+          {/* brand mark */}
+          <div className="auth-reveal" style={{position:"absolute",top:36,left:40,animationDelay:".1s"}}>
+            <div style={{fontFamily:T.serif,fontSize:22,fontWeight:700,color:"#fff",letterSpacing:"-.01em",opacity:.95}}>YarnHive</div>
+          </div>
+          {/* bottom editorial copy */}
+          <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"0 48px 52px"}}>
+            <div className="auth-reveal" style={{animationDelay:".2s"}}>
+              <div style={{fontFamily:T.serif,fontSize:50,fontWeight:700,color:"#fff",lineHeight:1.0,marginBottom:18,letterSpacing:"-.03em"}}>The pattern<br/><span style={{fontStyle:"italic",fontWeight:500,color:"rgba(255,255,255,.7)"}}>you've been</span><br/>looking for.</div>
+              <p style={{fontSize:15,color:"rgba(255,255,255,.55)",lineHeight:1.75,maxWidth:320,fontWeight:300}}>Save every pattern. Track every row. Scan any finished object with Hive Vision and recreate it from scratch.</p>
+            </div>
+            {/* feature grid */}
+            <div className="auth-reveal" style={{display:"flex",flexWrap:"wrap",gap:8,marginTop:28,animationDelay:".35s"}}>
+              {FEATURES.map(f=>(
+                <div key={f.label} className="auth-pill" style={{background:"rgba(255,255,255,.07)",backdropFilter:"blur(12px)",borderRadius:10,padding:"9px 14px",display:"flex",alignItems:"center",gap:9,border:"1px solid rgba(255,255,255,.1)"}}>
+                  <span style={{fontSize:15}}>{f.icon}</span>
+                  <div><div style={{fontSize:12,fontWeight:600,color:"rgba(255,255,255,.9)"}}>{f.label}</div><div style={{fontSize:10,color:"rgba(255,255,255,.45)"}}>{f.sub}</div></div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
-        <div style={{flex:"0 0 48%",display:"flex",alignItems:"center",justifyContent:"center",background:T.bg,padding:"60px 40px"}}>
-          <div style={{width:"100%",maxWidth:400}}>
-            {!showForm&&<>
-              <div style={{fontFamily:T.serif,fontSize:36,color:T.ink,marginBottom:8,lineHeight:1.1}}>Welcome.</div>
-              <div style={{fontSize:15,color:T.ink3,marginBottom:40,lineHeight:1.6}}>The smart crochet platform for makers who mean it.</div>
-              <div style={{display:"flex",flexDirection:"column",gap:12}}>
-                <Btn onClick={()=>setScreen("signup")}>Create free account</Btn>
-                <Btn variant="secondary" onClick={()=>setScreen("signin")}>Sign in</Btn>
-                <Btn variant="ghost" onClick={onEnter}>Continue without account →</Btn>
-              </div>
-              <div style={{borderTop:`1px solid ${T.border}`,marginTop:24,paddingTop:16}}><Btn variant="sage" onClick={onEnterAsPro} small>🔑 Dev access — Pro unlocked</Btn></div>
-              <div style={{marginTop:20,display:"flex",gap:20}}>
-                <div style={{flex:1,background:T.linen,borderRadius:12,padding:"14px 16px",textAlign:"center",border:`1px solid ${T.border}`}}><div style={{fontFamily:T.serif,fontSize:22,color:T.terra,fontWeight:700}}>Free</div><div style={{fontSize:11,color:T.ink3,marginTop:3}}>5 patterns · all features</div></div>
-                <div style={{flex:1,background:`linear-gradient(135deg,${T.terra},#8B3A22)`,borderRadius:12,padding:"14px 16px",textAlign:"center"}}><div style={{fontFamily:T.serif,fontSize:22,color:"#fff",fontWeight:700}}>Pro</div><div style={{fontSize:11,color:"rgba(255,255,255,.7)",marginTop:3}}>$9.99/mo · unlimited</div></div>
-              </div>
-              <div style={{marginTop:20,background:T.linen,borderRadius:12,border:`1px solid ${T.border}`,padding:"14px 16px"}}>
-                <div style={{fontSize:10,color:T.ink3,textTransform:"uppercase",letterSpacing:".1em",marginBottom:10,fontWeight:600,textAlign:"center"}}>Coming Soon to Mobile</div>
-                <div style={{display:"flex",gap:10}}>
-                  <div style={{flex:1,background:"#000",borderRadius:10,padding:"10px 14px",display:"flex",alignItems:"center",gap:10,cursor:"default"}}>
-                    <span style={{fontSize:22}}>🍎</span>
-                    <div><div style={{fontSize:9,color:"rgba(255,255,255,.6)",letterSpacing:".06em"}}>DOWNLOAD ON THE</div><div style={{fontSize:14,fontWeight:700,color:"#fff",lineHeight:1.1}}>App Store</div></div>
-                    <div style={{marginLeft:"auto",background:"rgba(255,255,255,.15)",borderRadius:6,padding:"3px 8px",fontSize:9,color:"rgba(255,255,255,.7)",fontWeight:600}}>Soon</div>
+
+        {/* RIGHT: auth panel */}
+        <div style={{flex:"0 0 48%",display:"flex",alignItems:"center",justifyContent:"center",background:"#FAF7F3",padding:"60px 56px",position:"relative"}}>
+          {/* subtle texture overlay */}
+          <div style={{position:"absolute",inset:0,backgroundImage:"radial-gradient(circle at 80% 20%, rgba(184,90,60,.04) 0%, transparent 60%)",pointerEvents:"none"}}/>
+          <div style={{width:"100%",maxWidth:380,position:"relative"}}>
+            {!showForm ? (
+              <>
+                <div className="auth-reveal" style={{animationDelay:".15s"}}>
+                  <div style={{fontFamily:T.serif,fontSize:42,color:T.ink,lineHeight:1.05,marginBottom:10,letterSpacing:"-.02em"}}>Welcome.</div>
+                  <p style={{fontSize:15,color:T.ink3,marginBottom:36,lineHeight:1.65,fontWeight:300}}>The smart crochet platform<br/>for makers who mean it.</p>
+                </div>
+                <div className="auth-reveal" style={{display:"flex",flexDirection:"column",gap:10,animationDelay:".25s"}}>
+                  <button onClick={()=>setScreen("signup")} style={{width:"100%",background:`linear-gradient(135deg,${T.terra},#8B3A22)`,color:"#fff",border:"none",borderRadius:14,padding:"16px 20px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 8px 24px rgba(184,90,60,.35)",letterSpacing:".01em",transition:"transform .15s,box-shadow .15s"}} onMouseEnter={e=>{e.target.style.transform="translateY(-1px)";e.target.style.boxShadow="0 12px 32px rgba(184,90,60,.45)";}} onMouseLeave={e=>{e.target.style.transform="none";e.target.style.boxShadow="0 8px 24px rgba(184,90,60,.35)";}}>Create free account</button>
+                  <button onClick={()=>setScreen("signin")} style={{width:"100%",background:T.surface,color:T.ink,border:`1.5px solid ${T.border}`,borderRadius:14,padding:"15px 20px",fontSize:15,fontWeight:500,cursor:"pointer",transition:"border-color .15s,background .15s"}} onMouseEnter={e=>{e.target.style.borderColor=T.terra;e.target.style.background=T.linen;}} onMouseLeave={e=>{e.target.style.borderColor=T.border;e.target.style.background=T.surface;}}>Sign in to your account</button>
+                  <button onClick={onEnter} style={{background:"none",border:"none",color:T.ink3,fontSize:13,cursor:"pointer",padding:"8px 0",letterSpacing:".01em"}} onMouseEnter={e=>e.target.style.color=T.ink2} onMouseLeave={e=>e.target.style.color=T.ink3}>Continue without account →</button>
+                </div>
+                <div className="auth-reveal" style={{animationDelay:".35s"}}>
+                  {/* pricing strip */}
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginTop:28}}>
+                    <div style={{background:T.linen,borderRadius:14,padding:"16px 18px",border:`1px solid ${T.border}`}}>
+                      <div style={{fontFamily:T.serif,fontSize:26,color:T.terra,fontWeight:700,lineHeight:1}}>Free</div>
+                      <div style={{fontSize:11,color:T.ink3,marginTop:5,lineHeight:1.5}}>5 patterns<br/>All core features</div>
+                    </div>
+                    <div style={{background:`linear-gradient(145deg,${T.terra},#7A2E14)`,borderRadius:14,padding:"16px 18px",position:"relative",overflow:"hidden"}}>
+                      <div style={{position:"absolute",top:-12,right:-12,width:60,height:60,borderRadius:"50%",background:"rgba(255,255,255,.06)"}}/>
+                      <div style={{fontFamily:T.serif,fontSize:26,color:"#fff",fontWeight:700,lineHeight:1}}>Pro</div>
+                      <div style={{fontSize:11,color:"rgba(255,255,255,.65)",marginTop:5,lineHeight:1.5}}>$9.99/mo<br/>Unlimited everything</div>
+                    </div>
                   </div>
-                  <div style={{flex:1,background:"#000",borderRadius:10,padding:"10px 14px",display:"flex",alignItems:"center",gap:10,cursor:"default"}}>
-                    <span style={{fontSize:22}}>▶</span>
-                    <div><div style={{fontSize:9,color:"rgba(255,255,255,.6)",letterSpacing:".06em"}}>GET IT ON</div><div style={{fontSize:14,fontWeight:700,color:"#fff",lineHeight:1.1}}>Google Play</div></div>
-                    <div style={{marginLeft:"auto",background:"rgba(255,255,255,.15)",borderRadius:6,padding:"3px 8px",fontSize:9,color:"rgba(255,255,255,.7)",fontWeight:600}}>Soon</div>
+                  <AppBadges/>
+                  <div style={{marginTop:20,paddingTop:16,borderTop:`1px solid ${T.border}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                    <span style={{fontSize:10,color:T.ink3,opacity:.5,letterSpacing:".06em"}}>{APP_VERSION}</span>
+                    <button onClick={onEnterAsPro} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:8,padding:"5px 12px",fontSize:11,color:T.ink3,cursor:"pointer"}}>🔑 Dev access</button>
                   </div>
                 </div>
-              </div>
-              <div style={{textAlign:"center",marginTop:16,fontSize:10,color:T.ink3,opacity:.5,letterSpacing:".06em"}}>{APP_VERSION}</div>
-            </>}
-            {showForm&&<>
-              <button onClick={()=>setScreen("welcome")} style={{background:"none",border:"none",color:T.terra,cursor:"pointer",fontSize:13,fontWeight:600,padding:0,marginBottom:28,display:"flex",alignItems:"center",gap:6}}>← Back</button>
-              <div style={{fontFamily:T.serif,fontSize:32,color:T.ink,marginBottom:6}}>{isSignup?"Create account":"Welcome back"}</div>
-              <div style={{fontSize:14,color:T.ink3,marginBottom:32}}>{isSignup?"Start your pattern collection":"Your patterns are waiting"}</div>
-              {isSignup&&<Field label="Your name" placeholder="e.g. Sarah" value={name} onChange={e=>setName(e.target.value)}/>}
-              <Field label="Email" placeholder="you@example.com" value={email} onChange={e=>setEmail(e.target.value)} type="email"/>
-              <Field label="Password" placeholder="••••••••" value={pass} onChange={e=>setPass(e.target.value)} type="password"/>
-              {screen==="signin"&&<div style={{textAlign:"right",marginBottom:18}}><span style={{fontSize:13,color:T.terra,cursor:"pointer"}}>Forgot password?</span></div>}
-              <Btn onClick={onEnter} style={{marginTop:8}}>{isSignup?"Create my YarnHive":"Sign in"}</Btn>
-            </>}
+              </>
+            ) : (
+              <>
+                <button onClick={()=>setScreen("welcome")} style={{background:"none",border:"none",color:T.terra,cursor:"pointer",fontSize:13,fontWeight:600,padding:0,marginBottom:32,display:"flex",alignItems:"center",gap:6,letterSpacing:".01em"}}>← Back</button>
+                <div style={{fontFamily:T.serif,fontSize:34,color:T.ink,marginBottom:6,letterSpacing:"-.02em"}}>{isSignup?"Create account":"Welcome back"}</div>
+                <p style={{fontSize:14,color:T.ink3,marginBottom:28,fontWeight:300}}>{isSignup?"Start your pattern collection today":"Your hive is waiting for you"}</p>
+                {isSignup&&<Field label="Your name" placeholder="e.g. Sarah" value={name} onChange={e=>setName(e.target.value)}/>}
+                <Field label="Email" placeholder="you@example.com" value={email} onChange={e=>setEmail(e.target.value)} type="email"/>
+                <Field label="Password" placeholder="••••••••" value={pass} onChange={e=>setPass(e.target.value)} type="password"/>
+                {screen==="signin"&&<div style={{textAlign:"right",marginBottom:20}}><span style={{fontSize:13,color:T.terra,cursor:"pointer",fontWeight:500}}>Forgot password?</span></div>}
+                <button onClick={onEnter} style={{width:"100%",background:`linear-gradient(135deg,${T.terra},#8B3A22)`,color:"#fff",border:"none",borderRadius:14,padding:"16px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 8px 24px rgba(184,90,60,.3)",marginTop:8}}>{isSignup?"Create my YarnHive":"Sign in"}</button>
+              </>
+            )}
           </div>
         </div>
       </div>
     );
   }
+
+  /* ── MOBILE ── */
   if(screen==="welcome") return (
-    <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column"}}>
+    <div style={{minHeight:"100vh",background:"#0E0A08",display:"flex",flexDirection:"column",fontFamily:T.sans}}>
       <CSS/>
-      <div style={{flex:1,position:"relative",overflow:"hidden",minHeight:460}}>
-        <Photo src={PHOTOS.hero} alt="crochet" style={{position:"absolute",inset:0,width:"100%",height:"100%"}}/>
-        <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(15,10,8,.92) 0%,rgba(15,10,8,.15) 55%,transparent 100%)"}}/>
-        <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"0 28px 36px"}}><div style={{fontFamily:T.serif,fontSize:46,fontWeight:700,color:"#fff",lineHeight:1,marginBottom:10,letterSpacing:"-.02em"}}>YarnHive</div><p style={{fontSize:16,color:"rgba(255,255,255,.72)",lineHeight:1.65,maxWidth:290}}>Save every pattern. Track every row. Scale, calculate, and create.</p></div>
+      <style>{`
+        @keyframes mobileReveal { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+        .mob-reveal { animation: mobileReveal .5s cubic-bezier(.22,.68,0,1.05) both; }
+      `}</style>
+      {/* hero image — takes most of screen */}
+      <div style={{flex:1,position:"relative",overflow:"hidden",minHeight:"55vh"}}>
+        <Photo src={PHOTOS.hero} alt="crochet" style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 30%"}}/>
+        <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(8,4,2,.98) 0%,rgba(8,4,2,.4) 40%,transparent 70%)"}}/>
+        {/* brand */}
+        <div style={{position:"absolute",top:24,left:24}}><div style={{fontFamily:T.serif,fontSize:20,fontWeight:700,color:"#fff",opacity:.9}}>YarnHive</div></div>
+        {/* hero copy */}
+        <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"0 24px 32px"}}>
+          <div className="mob-reveal" style={{fontFamily:T.serif,fontSize:38,fontWeight:700,color:"#fff",lineHeight:1.05,marginBottom:10,letterSpacing:"-.02em",animationDelay:".1s"}}>The pattern<br/><span style={{fontStyle:"italic",fontWeight:400,color:"rgba(255,255,255,.6)"}}>you've been</span><br/>looking for.</div>
+          <p className="mob-reveal" style={{fontSize:14,color:"rgba(255,255,255,.5)",lineHeight:1.65,fontWeight:300,animationDelay:".2s"}}>Save patterns. Track rows. Scan anything.</p>
+        </div>
       </div>
-      <div style={{background:T.surface,padding:"28px 22px 48px",display:"flex",flexDirection:"column",gap:12}}>
-        <Btn onClick={()=>setScreen("signup")}>Create free account</Btn>
-        <Btn variant="secondary" onClick={()=>setScreen("signin")}>Sign in</Btn>
-        <Btn variant="ghost" onClick={onEnter}>Continue without account →</Btn>
-        <div style={{borderTop:`1px solid ${T.border}`,paddingTop:12,marginTop:4}}><Btn variant="sage" onClick={onEnterAsPro} small>🔑 Dev access — Pro unlocked</Btn></div>
-        <p style={{fontSize:11,color:T.ink3,textAlign:"center",lineHeight:1.6,marginTop:4}}>Free: up to 5 patterns, all features · Pro $9.99/mo or $74.99/yr: unlimited</p>
-        {/* App Store badges */}
-        <div style={{display:"flex",gap:8,marginTop:4}}>
-          <div style={{flex:1,background:"#000",borderRadius:10,padding:"9px 12px",display:"flex",alignItems:"center",gap:8}}>
-            <span style={{fontSize:18}}>🍎</span>
-            <div><div style={{fontSize:8,color:"rgba(255,255,255,.55)",letterSpacing:".06em"}}>DOWNLOAD ON THE</div><div style={{fontSize:12,fontWeight:700,color:"#fff",lineHeight:1.1}}>App Store</div></div>
-            <div style={{marginLeft:"auto",background:"rgba(255,255,255,.12)",borderRadius:5,padding:"2px 7px",fontSize:8,color:"rgba(255,255,255,.6)",fontWeight:600}}>Soon</div>
+      {/* action panel */}
+      <div className="mob-reveal" style={{background:"#FAF7F3",borderRadius:"24px 24px 0 0",padding:"28px 22px 48px",animationDelay:".25s"}}>
+        <div style={{width:36,height:2,background:T.border,borderRadius:99,margin:"0 auto 24px"}}/>
+        <button onClick={()=>setScreen("signup")} style={{width:"100%",background:`linear-gradient(135deg,${T.terra},#8B3A22)`,color:"#fff",border:"none",borderRadius:14,padding:"16px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 8px 24px rgba(184,90,60,.35)",marginBottom:10}}>Create free account</button>
+        <button onClick={()=>setScreen("signin")} style={{width:"100%",background:T.surface,color:T.ink,border:`1.5px solid ${T.border}`,borderRadius:14,padding:"15px",fontSize:15,fontWeight:500,cursor:"pointer",marginBottom:6}}>Sign in</button>
+        <button onClick={onEnter} style={{width:"100%",background:"none",border:"none",color:T.ink3,fontSize:13,cursor:"pointer",padding:"10px 0"}}>Continue without account →</button>
+        {/* pricing strip */}
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:8,marginBottom:4}}>
+          <div style={{background:T.linen,borderRadius:12,padding:"12px 14px",border:`1px solid ${T.border}`}}>
+            <div style={{fontFamily:T.serif,fontSize:20,color:T.terra,fontWeight:700}}>Free</div>
+            <div style={{fontSize:10,color:T.ink3,marginTop:3,lineHeight:1.5}}>5 patterns · all features</div>
           </div>
-          <div style={{flex:1,background:"#000",borderRadius:10,padding:"9px 12px",display:"flex",alignItems:"center",gap:8}}>
-            <span style={{fontSize:18}}>▶</span>
-            <div><div style={{fontSize:8,color:"rgba(255,255,255,.55)",letterSpacing:".06em"}}>GET IT ON</div><div style={{fontSize:12,fontWeight:700,color:"#fff",lineHeight:1.1}}>Google Play</div></div>
-            <div style={{marginLeft:"auto",background:"rgba(255,255,255,.12)",borderRadius:5,padding:"2px 7px",fontSize:8,color:"rgba(255,255,255,.6)",fontWeight:600}}>Soon</div>
+          <div style={{background:`linear-gradient(145deg,${T.terra},#7A2E14)`,borderRadius:12,padding:"12px 14px"}}>
+            <div style={{fontFamily:T.serif,fontSize:20,color:"#fff",fontWeight:700}}>Pro</div>
+            <div style={{fontSize:10,color:"rgba(255,255,255,.65)",marginTop:3,lineHeight:1.5}}>$9.99/mo · unlimited</div>
           </div>
         </div>
-        <p style={{fontSize:10,color:T.ink3,textAlign:"center",opacity:.5,marginTop:4,letterSpacing:".06em"}}>{APP_VERSION}</p>
+        {/* mobile app badges */}
+        <div style={{display:"flex",gap:8,marginTop:12}}>
+          {[{icon:"🍎",l1:"DOWNLOAD ON THE",l2:"App Store"},{icon:"▶",l1:"GET IT ON",l2:"Google Play"}].map(b=>(
+            <div key={b.l2} style={{flex:1,background:"#0D0D0D",borderRadius:10,padding:"9px 11px",display:"flex",alignItems:"center",gap:7}}>
+              <span style={{fontSize:16}}>{b.icon}</span>
+              <div><div style={{fontSize:7,color:"rgba(255,255,255,.4)",letterSpacing:".07em"}}>{b.l1}</div><div style={{fontSize:11,fontWeight:600,color:"#fff"}}>{b.l2}</div></div>
+              <div style={{marginLeft:"auto",fontSize:8,color:"rgba(255,255,255,.3)",border:"1px solid rgba(255,255,255,.1)",borderRadius:5,padding:"2px 6px"}}>Soon</div>
+            </div>
+          ))}
+        </div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:14}}>
+          <span style={{fontSize:9,color:T.ink3,opacity:.4,letterSpacing:".06em"}}>{APP_VERSION}</span>
+          <button onClick={onEnterAsPro} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:7,padding:"4px 10px",fontSize:10,color:T.ink3,cursor:"pointer"}}>🔑 Dev access</button>
+        </div>
       </div>
     </div>
   );
+
+  /* ── MOBILE SIGN IN / SIGN UP ── */
   const isSignup=screen==="signup";
   return (
-    <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column"}}>
+    <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",fontFamily:T.sans}}>
       <CSS/>
-      <div style={{height:200,position:"relative",overflow:"hidden"}}>
-        <Photo src={PHOTOS.auth} alt="yarn" style={{width:"100%",height:"100%"}}/>
-        <div style={{position:"absolute",inset:0,background:"rgba(15,10,8,.45)"}}/>
-        <div style={{position:"absolute",bottom:22,left:24}}><div style={{fontFamily:T.serif,fontSize:28,color:"#fff",fontWeight:700}}>{isSignup?"Create account":"Welcome back"}</div><div style={{fontSize:13,color:"rgba(255,255,255,.65)",marginTop:3}}>{isSignup?"Start your pattern collection":"Your patterns are waiting"}</div></div>
+      <div style={{height:180,position:"relative",overflow:"hidden"}}>
+        <Photo src={PHOTOS.auth} alt="yarn" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 40%"}}/>
+        <div style={{position:"absolute",inset:0,background:"rgba(10,6,4,.55)"}}/>
+        <div style={{position:"absolute",bottom:20,left:22}}>
+          <div style={{fontFamily:T.serif,fontSize:26,color:"#fff",fontWeight:700,letterSpacing:"-.01em"}}>{isSignup?"Create account":"Welcome back"}</div>
+          <div style={{fontSize:13,color:"rgba(255,255,255,.55)",marginTop:3,fontWeight:300}}>{isSignup?"Start your pattern collection":"Your hive is waiting"}</div>
+        </div>
       </div>
-      <div style={{flex:1,padding:"28px 24px 40px"}}>
+      <div style={{flex:1,padding:"28px 22px 40px"}}>
         {isSignup&&<Field label="Your name" placeholder="e.g. Sarah" value={name} onChange={e=>setName(e.target.value)}/>}
         <Field label="Email" placeholder="you@example.com" value={email} onChange={e=>setEmail(e.target.value)} type="email"/>
         <Field label="Password" placeholder="••••••••" value={pass} onChange={e=>setPass(e.target.value)} type="password"/>
-        {!isSignup&&<div style={{textAlign:"right",marginBottom:18}}><span style={{fontSize:13,color:T.terra,cursor:"pointer"}}>Forgot password?</span></div>}
-        <Btn onClick={onEnter} style={{marginTop:8,marginBottom:12}}>{isSignup?"Create my YarnHive":"Sign in"}</Btn>
-        <Btn variant="ghost" onClick={()=>setScreen("welcome")} full>← Back</Btn>
+        {!isSignup&&<div style={{textAlign:"right",marginBottom:18}}><span style={{fontSize:13,color:T.terra,cursor:"pointer",fontWeight:500}}>Forgot password?</span></div>}
+        <button onClick={onEnter} style={{width:"100%",background:`linear-gradient(135deg,${T.terra},#8B3A22)`,color:"#fff",border:"none",borderRadius:14,padding:"16px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 8px 24px rgba(184,90,60,.3)",marginTop:8,marginBottom:10}}>{isSignup?"Create my YarnHive":"Sign in"}</button>
+        <button onClick={()=>setScreen("welcome")} style={{width:"100%",background:"none",border:"none",color:T.ink3,fontSize:13,cursor:"pointer",padding:"8px 0"}}>← Back</button>
       </div>
     </div>
   );
