@@ -921,7 +921,7 @@ const SidebarNav = ({view,setView,count,isPro,onAddPattern}) => {
   return (
     <div style={{width:260,background:T.surface,borderRight:`1px solid ${T.border}`,height:"100vh",position:"sticky",top:0,display:"flex",flexDirection:"column",flexShrink:0}}>
       <div style={{position:"relative",height:160,overflow:"hidden",flexShrink:0}}>
-        <Photo src={PHOTOS.world} alt="YarnHive world" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 40%"}}/>
+        <Photo src="https://res.cloudinary.com/dmaupzhcx/image/upload/v1774123693/yarnhive_sidebar_bee.jpg" alt="YarnHive bee" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 60%"}}/>
         <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(20,14,10,.85) 0%,rgba(20,14,10,.2) 100%)"}}/>
         <div style={{position:"absolute",bottom:18,left:20}}><div style={{fontFamily:T.serif,fontSize:26,fontWeight:700,color:"#fff",lineHeight:1}}>YarnHive</div><div style={{fontSize:11,color:"rgba(255,255,255,.6)",marginTop:4}}>Your crochet hive</div></div>
       </div>
@@ -954,7 +954,7 @@ const NavPanel = ({open,onClose,view,setView,count,isPro}) => {
       <div className={closing?"dim-out":"dim-in"} onClick={dismiss} style={{position:"absolute",inset:0,background:"rgba(28,23,20,.52)",backdropFilter:"blur(3px)"}}/>
       <div className={closing?"nav-close":"nav-open"} style={{position:"absolute",top:0,left:0,bottom:0,width:"80%",maxWidth:320,background:T.surface,display:"flex",flexDirection:"column",boxShadow:"6px 0 40px rgba(28,23,20,.2)"}}>
         <div style={{position:"relative",height:130,overflow:"hidden",flexShrink:0}}>
-          <Photo src={PHOTOS.world} alt="YarnHive world" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 40%"}}/>
+          <Photo src="https://res.cloudinary.com/dmaupzhcx/image/upload/v1774123693/yarnhive_sidebar_bee.jpg" alt="YarnHive bee" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 60%"}}/>
           <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(20,14,10,.8) 0%,rgba(20,14,10,.2) 100%)"}}/>
           <div style={{position:"absolute",bottom:16,left:18}}><div style={{fontFamily:T.serif,fontSize:22,fontWeight:700,color:"#fff",lineHeight:1}}>YarnHive</div><div style={{fontSize:11,color:"rgba(255,255,255,.65)",marginTop:3}}>Your crochet hive</div></div>
         </div>
@@ -1013,6 +1013,7 @@ const BeeAnimator = ({visible, isDesktop}) => {
           top: 0; left: 0;
           font-size: ${size}px;
           line-height: 1;
+          transform: scaleX(-1);
           animation:
             beefly 3.2s cubic-bezier(.25,.46,.45,.94) 0.9s both,
             beebob 2.2s ease-in-out ${0.9 + 3.2}s infinite;
