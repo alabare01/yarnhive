@@ -995,8 +995,9 @@ const BeeAnimator = ({show, isDesktop}) => {
       if (!readyRef.current || !canvasRef.current) { setTimeout(tryStart, 80); return; }
       startAnim();
     };
-    tryStart();
-    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+    // Delay start slightly so card has rendered and canvas has real dimensions
+    const t = setTimeout(tryStart, 120);
+    return () => { clearTimeout(t); if (rafRef.current) cancelAnimationFrame(rafRef.current); };
   }, [show, isDesktop]);
 
   const startAnim = () => {
@@ -1007,18 +1008,15 @@ const BeeAnimator = ({show, isDesktop}) => {
 
     const BEE_W = isDesktop ? 110 : 88;
     const BEE_H = Math.round(BEE_W * img.height / img.width);
-
-    // Landing: right side, bee sits fully within canvas
     const LX = W * 0.76, LY = H - BEE_H * 0.5 - 8;
 
-    // Path: left off-screen -> arc high -> land
     const p0 = { x: -BEE_W,   y: H * 0.7  };
     const p1 = { x: W * 0.12, y: H * 0.04 };
     const p2 = { x: W * 0.76, y: H * 0.02 };
     const p3 = { x: LX,       y: LY       };
 
     const FLIGHT_MS = 3200;
-    // Smooth ease: slow start, cruise, long decel into landing
+
     const ease = t => {
       if (t < 0.1) return 0.5 * Math.pow(t / 0.1, 2);
       if (t < 0.8) return 0.05 + 0.85 * ((t - 0.1) / 0.7);
@@ -1059,7 +1057,7 @@ const BeeAnimator = ({show, isDesktop}) => {
         angle = Math.atan2(d.y, d.x);
         if (rawT >= 1) landed = true;
 
-        // FIX: only emit trail when bee is actually ON screen (x > 0)
+        // Only emit trail once bee is on screen
         if (pos.x > 0 && ts - lastTrail > 32) {
           lastTrail = ts;
           trail.push({
@@ -1086,7 +1084,6 @@ const BeeAnimator = ({show, isDesktop}) => {
         const r = Math.max(0.4, dot.r*(1-p*0.4));
         ctx.save();
         ctx.globalAlpha = a*0.22;
-        ctx.shadowColor = dot.color+'1)'; ctx.shadowBlur = 10;
         ctx.fillStyle = dot.color+'1)';
         ctx.beginPath(); ctx.arc(dot.x, dot.y, r*2.2, 0, Math.PI*2); ctx.fill();
         ctx.restore();
@@ -1097,10 +1094,8 @@ const BeeAnimator = ({show, isDesktop}) => {
         ctx.restore();
       }
 
-      // No ground shadow — causes canvas boundary artifacts
-
-      // Draw bee
-      if (pos.x > -BEE_W*0.3) { // only draw when mostly on screen
+      // Draw bee — only when on screen, no shadow effects
+      if (pos.x > -BEE_W * 0.3) {
         const bob = Math.sin(ts*(landed?0.0016:0.024)) * (landed?1.5:2.0);
         const rawP = Math.min(elapsed/FLIGHT_MS, 1);
         const tiltDamp = landed ? 0 : Math.max(0, 1 - rawP*1.8);
@@ -1121,8 +1116,15 @@ const BeeAnimator = ({show, isDesktop}) => {
   const W = isDesktop ? 440 : 370;
   const H = isDesktop ? 180 : 155;
   return (
-    <canvas ref={canvasRef} width={W} height={H}
-      style={{display:'block',width:W,height:H,marginBottom:-(H-26),position:'relative',zIndex:2,pointerEvents:'none'}}
+    <canvas
+      ref={canvasRef} width={W} height={H}
+      style={{
+        display:'block', width:W, height:H,
+        marginBottom:-(H-26),
+        position:'relative', zIndex:2,
+        pointerEvents:'none',
+        background:'transparent',
+      }}
     />
   );
 };
