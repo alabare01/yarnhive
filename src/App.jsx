@@ -981,145 +981,116 @@ const BeeAnimator = ({show, isDesktop}) => {
   const rafRef = useRef(null);
 
   useEffect(() => {
-    if (!show) {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      return;
-    }
+    if (!show) { if (rafRef.current) cancelAnimationFrame(rafRef.current); return; }
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     const W = canvas.width, H = canvas.height;
 
-    // ── Bezier path: sweeping arc from upper-right, looping across, landing at card top-right ──
-    // The bee flies ONE smooth continuous path — no stops, no resets
-    const LAND = { x: W * 0.76, y: H - 10 }; // final resting spot
+    // Landing spot: right side, sitting on top edge of the card
+    const LX = W * 0.78, LY = H - 14;
 
-    // Control points for a wide sweeping S-curve
-    const segments = [
-      // Entry arc: comes in from far right, sweeps left and down
-      {
-        p0: { x: W + 100, y: -80 },
-        p1: { x: W * 0.9,  y: -60 },
-        p2: { x: W * 0.15, y: H * 0.2 },
-        p3: { x: W * 0.25, y: H * 0.65 },
-        dur: 1400,
-      },
-      // Recovery arc: swoops back right and down to land
-      {
-        p0: { x: W * 0.25, y: H * 0.65 },
-        p1: { x: W * 0.35, y: H * 0.9  },
-        p2: { x: W * 0.6,  y: H * 0.4  },
-        p3: LAND,
-        dur: 900,
-      },
-    ];
-    const TOTAL_DUR = segments.reduce((s, seg) => s + seg.dur, 0);
+    // Single smooth cubic bezier: enters from LEFT side off-screen,
+    // arcs UP and across, descends to land on right side of card top
+    // p0 = start (off-screen left), p3 = land position
+    const p0 = { x: -60,      y: H * 0.3  };
+    const p1 = { x: W * 0.1,  y: -H * 0.6 }; // control: swoop up and right
+    const p2 = { x: W * 0.9,  y: -H * 0.2 }; // control: arc across high
+    const p3 = { x: LX,       y: LY        }; // land
 
-    const bezierPt = (seg, t) => {
-      const { p0, p1, p2, p3 } = seg;
-      const mt = 1 - t;
+    const FLIGHT_MS = 2200;
+    // Ease: quick start, long smooth deceleration into landing
+    const ease = t => {
+      if (t < 0.6) return 0.5 * Math.pow(t / 0.6, 0.7);
+      return 0.5 + 0.5 * (1 - Math.pow(1 - (t - 0.6) / 0.4, 3));
+    };
+
+    const bezier = t => {
+      const u = 1 - t;
       return {
-        x: mt*mt*mt*p0.x + 3*mt*mt*t*p1.x + 3*mt*t*t*p2.x + t*t*t*p3.x,
-        y: mt*mt*mt*p0.y + 3*mt*mt*t*p1.y + 3*mt*t*t*p2.y + t*t*t*p3.y,
+        x: u*u*u*p0.x + 3*u*u*t*p1.x + 3*u*t*t*p2.x + t*t*t*p3.x,
+        y: u*u*u*p0.y + 3*u*u*t*p1.y + 3*u*t*t*p2.y + t*t*t*p3.y,
       };
     };
-    const bezierTangent = (seg, t) => {
-      const { p0, p1, p2, p3 } = seg;
-      const mt = 1 - t;
+    const bezierD = t => {
+      const u = 1 - t;
       return {
-        x: 3*(mt*mt*(p1.x-p0.x) + 2*mt*t*(p2.x-p1.x) + t*t*(p3.x-p2.x)),
-        y: 3*(mt*mt*(p1.y-p0.y) + 2*mt*t*(p2.y-p1.y) + t*t*(p3.y-p2.y)),
+        x: 3*(u*u*(p1.x-p0.x) + 2*u*t*(p2.x-p1.x) + t*t*(p3.x-p2.x)),
+        y: 3*(u*u*(p1.y-p0.y) + 2*u*t*(p2.y-p1.y) + t*t*(p3.y-p2.y)),
       };
     };
 
-    // Ease: smooth in-out for each segment
-    const easeInOut = t => t < 0.5 ? 2*t*t : -1+(4-2*t)*t;
-    // Landing deceleration — ease in only
-    const easeLand = t => 1 - Math.pow(1 - t, 3);
-
-    // Trail: array of {x, y, age, maxAge, r, color}
+    // Trail: stores recent positions as glowing dots
     const trail = [];
-    const TRAIL_COLORS = [
-      'rgba(255,210,60,',   // gold
-      'rgba(184,90,60,',    // terra
-      'rgba(255,255,180,',  // cream
-      'rgba(92,122,94,',    // sage
-      'rgba(255,160,80,',   // amber
+    const COLORS = [
+      'rgba(255,210,60,',
+      'rgba(184,90,60,',
+      'rgba(255,255,160,',
+      'rgba(92,122,94,',
+      'rgba(255,170,60,',
     ];
-    let trailTimer = 0;
-    const TRAIL_INTERVAL = 28; // ms between trail drops
+    let lastTrailTime = 0;
 
     let startTs = null;
     let landed = false;
-    let landedPos = null;
-    let bobOffset = 0;
 
-    const frame = (ts) => {
+    const frame = ts => {
       if (!startTs) startTs = ts;
       const elapsed = ts - startTs;
+
       ctx.clearRect(0, 0, W, H);
 
-      // ── Determine current bee position ──
-      let pos = null, angle = 0;
+      // Determine position
+      let pos, angle = 0;
       if (!landed) {
-        let cumDur = 0;
-        for (let i = 0; i < segments.length; i++) {
-          const seg = segments[i];
-          if (elapsed <= cumDur + seg.dur || i === segments.length - 1) {
-            const rawT = Math.min((elapsed - cumDur) / seg.dur, 1);
-            const t = i === segments.length - 1 ? easeLand(rawT) : easeInOut(rawT);
-            pos = bezierPt(seg, t);
-            const tang = bezierTangent(seg, t);
-            angle = Math.atan2(tang.y, tang.x) * 0.28;
-            break;
-          }
-          cumDur += seg.dur;
-        }
-        if (elapsed >= TOTAL_DUR) {
-          landed = true;
-          landedPos = { ...LAND };
-        }
+        const rawT = Math.min(elapsed / FLIGHT_MS, 1);
+        const t = ease(rawT);
+        pos = bezier(t);
+        const d = bezierD(t);
+        // Rotate to face direction of travel, but keep it subtle
+        angle = Math.atan2(d.y, d.x) * 0.25;
+        if (rawT >= 1) { landed = true; }
       } else {
-        bobOffset = Math.sin(ts * 0.0022) * 2.4;
-        pos = { x: LAND.x, y: LAND.y + bobOffset };
+        pos = { x: LX, y: LY + Math.sin(ts * 0.002) * 2 };
         angle = 0;
       }
 
-      // ── Emit trail dots from current bee position ──
-      trailTimer += 16; // approximate frame time
-      if (!landed && pos && trailTimer >= TRAIL_INTERVAL) {
-        trailTimer = 0;
-        const color = TRAIL_COLORS[Math.floor(Math.random() * TRAIL_COLORS.length)];
+      // Emit trail dot at current position every ~30ms
+      if (!landed && ts - lastTrailTime > 30 && pos) {
+        lastTrailTime = ts;
         trail.push({
-          x: pos.x + (Math.random() - 0.5) * 6,
-          y: pos.y + (Math.random() - 0.5) * 6,
-          age: 0,
-          maxAge: 380 + Math.random() * 200,
-          r: 2.5 + Math.random() * 3,
-          color,
+          x: pos.x + (Math.random() - 0.5) * 5,
+          y: pos.y + (Math.random() - 0.5) * 5,
+          born: ts,
+          life: 500 + Math.random() * 300,
+          r: 2 + Math.random() * 3.5,
+          color: COLORS[Math.floor(Math.random() * COLORS.length)],
         });
       }
 
-      // ── Draw + age trail ──
+      // Draw trail — oldest first so newest is on top
       for (let i = trail.length - 1; i >= 0; i--) {
         const dot = trail[i];
-        dot.age += 16;
-        if (dot.age > dot.maxAge) { trail.splice(i, 1); continue; }
-        const progress = dot.age / dot.maxAge;
-        const alpha = (1 - progress) * 0.75;
-        const r = dot.r * (1 - progress * 0.5);
+        const age = ts - dot.born;
+        if (age > dot.life) { trail.splice(i, 1); continue; }
+        const progress = age / dot.life;
+        const alpha = (1 - progress);
+        const r = dot.r * (1 - progress * 0.4);
+
+        // Glow ring
         ctx.save();
-        // Outer glow
-        ctx.shadowColor = dot.color + '0.9)';
-        ctx.shadowBlur = 6;
-        ctx.globalAlpha = alpha * 0.4;
+        ctx.globalAlpha = alpha * 0.3;
+        ctx.shadowColor = dot.color + '1)';
+        ctx.shadowBlur = 8;
         ctx.fillStyle = dot.color + '1)';
         ctx.beginPath();
-        ctx.arc(dot.x, dot.y, r * 1.6, 0, Math.PI * 2);
+        ctx.arc(dot.x, dot.y, r * 1.8, 0, Math.PI * 2);
         ctx.fill();
-        // Core dot
-        ctx.shadowBlur = 0;
-        ctx.globalAlpha = alpha;
+        ctx.restore();
+
+        // Core
+        ctx.save();
+        ctx.globalAlpha = alpha * 0.85;
         ctx.fillStyle = dot.color + '1)';
         ctx.beginPath();
         ctx.arc(dot.x, dot.y, r, 0, Math.PI * 2);
@@ -1127,33 +1098,31 @@ const BeeAnimator = ({show, isDesktop}) => {
         ctx.restore();
       }
 
-      // ── Draw bee ──
-      if (pos) {
-        const SIZE = 28;
-        const flutter = !landed ? Math.sin(ts * 0.032) * 2.2 : Math.sin(ts * 0.008) * 0.8;
-
-        // Shadow on the card surface
-        if (landed || elapsed > TOTAL_DUR * 0.7) {
-          const shadowAlpha = landed ? 0.28 : Math.min((elapsed - TOTAL_DUR * 0.7) / (TOTAL_DUR * 0.3), 1) * 0.25;
-          ctx.save();
-          ctx.globalAlpha = shadowAlpha;
-          ctx.fillStyle = 'rgba(0,0,0,0.5)';
-          ctx.filter = 'blur(4px)';
-          ctx.beginPath();
-          ctx.ellipse(LAND.x, LAND.y + 6, SIZE * 0.55, SIZE * 0.12, 0, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.restore();
-        }
-
+      // Ground shadow once near landing
+      const rawProgress = Math.min(elapsed / FLIGHT_MS, 1);
+      if (rawProgress > 0.75 || landed) {
+        const shadowFade = landed ? 1 : (rawProgress - 0.75) / 0.25;
         ctx.save();
-        ctx.translate(pos.x, pos.y + flutter);
-        ctx.rotate(angle);
-        ctx.font = `${SIZE * 2}px serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('🐝', 0, 0);
+        ctx.globalAlpha = 0.22 * shadowFade;
+        ctx.filter = 'blur(4px)';
+        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+        ctx.beginPath();
+        ctx.ellipse(LX + 2, LY + 8, 16, 4, 0, 0, Math.PI * 2);
+        ctx.fill();
         ctx.restore();
       }
+
+      // Draw bee emoji
+      const SIZE = isDesktop ? 30 : 26;
+      const flutter = Math.sin(ts * (landed ? 0.008 : 0.03)) * (landed ? 1 : 2.5);
+      ctx.save();
+      ctx.translate(pos.x, pos.y + flutter);
+      ctx.rotate(angle);
+      ctx.font = `${SIZE * 2}px serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('🐝', 0, 0);
+      ctx.restore();
 
       rafRef.current = requestAnimationFrame(frame);
     };
@@ -1164,7 +1133,7 @@ const BeeAnimator = ({show, isDesktop}) => {
 
   if (!show) return null;
   const W = isDesktop ? 420 : 360;
-  const H = 80;
+  const H = 100;
   return (
     <canvas
       ref={canvasRef}
@@ -1174,7 +1143,7 @@ const BeeAnimator = ({show, isDesktop}) => {
         display: 'block',
         width: W,
         height: H,
-        marginBottom: -H + 16,
+        marginBottom: -(H - 18),
         position: 'relative',
         zIndex: 2,
         pointerEvents: 'none',
