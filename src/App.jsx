@@ -1007,18 +1007,15 @@ const BeeAnimator = ({visible, isDesktop}) => {
           3%   { opacity: 1; }
           28%  { transform: translate(${x1}px, ${y1}px) rotate(-12deg); }
           62%  { transform: translate(${x2}px, ${y2}px) rotate(-6deg); }
-          82%  { transform: translate(${Math.round(lx + 20)}px, ${Math.round(ly - 22)}px) rotate(8deg); }
-          90%  { transform: translate(${lx}px, ${ly}px) rotate(0deg); opacity: 1; }
-          94%  { transform: translate(${lx}px, ${Math.round(ly - 3)}px); opacity: 1; }
-          97%  { transform: translate(${lx}px, ${ly}px); opacity: 1; }
-          100% { transform: translate(${x0}px, ${y0}px); opacity: 0; }
+          88%  { transform: translate(${Math.round(lx + 18)}px, ${Math.round(ly - 20)}px) rotate(4deg); }
+          100% { transform: translate(${lx}px, ${ly}px) rotate(0deg); opacity: 1; }
         }
         .bee-anim {
           position: absolute;
           top: 0; left: 0;
           font-size: ${size}px;
           line-height: 1;
-          animation: beepath 6s cubic-bezier(.45,.05,.55,.95) 0.85s infinite;
+          animation: beepath 3.2s cubic-bezier(.25,.46,.45,.94) 0.85s both;
           will-change: transform, opacity;
           user-select: none;
         }
