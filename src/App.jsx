@@ -1174,11 +1174,11 @@ const Auth = ({onEnter,onEnterAsPro}) => {
     position:"relative",
   };
 
-  const Badges = () => (
+  const Badges = ({onBadgeClick}) => (
     <div style={{marginTop:18}}>
       <div style={{fontSize:9,color:T.ink3,textTransform:"uppercase",letterSpacing:".12em",marginBottom:8,fontWeight:600,textAlign:"center"}}>Coming to mobile</div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-        <div style={{background:"#000",borderRadius:12,padding:"8px 12px",display:"flex",alignItems:"center",gap:8,boxShadow:"0 4px 12px rgba(0,0,0,0.4)",border:"1px solid rgba(255,255,255,0.08)"}}>
+        <div onClick={()=>onBadgeClick('ios')} style={{background:"#000",borderRadius:12,padding:"8px 12px",display:"flex",alignItems:"center",gap:8,boxShadow:"0 4px 12px rgba(0,0,0,0.4)",border:"1px solid rgba(255,255,255,0.08)",cursor:"pointer",transition:"opacity .15s"}} onMouseEnter={e=>e.currentTarget.style.opacity='.75'} onMouseLeave={e=>e.currentTarget.style.opacity='1'}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
           <div style={{flex:1,minWidth:0}}>
             <div style={{fontSize:7,color:"rgba(255,255,255,.45)",letterSpacing:".07em",lineHeight:1}}>DOWNLOAD ON THE</div>
@@ -1186,7 +1186,7 @@ const Auth = ({onEnter,onEnterAsPro}) => {
           </div>
           <div style={{fontSize:8,color:"rgba(255,255,255,.35)",border:"1px solid rgba(255,255,255,.15)",borderRadius:5,padding:"2px 6px"}}>Soon</div>
         </div>
-        <div style={{background:"#000",borderRadius:12,padding:"8px 12px",display:"flex",alignItems:"center",gap:8,boxShadow:"0 4px 12px rgba(0,0,0,0.4)",border:"1px solid rgba(255,255,255,0.08)"}}>
+        <div onClick={()=>onBadgeClick('android')} style={{background:"#000",borderRadius:12,padding:"8px 12px",display:"flex",alignItems:"center",gap:8,boxShadow:"0 4px 12px rgba(0,0,0,0.4)",border:"1px solid rgba(255,255,255,0.08)",cursor:"pointer",transition:"opacity .15s"}} onMouseEnter={e=>e.currentTarget.style.opacity='.75'} onMouseLeave={e=>e.currentTarget.style.opacity='1'}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
             <path d="M4.5 21.5L13.5 12L4.5 2.5C4 2.8 3.5 3.4 3.5 4.2v15.6c0 .8.5 1.4 1 1.7z" fill="#4285F4"/>
             <path d="M17 15.5L14 13.8 13.5 12 14 10.2 17 8.5 20.5 10.5c1 .6 1 1.4 0 2L17 15.5z" fill="#FBBC05"/>
@@ -1203,8 +1203,127 @@ const Auth = ({onEnter,onEnterAsPro}) => {
     </div>
   );
 
+  /* ── Tier / App Store info modals ── */
+  const MODALS = {
+    free: {
+      icon:"🧶",
+      title:"Start for Free",
+      subtitle:"Everything you need to get started — no credit card required.",
+      color: T.terra,
+      features:[
+        {icon:"📚",label:"5 pattern slots",sub:"Save your favorite patterns and track progress"},
+        {icon:"🐝",label:"Hive Vision scans",sub:"3 free photo-to-pattern scans per month"},
+        {icon:"⚖️",label:"Full calculator suite",sub:"Gauge, yardage, resize — all unlocked"},
+        {icon:"🎀",label:"Yarn stash tracker",sub:"Know exactly what you have before you buy"},
+        {icon:"🔗",label:"All import methods",sub:"URL, PDF, manual entry — use them all"},
+      ],
+      cta:"Create free account",
+      ctaAction: "signup",
+      footnote:"Upgrade to Pro anytime — your patterns come with you.",
+    },
+    pro: {
+      icon:"✨",
+      title:"YarnHive Pro",
+      subtitle:"Unlimited everything. Built for makers who are serious about their craft.",
+      color: T.terra,
+      gradient: `linear-gradient(145deg,${T.terra},#6B2410)`,
+      features:[
+        {icon:"♾️",label:"Unlimited patterns",sub:"No cap. Save every pattern you'll ever make"},
+        {icon:"🐝",label:"Unlimited Hive Vision",sub:"Scan as many finished objects as you want"},
+        {icon:"☁️",label:"Cloud sync",sub:"Access your hive on every device, always in sync"},
+        {icon:"📖",label:"Pattern Help AI",sub:"Get AI-powered help for any row you're stuck on"},
+        {icon:"📊",label:"Advanced analytics",sub:"Track your making history and stash usage"},
+        {icon:"🏆",label:"Early access",sub:"First to get every new feature we ship"},
+      ],
+      cta:"Get Pro — $9.99/mo",
+      ctaAlt:"$74.99/yr — save 37%",
+      ctaAction: "signup",
+      footnote:"Cancel anytime. No questions asked.",
+    },
+    ios: {
+      icon:"🍎",
+      title:"YarnHive for iPhone",
+      subtitle:"The full YarnHive experience in your pocket — coming soon to the App Store.",
+      color:"#000",
+      features:[
+        {icon:"📸",label:"Camera-first Hive Vision",sub:"Point, tap, get a pattern — right from your camera"},
+        {icon:"🔔",label:"Row reminders",sub:"Never lose your place with smart row notifications"},
+        {icon:"📶",label:"Offline mode",sub:"Access your patterns anywhere, no signal needed"},
+        {icon:"🔄",label:"Seamless sync",sub:"Start on web, continue on mobile — everything syncs"},
+      ],
+      cta:"Notify me when it's live",
+      ctaAction: "notify",
+      badge:"Coming Soon",
+      footnote:"Be first in line — we'll email you the day it launches.",
+    },
+    android: {
+      icon:"▶",
+      title:"YarnHive for Android",
+      subtitle:"Everything iPhone gets, built natively for Android — coming to Google Play.",
+      color:"#1a73e8",
+      features:[
+        {icon:"📸",label:"Native camera scanner",sub:"Hive Vision built right into the Android experience"},
+        {icon:"🔔",label:"Row reminders",sub:"Smart notifications keep you on track"},
+        {icon:"📶",label:"Offline mode",sub:"Your patterns are always available, signal or not"},
+        {icon:"🔄",label:"Cross-device sync",sub:"Web, iOS, Android — one hive everywhere"},
+      ],
+      cta:"Notify me when it's live",
+      ctaAction: "notify",
+      badge:"Coming Soon",
+      footnote:"We'll let you know the moment it hits Google Play.",
+    },
+  };
+
+  const [activeModal, setActiveModal] = useState(null);
+  const [notified, setNotified] = useState(false);
+  const modal = activeModal ? MODALS[activeModal] : null;
+
+  const handleModalCTA = () => {
+    if (modal.ctaAction === 'signup') { setActiveModal(null); setScreen('signup'); }
+    else if (modal.ctaAction === 'notify') { setNotified(true); setTimeout(()=>{ setNotified(false); setActiveModal(null); }, 2000); }
+  };
+
   const WelcomeCard = () => (
     <div style={CARD_STYLE}>
+      {/* Tier / App Store modal */}
+      {modal && (
+        <div style={{position:"fixed",inset:0,zIndex:500,display:"flex",alignItems:"flex-end"}} onClick={()=>setActiveModal(null)}>
+          <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.65)",backdropFilter:"blur(6px)"}}/>
+          <div className="su" onClick={e=>e.stopPropagation()} style={{position:"relative",background:T.surface,borderRadius:"24px 24px 0 0",width:"100%",maxHeight:"88vh",overflowY:"auto",padding:"24px 22px 48px",zIndex:1}}>
+            <div style={{width:36,height:3,background:T.border,borderRadius:99,margin:"0 auto 20px"}}/>
+            {/* Header */}
+            <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:20}}>
+              <div style={{width:52,height:52,borderRadius:16,background:modal.gradient||modal.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:`0 8px 20px ${modal.color}44`}}>
+                {modal.icon}
+              </div>
+              <div>
+                {modal.badge&&<div style={{fontSize:9,fontWeight:700,color:T.terra,textTransform:"uppercase",letterSpacing:".1em",marginBottom:3}}>{modal.badge}</div>}
+                <div style={{fontFamily:T.serif,fontSize:22,fontWeight:700,color:T.ink,lineHeight:1.1}}>{modal.title}</div>
+                <div style={{fontSize:12,color:T.ink3,marginTop:3,fontWeight:300,lineHeight:1.5}}>{modal.subtitle}</div>
+              </div>
+            </div>
+            {/* Features */}
+            <div style={{display:"flex",flexDirection:"column",gap:12,marginBottom:24}}>
+              {modal.features.map((f,i)=>(
+                <div key={i} style={{display:"flex",alignItems:"flex-start",gap:12,padding:"10px 12px",background:T.linen,borderRadius:12,border:`1px solid ${T.border}`}}>
+                  <div style={{width:36,height:36,borderRadius:10,background:T.surface,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0,border:`1px solid ${T.border}`}}>{f.icon}</div>
+                  <div><div style={{fontSize:13,fontWeight:600,color:T.ink,marginBottom:2}}>{f.label}</div><div style={{fontSize:12,color:T.ink3,lineHeight:1.5}}>{f.sub}</div></div>
+                </div>
+              ))}
+            </div>
+            {/* CTA */}
+            {notified
+              ? <div style={{background:T.sageLt,borderRadius:14,padding:"16px",textAlign:"center",border:`1px solid ${T.sage}`}}><div style={{fontSize:16,fontWeight:600,color:T.sage}}>✓ You're on the list!</div><div style={{fontSize:12,color:T.ink3,marginTop:4}}>We'll email you the moment it launches.</div></div>
+              : <>
+                  <button onClick={handleModalCTA} style={{width:"100%",background:modal.gradient||`linear-gradient(135deg,${T.terra},#7A2E14)`,color:"#fff",border:"none",borderRadius:14,padding:"16px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:`0 8px 24px ${T.terra}44`,marginBottom:modal.ctaAlt?8:0}}>{modal.cta}</button>
+                  {modal.ctaAlt&&<button onClick={()=>{setActiveModal(null);setScreen('signup');}} style={{width:"100%",background:"none",border:`1.5px solid ${T.border}`,borderRadius:14,padding:"13px",fontSize:13,fontWeight:500,color:T.ink2,cursor:"pointer"}}>{modal.ctaAlt}</button>}
+                </>
+            }
+            {modal.footnote&&<div style={{textAlign:"center",marginTop:12,fontSize:11,color:T.ink3}}>{modal.footnote}</div>}
+          </div>
+        </div>
+      )}
+
       <div style={{textAlign:"center",marginBottom:24}}>
         <div style={{display:"inline-flex",alignItems:"center",gap:9,background:"rgba(184,90,60,.09)",borderRadius:14,padding:"7px 16px",border:"1px solid rgba(184,90,60,.18)"}}>
           <span style={{fontSize:18}}>🐝</span>
@@ -1225,19 +1344,22 @@ const Auth = ({onEnter,onEnterAsPro}) => {
         <button onClick={onEnter} style={{background:"none",border:"none",color:"rgba(92,79,68,0.6)",fontSize:12,cursor:"pointer",padding:"2px 0"}}>Continue without account →</button>
       </div>
       <div style={{height:"1px",background:"rgba(28,23,20,.07)",margin:"2px 0 14px"}}/>
+      {/* Clickable Free/Pro cards */}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:2}}>
-        <div style={{background:"rgba(244,237,227,0.75)",backdropFilter:"blur(8px)",borderRadius:14,padding:"12px 14px",border:"1px solid rgba(255,255,255,0.6)",textAlign:"center"}}>
+        <div onClick={()=>setActiveModal('free')} style={{background:"rgba(244,237,227,0.75)",backdropFilter:"blur(8px)",borderRadius:14,padding:"12px 14px",border:"1px solid rgba(255,255,255,0.6)",textAlign:"center",cursor:"pointer",transition:"transform .15s,box-shadow .15s"}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 8px 20px rgba(0,0,0,0.1)";}} onMouseLeave={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="none";}}>
           <div style={{fontFamily:T.serif,fontSize:20,color:T.terra,fontWeight:700,lineHeight:1}}>Free</div>
           <div style={{fontSize:10,color:T.ink3,marginTop:4,lineHeight:1.4}}>5 patterns<br/>All core features</div>
+          <div style={{fontSize:9,color:T.terra,marginTop:6,fontWeight:600,letterSpacing:".05em"}}>SEE WHAT'S INCLUDED →</div>
         </div>
-        <div style={{background:`linear-gradient(145deg,${T.terra},#6B2410)`,borderRadius:14,padding:"12px 14px",textAlign:"center",boxShadow:"0 6px 20px rgba(184,90,60,.5)",position:"relative",overflow:"hidden"}}>
+        <div onClick={()=>setActiveModal('pro')} style={{background:`linear-gradient(145deg,${T.terra},#6B2410)`,borderRadius:14,padding:"12px 14px",textAlign:"center",boxShadow:"0 6px 20px rgba(184,90,60,.5)",position:"relative",overflow:"hidden",cursor:"pointer",transition:"transform .15s,box-shadow .15s"}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 12px 28px rgba(184,90,60,.65)";}} onMouseLeave={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="0 6px 20px rgba(184,90,60,.5)";}}>
           <div style={{position:"absolute",top:0,left:0,right:0,bottom:0,background:"linear-gradient(135deg,rgba(255,255,255,0) 30%,rgba(255,255,255,0.07) 50%,rgba(255,255,255,0) 70%)",pointerEvents:"none"}}/>
           <div style={{position:"absolute",top:10,right:-20,background:"rgba(255,255,255,0.18)",padding:"3px 28px",transform:"rotate(35deg)",fontSize:7,fontWeight:700,color:"rgba(255,255,255,0.9)",letterSpacing:".06em",whiteSpace:"nowrap"}}>HIVE VISION</div>
           <div style={{fontFamily:T.serif,fontSize:20,color:"#fff",fontWeight:700,lineHeight:1,position:"relative"}}>Pro</div>
           <div style={{fontSize:10,color:"rgba(255,255,255,.65)",marginTop:4,lineHeight:1.4,position:"relative"}}>$9.99/mo<br/>Unlimited everything</div>
+          <div style={{fontSize:9,color:"rgba(255,255,255,.75)",marginTop:6,fontWeight:600,letterSpacing:".05em",position:"relative"}}>SEE WHAT'S INCLUDED →</div>
         </div>
       </div>
-      <Badges/>
+      <Badges onBadgeClick={setActiveModal}/>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:16,paddingTop:12,borderTop:"1px solid rgba(28,23,20,.06)"}}>
         <span style={{fontSize:9,color:T.ink3,opacity:.4,letterSpacing:".06em"}}>{APP_VERSION}</span>
         <button onClick={onEnterAsPro} style={{background:"rgba(92,122,94,.12)",border:"1px solid rgba(92,122,94,.22)",borderRadius:7,padding:"4px 11px",fontSize:10,color:T.sage,cursor:"pointer",fontWeight:500}}>🔑 Dev</button>
