@@ -185,14 +185,25 @@ const normalizeRole = (role,primitive) => {
   return "detail";
 };
 
+// Positions are relative to body center (y=0). Positive y = up, negative y = down.
+// zOff = forward offset so face parts protrude naturally from the front.
+// mirror:true = component is duplicated and placed symmetrically on both sides (x and -x).
 const SLOT_POSITIONS = {
-  body:{y:0.0,x:0,zOff:0}, head:{y:1.6,x:0,zOff:0}, hat:{y:3.1,x:0,zOff:0},
-  beard:{y:1.05,x:0,zOff:0.35}, nose:{y:1.65,x:0,zOff:0.75},
-  eye:{y:1.75,x:0.38,zOff:0.6,mirror:true}, ear:{y:2.25,x:0.55,zOff:0,mirror:true},
-  arm:{y:0.3,x:1.2,zOff:0,mirror:true}, leg:{y:-1.35,x:0.6,zOff:0,mirror:true},
-  tail:{y:-0.8,x:0,zOff:-0.9}, base:{y:-1.8,x:0,zOff:0},
-  horn:{y:2.4,x:0.3,zOff:0,mirror:true}, wing:{y:0.5,x:1.5,zOff:-0.3,mirror:true},
-  accessory:{y:2.1,x:0,zOff:0.2}, detail:{y:0.7,x:0,zOff:0.5},
+  base:     {y:-1.9, x:0,    zOff:0,    mirror:false},  // flat disc at very bottom
+  body:     {y: 0.0, x:0,    zOff:0,    mirror:false},  // dominant center mass
+  leg:      {y:-1.2, x:0.55, zOff:0,    mirror:true },  // below body, spread out
+  arm:      {y: 0.1, x:1.15, zOff:0.1,  mirror:true },  // sides of body, slight forward lean
+  tail:     {y:-0.5, x:0,    zOff:-0.9, mirror:false},  // behind body
+  head:     {y: 1.55,x:0,    zOff:0,    mirror:false},  // directly above body
+  ear:      {y: 1.9, x:0.65, zOff:0,    mirror:true },  // sides of head
+  hat:      {y: 2.85,x:0,    zOff:0,    mirror:false},  // on top of head
+  horn:     {y: 2.55,x:0.28, zOff:0.1,  mirror:true },  // front-top of head
+  eye:      {y: 1.65,x:0.32, zOff:0.65, mirror:true },  // front face, symmetric
+  nose:     {y: 1.45,x:0,    zOff:0.8,  mirror:false},  // front center face, lower than eyes
+  beard:    {y: 1.1, x:0,    zOff:0.55, mirror:false},  // below nose, protrudes forward
+  wing:     {y: 0.5, x:1.4,  zOff:-0.2, mirror:true },  // back-sides of body
+  accessory:{y: 2.0, x:0,    zOff:0.3,  mirror:false},  // front of head/body area
+  detail:   {y: 0.6, x:0,    zOff:0.4,  mirror:false},  // generic fallback, front-center
 };
 
 const ROLE_COLORS = {
@@ -659,7 +670,7 @@ const HiveVisionForm = ({onSave}) => {
             <div style={{fontSize:12,color:T.ink3,marginBottom:10}}>Hook {preview.hook} · {preview.weight} · ~{preview.yardage} yds · {preview.rows.length} steps</div>
             <div style={{fontSize:12,color:T.ink2,lineHeight:1.6,marginBottom:12}}>{preview.notes}</div>
             <div style={{fontSize:11,color:T.ink3,fontStyle:"italic",marginBottom:12}}>Review the steps after saving — adjust stitch counts to match your gauge and yarn weight.</div>
-            <Btn onClick={()=>onSave({id:Date.now(),photo:imgSrc||PILL[0],source:"Hive Vision",cat:analysis.object_category==="amigurumi"?"Amigurumi":"Uncategorized",rating:0,skeins:2,skeinYards:200,gauge:{stitches:16,rows:20,size:4},dimensions:{width:20,height:20},snapConfidence:confidence,...preview})}>Save to Your Hive</Btn>
+            <Btn onClick={()=>onSave({id:Date.now(),photo:imgSrc||PILL[0],source:"Hive Vision",cat:analysis.object_category==="amigurumi"?"Amigurumi":"Uncategorized",rating:0,skeins:2,skeinYards:200,gauge:{stitches:16,rows:20,size:4},dimensions:{width:20,height:20},snapConfidence:confidence,snapComponents:analysis.components||[],snapObjectName:analysis.object_name||"",...preview})}>Save to Your Hive</Btn>
             <div style={{marginTop:8}}><Btn variant="ghost" onClick={reset}>Try different photo</Btn></div>
           </div>
         </div>
@@ -1290,24 +1301,80 @@ const Detail = ({p,onBack,onSave}) => {
           <button onClick={()=>setMilestone(null)} style={{background:"none",border:"none",color:"rgba(255,255,255,.6)",fontSize:18,cursor:"pointer",flexShrink:0,padding:"4px"}}>×</button>
         </div>
       )}
-      <div style={{position:"relative",flexShrink:0,height:isDesktop?280:230,overflow:"hidden",background:T.linen,marginTop:milestone?56:0,transition:"margin .3s"}}>
-        <Photo src={p.photo} alt={p.title} style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center center"}}/>
-        <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(20,14,10,.9) 0%,rgba(20,14,10,.2) 55%,transparent 100%)"}}/>
-        <div style={{position:"absolute",top:0,left:0,right:0,padding:"16px 18px",display:"flex",justifyContent:"space-between"}}>
-          <button onClick={onBack} style={{background:"rgba(15,10,8,.4)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.15)",borderRadius:10,padding:"7px 16px",color:"#fff",cursor:"pointer",fontSize:13,fontWeight:500}}>← Back</button>
-          <div style={{display:"flex",gap:8}}>
-            <button onClick={()=>setShowShare(true)} style={{background:"rgba(15,10,8,.4)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.15)",borderRadius:10,padding:"7px 14px",color:"#fff",cursor:"pointer",fontSize:12,fontWeight:600}}>📤 Share</button>
-            <button onClick={()=>setShowScale(true)} style={{background:"rgba(15,10,8,.4)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.15)",borderRadius:10,padding:"7px 14px",color:"#fff",cursor:"pointer",fontSize:12,fontWeight:600}}>⚖️ Scale</button>
-            <button onClick={()=>editing?save():setEditing(true)} style={{background:editing?T.terra:"rgba(15,10,8,.4)",backdropFilter:"blur(8px)",border:"1px solid "+(editing?T.terra:"rgba(255,255,255,.15)"),borderRadius:10,padding:"7px 16px",color:"#fff",cursor:"pointer",fontSize:13,fontWeight:600}}>{editing?"Save":"Edit"}</button>
+      {/* ── HERO: Hive Vision patterns get split photo+wireframe, others get clean fixed-height photo ── */}
+      {p.snapConfidence&&p.snapComponents?.length ? (
+        /* ── HIVE VISION SPLIT HERO ── */
+        <div style={{flexShrink:0,background:"#1C1714",marginTop:milestone?56:0,transition:"margin .3s"}}>
+          {/* top bar */}
+          <div style={{position:"relative",zIndex:2,padding:"12px 18px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <button onClick={onBack} style={{background:"rgba(255,255,255,.12)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.15)",borderRadius:10,padding:"7px 16px",color:"#fff",cursor:"pointer",fontSize:13,fontWeight:500}}>← Back</button>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>setShowShare(true)} style={{background:"rgba(255,255,255,.1)",border:"1px solid rgba(255,255,255,.15)",borderRadius:10,padding:"7px 14px",color:"#fff",cursor:"pointer",fontSize:12,fontWeight:600}}>📤 Share</button>
+              <button onClick={()=>setShowScale(true)} style={{background:"rgba(255,255,255,.1)",border:"1px solid rgba(255,255,255,.15)",borderRadius:10,padding:"7px 14px",color:"#fff",cursor:"pointer",fontSize:12,fontWeight:600}}>⚖️ Scale</button>
+              <button onClick={()=>editing?save():setEditing(true)} style={{background:editing?T.terra:"rgba(255,255,255,.1)",border:"1px solid "+(editing?T.terra:"rgba(255,255,255,.15)"),borderRadius:10,padding:"7px 16px",color:"#fff",cursor:"pointer",fontSize:13,fontWeight:600}}>{editing?"Save":"Edit"}</button>
+            </div>
+          </div>
+          {/* split panel */}
+          <div style={{display:"grid",gridTemplateColumns:isDesktop?"1fr 1fr":"1fr 1fr",height:isDesktop?320:220,position:"relative"}}>
+            {/* left: photo */}
+            <div style={{position:"relative",overflow:"hidden"}}>
+              <Photo src={p.photo} alt={p.title} style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top"}}/>
+              <div style={{position:"absolute",inset:0,background:"linear-gradient(to right,transparent 60%,rgba(28,23,20,.6) 100%)"}}/>
+              <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(28,23,20,.75) 0%,transparent 50%)"}}/>
+              <div style={{position:"absolute",bottom:14,left:14,right:0}}>
+                <div style={{fontSize:9,color:"rgba(255,255,255,.5)",textTransform:"uppercase",letterSpacing:".1em",marginBottom:3}}>{p.cat} · {p.weight}</div>
+                {editing
+                  ?<input value={draft.title} onChange={e=>setDraft({...draft,title:e.target.value})} style={{width:"90%",background:"rgba(255,255,255,.12)",border:"1px solid rgba(255,255,255,.3)",borderRadius:8,padding:"5px 8px",color:"#fff",fontSize:16,fontFamily:T.serif,outline:"none"}}/>
+                  :<div style={{fontFamily:T.serif,fontSize:isDesktop?20:15,fontWeight:700,color:"#fff",lineHeight:1.2,paddingRight:8}}>{p.title}</div>}
+              </div>
+              {/* Hive Vision badge */}
+              <div style={{position:"absolute",top:10,left:10,background:"rgba(184,90,60,.9)",borderRadius:8,padding:"3px 9px",fontSize:9,fontWeight:700,color:"#fff",display:"flex",alignItems:"center",gap:4}}>
+                🐝 Hive Vision · {p.snapConfidence}%
+              </div>
+            </div>
+            {/* right: interactive wireframe */}
+            <div style={{position:"relative",background:"#FAF7F3",borderLeft:"1px solid rgba(255,255,255,.08)"}}>
+              <WireframeViewer components={p.snapComponents} labeled={true} fillContainer={true}/>
+              <div style={{position:"absolute",top:10,right:10,background:"rgba(28,23,20,.55)",backdropFilter:"blur(6px)",borderRadius:8,padding:"3px 9px",fontSize:9,color:"rgba(255,255,255,.8)",fontWeight:600,pointerEvents:"none"}}>
+                3D Component Map
+              </div>
+            </div>
+          </div>
+          {/* progress bar row */}
+          <div style={{padding:"10px 18px 12px",background:"#1C1714"}}>
+            <div style={{display:"flex",alignItems:"center",gap:10}}>
+              <div style={{flex:1}}><Bar val={done} color={T.terra} h={3} bg="rgba(255,255,255,.15)"/></div>
+              <span style={{color:"rgba(255,255,255,.7)",fontSize:12,fontWeight:600,minWidth:36}}>{done}%</span>
+              <span style={{color:"rgba(255,255,255,.35)",fontSize:11}}>{rows.filter(r=>r.done).length}/{rows.length} rows</span>
+            </div>
           </div>
         </div>
-        <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"0 20px 16px"}}>
-          <div style={{fontSize:10,color:"rgba(255,255,255,.55)",textTransform:"uppercase",letterSpacing:".09em",marginBottom:4}}>{p.cat} · Hook {p.hook} · {p.weight}</div>
-          {editing?<input value={draft.title} onChange={e=>setDraft({...draft,title:e.target.value})} style={{width:"100%",background:"rgba(255,255,255,.12)",border:"1px solid rgba(255,255,255,.3)",borderRadius:8,padding:"6px 10px",color:"#fff",fontSize:19,fontFamily:T.serif,outline:"none"}}/>:<div style={{fontFamily:T.serif,fontSize:21,fontWeight:700,color:"#fff",lineHeight:1.2}}>{p.title}</div>}
-          <div style={{marginTop:10,display:"flex",alignItems:"center",gap:10}}><div style={{flex:1}}><Bar val={done} color={T.terra} h={4} bg="rgba(255,255,255,.25)"/></div><span style={{color:"#fff",fontSize:13,fontWeight:600,minWidth:36}}>{done}%</span></div>
-          <div style={{fontSize:11,color:"rgba(255,255,255,.45)",marginTop:3}}>{rows.filter(r=>r.done).length} of {rows.length} rows complete</div>
+      ) : (
+        /* ── STANDARD PHOTO HERO ── */
+        <div style={{position:"relative",flexShrink:0,height:isDesktop?260:220,overflow:"hidden",background:T.linen,marginTop:milestone?56:0,transition:"margin .3s"}}>
+          <Photo src={p.photo} alt={p.title} style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 20%"}}/>
+          <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(20,14,10,.92) 0%,rgba(20,14,10,.3) 50%,rgba(20,14,10,.05) 100%)"}}/>
+          <div style={{position:"absolute",top:0,left:0,right:0,padding:"14px 18px",display:"flex",justifyContent:"space-between"}}>
+            <button onClick={onBack} style={{background:"rgba(15,10,8,.45)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.15)",borderRadius:10,padding:"7px 16px",color:"#fff",cursor:"pointer",fontSize:13,fontWeight:500}}>← Back</button>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>setShowShare(true)} style={{background:"rgba(15,10,8,.45)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.15)",borderRadius:10,padding:"7px 14px",color:"#fff",cursor:"pointer",fontSize:12,fontWeight:600}}>📤 Share</button>
+              <button onClick={()=>setShowScale(true)} style={{background:"rgba(15,10,8,.45)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.15)",borderRadius:10,padding:"7px 14px",color:"#fff",cursor:"pointer",fontSize:12,fontWeight:600}}>⚖️ Scale</button>
+              <button onClick={()=>editing?save():setEditing(true)} style={{background:editing?T.terra:"rgba(15,10,8,.45)",backdropFilter:"blur(8px)",border:"1px solid "+(editing?T.terra:"rgba(255,255,255,.15)"),borderRadius:10,padding:"7px 16px",color:"#fff",cursor:"pointer",fontSize:13,fontWeight:600}}>{editing?"Save":"Edit"}</button>
+            </div>
+          </div>
+          <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"0 20px 14px"}}>
+            <div style={{fontSize:10,color:"rgba(255,255,255,.5)",textTransform:"uppercase",letterSpacing:".09em",marginBottom:4}}>{p.cat} · Hook {p.hook} · {p.weight}</div>
+            {editing
+              ?<input value={draft.title} onChange={e=>setDraft({...draft,title:e.target.value})} style={{width:"100%",background:"rgba(255,255,255,.12)",border:"1px solid rgba(255,255,255,.3)",borderRadius:8,padding:"6px 10px",color:"#fff",fontSize:19,fontFamily:T.serif,outline:"none"}}/>
+              :<div style={{fontFamily:T.serif,fontSize:isDesktop?24:20,fontWeight:700,color:"#fff",lineHeight:1.2}}>{p.title}</div>}
+            <div style={{marginTop:10,display:"flex",alignItems:"center",gap:10}}>
+              <div style={{flex:1}}><Bar val={done} color={T.terra} h={4} bg="rgba(255,255,255,.25)"/></div>
+              <span style={{color:"#fff",fontSize:13,fontWeight:600,minWidth:36}}>{done}%</span>
+            </div>
+            <div style={{fontSize:11,color:"rgba(255,255,255,.4)",marginTop:3}}>{rows.filter(r=>r.done).length} of {rows.length} rows complete</div>
+          </div>
         </div>
-      </div>
+      )}
       <div style={{display:"flex",background:T.surface,borderBottom:`1px solid ${T.border}`,flexShrink:0}}>
         {[["materials","Materials"],["rows","Rows"],["notes","Notes"]].map(([key,label])=>(
           <button key={key} onClick={()=>setTab(key)} style={{flex:1,padding:"13px 0",border:"none",background:"transparent",color:tab===key?T.terra:T.ink3,fontWeight:tab===key?600:400,fontSize:13,cursor:"pointer",borderBottom:"2px solid "+(tab===key?T.terra:"transparent"),transition:"color .15s"}}>{label}</button>
