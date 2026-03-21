@@ -1275,51 +1275,142 @@ const Auth = ({onEnter,onEnterAsPro}) => {
   };
 
   const [activeModal, setActiveModal] = useState(null);
-  const [notified, setNotified] = useState(false);
+  const [notifyEmail, setNotifyEmail] = useState('');
+  const [notifySubmitted, setNotifySubmitted] = useState(false);
+  const [notifyLoading, setNotifyLoading] = useState(false);
   const modal = activeModal ? MODALS[activeModal] : null;
 
+  // Swipe-to-close state
+  const swipeStartY = useRef(null);
+  const sheetRef = useRef(null);
+
+  const closeModal = () => { setActiveModal(null); setNotifyEmail(''); setNotifySubmitted(false); setNotifyLoading(false); };
+
+  const handleSwipeStart = e => { swipeStartY.current = e.touches?.[0]?.clientY ?? null; };
+  const handleSwipeMove = e => {
+    if (swipeStartY.current === null || !sheetRef.current) return;
+    const dy = (e.touches?.[0]?.clientY ?? 0) - swipeStartY.current;
+    if (dy > 0) sheetRef.current.style.transform = `translateY(${dy}px)`;
+  };
+  const handleSwipeEnd = e => {
+    if (swipeStartY.current === null || !sheetRef.current) return;
+    const dy = (e.changedTouches?.[0]?.clientY ?? 0) - swipeStartY.current;
+    if (dy > 80) { closeModal(); }
+    else { sheetRef.current.style.transform = 'translateY(0)'; sheetRef.current.style.transition = 'transform .25s ease'; setTimeout(()=>{ if(sheetRef.current) sheetRef.current.style.transition = ''; }, 250); }
+    swipeStartY.current = null;
+  };
+
+  const handleNotifySubmit = async () => {
+    if (!notifyEmail.trim() || !notifyEmail.includes('@')) return;
+    setNotifyLoading(true);
+    // Store in Supabase leads table when auth is wired — for now simulate success
+    await new Promise(r => setTimeout(r, 800));
+    setNotifyLoading(false);
+    setNotifySubmitted(true);
+  };
+
   const handleModalCTA = () => {
-    if (modal.ctaAction === 'signup') { setActiveModal(null); setScreen('signup'); }
-    else if (modal.ctaAction === 'notify') { setNotified(true); setTimeout(()=>{ setNotified(false); setActiveModal(null); }, 2000); }
+    if (modal.ctaAction === 'signup') { closeModal(); setScreen('signup'); }
   };
 
   const WelcomeCard = () => (
     <div style={CARD_STYLE}>
-      {/* Tier / App Store modal */}
+      {/* Modal — renders at fixed position, OUTSIDE card stacking context */}
       {modal && (
-        <div style={{position:"fixed",inset:0,zIndex:500,display:"flex",alignItems:"flex-end"}} onClick={()=>setActiveModal(null)}>
-          <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.65)",backdropFilter:"blur(6px)"}}/>
-          <div className="su" onClick={e=>e.stopPropagation()} style={{position:"relative",background:T.surface,borderRadius:"24px 24px 0 0",width:"100%",maxHeight:"88vh",overflowY:"auto",padding:"24px 22px 48px",zIndex:1}}>
-            <div style={{width:36,height:3,background:T.border,borderRadius:99,margin:"0 auto 20px"}}/>
-            {/* Header */}
-            <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:20}}>
-              <div style={{width:52,height:52,borderRadius:16,background:modal.gradient||modal.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:`0 8px 20px ${modal.color}44`}}>
-                {modal.icon}
-              </div>
-              <div>
-                {modal.badge&&<div style={{fontSize:9,fontWeight:700,color:T.terra,textTransform:"uppercase",letterSpacing:".1em",marginBottom:3}}>{modal.badge}</div>}
-                <div style={{fontFamily:T.serif,fontSize:22,fontWeight:700,color:T.ink,lineHeight:1.1}}>{modal.title}</div>
-                <div style={{fontSize:12,color:T.ink3,marginTop:3,fontWeight:300,lineHeight:1.5}}>{modal.subtitle}</div>
-              </div>
+        <div style={{position:"fixed",inset:0,zIndex:500,display:"flex",alignItems:"flex-end"}} onClick={closeModal}>
+          <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.7)",backdropFilter:"blur(8px)"}}/>
+          <div
+            ref={sheetRef}
+            className="su"
+            onClick={e=>e.stopPropagation()}
+            onTouchStart={handleSwipeStart}
+            onTouchMove={handleSwipeMove}
+            onTouchEnd={handleSwipeEnd}
+            style={{position:"relative",background:T.surface,borderRadius:"22px 22px 0 0",width:"100%",maxHeight:"90vh",display:"flex",flexDirection:"column",zIndex:1,boxShadow:"0 -8px 40px rgba(0,0,0,0.3)"}}
+          >
+            {/* Drag handle + close button */}
+            <div style={{flexShrink:0,padding:"14px 18px 0",display:"flex",alignItems:"center",justifyContent:"center",position:"relative"}}>
+              <div style={{width:36,height:3,background:T.border,borderRadius:99}}/>
+              <button onClick={closeModal} style={{position:"absolute",right:16,top:10,width:28,height:28,borderRadius:"50%",background:T.linen,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,color:T.ink3}}>×</button>
             </div>
-            {/* Features */}
-            <div style={{display:"flex",flexDirection:"column",gap:12,marginBottom:24}}>
-              {modal.features.map((f,i)=>(
-                <div key={i} style={{display:"flex",alignItems:"flex-start",gap:12,padding:"10px 12px",background:T.linen,borderRadius:12,border:`1px solid ${T.border}`}}>
-                  <div style={{width:36,height:36,borderRadius:10,background:T.surface,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0,border:`1px solid ${T.border}`}}>{f.icon}</div>
-                  <div><div style={{fontSize:13,fontWeight:600,color:T.ink,marginBottom:2}}>{f.label}</div><div style={{fontSize:12,color:T.ink3,lineHeight:1.5}}>{f.sub}</div></div>
+
+            {/* Scrollable content */}
+            <div style={{flex:1,overflowY:"auto",padding:"16px 20px 40px"}}>
+              {/* Header */}
+              <div style={{display:"flex",alignItems:"flex-start",gap:14,marginBottom:20,paddingTop:4}}>
+                <div style={{
+                  width:48,height:48,borderRadius:14,flexShrink:0,
+                  background:modal.gradient||`linear-gradient(135deg,${T.terra},#7A2E14)`,
+                  display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,
+                  boxShadow:`0 6px 16px rgba(184,90,60,0.35)`,
+                }}>
+                  {modal.icon}
                 </div>
-              ))}
-            </div>
-            {/* CTA */}
-            {notified
-              ? <div style={{background:T.sageLt,borderRadius:14,padding:"16px",textAlign:"center",border:`1px solid ${T.sage}`}}><div style={{fontSize:16,fontWeight:600,color:T.sage}}>✓ You're on the list!</div><div style={{fontSize:12,color:T.ink3,marginTop:4}}>We'll email you the moment it launches.</div></div>
-              : <>
-                  <button onClick={handleModalCTA} style={{width:"100%",background:modal.gradient||`linear-gradient(135deg,${T.terra},#7A2E14)`,color:"#fff",border:"none",borderRadius:14,padding:"16px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:`0 8px 24px ${T.terra}44`,marginBottom:modal.ctaAlt?8:0}}>{modal.cta}</button>
-                  {modal.ctaAlt&&<button onClick={()=>{setActiveModal(null);setScreen('signup');}} style={{width:"100%",background:"none",border:`1.5px solid ${T.border}`,borderRadius:14,padding:"13px",fontSize:13,fontWeight:500,color:T.ink2,cursor:"pointer"}}>{modal.ctaAlt}</button>}
+                <div style={{flex:1,minWidth:0}}>
+                  {modal.badge&&(
+                    <div style={{display:"inline-block",background:T.terraLt,borderRadius:6,padding:"2px 8px",fontSize:9,fontWeight:700,color:T.terra,textTransform:"uppercase",letterSpacing:".1em",marginBottom:5}}>
+                      {modal.badge}
+                    </div>
+                  )}
+                  <div style={{fontFamily:T.serif,fontSize:20,fontWeight:700,color:T.ink,lineHeight:1.15,marginBottom:3}}>{modal.title}</div>
+                  <div style={{fontSize:12,color:T.ink3,lineHeight:1.55,fontWeight:300}}>{modal.subtitle}</div>
+                </div>
+              </div>
+
+              {/* Features */}
+              <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:20}}>
+                {modal.features.map((f,i)=>(
+                  <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 12px",background:T.linen,borderRadius:12,border:`1px solid ${T.border}`}}>
+                    <div style={{fontSize:20,width:28,textAlign:"center",flexShrink:0}}>{f.icon}</div>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:13,fontWeight:600,color:T.ink,lineHeight:1.2}}>{f.label}</div>
+                      <div style={{fontSize:11,color:T.ink3,lineHeight:1.45,marginTop:1}}>{f.sub}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* CTA — signup or notify lead gen */}
+              {modal.ctaAction === 'notify' ? (
+                notifySubmitted ? (
+                  <div style={{background:T.sageLt,borderRadius:14,padding:"18px 16px",textAlign:"center",border:`1px solid rgba(92,122,94,.2)`}}>
+                    <div style={{fontSize:22,marginBottom:8}}>🎉</div>
+                    <div style={{fontFamily:T.serif,fontSize:17,fontWeight:700,color:T.sage,marginBottom:4}}>You're on the list!</div>
+                    <div style={{fontSize:12,color:T.ink3,lineHeight:1.6}}>We'll email you the day it launches.<br/>Thanks for your interest in YarnHive.</div>
+                  </div>
+                ) : (
+                  <div>
+                    <div style={{fontFamily:T.serif,fontSize:15,color:T.ink,marginBottom:10,fontWeight:600}}>Get notified when we launch</div>
+                    <div style={{display:"flex",gap:8,marginBottom:8}}>
+                      <input
+                        value={notifyEmail}
+                        onChange={e=>setNotifyEmail(e.target.value)}
+                        onKeyDown={e=>e.key==='Enter'&&handleNotifySubmit()}
+                        placeholder="your@email.com"
+                        type="email"
+                        style={{flex:1,padding:"13px 14px",background:T.linen,border:`1.5px solid ${T.border}`,borderRadius:12,fontSize:14,color:T.ink,outline:"none"}}
+                        onFocus={e=>e.target.style.borderColor=T.terra}
+                        onBlur={e=>e.target.style.borderColor=T.border}
+                      />
+                      <button
+                        onClick={handleNotifySubmit}
+                        disabled={notifyLoading||!notifyEmail.includes('@')}
+                        style={{background:`linear-gradient(135deg,${T.terra},#7A2E14)`,color:"#fff",border:"none",borderRadius:12,padding:"13px 16px",fontSize:14,fontWeight:600,cursor:notifyLoading?"not-allowed":"pointer",opacity:notifyEmail.includes('@')?1:0.5,transition:"opacity .15s",whiteSpace:"nowrap"}}
+                      >
+                        {notifyLoading ? '...' : 'Notify me'}
+                      </button>
+                    </div>
+                    <div style={{fontSize:11,color:T.ink3,lineHeight:1.5}}>{modal.footnote}</div>
+                  </div>
+                )
+              ) : (
+                <>
+                  <button onClick={handleModalCTA} style={{width:"100%",background:`linear-gradient(135deg,${T.terra},#7A2E14)`,color:"#fff",border:"none",borderRadius:14,padding:"15px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:`0 8px 24px rgba(184,90,60,.35)`,marginBottom:modal.ctaAlt?8:0}}>{modal.cta}</button>
+                  {modal.ctaAlt&&<button onClick={()=>{closeModal();setScreen('signup');}} style={{width:"100%",background:T.linen,border:`1.5px solid ${T.border}`,borderRadius:14,padding:"13px",fontSize:13,fontWeight:500,color:T.ink2,cursor:"pointer"}}>{modal.ctaAlt}</button>}
+                  {modal.footnote&&<div style={{textAlign:"center",marginTop:10,fontSize:11,color:T.ink3}}>{modal.footnote}</div>}
                 </>
-            }
-            {modal.footnote&&<div style={{textAlign:"center",marginTop:12,fontSize:11,color:T.ink3}}>{modal.footnote}</div>}
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -1344,14 +1435,13 @@ const Auth = ({onEnter,onEnterAsPro}) => {
         <button onClick={onEnter} style={{background:"none",border:"none",color:"rgba(92,79,68,0.6)",fontSize:12,cursor:"pointer",padding:"2px 0"}}>Continue without account →</button>
       </div>
       <div style={{height:"1px",background:"rgba(28,23,20,.07)",margin:"2px 0 14px"}}/>
-      {/* Clickable Free/Pro cards */}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:2}}>
-        <div onClick={()=>setActiveModal('free')} style={{background:"rgba(244,237,227,0.75)",backdropFilter:"blur(8px)",borderRadius:14,padding:"12px 14px",border:"1px solid rgba(255,255,255,0.6)",textAlign:"center",cursor:"pointer",transition:"transform .15s,box-shadow .15s"}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 8px 20px rgba(0,0,0,0.1)";}} onMouseLeave={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="none";}}>
+        <div onClick={()=>setActiveModal('free')} style={{background:"rgba(244,237,227,0.75)",backdropFilter:"blur(8px)",borderRadius:14,padding:"12px 14px",border:"1px solid rgba(255,255,255,0.6)",textAlign:"center",cursor:"pointer",transition:"transform .15s"}} onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"} onMouseLeave={e=>e.currentTarget.style.transform="none"}>
           <div style={{fontFamily:T.serif,fontSize:20,color:T.terra,fontWeight:700,lineHeight:1}}>Free</div>
           <div style={{fontSize:10,color:T.ink3,marginTop:4,lineHeight:1.4}}>5 patterns<br/>All core features</div>
           <div style={{fontSize:9,color:T.terra,marginTop:6,fontWeight:600,letterSpacing:".05em"}}>SEE WHAT'S INCLUDED →</div>
         </div>
-        <div onClick={()=>setActiveModal('pro')} style={{background:`linear-gradient(145deg,${T.terra},#6B2410)`,borderRadius:14,padding:"12px 14px",textAlign:"center",boxShadow:"0 6px 20px rgba(184,90,60,.5)",position:"relative",overflow:"hidden",cursor:"pointer",transition:"transform .15s,box-shadow .15s"}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 12px 28px rgba(184,90,60,.65)";}} onMouseLeave={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="0 6px 20px rgba(184,90,60,.5)";}}>
+        <div onClick={()=>setActiveModal('pro')} style={{background:`linear-gradient(145deg,${T.terra},#6B2410)`,borderRadius:14,padding:"12px 14px",textAlign:"center",boxShadow:"0 6px 20px rgba(184,90,60,.5)",position:"relative",overflow:"hidden",cursor:"pointer",transition:"transform .15s"}} onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"} onMouseLeave={e=>e.currentTarget.style.transform="none"}>
           <div style={{position:"absolute",top:0,left:0,right:0,bottom:0,background:"linear-gradient(135deg,rgba(255,255,255,0) 30%,rgba(255,255,255,0.07) 50%,rgba(255,255,255,0) 70%)",pointerEvents:"none"}}/>
           <div style={{position:"absolute",top:10,right:-20,background:"rgba(255,255,255,0.18)",padding:"3px 28px",transform:"rotate(35deg)",fontSize:7,fontWeight:700,color:"rgba(255,255,255,0.9)",letterSpacing:".06em",whiteSpace:"nowrap"}}>HIVE VISION</div>
           <div style={{fontFamily:T.serif,fontSize:20,color:"#fff",fontWeight:700,lineHeight:1,position:"relative"}}>Pro</div>
@@ -1401,7 +1491,7 @@ const Auth = ({onEnter,onEnterAsPro}) => {
         }}/>
       </div>
       <div style={{position:"relative",zIndex:1,minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"24px 16px"}}>
-        <BeeAnimator show={!showForm} isDesktop={isDesktop}/>
+        <BeeAnimator show={!showForm && !activeModal} isDesktop={isDesktop}/>
         <div className="card-rise" style={{width:"100%",maxWidth:isDesktop?420:360}}>
           {showForm ? <FormCard/> : <WelcomeCard/>}
         </div>
