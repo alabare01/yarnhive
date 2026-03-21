@@ -977,9 +977,19 @@ const NavPanel = ({open,onClose,view,setView,count,isPro}) => {
 };
 
 const BeeAnimator = ({visible, isDesktop}) => {
-  const size = isDesktop ? 52 : 44;
+  const size = isDesktop ? 52 : 42;
   const W = isDesktop ? 440 : 370;
-  const H = isDesktop ? 180 : 155;
+  const H = isDesktop ? 200 : 170;
+
+  // Landing: bottom-left, well below headline text
+  const lx = Math.round(W * 0.12);
+  const ly = Math.round(H * 0.82);
+
+  // Path waypoints: enter right, arc high, descend to bottom-left
+  const x0 = W + size;   const y0 = Math.round(H * 0.6);
+  const x1 = Math.round(W * 0.78); const y1 = Math.round(H * 0.05);
+  const x2 = Math.round(W * 0.38); const y2 = Math.round(H * 0.04);
+  const x3 = lx;         const y3 = ly;
 
   return (
     <div style={{
@@ -992,45 +1002,28 @@ const BeeAnimator = ({visible, isDesktop}) => {
       transition: 'opacity .3s ease',
     }}>
       <style>{`
-        @keyframes beefly {
-          0%   { transform: translate(${W+size}px, ${isDesktop ? 130 : 108}px) rotate(8deg); opacity: 0; }
-          4%   { opacity: 1; }
-          30%  { transform: translate(${Math.round(W*0.82)}px, ${Math.round(H*0.08)}px) rotate(22deg); }
-          65%  { transform: translate(${Math.round(W*0.42)}px, ${Math.round(H*0.06)}px) rotate(10deg); }
-          88%  { transform: translate(${Math.round(W*0.22)}px, ${Math.round(H*0.52)}px) rotate(-4deg); }
-          100% { transform: translate(${Math.round(W*0.22)}px, ${Math.round(H*0.64)}px) rotate(0deg); opacity: 1; }
+        @keyframes beepath {
+          0%   { transform: translate(${x0}px, ${y0}px) scaleX(-1); opacity: 0; }
+          3%   { opacity: 1; }
+          28%  { transform: translate(${x1}px, ${y1}px) scaleX(-1) rotate(-12deg); }
+          62%  { transform: translate(${x2}px, ${y2}px) scaleX(-1) rotate(-6deg); }
+          82%  { transform: translate(${Math.round(lx + 20)}px, ${Math.round(ly - 22)}px) scaleX(-1) rotate(8deg); }
+          90%  { transform: translate(${lx}px, ${ly}px) scaleX(-1) rotate(0deg); opacity: 1; }
+          94%  { transform: translate(${lx}px, ${Math.round(ly - 3)}px) scaleX(-1); opacity: 1; }
+          97%  { transform: translate(${lx}px, ${ly}px) scaleX(-1); opacity: 1; }
+          100% { transform: translate(${x0}px, ${y0}px) scaleX(-1); opacity: 0; }
         }
-        @keyframes beebob {
-          0%, 100% { transform: translate(${Math.round(W*0.22)}px, ${Math.round(H*0.64)}px) rotate(0deg); }
-          50%       { transform: translate(${Math.round(W*0.22)}px, ${Math.round(H*0.64) - 4}px) rotate(0deg); }
-        }
-        @keyframes trailFade {
-          0%   { opacity: 0.7; transform: scale(1); }
-          100% { opacity: 0; transform: scale(0.3); }
-        }
-        .bee-fly {
+        .bee-anim {
           position: absolute;
           top: 0; left: 0;
           font-size: ${size}px;
           line-height: 1;
-          animation:
-            beefly 3.2s cubic-bezier(.25,.46,.45,.94) 0.9s both,
-            beebob 2.2s ease-in-out ${0.9 + 3.2}s infinite;
-          will-change: transform;
+          animation: beepath 6s cubic-bezier(.45,.05,.55,.95) 0.85s infinite;
+          will-change: transform, opacity;
           user-select: none;
         }
-        .bee-trail {
-          position: absolute;
-          top: 0; left: 0;
-          pointer-events: none;
-        }
-        .bee-trail span {
-          position: absolute;
-          border-radius: 50%;
-          animation: trailFade .8s ease-out forwards;
-        }
       `}</style>
-      <div className="bee-fly">🐝</div>
+      <div className="bee-anim">🐝</div>
     </div>
   );
 };
