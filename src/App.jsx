@@ -215,7 +215,7 @@ const ROLE_COLORS = {
 const WireframeViewer = ({components,labeled=false,height=220,fillContainer=false}) => {
   const mountRef=useRef(null),cameraRef=useRef(null),groupRef=useRef(null);
   const isDragging=useRef(false),lastMouse=useRef({x:0,y:0}),rotRef=useRef({x:0.25,y:0.4});
-  const zoomRef=useRef(7.0),pinchRef=useRef(null);
+  const zoomRef=useRef(11.0),pinchRef=useRef(null);
   const [threeLoaded,setThreeLoaded]=useState(false),[loadError,setLoadError]=useState(false);
   useEffect(()=>{
     if(window.THREE){setThreeLoaded(true);return;}
@@ -639,8 +639,9 @@ const HiveVisionForm = ({onSave}) => {
                 <div style={{position:"absolute",bottom:8,right:10,background:"rgba(0,0,0,.35)",borderRadius:6,padding:"2px 7px",fontSize:9,color:"rgba(255,255,255,.8)",pointerEvents:"none"}}>⤢ expand</div>
               </div>
             </div>
-            <div style={{display:"flex",gap:6,marginTop:8,justifyContent:"center"}}>
-              {[["labeled","Labeled"],["clean","Clean"]].map(([mode,label])=>(
+            <div style={{display:"flex",gap:6,marginTop:8,justifyContent:"center",alignItems:"center"}}>
+              <span style={{fontSize:11,color:T.ink3,marginRight:4}}>Component labels:</span>
+              {[["labeled","On"],["clean","Off"]].map(([mode,label])=>(
                 <button key={mode} onClick={()=>setWireframeMode(mode)} style={{background:wireframeMode===mode?T.terra:T.linen,color:wireframeMode===mode?"#fff":T.ink3,border:`1px solid ${wireframeMode===mode?T.terra:T.border}`,borderRadius:8,padding:"5px 14px",fontSize:11,fontWeight:600,cursor:"pointer",transition:"all .15s"}}>{label}</button>
               ))}
             </div>
@@ -1008,6 +1009,21 @@ const Auth = ({onEnter,onEnterAsPro}) => {
                 <div style={{flex:1,background:T.linen,borderRadius:12,padding:"14px 16px",textAlign:"center",border:`1px solid ${T.border}`}}><div style={{fontFamily:T.serif,fontSize:22,color:T.terra,fontWeight:700}}>Free</div><div style={{fontSize:11,color:T.ink3,marginTop:3}}>5 patterns · all features</div></div>
                 <div style={{flex:1,background:`linear-gradient(135deg,${T.terra},#8B3A22)`,borderRadius:12,padding:"14px 16px",textAlign:"center"}}><div style={{fontFamily:T.serif,fontSize:22,color:"#fff",fontWeight:700}}>Pro</div><div style={{fontSize:11,color:"rgba(255,255,255,.7)",marginTop:3}}>$9.99/mo · unlimited</div></div>
               </div>
+              <div style={{marginTop:20,background:T.linen,borderRadius:12,border:`1px solid ${T.border}`,padding:"14px 16px"}}>
+                <div style={{fontSize:10,color:T.ink3,textTransform:"uppercase",letterSpacing:".1em",marginBottom:10,fontWeight:600,textAlign:"center"}}>Coming Soon to Mobile</div>
+                <div style={{display:"flex",gap:10}}>
+                  <div style={{flex:1,background:"#000",borderRadius:10,padding:"10px 14px",display:"flex",alignItems:"center",gap:10,cursor:"default"}}>
+                    <span style={{fontSize:22}}>🍎</span>
+                    <div><div style={{fontSize:9,color:"rgba(255,255,255,.6)",letterSpacing:".06em"}}>DOWNLOAD ON THE</div><div style={{fontSize:14,fontWeight:700,color:"#fff",lineHeight:1.1}}>App Store</div></div>
+                    <div style={{marginLeft:"auto",background:"rgba(255,255,255,.15)",borderRadius:6,padding:"3px 8px",fontSize:9,color:"rgba(255,255,255,.7)",fontWeight:600}}>Soon</div>
+                  </div>
+                  <div style={{flex:1,background:"#000",borderRadius:10,padding:"10px 14px",display:"flex",alignItems:"center",gap:10,cursor:"default"}}>
+                    <span style={{fontSize:22}}>▶</span>
+                    <div><div style={{fontSize:9,color:"rgba(255,255,255,.6)",letterSpacing:".06em"}}>GET IT ON</div><div style={{fontSize:14,fontWeight:700,color:"#fff",lineHeight:1.1}}>Google Play</div></div>
+                    <div style={{marginLeft:"auto",background:"rgba(255,255,255,.15)",borderRadius:6,padding:"3px 8px",fontSize:9,color:"rgba(255,255,255,.7)",fontWeight:600}}>Soon</div>
+                  </div>
+                </div>
+              </div>
               <div style={{textAlign:"center",marginTop:16,fontSize:10,color:T.ink3,opacity:.5,letterSpacing:".06em"}}>{APP_VERSION}</div>
             </>}
             {showForm&&<>
@@ -1039,6 +1055,19 @@ const Auth = ({onEnter,onEnterAsPro}) => {
         <Btn variant="ghost" onClick={onEnter}>Continue without account →</Btn>
         <div style={{borderTop:`1px solid ${T.border}`,paddingTop:12,marginTop:4}}><Btn variant="sage" onClick={onEnterAsPro} small>🔑 Dev access — Pro unlocked</Btn></div>
         <p style={{fontSize:11,color:T.ink3,textAlign:"center",lineHeight:1.6,marginTop:4}}>Free: up to 5 patterns, all features · Pro $9.99/mo or $74.99/yr: unlimited</p>
+        {/* App Store badges */}
+        <div style={{display:"flex",gap:8,marginTop:4}}>
+          <div style={{flex:1,background:"#000",borderRadius:10,padding:"9px 12px",display:"flex",alignItems:"center",gap:8}}>
+            <span style={{fontSize:18}}>🍎</span>
+            <div><div style={{fontSize:8,color:"rgba(255,255,255,.55)",letterSpacing:".06em"}}>DOWNLOAD ON THE</div><div style={{fontSize:12,fontWeight:700,color:"#fff",lineHeight:1.1}}>App Store</div></div>
+            <div style={{marginLeft:"auto",background:"rgba(255,255,255,.12)",borderRadius:5,padding:"2px 7px",fontSize:8,color:"rgba(255,255,255,.6)",fontWeight:600}}>Soon</div>
+          </div>
+          <div style={{flex:1,background:"#000",borderRadius:10,padding:"9px 12px",display:"flex",alignItems:"center",gap:8}}>
+            <span style={{fontSize:18}}>▶</span>
+            <div><div style={{fontSize:8,color:"rgba(255,255,255,.55)",letterSpacing:".06em"}}>GET IT ON</div><div style={{fontSize:12,fontWeight:700,color:"#fff",lineHeight:1.1}}>Google Play</div></div>
+            <div style={{marginLeft:"auto",background:"rgba(255,255,255,.12)",borderRadius:5,padding:"2px 7px",fontSize:8,color:"rgba(255,255,255,.6)",fontWeight:600}}>Soon</div>
+          </div>
+        </div>
         <p style={{fontSize:10,color:T.ink3,textAlign:"center",opacity:.5,marginTop:4,letterSpacing:".06em"}}>{APP_VERSION}</p>
       </div>
     </div>
@@ -1315,12 +1344,11 @@ const Detail = ({p,onBack,onSave}) => {
             </div>
           </div>
           {/* split panel */}
-          <div style={{display:"grid",gridTemplateColumns:isDesktop?"1fr 1fr":"1fr 1fr",height:isDesktop?320:220,position:"relative"}}>
-            {/* left: photo */}
-            <div style={{position:"relative",overflow:"hidden"}}>
-              <Photo src={p.photo} alt={p.title} style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top"}}/>
-              <div style={{position:"absolute",inset:0,background:"linear-gradient(to right,transparent 60%,rgba(28,23,20,.6) 100%)"}}/>
-              <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(28,23,20,.75) 0%,transparent 50%)"}}/>
+          <div style={{display:"grid",gridTemplateColumns:isDesktop?"1fr 1fr":"1fr 1fr",height:isDesktop?340:240,position:"relative"}}>
+            {/* left: photo — contain so full subject always visible */}
+            <div style={{position:"relative",overflow:"hidden",background:"#0E0A08"}}>
+              <Photo src={p.photo} alt={p.title} style={{width:"100%",height:"100%",objectFit:"contain",objectPosition:"center center"}}/>
+              <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(14,10,8,.85) 0%,transparent 45%)"}}/>
               <div style={{position:"absolute",bottom:14,left:14,right:0}}>
                 <div style={{fontSize:9,color:"rgba(255,255,255,.5)",textTransform:"uppercase",letterSpacing:".1em",marginBottom:3}}>{p.cat} · {p.weight}</div>
                 {editing
