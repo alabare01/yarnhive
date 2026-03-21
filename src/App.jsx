@@ -1097,22 +1097,7 @@ const BeeAnimator = ({show, isDesktop}) => {
         ctx.restore();
       }
 
-      // FIX: soft radial shadow under bee only — no ellipse that outlines the card border
-      const rawProgress = Math.min(elapsed/FLIGHT_MS, 1);
-      if ((rawProgress > 0.82 || landed) && pos.x > 0) {
-        const fade = landed ? 1 : (rawProgress-0.82)/0.18;
-        ctx.save();
-        ctx.globalAlpha = 0.14 * fade;
-        // Radial gradient shadow — soft, no hard edge that reveals card shape
-        const grad = ctx.createRadialGradient(LX, LY+BEE_H*0.48, 0, LX, LY+BEE_H*0.48, BEE_W*0.5);
-        grad.addColorStop(0, 'rgba(0,0,0,0.5)');
-        grad.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.ellipse(LX, LY+BEE_H*0.48, BEE_W*0.5, BEE_H*0.18, 0, 0, Math.PI*2);
-        ctx.fill();
-        ctx.restore();
-      }
+      // No ground shadow — causes canvas boundary artifacts
 
       // Draw bee
       if (pos.x > -BEE_W*0.3) { // only draw when mostly on screen
@@ -1122,8 +1107,6 @@ const BeeAnimator = ({show, isDesktop}) => {
         ctx.save();
         ctx.translate(pos.x, pos.y+bob);
         ctx.rotate(angle * 0.3 * tiltDamp);
-        ctx.shadowColor = 'rgba(0,0,0,0.25)';
-        ctx.shadowBlur = 8; ctx.shadowOffsetY = 4;
         ctx.drawImage(img, -BEE_W/2, -BEE_H/2, BEE_W, BEE_H);
         ctx.restore();
       }
