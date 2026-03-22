@@ -155,6 +155,35 @@ const CSS = () => (
 );
 
 const pct = p => p.rows.length ? Math.round(p.rows.filter(r=>r.done).length/p.rows.length*100) : 0;
+
+const makeStarterPatterns = () => [
+  {id:"onboard_granny_"+Date.now(),title:"Granny Square",cat:"Blankets",hook:"5.0mm",weight:"Worsted",yardage:120,notes:"",source:"YarnHive Starter",photo:PHOTOS.blanket,materials:[],rating:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:12,height:12},isStarter:true,rows:[
+    {id:1,text:"Magic ring, ch 3 (counts as first dc), 2 dc in ring, ch 2, [3 dc in ring, ch 2] 3 times, sl st to top of ch-3 to join.",done:false,note:""},
+    {id:2,text:"Sl st to ch-2 sp, ch 3, 2 dc in same sp, ch 1, [3 dc, ch 2, 3 dc in next ch-2 sp, ch 1] 3 times, 3 dc in first sp, ch 2, sl st to join.",done:false,note:""},
+    {id:3,text:"Sl st to ch-2 corner sp, ch 3, 2 dc in same sp, ch 2, 3 dc in same sp, ch 1, 3 dc in ch-1 sp, ch 1, [corner, ch 1, 3 dc in ch-1 sp, ch 1] repeat, sl st to join.",done:false,note:""},
+    {id:4,text:"Continue pattern, adding one 3-dc group in each ch-1 sp along sides and working [3 dc, ch 2, 3 dc] in each corner ch-2 sp.",done:false,note:""},
+    {id:5,text:"Repeat Row 4 to expand square one more round.",done:false,note:""},
+    {id:6,text:"Final round: sc evenly around entire square, working 3 sc in each corner. Fasten off and weave in ends.",done:false,note:""},
+  ]},
+  {id:"onboard_amigurumi_"+Date.now(),title:"Amigurumi Ball",cat:"Amigurumi",hook:"3.5mm",weight:"DK",yardage:40,notes:"",source:"YarnHive Starter",photo:PHOTOS.granny,materials:[],rating:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:4,height:4},isStarter:true,rows:[
+    {id:11,text:"Magic ring, 6 sc in ring. (6)",done:false,note:""},
+    {id:12,text:"2 sc in each st around. (12)",done:false,note:""},
+    {id:13,text:"[ Sc in next st, 2 sc in next st ] repeat around. (18)",done:false,note:""},
+    {id:14,text:"Sc in each st around. (18) — repeat this row 3 times total.",done:false,note:""},
+    {id:15,text:"[ Sc in next st, sc2tog ] repeat around. (12) — stuff with fiberfill now.",done:false,note:""},
+    {id:16,text:"Sc2tog around. (6) — fasten off, close opening, weave in ends.",done:false,note:""},
+  ]},
+  {id:"onboard_beanie_"+Date.now(),title:"Basic Beanie",cat:"Wearables",hook:"5.0mm",weight:"Worsted",yardage:150,notes:"",source:"YarnHive Starter",photo:PHOTOS.cardigan,materials:[],rating:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:10,height:8},isStarter:true,rows:[
+    {id:21,text:"Magic ring, 6 sc. (6)",done:false,note:""},
+    {id:22,text:"2 sc in each st. (12)",done:false,note:""},
+    {id:23,text:"[ Sc, 2 sc in next ] repeat. (18)",done:false,note:""},
+    {id:24,text:"[ Sc in 2, 2 sc in next ] repeat. (24)",done:false,note:""},
+    {id:25,text:"[ Sc in 3, 2 sc in next ] repeat. (30)",done:false,note:""},
+    {id:26,text:"Sc in each st around until piece measures 5 inches from top.",done:false,note:""},
+    {id:27,text:"Continue even rounds until beanie measures 7.5 inches total.",done:false,note:""},
+    {id:28,text:"Last round: sl st in each st around. Fasten off, weave in ends.",done:false,note:""},
+  ]},
+];
 const estYards = p => {
   if (p.yardage > 0) return p.yardage;
   return (p.materials||[]).reduce((s,m) => {
@@ -1112,12 +1141,23 @@ const FormCard = ({cardStyle,isSignup,email,setEmail,pass,setPass,confirmPass,se
   );
 };
 
-const EmailConfirmBanner = ({onDismiss}) => (
-  <div style={{background:T.terra,padding:"10px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
-    <span style={{fontSize:13,color:"#fff",fontWeight:500,lineHeight:1.4}}>Confirm your email to unlock sharing features — check your inbox.</span>
-    <button onClick={onDismiss} style={{background:"none",border:"none",cursor:"pointer",color:"#fff",fontSize:18,lineHeight:1,padding:"0 2px",flexShrink:0,opacity:.75}}>×</button>
-  </div>
-);
+const EmailConfirmBanner = ({onDismiss,onResend}) => {
+  const [resending,setResending]=useState(false);
+  const handleResend = async () => {
+    setResending(true);
+    if (onResend) await onResend();
+    setResending(false);
+  };
+  return (
+    <div style={{background:T.gold,padding:"10px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
+      <span style={{fontSize:13,color:"#fff",fontWeight:500,lineHeight:1.4}}>Confirm your email to unlock sharing features — check your inbox.</span>
+      <div style={{display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
+        <button onClick={handleResend} disabled={resending} style={{background:"none",border:"none",color:"#fff",fontSize:12,fontWeight:600,cursor:"pointer",textDecoration:"underline",opacity:resending?.5:1}}>{resending?"Sending…":"Resend email"}</button>
+        <button onClick={onDismiss} style={{background:"none",border:"none",cursor:"pointer",color:"#fff",fontSize:18,lineHeight:1,padding:"0 2px",opacity:.75}}>×</button>
+      </div>
+    </div>
+  );
+};
 
 const PRO_FEATURES = [
   {label:"Unlimited patterns",sub:"No cap. Save every pattern you'll ever make"},
@@ -1900,7 +1940,7 @@ const PatternCard = ({p,onClick,delay=0}) => {
       <div style={{position:"relative",height:160,overflow:"hidden",background:T.linen}}>
         <Photo src={p.photo} alt={p.title} style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center center"}}/>
         <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(28,23,20,.5) 0%,transparent 55%)"}}/>
-        {p.isStarter?<div style={{position:"absolute",top:10,left:10,background:"rgba(184,90,60,.85)",backdropFilter:"blur(4px)",color:"#fff",fontSize:9,fontWeight:700,padding:"3px 8px",borderRadius:99}}>🎁 Free</div>
+        {p.isStarter?<div style={{position:"absolute",top:10,left:10,background:"rgba(92,122,94,.85)",backdropFilter:"blur(4px)",color:"#fff",fontSize:9,fontWeight:700,padding:"3px 8px",borderRadius:99,letterSpacing:".05em"}}>STARTER</div>
         :done===100?<div style={{position:"absolute",top:10,right:10,background:T.sage,color:"#fff",fontSize:9,fontWeight:700,padding:"3px 8px",borderRadius:99,letterSpacing:".07em"}}>DONE</div>
         :done>0&&done<100?<><div style={{position:"absolute",top:10,right:10,background:"rgba(28,23,20,.65)",backdropFilter:"blur(4px)",color:"#fff",fontSize:10,fontWeight:600,padding:"3px 8px",borderRadius:99}}>{done}%</div><div style={{position:"absolute",bottom:0,left:0,right:0}}><Bar val={done} color="rgba(255,255,255,.8)" h={3} bg="transparent"/></div></>
         :null}
@@ -2293,7 +2333,7 @@ const CollectionView = ({userPatterns,starterPatterns,cat,setCat,search,setSearc
   const allPatterns = [...userPatterns,...starterPatterns];
   const filteredUser=userPatterns.filter(p=>(cat==="All"||p.cat===cat)&&(!search||p.title.toLowerCase().includes(search.toLowerCase())));
   const filteredStarter=starterPatterns.filter(p=>(cat==="All"||p.cat===cat)&&(!search||p.title.toLowerCase().includes(search.toLowerCase())));
-  const inProgress=allPatterns.filter(p=>{const v=pct(p);return (v>0&&v<100)||(p.isStarter&&p.rows&&p.rows.length>0&&v<100);});
+  const inProgress=allPatterns.filter(p=>{const v=pct(p);return v>0&&v<100;});
   const pad=isDesktop?"0":"0 18px";
   return (
     <>
@@ -2587,6 +2627,28 @@ export default function YarnHive() {
     return ()=>clearInterval(poll);
   },[showEmailBanner,authed]);
 
+  const showEmailBannerIfNeeded = () => {
+    if (!isEmailConfirmed() && !sessionStorage.getItem("yh_banner_dismissed")) setShowEmailBanner(true);
+  };
+
+  const handleResendEmail = async () => {
+    const user = supabaseAuth.getUser();
+    const s = getSession();
+    if (!user || !s) return;
+    try {
+      await fetch(`${SUPABASE_URL}/auth/v1/resend`, {
+        method:"POST",
+        headers:{"apikey":SUPABASE_ANON_KEY,"Content-Type":"application/json"},
+        body:JSON.stringify({type:"signup",email:user.email,options:{emailRedirectTo:APP_ORIGIN}}),
+      });
+    } catch {}
+  };
+
+  const handleDismissEmailBanner = () => {
+    setShowEmailBanner(false);
+    sessionStorage.setItem("yh_banner_dismissed","1");
+  };
+
   const handleNewSignup = () => {
     setAuthed(true);
     setView("collection");
@@ -2594,7 +2656,7 @@ export default function YarnHive() {
     setShowWelcomeBanner(true);
     setTimeout(()=>{
       setShowWelcomeBanner(false);
-      if (!isEmailConfirmed()) setShowEmailBanner(true);
+      showEmailBannerIfNeeded();
     },4000);
   };
 
@@ -2603,7 +2665,7 @@ export default function YarnHive() {
     setView("collection");
     setShowWelcomeToast(true);
     setTimeout(()=>setShowWelcomeToast(false),3000);
-    if (!isEmailConfirmed()) setShowEmailBanner(true);
+    showEmailBannerIfNeeded();
   };
 
   // Show nothing until session is validated against Supabase
@@ -2614,13 +2676,13 @@ export default function YarnHive() {
   const openDetail=p=>{setSelected(p);setView("detail");};
   const handleAddPattern=p=>{setUserPatterns(prev=>[p,...prev]);setView("collection");};
   const openAddModal=()=>{if(tier.atCap){setShowPaywall(true);return;}setAddOpen(true);};
-  const inProgress=allPatterns.filter(p=>{const v=pct(p);return (v>0&&v<100)||(p.isStarter&&p.rows&&p.rows.length>0&&v<100);});
+  const inProgress=allPatterns.filter(p=>{const v=pct(p);return v>0&&v<100;});
   const TITLE_MAP={collection:"Your Hive",wip:"Builds in Progress",browse:"Browse Sites",stash:"Yarn Stash",calculator:"Calculators",shopping:"Shopping List",profile:"Profile & Settings"};
 
   if(isDesktop) return (
     <div style={{display:"flex",minHeight:"100vh",width:"100%",background:T.bg,fontFamily:T.sans,position:"relative"}}>
       <CSS/>
-      {showOnboarding&&<OnboardingScreen onComplete={()=>{setShowOnboarding(false);setJustCompletedOnboarding(true);setView("profile");}} onBackToAuth={async()=>{setShowOnboarding(false);await supabaseAuth.signOut();setAuthed(false);setIsPro(false);setUserPatterns([]);setStarterPatterns([]);}}/>}
+      {showOnboarding&&<OnboardingScreen onComplete={()=>{setShowOnboarding(false);setJustCompletedOnboarding(true);setUserPatterns(prev=>[...makeStarterPatterns(),...prev]);setView("profile");}} onBackToAuth={async()=>{setShowOnboarding(false);await supabaseAuth.signOut();setAuthed(false);setIsPro(false);setUserPatterns([]);setStarterPatterns([]);}}/>}
       {showPaywall&&<PaywallGate patternCount={userPatterns.length} onClose={()=>setShowPaywall(false)} onUpgrade={()=>setShowPaywall(false)}/>}
       {showProModal&&<ProInfoModal onClose={()=>setShowProModal(false)}/>}
       {addOpen&&<AddPatternModal onClose={()=>setAddOpen(false)} onSave={handleAddPattern} isPro={isPro} patternCount={userPatterns.length}/>}
@@ -2628,7 +2690,7 @@ export default function YarnHive() {
       <SidebarNav view={view} setView={setView} count={userPatterns.length} isPro={isPro} onAddPattern={openAddModal} onSignOut={handleSignOut} onUpgrade={()=>setShowProModal(true)}/>
       <div style={{flex:1,minWidth:0,overflowY:"auto",display:"flex",flexDirection:"column"}}>
         <WelcomeBanner visible={showWelcomeBanner}/>
-        {showEmailBanner&&!showWelcomeBanner&&<EmailConfirmBanner onDismiss={()=>setShowEmailBanner(false)}/>}
+        {showEmailBanner&&!showWelcomeBanner&&<EmailConfirmBanner onDismiss={handleDismissEmailBanner} onResend={handleResendEmail}/>}
         <div style={{background:T.surface,borderBottom:`1px solid ${T.border}`,padding:"0 40px",height:64,display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:20,flexShrink:0}}>
           <div style={{fontFamily:T.serif,fontSize:24,fontWeight:700,color:T.ink}}>{TITLE_MAP[view]||"YarnHive"}</div>
           <div style={{display:"flex",alignItems:"center",gap:12}}>
@@ -2652,13 +2714,13 @@ export default function YarnHive() {
   return (
     <div style={{fontFamily:T.sans,background:T.bg,minHeight:"100vh",maxWidth:isTablet?680:430,margin:"0 auto",display:"flex",flexDirection:"column",position:"relative"}}>
       <CSS/>
-      {showOnboarding&&<OnboardingScreen onComplete={()=>{setShowOnboarding(false);setJustCompletedOnboarding(true);setView("profile");}} onBackToAuth={async()=>{setShowOnboarding(false);await supabaseAuth.signOut();setAuthed(false);setIsPro(false);setUserPatterns([]);setStarterPatterns([]);}}/>}
+      {showOnboarding&&<OnboardingScreen onComplete={()=>{setShowOnboarding(false);setJustCompletedOnboarding(true);setUserPatterns(prev=>[...makeStarterPatterns(),...prev]);setView("profile");}} onBackToAuth={async()=>{setShowOnboarding(false);await supabaseAuth.signOut();setAuthed(false);setIsPro(false);setUserPatterns([]);setStarterPatterns([]);}}/>}
       <WelcomeToast visible={showWelcomeToast}/>
       <NavPanel open={navOpen} onClose={()=>setNavOpen(false)} view={view} setView={setView} count={userPatterns.length} isPro={isPro} onSignOut={handleSignOut} onUpgrade={()=>setShowProModal(true)}/>
       {showPaywall&&<PaywallGate patternCount={userPatterns.length} onClose={()=>setShowPaywall(false)} onUpgrade={()=>setShowPaywall(false)}/>}
       {showProModal&&<ProInfoModal onClose={()=>setShowProModal(false)}/>}
       {addOpen&&<AddPatternModal onClose={()=>setAddOpen(false)} onSave={handleAddPattern} isPro={isPro} patternCount={userPatterns.length}/>}
-      {showEmailBanner&&<EmailConfirmBanner onDismiss={()=>setShowEmailBanner(false)}/>}
+      {showEmailBanner&&<EmailConfirmBanner onDismiss={handleDismissEmailBanner} onResend={handleResendEmail}/>}
       {showWelcomeBanner&&<WelcomeBanner onDismiss={()=>setShowWelcomeBanner(false)}/>}
       <div style={{background:T.surface,borderBottom:`1px solid ${T.border}`,padding:"0 18px",height:56,display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:20,flexShrink:0}}>
         <button onClick={()=>setNavOpen(true)} style={{background:"none",border:"none",cursor:"pointer",padding:"8px 8px 8px 0",display:"flex",flexDirection:"column",gap:5}}><div style={{width:22,height:1.5,background:T.ink,borderRadius:99}}/><div style={{width:15,height:1.5,background:T.ink,borderRadius:99}}/><div style={{width:22,height:1.5,background:T.ink,borderRadius:99}}/></button>
