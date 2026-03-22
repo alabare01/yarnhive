@@ -1174,10 +1174,12 @@ const ProInfoModal = ({onClose}) => {
   );
 };
 
-const ProfileSettingsView = ({isPro,onOpenProModal,onGoHome,onEmailConfirmed}) => {
+const ProfileSettingsView = ({isPro,onOpenProModal,onGoHome,onEmailConfirmed,showNewUserBanner}) => {
   const [username,setUsername]=useState(""),[displayName,setDisplayName]=useState(""),[bio,setBio]=useState("");
+  const [socialInstagram,setSocialInstagram]=useState(""),[socialPinterest,setSocialPinterest]=useState(""),[socialRavelry,setSocialRavelry]=useState("");
   const [profileSaving,setProfileSaving]=useState(false),[profileMsg,setProfileMsg]=useState(null),[profileLoaded,setProfileLoaded]=useState(false);
   const [saveBtnText,setSaveBtnText]=useState("Save Profile");
+  const [welcomeDismissed,setWelcomeDismissed]=useState(()=>!!localStorage.getItem("yh_welcome_banner_dismissed"));
   const [curPass,setCurPass]=useState(""),[newPass,setNewPass]=useState(""),[passSaving,setPassSaving]=useState(false),[passMsg,setPassMsg]=useState(null);
   const [resending,setResending]=useState(false),[resendMsg,setResendMsg]=useState(null);
   const [emailConfirmed,setEmailConfirmed]=useState(false);
@@ -1230,12 +1232,12 @@ const ProfileSettingsView = ({isPro,onOpenProModal,onGoHome,onEmailConfirmed}) =
     if (!user || profileLoaded) return;
     (async ()=>{
       try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/user_profiles?id=eq.${user.id}&select=username,display_name,bio`, {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/user_profiles?id=eq.${user.id}&select=username,display_name,bio,social_instagram,social_pinterest,social_ravelry`, {
           headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${session.access_token}`},
         });
         if (res.ok) {
           const rows = await res.json();
-          if (rows[0]) { setUsername(rows[0].username||""); setDisplayName(rows[0].display_name||""); setBio(rows[0].bio||""); }
+          if (rows[0]) { setUsername(rows[0].username||""); setDisplayName(rows[0].display_name||""); setBio(rows[0].bio||""); setSocialInstagram(rows[0].social_instagram||""); setSocialPinterest(rows[0].social_pinterest||""); setSocialRavelry(rows[0].social_ravelry||""); }
         }
       } catch {}
       setProfileLoaded(true);
@@ -1250,7 +1252,7 @@ const ProfileSettingsView = ({isPro,onOpenProModal,onGoHome,onEmailConfirmed}) =
       const res = await fetch(`${SUPABASE_URL}/rest/v1/user_profiles?id=eq.${user.id}`, {
         method:"PATCH",
         headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${session.access_token}`,"Content-Type":"application/json","Prefer":"return=minimal"},
-        body:JSON.stringify({username:handle||null, display_name:displayName.trim()||null, bio:bio.trim()||null}),
+        body:JSON.stringify({username:handle||null, display_name:displayName.trim()||null, bio:bio.trim()||null, social_instagram:socialInstagram.trim()||null, social_pinterest:socialPinterest.trim()||null, social_ravelry:socialRavelry.trim()||null}),
       });
       if (!res.ok) {
         const d = await res.json().catch(()=>({}));
@@ -1309,6 +1311,15 @@ const ProfileSettingsView = ({isPro,onOpenProModal,onGoHome,onEmailConfirmed}) =
     <div style={{padding:isDesktop?"24px 0 80px":"16px 18px 100px",maxWidth:560}}>
       <button onClick={onGoHome} style={{background:"none",border:"none",color:T.ink3,cursor:"pointer",fontSize:13,fontWeight:500,padding:0,marginBottom:16,display:"flex",alignItems:"center",gap:4}}>← Your Hive</button>
 
+      {showNewUserBanner&&!welcomeDismissed&&(
+        <div style={{background:`linear-gradient(135deg,${T.terra},#C97A5E)`,borderRadius:16,padding:isDesktop?"20px 24px":"16px 18px",marginBottom:20,position:"relative"}}>
+          <button onClick={()=>{setWelcomeDismissed(true);localStorage.setItem("yh_welcome_banner_dismissed","1");}} style={{position:"absolute",top:12,right:14,background:"none",border:"none",color:"rgba(255,255,255,.6)",fontSize:18,cursor:"pointer",lineHeight:1}}>×</button>
+          <div style={{fontFamily:T.serif,fontSize:20,fontWeight:700,color:"#fff",marginBottom:4}}>Your hive is ready! 🐝</div>
+          <div style={{fontSize:13,color:"rgba(255,255,255,.85)",marginBottom:14,lineHeight:1.5}}>Start building your pattern collection.</div>
+          <button onClick={()=>{setWelcomeDismissed(true);localStorage.setItem("yh_welcome_banner_dismissed","1");onGoHome();}} style={{background:"rgba(255,255,255,.2)",border:"1px solid rgba(255,255,255,.3)",borderRadius:12,padding:"10px 20px",fontSize:14,fontWeight:600,color:"#fff",cursor:"pointer"}}>Go to Your Hive →</button>
+        </div>
+      )}
+
       {/* Profile completion bar */}
       <div style={{marginBottom:20}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
@@ -1331,6 +1342,12 @@ const ProfileSettingsView = ({isPro,onOpenProModal,onGoHome,onEmailConfirmed}) =
           </div>
         </div>
         <Field label="Bio" placeholder="Tell us about your craft..." value={bio} onChange={e=>setBio(e.target.value)} rows={3}/>
+        <div style={{borderTop:`1px solid ${T.border}`,paddingTop:16,marginTop:8}}>
+          <div style={{fontSize:13,fontWeight:600,color:T.ink,marginBottom:12}}>Social Connections</div>
+          <Field label="Instagram handle" placeholder="@yourhandle" value={socialInstagram} onChange={e=>setSocialInstagram(e.target.value)}/>
+          <Field label="Pinterest handle" placeholder="@yourhandle" value={socialPinterest} onChange={e=>setSocialPinterest(e.target.value)}/>
+          <Field label="Ravelry username" placeholder="yourhandle" value={socialRavelry} onChange={e=>setSocialRavelry(e.target.value)}/>
+        </div>
         <Msg msg={profileMsg}/>
         <button onClick={handleProfileSave} disabled={profileSaving} style={{background:T.terra,color:"#fff",border:"none",borderRadius:12,padding:"12px 24px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.3)",opacity:profileSaving?.6:1}}>{profileSaving?"Saving…":saveBtnText}</button>
       </div>
@@ -2339,6 +2356,16 @@ const WelcomeBanner = ({visible}) => (
   </div>
 );
 
+const InfoTooltip = ({text}) => {
+  const [show,setShow]=useState(false);
+  return (
+    <span style={{position:"relative",display:"inline-flex",marginLeft:4,cursor:"pointer"}} onMouseEnter={()=>setShow(true)} onMouseLeave={()=>setShow(false)} onClick={()=>setShow(!show)}>
+      <span style={{fontSize:12,color:T.ink3,opacity:.7}}>&#9432;</span>
+      {show&&<div style={{position:"absolute",bottom:"calc(100% + 6px)",left:"50%",transform:"translateX(-50%)",background:T.ink,color:"#fff",fontSize:11,lineHeight:1.5,padding:"8px 12px",borderRadius:8,width:220,zIndex:10,boxShadow:"0 4px 16px rgba(0,0,0,.2)",pointerEvents:"none"}}>{text}<div style={{position:"absolute",top:"100%",left:"50%",transform:"translateX(-50%)",width:0,height:0,borderLeft:"6px solid transparent",borderRight:"6px solid transparent",borderTop:`6px solid ${T.ink}`}}/></div>}
+    </span>
+  );
+};
+
 const OnboardingScreen = ({onComplete,onSkip}) => {
   const user = supabaseAuth.getUser();
   const session = getSession();
@@ -2348,30 +2375,46 @@ const OnboardingScreen = ({onComplete,onSkip}) => {
   const [displayName,setDisplayName]=useState(""),[username,setUsername]=useState(emailPrefix);
   const [cellPhone,setCellPhone]=useState(""),[smsOptIn,setSmsOptIn]=useState(true);
   const [bio,setBio]=useState("");
-  const [street,setStreet]=useState(""),[city,setCity]=useState(""),[state,setState]=useState(""),[zip,setZip]=useState("");
-  const [instagram,setInstagram]=useState(""),[pinterest,setPinterest]=useState(""),[ravelry,setRavelry]=useState("");
   const [saving,setSaving]=useState(false),[error,setError]=useState(null);
   const{isDesktop}=useBreakpoint();
 
+  // Browser history management for back button
+  useEffect(()=>{
+    history.pushState({onboardingStep:2},"","");
+    const handlePop = (e) => {
+      if (step===3) { setStep(2); history.pushState({onboardingStep:2},"",""); }
+    };
+    window.addEventListener("popstate",handlePop);
+    return ()=>window.removeEventListener("popstate",handlePop);
+  },[step]);
+
+  const goToStep3 = () => {
+    history.pushState({onboardingStep:3},"","");
+    setError(null);
+    setStep(3);
+  };
+
   // Step 2 save — saves to DB then advances to Step 3
   const handleStep2Save = async () => {
+    if (!firstName.trim()) { setError("First name is required."); return; }
+    if (!lastName.trim()) { setError("Last name is required."); return; }
     if (!displayName.trim()) { setError("Display name is required."); return; }
     const handle = username.trim().replace(/^@/,"");
     if (!handle) { setError("Username is required."); return; }
     if (!/^[a-zA-Z0-9_]{2,30}$/.test(handle)) { setError("Username: 2-30 chars, letters/numbers/underscores only."); return; }
+    if (!cellPhone.trim()) { setError("Cell phone is required."); return; }
     setSaving(true); setError(null);
     if (user && session) {
       try {
         await fetch(`${SUPABASE_URL}/rest/v1/user_profiles?id=eq.${user.id}`, {
           method:"PATCH",
           headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${session.access_token}`,"Content-Type":"application/json","Prefer":"return=minimal"},
-          body:JSON.stringify({username:handle,display_name:displayName.trim(),first_name:firstName.trim()||null,last_name:lastName.trim()||null,cell_phone:cellPhone.trim()||null,sms_opt_in:smsOptIn}),
+          body:JSON.stringify({username:handle,display_name:displayName.trim(),first_name:firstName.trim(),last_name:lastName.trim(),cell_phone:cellPhone.trim(),sms_opt_in:smsOptIn}),
         });
       } catch {}
     }
     setSaving(false);
-    setError(null);
-    setStep(3);
+    goToStep3();
   };
 
   const markOnboardingComplete = async () => {
@@ -2386,7 +2429,7 @@ const OnboardingScreen = ({onComplete,onSkip}) => {
     }
   };
 
-  // Step 3 save — saves everything to DB then closes modal
+  // Step 3 save — saves personal info to DB then closes modal
   const handleStep3Save = async () => {
     const handle = username.trim().replace(/^@/,"");
     if (handle && !/^[a-zA-Z0-9_]{2,30}$/.test(handle)) { setError("Username: 2-30 chars, letters/numbers/underscores only."); return; }
@@ -2396,7 +2439,7 @@ const OnboardingScreen = ({onComplete,onSkip}) => {
         const res = await fetch(`${SUPABASE_URL}/rest/v1/user_profiles?id=eq.${user.id}`, {
           method:"PATCH",
           headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${session.access_token}`,"Content-Type":"application/json","Prefer":"return=minimal"},
-          body:JSON.stringify({first_name:firstName.trim()||null,last_name:lastName.trim()||null,display_name:displayName.trim()||null,username:handle||null,bio:bio.trim()||null,cell_phone:cellPhone.trim()||null,address_street:street.trim()||null,address_city:city.trim()||null,address_state:state.trim()||null,address_zip:zip.trim()||null,social_instagram:instagram.trim()||null,social_pinterest:pinterest.trim()||null,social_ravelry:ravelry.trim()||null,has_completed_onboarding:true}),
+          body:JSON.stringify({first_name:firstName.trim()||null,last_name:lastName.trim()||null,display_name:displayName.trim()||null,username:handle||null,bio:bio.trim()||null,has_completed_onboarding:true}),
         });
         if (!res.ok) {
           const d=await res.json().catch(()=>({}));
@@ -2409,20 +2452,23 @@ const OnboardingScreen = ({onComplete,onSkip}) => {
     onComplete();
   };
 
-  const handleSkip = () => { markOnboardingComplete(); onSkip(); };
-  const handleStep3Skip = () => { markOnboardingComplete(); onSkip(); };
+  // Step 2 skip — advances to Step 3 without saving
+  const handleStep2Skip = () => { goToStep3(); };
+  // Step 3 "Looks good" — marks complete and navigates
+  const handleStep3Done = () => { markOnboardingComplete(); onComplete(); };
 
-  const trackable = [firstName,lastName,displayName,username,cellPhone,street,city,state,zip];
+  const trackable = [firstName,lastName,displayName,username,bio];
   const filled = trackable.filter(f=>f.trim()).length;
   const progress = Math.round((filled/trackable.length)*100);
 
-  const SECTION = {background:"rgba(253,250,247,0.6)",borderRadius:14,border:`1px solid ${T.border}`,padding:"16px 18px",marginBottom:14};
-  const SECTION_TITLE = {fontFamily:T.serif,fontSize:15,fontWeight:700,color:T.ink,marginBottom:12};
+  const LABEL_WITH_TIP = (label,tip) => (
+    <div style={{fontSize:11,color:T.ink3,textTransform:"uppercase",letterSpacing:".08em",marginBottom:5,display:"flex",alignItems:"center"}}>{label}<InfoTooltip text={tip}/></div>
+  );
 
   return (
     <div style={{position:"fixed",inset:0,zIndex:700,display:"flex",alignItems:"center",justifyContent:"center",padding:24,fontFamily:T.sans}}>
       <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.55)",backdropFilter:"blur(8px)"}}/>
-      <div style={{position:"relative",zIndex:1,width:"100%",maxWidth:step===3?540:480,maxHeight:"80vh",display:"flex",flexDirection:"column",background:"rgba(250,247,243,0.95)",backdropFilter:"blur(36px) saturate(1.6) brightness(1.05)",WebkitBackdropFilter:"blur(36px) saturate(1.6) brightness(1.05)",borderRadius:28,boxShadow:"0 40px 100px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.45) inset, 0 2px 0 rgba(255,255,255,0.7) inset",border:"1px solid rgba(255,255,255,0.38)"}}>
+      <div style={{position:"relative",zIndex:1,width:"100%",maxWidth:480,maxHeight:"80vh",display:"flex",flexDirection:"column",background:"rgba(250,247,243,0.95)",backdropFilter:"blur(36px) saturate(1.6) brightness(1.05)",WebkitBackdropFilter:"blur(36px) saturate(1.6) brightness(1.05)",borderRadius:28,boxShadow:"0 40px 100px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.45) inset, 0 2px 0 rgba(255,255,255,0.7) inset",border:"1px solid rgba(255,255,255,0.38)"}}>
         <div style={{overflowY:"auto",padding:isDesktop?"44px 48px 40px":"28px 24px 32px"}}>
           {step===2 ? <>
             <div style={{textAlign:"center",marginBottom:28}}>
@@ -2432,18 +2478,24 @@ const OnboardingScreen = ({onComplete,onSkip}) => {
               <p style={{fontSize:14,color:T.ink3,marginTop:8,lineHeight:1.6}}>Let the hive know who you are.</p>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 12px"}}>
-              <Field label="First name" placeholder="e.g. Sarah" value={firstName} onChange={e=>setFirstName(e.target.value)}/>
-              <Field label="Last name" placeholder="e.g. Miller" value={lastName} onChange={e=>setLastName(e.target.value)}/>
+              <Field label="First name *" placeholder="e.g. Sarah" value={firstName} onChange={e=>setFirstName(e.target.value)}/>
+              <Field label="Last name *" placeholder="e.g. Miller" value={lastName} onChange={e=>setLastName(e.target.value)}/>
             </div>
-            <Field label="Display name" placeholder="e.g. Sarah" value={displayName} onChange={e=>setDisplayName(e.target.value)}/>
             <div style={{marginBottom:14}}>
-              <div style={{fontSize:11,color:T.ink3,textTransform:"uppercase",letterSpacing:".08em",marginBottom:5}}>Username</div>
+              {LABEL_WITH_TIP("Display name *","How other makers see you in The Hive. Can be your name, nickname, anything you like.")}
+              <input value={displayName} onChange={e=>setDisplayName(e.target.value)} placeholder="e.g. Sarah" style={{width:"100%",padding:"13px 16px",background:T.linen,border:`1.5px solid ${T.border}`,borderRadius:12,color:T.ink,fontSize:15}} onFocus={e=>e.target.style.borderColor=T.terra} onBlur={e=>e.target.style.borderColor=T.border}/>
+            </div>
+            <div style={{marginBottom:14}}>
+              {LABEL_WITH_TIP("Username *","Your unique @handle for your public profile.")}
               <div style={{position:"relative"}}>
                 <span style={{position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",color:T.ink3,fontSize:15,pointerEvents:"none"}}>@</span>
                 <input value={username} onChange={e=>setUsername(e.target.value)} placeholder="yourhandle" style={{width:"100%",padding:"13px 16px 13px 30px",background:T.linen,border:`1.5px solid ${T.border}`,borderRadius:12,color:T.ink,fontSize:15}} onFocus={e=>e.target.style.borderColor=T.terra} onBlur={e=>e.target.style.borderColor=T.border}/>
               </div>
             </div>
-            <Field label="Cell phone" placeholder="e.g. (555) 123-4567" value={cellPhone} onChange={e=>setCellPhone(e.target.value)} type="tel"/>
+            <div style={{marginBottom:14}}>
+              {LABEL_WITH_TIP("Cell phone *","Only used for SMS updates if you opt in. Never shared.")}
+              <input value={cellPhone} onChange={e=>setCellPhone(e.target.value)} placeholder="e.g. (555) 123-4567" type="tel" style={{width:"100%",padding:"13px 16px",background:T.linen,border:`1.5px solid ${T.border}`,borderRadius:12,color:T.ink,fontSize:15}} onFocus={e=>e.target.style.borderColor=T.terra} onBlur={e=>e.target.style.borderColor=T.border}/>
+            </div>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 0 14px"}}>
               <div>
                 <div style={{fontSize:13,color:T.ink2,fontWeight:500}}>Text me updates from YarnHive</div>
@@ -2455,7 +2507,7 @@ const OnboardingScreen = ({onComplete,onSkip}) => {
             </div>
             {error&&<div style={{background:T.terraLt,border:"1px solid rgba(184,90,60,.2)",borderRadius:10,padding:"10px 14px",fontSize:12,color:T.terra,lineHeight:1.5,marginBottom:8}}>{error}</div>}
             <button onClick={handleStep2Save} disabled={saving} style={{width:"100%",background:T.terra,color:"#fff",border:"none",borderRadius:14,padding:"15px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.3)",marginTop:4,opacity:saving?.6:1}}>{saving?"Setting up…":"Set up my profile"}</button>
-            <div style={{textAlign:"center",marginTop:12}}><button onClick={handleSkip} style={{background:"none",border:"none",color:T.ink3,fontSize:13,cursor:"pointer",fontWeight:500}}>Skip for now</button></div>
+            <div style={{textAlign:"center",marginTop:12}}><button onClick={handleStep2Skip} style={{background:"none",border:"none",color:T.ink3,fontSize:13,cursor:"pointer",fontWeight:500}}>I'll do this later</button></div>
           </> : <>
             <div style={{textAlign:"center",marginBottom:20}}>
               <div style={{fontSize:11,color:T.ink3,fontWeight:500,letterSpacing:".06em",marginBottom:10}}>Step 3 of 3</div>
@@ -2474,8 +2526,8 @@ const OnboardingScreen = ({onComplete,onSkip}) => {
               </div>
             </div>
             {/* Personal Info */}
-            <div style={SECTION}>
-              <div style={SECTION_TITLE}>Personal Info</div>
+            <div style={{background:"rgba(253,250,247,0.6)",borderRadius:14,border:`1px solid ${T.border}`,padding:"16px 18px",marginBottom:14}}>
+              <div style={{fontFamily:T.serif,fontSize:15,fontWeight:700,color:T.ink,marginBottom:12}}>Personal Info</div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 12px"}}>
                 <Field label="First name" placeholder="e.g. Sarah" value={firstName} onChange={e=>setFirstName(e.target.value)}/>
                 <Field label="Last name" placeholder="e.g. Miller" value={lastName} onChange={e=>setLastName(e.target.value)}/>
@@ -2490,37 +2542,9 @@ const OnboardingScreen = ({onComplete,onSkip}) => {
               </div>
               <Field label="Bio" placeholder="Tell us about your craft..." value={bio} onChange={e=>setBio(e.target.value)} rows={3}/>
             </div>
-            {/* Contact */}
-            <div style={SECTION}>
-              <div style={SECTION_TITLE}>Contact</div>
-              <div style={{marginBottom:14}}>
-                <div style={{fontSize:11,color:T.ink3,textTransform:"uppercase",letterSpacing:".08em",marginBottom:5}}>Email</div>
-                <div style={{padding:"13px 16px",background:T.linen,border:`1.5px solid ${T.border}`,borderRadius:12,color:T.ink3,fontSize:14}}>{user?.email||"—"}</div>
-              </div>
-              <Field label="Cell phone" placeholder="e.g. (555) 123-4567" value={cellPhone} onChange={e=>setCellPhone(e.target.value)} type="tel"/>
-              <div style={{height:1,background:T.border,margin:"4px 0 14px"}}/>
-              <div style={{fontSize:11,color:T.ink3,textTransform:"uppercase",letterSpacing:".08em",marginBottom:10,fontWeight:600}}>Address</div>
-              <Field label="Street" placeholder="e.g. 123 Main St" value={street} onChange={e=>setStreet(e.target.value)}/>
-              <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr",gap:"0 10px"}}>
-                <Field label="City" placeholder="e.g. Portland" value={city} onChange={e=>setCity(e.target.value)}/>
-                <Field label="State" placeholder="e.g. OR" value={state} onChange={e=>setState(e.target.value)}/>
-                <Field label="Zip" placeholder="e.g. 97201" value={zip} onChange={e=>setZip(e.target.value)}/>
-              </div>
-            </div>
-            {/* Social Connections */}
-            <div style={{...SECTION,opacity:.7}}>
-              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
-                <div style={SECTION_TITLE}>Social Connections</div>
-                <div style={{fontSize:14,marginTop:-12}}>🔒</div>
-              </div>
-              <div style={{background:T.linen,borderRadius:10,padding:"8px 12px",fontSize:11,color:T.ink3,lineHeight:1.5,marginBottom:12}}>Coming soon — connect your accounts</div>
-              <Field label="Instagram handle" placeholder="@yourhandle" value={instagram} onChange={e=>setInstagram(e.target.value)}/>
-              <Field label="Pinterest handle" placeholder="@yourhandle" value={pinterest} onChange={e=>setPinterest(e.target.value)}/>
-              <Field label="Ravelry username" placeholder="yourhandle" value={ravelry} onChange={e=>setRavelry(e.target.value)}/>
-            </div>
             {error&&<div style={{background:T.terraLt,border:"1px solid rgba(184,90,60,.2)",borderRadius:10,padding:"10px 14px",fontSize:12,color:T.terra,lineHeight:1.5,marginBottom:8}}>{error}</div>}
             <button onClick={handleStep3Save} disabled={saving} style={{width:"100%",background:T.terra,color:"#fff",border:"none",borderRadius:14,padding:"15px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.3)",marginTop:4,opacity:saving?.6:1}}>{saving?"Saving…":"Complete my profile"}</button>
-            <div style={{textAlign:"center",marginTop:12}}><button onClick={handleStep3Skip} style={{background:"none",border:"none",color:T.ink3,fontSize:13,cursor:"pointer",fontWeight:500}}>Skip for now</button></div>
+            <div style={{textAlign:"center",marginTop:12}}><button onClick={handleStep3Done} style={{background:"none",border:"none",color:T.ink3,fontSize:13,cursor:"pointer",fontWeight:500}}>Looks good, let's go →</button></div>
           </>}
         </div>
       </div>
@@ -2539,6 +2563,7 @@ export default function YarnHive() {
   const [showWelcomeToast,setShowWelcomeToast]=useState(false);
   const [showProModal,setShowProModal]=useState(false);
   const [showOnboarding,setShowOnboarding]=useState(false);
+  const [justCompletedOnboarding,setJustCompletedOnboarding]=useState(false);
   const{isTablet,isDesktop}=useBreakpoint();
   const allPatterns = [...userPatterns,...starterPatterns];
   const tier=useTier(isPro,userPatterns.length);
@@ -2687,7 +2712,7 @@ export default function YarnHive() {
   if(isDesktop) return (
     <div style={{display:"flex",minHeight:"100vh",width:"100%",background:T.bg,fontFamily:T.sans,position:"relative"}}>
       <CSS/>
-      {showOnboarding&&<OnboardingScreen onComplete={()=>{setShowOnboarding(false);setView("collection");}} onSkip={()=>{setShowOnboarding(false);setView("collection");}}/>}
+      {showOnboarding&&<OnboardingScreen onComplete={()=>{setShowOnboarding(false);setJustCompletedOnboarding(true);setView("profile");}} onSkip={()=>{setShowOnboarding(false);setJustCompletedOnboarding(true);setView("profile");}}/>}
       {showPaywall&&<PaywallGate patternCount={userPatterns.length} onClose={()=>setShowPaywall(false)} onUpgrade={()=>setShowPaywall(false)}/>}
       {showProModal&&<ProInfoModal onClose={()=>setShowProModal(false)}/>}
       {addOpen&&<AddPatternModal onClose={()=>setAddOpen(false)} onSave={handleAddPattern} isPro={isPro} patternCount={userPatterns.length}/>}
@@ -2710,7 +2735,7 @@ export default function YarnHive() {
           {view==="stash"&&<div style={{paddingTop:24}}><YarnStash/></div>}
           {view==="calculator"&&<div style={{paddingTop:24}}><Calculators/></div>}
           {view==="shopping"&&<div style={{paddingTop:24}}><ShoppingList patterns={allPatterns}/></div>}
-          {view==="profile"&&<ProfileSettingsView isPro={isPro} onOpenProModal={()=>setShowProModal(true)} onGoHome={()=>setView("collection")} onEmailConfirmed={()=>setShowEmailBanner(false)}/>}
+          {view==="profile"&&<ProfileSettingsView isPro={isPro} onOpenProModal={()=>setShowProModal(true)} onGoHome={()=>setView("collection")} onEmailConfirmed={()=>setShowEmailBanner(false)} showNewUserBanner={justCompletedOnboarding}/>}
         </div>
       </div>
     </div>
@@ -2719,7 +2744,7 @@ export default function YarnHive() {
   return (
     <div style={{fontFamily:T.sans,background:T.bg,minHeight:"100vh",maxWidth:isTablet?680:430,margin:"0 auto",display:"flex",flexDirection:"column",position:"relative"}}>
       <CSS/>
-      {showOnboarding&&<OnboardingScreen onComplete={()=>{setShowOnboarding(false);setView("collection");}} onSkip={()=>{setShowOnboarding(false);setView("collection");}}/>}
+      {showOnboarding&&<OnboardingScreen onComplete={()=>{setShowOnboarding(false);setJustCompletedOnboarding(true);setView("profile");}} onSkip={()=>{setShowOnboarding(false);setJustCompletedOnboarding(true);setView("profile");}}/>}
       <WelcomeToast visible={showWelcomeToast}/>
       <NavPanel open={navOpen} onClose={()=>setNavOpen(false)} view={view} setView={setView} count={userPatterns.length} isPro={isPro} onSignOut={handleSignOut} onUpgrade={()=>setShowProModal(true)}/>
       {showPaywall&&<PaywallGate patternCount={userPatterns.length} onClose={()=>setShowPaywall(false)} onUpgrade={()=>setShowPaywall(false)}/>}
@@ -2739,7 +2764,7 @@ export default function YarnHive() {
         {view==="stash"&&<div style={{paddingTop:18}}><YarnStash/></div>}
         {view==="calculator"&&<div style={{paddingTop:18}}><Calculators/></div>}
         {view==="shopping"&&<div style={{paddingTop:18}}><ShoppingList patterns={allPatterns}/></div>}
-        {view==="profile"&&<ProfileSettingsView isPro={isPro} onOpenProModal={()=>setShowProModal(true)} onGoHome={()=>setView("collection")} onEmailConfirmed={()=>setShowEmailBanner(false)}/>}
+        {view==="profile"&&<ProfileSettingsView isPro={isPro} onOpenProModal={()=>setShowProModal(true)} onGoHome={()=>setView("collection")} onEmailConfirmed={()=>setShowEmailBanner(false)} showNewUserBanner={justCompletedOnboarding}/>}
       </div>
       <div style={{position:"fixed",bottom:28,left:"50%",transform:"translateX(-50%)",zIndex:30,pointerEvents:"none"}}>
         <button onClick={openAddModal} style={{background:`linear-gradient(135deg,${T.terra},#8B3A22)`,color:"#fff",border:"none",borderRadius:99,padding:"13px 26px",fontSize:14,fontWeight:700,cursor:"pointer",pointerEvents:"auto",boxShadow:"0 8px 28px rgba(184,90,60,.55)",display:"flex",alignItems:"center",gap:8,animation:"fabPulse 3s ease infinite"}}><span style={{fontSize:17}}>+</span> Add Pattern</button>
