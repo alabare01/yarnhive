@@ -964,7 +964,7 @@ const AddPatternModal = ({onClose,onSave,isPro,patternCount}) => {
   );
 };
 
-const SidebarNav = ({view,setView,count,isPro,onAddPattern}) => {
+const SidebarNav = ({view,setView,count,isPro,onAddPattern,onSignOut}) => {
   const ITEMS=[{key:"collection",label:"Your Hive",sub:count+" saved",icon:"🧶"},{key:"wip",label:"In Progress",sub:"Currently making",icon:"🪡"},{key:"browse",label:"Browse Sites",sub:"Find free patterns",icon:"🌐"},{key:"stash",label:"Yarn Stash",sub:"Manage your yarn",icon:"🎀"},{key:"calculator",label:"Calculators",sub:"Gauge, yardage & more",icon:"🧮"},{key:"shopping",label:"Shopping List",sub:"Auto-generated",icon:"🛒"}];
   return (
     <div style={{width:260,background:T.surface,borderRight:`1px solid ${T.border}`,height:"100vh",position:"sticky",top:0,display:"flex",flexDirection:"column",flexShrink:0}}>
@@ -986,12 +986,13 @@ const SidebarNav = ({view,setView,count,isPro,onAddPattern}) => {
       <div style={{padding:"12px 16px 24px"}}>
         {isPro?<div style={{background:`linear-gradient(135deg,${T.sage},#3D5E3F)`,borderRadius:12,padding:"12px 14px",display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:16}}>✨</span><div><div style={{fontSize:12,fontWeight:700,color:"#fff"}}>YarnHive Pro</div><div style={{fontSize:11,color:"rgba(255,255,255,.7)"}}>All features active</div></div></div>
         :<div style={{background:`linear-gradient(135deg,${T.terra},#8B3A22)`,borderRadius:12,padding:"14px"}}><div style={{fontSize:12,fontWeight:700,color:"#fff",marginBottom:3}}>✨ Upgrade to Pro</div><div style={{fontSize:11,color:"rgba(255,255,255,.75)",lineHeight:1.5,marginBottom:10}}>Unlimited patterns, all imports, Hive Vision, cloud sync.</div><div style={{background:"rgba(255,255,255,.2)",borderRadius:8,padding:"7px",textAlign:"center",fontSize:11,fontWeight:700,color:"#fff",cursor:"pointer"}}>$9.99/mo · $74.99/yr</div></div>}
+        {onSignOut&&<button onClick={onSignOut} style={{width:"100%",background:"none",border:"1px solid "+T.border,borderRadius:10,padding:"8px",fontSize:12,color:T.ink3,cursor:"pointer",marginTop:10,fontWeight:500}}>Sign out</button>}
       </div>
     </div>
   );
 };
 
-const NavPanel = ({open,onClose,view,setView,count,isPro}) => {
+const NavPanel = ({open,onClose,view,setView,count,isPro,onSignOut}) => {
   const [closing,setClosing]=useState(false);
   const dismiss=()=>{setClosing(true);setTimeout(()=>{setClosing(false);onClose();},220);};
   const go=v=>{setView(v);dismiss();};
@@ -1018,6 +1019,7 @@ const NavPanel = ({open,onClose,view,setView,count,isPro}) => {
         <div style={{padding:"14px 18px 36px"}}>
           {isPro?<div style={{background:`linear-gradient(135deg,${T.sage},#3D5E3F)`,borderRadius:14,padding:"12px 14px",display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:18}}>✨</span><div><div style={{fontSize:12,fontWeight:700,color:"#fff"}}>YarnHive Pro</div><div style={{fontSize:11,color:"rgba(255,255,255,.7)"}}>All features active</div></div></div>
           :<div style={{background:`linear-gradient(135deg,${T.terra},#8B3A22)`,borderRadius:14,padding:"14px 16px"}}><div style={{fontSize:13,fontWeight:700,color:"#fff",marginBottom:3}}>✨ Upgrade to Pro</div><div style={{fontSize:11,color:"rgba(255,255,255,.8)",lineHeight:1.5,marginBottom:10}}>Unlimited patterns, all imports, Hive Vision.</div><div style={{background:"rgba(255,255,255,.2)",borderRadius:8,padding:"8px",textAlign:"center",fontSize:12,fontWeight:700,color:"#fff",cursor:"pointer"}}>$9.99/mo · $74.99/yr</div></div>}
+          {onSignOut&&<button onClick={onSignOut} style={{width:"100%",background:"none",border:"1px solid "+T.border,borderRadius:10,padding:"8px",fontSize:12,color:T.ink3,cursor:"pointer",marginTop:10,fontWeight:500}}>Sign out</button>}
         </div>
       </div>
     </div>
@@ -1077,6 +1079,27 @@ const Auth = ({onEnter,onEnterAsPro}) => {
   const [screen,setScreen]=useState("welcome"),[email,setEmail]=useState(""),[pass,setPass]=useState(""),[name,setName]=useState("");
   const [loading,setLoading]=useState(false),[authError,setAuthError]=useState(null);
   const{isDesktop}=useBreakpoint();
+
+  const handleAuth = async () => {
+    setAuthError(null);
+    if (!email.trim() || !pass) { setAuthError("Please fill in all fields."); return; }
+    setLoading(true);
+    try {
+      if (screen === "signup") {
+        const {data, error} = await supabaseAuth.signUp(email.trim(), pass, name.trim());
+        if (error) { setAuthError(error.msg || error.error_description || error.message || "Sign-up failed."); setLoading(false); return; }
+        // Some Supabase projects require email confirmation
+        if (data && !data.session) { setAuthError("Check your email to confirm your account, then sign in."); setLoading(false); return; }
+      } else {
+        const {data, error} = await supabaseAuth.signIn(email.trim(), pass);
+        if (error) { setAuthError(error.error_description || error.msg || error.message || "Invalid email or password."); setLoading(false); return; }
+      }
+      onEnter();
+    } catch (e) {
+      setAuthError("Network error — please try again.");
+    }
+    setLoading(false);
+  };
 
   const isSignup=screen==="signup";
   const showForm=screen==="signup"||screen==="signin";
@@ -1310,7 +1333,8 @@ const Auth = ({onEnter,onEnterAsPro}) => {
         <Field label="Email" placeholder="you@example.com" value={email} onChange={e=>setEmail(e.target.value)} type="email"/>
         <Field label="Password" placeholder="••••••••" value={pass} onChange={e=>setPass(e.target.value)} type="password"/>
         {!isSignup&&<div style={{textAlign:"right",marginBottom:16}}><span style={{fontSize:12,color:T.terra,cursor:"pointer",fontWeight:500}}>Forgot password?</span></div>}
-        <button onClick={onEnter} style={{width:"100%",background:`linear-gradient(135deg,${T.terra},#7A2E14)`,color:"#fff",border:"none",borderRadius:14,padding:"15px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 8px 24px rgba(184,90,60,.45)",marginTop:8}}>{isSignup?"Create my YarnHive":"Sign in"}</button>
+        {authError&&<div style={{background:"rgba(200,50,50,.08)",border:"1px solid rgba(200,50,50,.2)",borderRadius:10,padding:"10px 14px",fontSize:12,color:"#993333",lineHeight:1.5,marginBottom:8}}>{authError}</div>}
+        <button onClick={handleAuth} disabled={loading} style={{width:"100%",background:`linear-gradient(135deg,${T.terra},#7A2E14)`,color:"#fff",border:"none",borderRadius:14,padding:"15px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 8px 24px rgba(184,90,60,.45)",marginTop:8,opacity:loading?.6:1}}>{loading?"Please wait…":isSignup?"Create my YarnHive":"Sign in"}</button>
       </div>
     </div>
   );
@@ -1950,9 +1974,11 @@ const CollectionView = ({patterns,cat,setCat,search,setSearch,openDetail,onAddPa
 };
 
 export default function YarnHive() {
-  const [authed,setAuthed]=useState(false),[isPro,setIsPro]=useState(false),[patterns,setPatterns]=useState(SEED_PATTERNS),[view,setView]=useState("collection"),[selected,setSelected]=useState(null),[navOpen,setNavOpen]=useState(false),[addOpen,setAddOpen]=useState(false),[showPaywall,setShowPaywall]=useState(false),[cat,setCat]=useState("All"),[search,setSearch]=useState("");
+  const [authed,setAuthed]=useState(()=>!!supabaseAuth.getUser()),[isPro,setIsPro]=useState(false),[patterns,setPatterns]=useState(SEED_PATTERNS),[view,setView]=useState("collection"),[selected,setSelected]=useState(null),[navOpen,setNavOpen]=useState(false),[addOpen,setAddOpen]=useState(false),[showPaywall,setShowPaywall]=useState(false),[cat,setCat]=useState("All"),[search,setSearch]=useState("");
   const{isTablet,isDesktop}=useBreakpoint();
   const tier=useTier(isPro,patterns.length);
+
+  const handleSignOut = async () => { await supabaseAuth.signOut(); setAuthed(false); setIsPro(false); };
 
   if(!authed) return <><CSS/><Auth onEnter={()=>setAuthed(true)} onEnterAsPro={()=>{setIsPro(true);setAuthed(true);}}/></>;
   if(view==="detail"&&selected) return <><CSS/><Detail p={selected} onBack={()=>setView("collection")} onSave={u=>{setPatterns(prev=>prev.map(p=>p.id===u.id?u:p));setSelected(u);}}/></>;
@@ -1968,7 +1994,7 @@ export default function YarnHive() {
       <CSS/>
       {showPaywall&&<PaywallGate patternCount={patterns.length} onClose={()=>setShowPaywall(false)} onUpgrade={()=>setShowPaywall(false)}/>}
       {addOpen&&<AddPatternModal onClose={()=>setAddOpen(false)} onSave={handleAddPattern} isPro={isPro} patternCount={patterns.length}/>}
-      <SidebarNav view={view} setView={setView} count={patterns.length} isPro={isPro} onAddPattern={openAddModal}/>
+      <SidebarNav view={view} setView={setView} count={patterns.length} isPro={isPro} onAddPattern={openAddModal} onSignOut={handleSignOut}/>
       <div style={{flex:1,minWidth:0,overflowY:"auto",display:"flex",flexDirection:"column"}}>
         <div style={{background:T.surface,borderBottom:`1px solid ${T.border}`,padding:"0 40px",height:64,display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:20,flexShrink:0}}>
           <div style={{fontFamily:T.serif,fontSize:24,fontWeight:700,color:T.ink}}>{TITLE_MAP[view]||"YarnHive"}</div>
@@ -1992,7 +2018,7 @@ export default function YarnHive() {
   return (
     <div style={{fontFamily:T.sans,background:T.bg,minHeight:"100vh",maxWidth:isTablet?680:430,margin:"0 auto",display:"flex",flexDirection:"column",position:"relative"}}>
       <CSS/>
-      <NavPanel open={navOpen} onClose={()=>setNavOpen(false)} view={view} setView={setView} count={patterns.length} isPro={isPro}/>
+      <NavPanel open={navOpen} onClose={()=>setNavOpen(false)} view={view} setView={setView} count={patterns.length} isPro={isPro} onSignOut={handleSignOut}/>
       {showPaywall&&<PaywallGate patternCount={patterns.length} onClose={()=>setShowPaywall(false)} onUpgrade={()=>setShowPaywall(false)}/>}
       {addOpen&&<AddPatternModal onClose={()=>setAddOpen(false)} onSave={handleAddPattern} isPro={isPro} patternCount={patterns.length}/>}
       <div style={{background:T.surface,borderBottom:`1px solid ${T.border}`,padding:"0 18px",height:56,display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:20,flexShrink:0}}>
