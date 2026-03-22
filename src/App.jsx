@@ -1081,8 +1081,10 @@ const BeeAnimator = ({visible, isDesktop}) => {
   );
 };
 
-const FormCard = ({cardStyle,isSignup,email,setEmail,pass,setPass,authError,handleAuth,loading,onBack}) => {
-  const onKey = e => { if(e.key==="Enter"&&!loading) handleAuth(); };
+const FormCard = ({cardStyle,isSignup,email,setEmail,pass,setPass,confirmPass,setConfirmPass,authError,handleAuth,loading,onBack}) => {
+  const mismatch = isSignup && confirmPass.length > 0 && pass !== confirmPass;
+  const signupDisabled = isSignup && (pass !== confirmPass || !confirmPass);
+  const onKey = e => { if(e.key==="Enter"&&!loading&&!(isSignup&&signupDisabled)) handleAuth(); };
   return (
   <div style={cardStyle}>
     <button onClick={onBack} style={{background:"none",border:"none",color:T.terra,cursor:"pointer",fontSize:13,fontWeight:600,padding:0,marginBottom:24,display:"flex",alignItems:"center",gap:6}}>← Back</button>
@@ -1093,9 +1095,13 @@ const FormCard = ({cardStyle,isSignup,email,setEmail,pass,setPass,authError,hand
     <div style={{marginTop:20}} onKeyDown={onKey}>
       <Field label="Email" placeholder="you@example.com" value={email} onChange={e=>setEmail(e.target.value)} type="email"/>
       <Field label="Password" placeholder="••••••••" value={pass} onChange={e=>setPass(e.target.value)} type="password"/>
+      {isSignup&&<>
+        <Field label="Confirm password" placeholder="••••••••" value={confirmPass} onChange={e=>setConfirmPass(e.target.value)} type="password"/>
+        {mismatch&&<div style={{fontSize:12,color:T.terra,marginTop:-8,marginBottom:10}}>Passwords don't match</div>}
+      </>}
       {!isSignup&&<div style={{textAlign:"right",marginBottom:16}}><span style={{fontSize:12,color:T.terra,cursor:"pointer",fontWeight:500}}>Forgot password?</span></div>}
       {authError&&<div style={{background:T.terraLt,border:"1px solid rgba(184,90,60,.2)",borderRadius:10,padding:"10px 14px",fontSize:12,color:T.terra,lineHeight:1.5,marginBottom:8}}>{authError}</div>}
-      <button onClick={handleAuth} disabled={loading} style={{width:"100%",background:`linear-gradient(135deg,${T.terra},#7A2E14)`,color:"#fff",border:"none",borderRadius:14,padding:"15px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 8px 24px rgba(184,90,60,.45)",marginTop:8,opacity:loading?.6:1}}>{loading?"Please wait…":isSignup?"Create my YarnHive":"Sign in"}</button>
+      <button onClick={handleAuth} disabled={loading||(isSignup&&signupDisabled)} style={{width:"100%",background:`linear-gradient(135deg,${T.terra},#7A2E14)`,color:"#fff",border:"none",borderRadius:14,padding:"15px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 8px 24px rgba(184,90,60,.45)",marginTop:8,opacity:(loading||(isSignup&&signupDisabled))?.5:1}}>{loading?"Please wait…":isSignup?"Create my YarnHive":"Sign in"}</button>
     </div>
   </div>
   );
@@ -1332,7 +1338,7 @@ const ProfileSettingsView = ({isPro,onOpenProModal,onGoHome}) => {
 };
 
 const Auth = ({onEnter,onEnterAsNew,onEnterAsPro}) => {
-  const [screen,setScreen]=useState("welcome"),[email,setEmail]=useState(""),[pass,setPass]=useState("");
+  const [screen,setScreen]=useState("welcome"),[email,setEmail]=useState(""),[pass,setPass]=useState(""),[confirmPass,setConfirmPass]=useState("");
   const [loading,setLoading]=useState(false),[authError,setAuthError]=useState(null);
   const{isDesktop}=useBreakpoint();
 
@@ -1602,7 +1608,7 @@ const Auth = ({onEnter,onEnterAsNew,onEnterAsPro}) => {
       <div style={{position:"relative",zIndex:1,minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"24px 16px"}}>
         <BeeAnimator visible={!showForm && !activeModal} isDesktop={isDesktop}/>
         <div className="card-rise" style={{width:"100%",maxWidth:isDesktop?420:360}}>
-          {showForm ? <FormCard cardStyle={CARD_STYLE} isSignup={isSignup} email={email} setEmail={setEmail} pass={pass} setPass={setPass} authError={authError} handleAuth={handleAuth} loading={loading} onBack={()=>setScreen("welcome")}/> : <WelcomeCard/>}
+          {showForm ? <FormCard cardStyle={CARD_STYLE} isSignup={isSignup} email={email} setEmail={setEmail} pass={pass} setPass={setPass} confirmPass={confirmPass} setConfirmPass={setConfirmPass} authError={authError} handleAuth={handleAuth} loading={loading} onBack={()=>setScreen("welcome")}/> : <WelcomeCard/>}
         </div>
       </div>
       {/* Modal — true viewport fixed, outside all card stacking contexts */}
