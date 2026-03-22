@@ -20,7 +20,55 @@ const PHOTOS = {
 };
 const PILL = [PHOTOS.blanket, PHOTOS.cardigan, PHOTOS.granny, PHOTOS.tote, PHOTOS.pillow, PHOTOS.market];
 
-const APP_VERSION = "v1.3.8 — Mar 21 2026";
+// ─── SUPABASE AUTH (no package needed) ───────────────────────────────────────
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+const saveSession = (s) => { try { if(s) localStorage.setItem("yh_session",JSON.stringify(s)); else localStorage.removeItem("yh_session"); } catch{} };
+const getSession = () => { try { const r=localStorage.getItem("yh_session"); return r?JSON.parse(r):null; } catch{return null;} };
+
+const supabaseAuth = {
+  signUp: async (email, password, displayName) => {
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+      method:"POST", headers:{"apikey":SUPABASE_ANON_KEY,"Content-Type":"application/json"},
+      body: JSON.stringify({email, password, data:{display_name:displayName}}),
+    });
+    const data = await res.json();
+    if(!res.ok) return {error: data};
+    if(data.session) saveSession(data.session);
+    return {data};
+  },
+  signIn: async (email, password) => {
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+      method:"POST", headers:{"apikey":SUPABASE_ANON_KEY,"Content-Type":"application/json"},
+      body: JSON.stringify({email, password}),
+    });
+    const data = await res.json();
+    if(!res.ok) return {error: data};
+    if(data.access_token) saveSession(data);
+    return {data};
+  },
+  signOut: async () => {
+    const s = getSession();
+    if(s?.access_token) {
+      await fetch(`${SUPABASE_URL}/auth/v1/logout`, {
+        method:"POST", headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${s.access_token}`},
+      });
+    }
+    saveSession(null);
+  },
+  getUser: () => {
+    const s = getSession(); if(!s?.access_token) return null;
+    try {
+      const p = JSON.parse(atob(s.access_token.split(".")[1]));
+      if(p.exp*1000 < Date.now()) { saveSession(null); return null; }
+      return {id:p.sub, email:p.email};
+    } catch { return null; }
+  },
+};
+// ─────────────────────────────────────────────────────────────────────────────
+
+const APP_VERSION = "v1.4.0 — Mar 22 2026";
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
 
 const TIER_CONFIG = {
