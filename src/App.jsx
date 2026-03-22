@@ -79,11 +79,12 @@ const TIER_CONFIG = {
   pro:  { patternCap: Infinity, priceMonthly: 9.99, priceAnnual: 74.99, priceLabel: "$9.99/mo", priceAnnualLabel: "$74.99/yr" },
 };
 
-const useTier = (isPro, userCount) => {
-  const atCap  = !isPro && userCount >= TIER_CONFIG.free.patternCap;
-  const canAdd = isPro  || userCount  < TIER_CONFIG.free.patternCap;
+const useTier = (isPro, userCount, starterCount=0) => {
+  const realCount = userCount - starterCount;
+  const atCap  = !isPro && realCount >= TIER_CONFIG.free.patternCap;
+  const canAdd = isPro  || realCount  < TIER_CONFIG.free.patternCap;
   const hasFeature = () => canAdd;
-  return { isPro, atCap, canAdd, hasFeature, userCount };
+  return { isPro, atCap, canAdd, hasFeature, userCount: realCount };
 };
 
 const T = {
@@ -1940,7 +1941,7 @@ const PatternCard = ({p,onClick,delay=0}) => {
       <div style={{position:"relative",height:160,overflow:"hidden",background:T.linen}}>
         <Photo src={p.photo} alt={p.title} style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center center"}}/>
         <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(28,23,20,.5) 0%,transparent 55%)"}}/>
-        {p.isStarter?<div style={{position:"absolute",top:10,left:10,background:"rgba(92,122,94,.85)",backdropFilter:"blur(4px)",color:"#fff",fontSize:9,fontWeight:700,padding:"3px 8px",borderRadius:99,letterSpacing:".05em"}}>STARTER</div>
+        {p.isStarter?<div style={{position:"absolute",top:10,left:10,background:"rgba(184,144,44,.9)",backdropFilter:"blur(4px)",color:"#fff",fontSize:9,fontWeight:600,padding:"3px 8px",borderRadius:99}}>Free Starter</div>
         :done===100?<div style={{position:"absolute",top:10,right:10,background:T.sage,color:"#fff",fontSize:9,fontWeight:700,padding:"3px 8px",borderRadius:99,letterSpacing:".07em"}}>DONE</div>
         :done>0&&done<100?<><div style={{position:"absolute",top:10,right:10,background:"rgba(28,23,20,.65)",backdropFilter:"blur(4px)",color:"#fff",fontSize:10,fontWeight:600,padding:"3px 8px",borderRadius:99}}>{done}%</div><div style={{position:"absolute",bottom:0,left:0,right:0}}><Bar val={done} color="rgba(255,255,255,.8)" h={3} bg="transparent"/></div></>
         :null}
@@ -1950,6 +1951,7 @@ const PatternCard = ({p,onClick,delay=0}) => {
         <div style={{fontSize:10,color:T.ink3,textTransform:"uppercase",letterSpacing:".08em",marginBottom:3}}>{p.cat}</div>
         <div style={{fontFamily:T.serif,fontSize:15,fontWeight:500,color:T.ink,lineHeight:1.3,marginBottom:7}}>{p.title}</div>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}><Stars val={p.rating} ro/><span style={{fontSize:11,color:T.ink3}}>{p.source}</span></div>
+        {p.isStarter&&<div style={{fontSize:10,color:T.ink3,opacity:.6,marginTop:6,fontStyle:"italic"}}>A gift from YarnHive — yours to keep</div>}
       </div>
     </div>
   );
@@ -2296,30 +2298,32 @@ const ShoppingList = ({patterns}) => {
   );
 };
 
+const FEED_IMG = {
+  bee:"https://res.cloudinary.com/dmaupzhcx/image/upload/c_fill,w_400,h_220,g_center/v1774123693/yarnhive_sidebar_bee.jpg",
+  world:"https://res.cloudinary.com/dmaupzhcx/image/upload/c_fill,w_400,h_220,g_center/v1774116735/yarnhive_bg_v2.jpg",
+};
 const HiveFeedStrip = ({hasPatterns,setView}) => {
   const cards = hasPatterns
-    ? [{id:"streak",type:"gradient",bg:"linear-gradient(135deg,#B85A3C,#7A2E14)",title:"You're on a roll! 🔥",sub:"Keep your making streak going."},
-       {id:"community",type:"gradient",bg:"linear-gradient(135deg,#5C7A5E,#3D5E3F)",title:"847 makers active",sub:"this week"},
-       {id:"tip",type:"gradient",bg:"linear-gradient(135deg,#B8902C,#8B6914)",title:"Pro tip 💡",sub:"Block finished pieces for a pro look"},
-       {id:"seasonal",type:"image",src:PHOTOS.blanket,title:"Spring patterns 🌸",sub:"Browse trending now →",action:"browse"},
-       {id:"milestone",type:"gradient",bg:"linear-gradient(135deg,#B85A3C,#7A2E14)",title:"Complete your first pattern ⭐",sub:"Earn your Yarn Curious badge"}]
-    : [{id:"welcome",type:"image",src:PHOTOS.world,title:"Welcome to YarnHive 🐝",sub:"Your hive is ready"},
-       {id:"community",type:"gradient",bg:"linear-gradient(135deg,#5C7A5E,#3D5E3F)",title:"847 makers active",sub:"this week"},
-       {id:"tip",type:"gradient",bg:"linear-gradient(135deg,#B8902C,#8B6914)",title:"Pro tip 💡",sub:"Block finished pieces for a pro look"},
-       {id:"seasonal",type:"image",src:PHOTOS.blanket,title:"Spring patterns 🌸",sub:"Browse trending now →",action:"browse"},
-       {id:"milestone",type:"gradient",bg:"linear-gradient(135deg,#B85A3C,#7A2E14)",title:"Complete your first pattern ⭐",sub:"Earn your Yarn Curious badge"}];
+    ? [{id:"streak",type:"image",src:FEED_IMG.bee,title:"You're on a roll! 🔥",sub:"Keep your making streak going."},
+       {id:"community",type:"textured",bg:"linear-gradient(135deg,#5C7A5E,#3D5E3F)",title:"847 makers active",sub:"this week"},
+       {id:"tip",type:"textured",bg:"linear-gradient(135deg,#B8902C,#8B6914)",title:"Pro tip 💡",sub:"Block finished pieces for a pro look"},
+       {id:"seasonal",type:"image",src:FEED_IMG.world,title:"Spring patterns 🌸",sub:"Browse trending now →",action:"browse"}]
+    : [{id:"welcome",type:"image",src:FEED_IMG.bee,title:"Welcome to YarnHive 🐝",sub:"Your hive is ready"},
+       {id:"community",type:"textured",bg:"linear-gradient(135deg,#5C7A5E,#3D5E3F)",title:"847 makers active",sub:"this week"},
+       {id:"tip",type:"textured",bg:"linear-gradient(135deg,#B8902C,#8B6914)",title:"Pro tip 💡",sub:"Block finished pieces for a pro look"},
+       {id:"seasonal",type:"image",src:FEED_IMG.world,title:"Spring patterns 🌸",sub:"Browse trending now →",action:"browse"}];
   return (
     <div style={{padding:"16px 0 8px",overflow:"visible"}}>
       <div style={{display:"flex",gap:12,overflowX:"auto",padding:"0 18px",WebkitOverflowScrolling:"touch"}}>
         {cards.map(c=>(
           <div key={c.id} onClick={c.action==="browse"?()=>setView("browse"):undefined} style={{width:240,minWidth:240,height:120,borderRadius:20,overflow:"hidden",position:"relative",cursor:c.action?"pointer":"default",flexShrink:0}}>
             {c.type==="image"
-              ?<><img src={c.src} alt="" style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}}/><div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(28,23,20,.7) 0%,rgba(28,23,20,.2) 100%)"}}/></>
-              :<div style={{position:"absolute",inset:0,background:c.bg}}/>
+              ?<><img src={c.src} alt="" style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}}/><div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(0,0,0,.6) 0%,rgba(0,0,0,.1) 100%)"}}/></>
+              :<><div style={{position:"absolute",inset:0,background:c.bg}}/><div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(0,0,0,.25) 0%,transparent 100%)"}}/><div style={{position:"absolute",inset:0,opacity:.08,backgroundImage:"url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",backgroundSize:"100px 100px"}}/></>
             }
             <div style={{position:"relative",zIndex:1,padding:16,display:"flex",flexDirection:"column",justifyContent:"flex-end",height:"100%"}}>
-              <div style={{color:"#fff",fontSize:15,fontWeight:700,lineHeight:1.3}}>{c.title}</div>
-              <div style={{color:"rgba(255,255,255,.75)",fontSize:12,marginTop:3,lineHeight:1.3}}>{c.sub}</div>
+              <div style={{color:"#fff",fontSize:15,fontWeight:700,lineHeight:1.3,textShadow:"0 1px 4px rgba(0,0,0,.3)"}}>{c.title}</div>
+              <div style={{color:"rgba(255,255,255,.8)",fontSize:12,marginTop:3,lineHeight:1.3,textShadow:"0 1px 3px rgba(0,0,0,.3)"}}>{c.sub}</div>
             </div>
           </div>
         ))}
@@ -2514,7 +2518,8 @@ export default function YarnHive() {
   const [justCompletedOnboarding,setJustCompletedOnboarding]=useState(false);
   const{isTablet,isDesktop}=useBreakpoint();
   const allPatterns = [...userPatterns,...starterPatterns];
-  const tier=useTier(isPro,userPatterns.length);
+  const userStarterCount=userPatterns.filter(p=>p.isStarter).length;
+  const tier=useTier(isPro,userPatterns.length,userStarterCount);
 
   // Validate session against Supabase on mount
   useEffect(()=>{
@@ -2682,7 +2687,7 @@ export default function YarnHive() {
   if(isDesktop) return (
     <div style={{display:"flex",minHeight:"100vh",width:"100%",background:T.bg,fontFamily:T.sans,position:"relative"}}>
       <CSS/>
-      {showOnboarding&&<OnboardingScreen onComplete={()=>{setShowOnboarding(false);setJustCompletedOnboarding(true);setUserPatterns(prev=>[...makeStarterPatterns(),...prev]);setView("profile");}} onBackToAuth={async()=>{setShowOnboarding(false);await supabaseAuth.signOut();setAuthed(false);setIsPro(false);setUserPatterns([]);setStarterPatterns([]);}}/>}
+      {showOnboarding&&<OnboardingScreen onComplete={()=>{setShowOnboarding(false);setJustCompletedOnboarding(true);localStorage.removeItem("yh_welcome_dismissed");setUserPatterns(prev=>[...makeStarterPatterns(),...prev]);setView("profile");}} onBackToAuth={async()=>{setShowOnboarding(false);await supabaseAuth.signOut();setAuthed(false);setIsPro(false);setUserPatterns([]);setStarterPatterns([]);}}/>}
       {showPaywall&&<PaywallGate patternCount={userPatterns.length} onClose={()=>setShowPaywall(false)} onUpgrade={()=>setShowPaywall(false)}/>}
       {showProModal&&<ProInfoModal onClose={()=>setShowProModal(false)}/>}
       {addOpen&&<AddPatternModal onClose={()=>setAddOpen(false)} onSave={handleAddPattern} isPro={isPro} patternCount={userPatterns.length}/>}
@@ -2714,7 +2719,7 @@ export default function YarnHive() {
   return (
     <div style={{fontFamily:T.sans,background:T.bg,minHeight:"100vh",maxWidth:isTablet?680:430,margin:"0 auto",display:"flex",flexDirection:"column",position:"relative"}}>
       <CSS/>
-      {showOnboarding&&<OnboardingScreen onComplete={()=>{setShowOnboarding(false);setJustCompletedOnboarding(true);setUserPatterns(prev=>[...makeStarterPatterns(),...prev]);setView("profile");}} onBackToAuth={async()=>{setShowOnboarding(false);await supabaseAuth.signOut();setAuthed(false);setIsPro(false);setUserPatterns([]);setStarterPatterns([]);}}/>}
+      {showOnboarding&&<OnboardingScreen onComplete={()=>{setShowOnboarding(false);setJustCompletedOnboarding(true);localStorage.removeItem("yh_welcome_dismissed");setUserPatterns(prev=>[...makeStarterPatterns(),...prev]);setView("profile");}} onBackToAuth={async()=>{setShowOnboarding(false);await supabaseAuth.signOut();setAuthed(false);setIsPro(false);setUserPatterns([]);setStarterPatterns([]);}}/>}
       <WelcomeToast visible={showWelcomeToast}/>
       <NavPanel open={navOpen} onClose={()=>setNavOpen(false)} view={view} setView={setView} count={userPatterns.length} isPro={isPro} onSignOut={handleSignOut} onUpgrade={()=>setShowProModal(true)}/>
       {showPaywall&&<PaywallGate patternCount={userPatterns.length} onClose={()=>setShowPaywall(false)} onUpgrade={()=>setShowPaywall(false)}/>}
