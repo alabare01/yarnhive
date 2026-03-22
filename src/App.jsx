@@ -1312,17 +1312,16 @@ const ProfileSettingsView = ({isPro,onOpenProModal,onGoHome}) => {
 
       {DIVIDER}
 
-      <div style={SECTION}>
-        <div style={SECTION_TITLE}>Subscription</div>
-        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
-          <div style={{fontSize:13,color:T.ink2}}>Current plan:</div>
-          {isPro
-            ? <div style={{background:T.sage,borderRadius:99,padding:"5px 14px",fontSize:11,fontWeight:700,color:"#fff"}}>Pro</div>
-            : <div style={{background:T.linen,borderRadius:99,padding:"5px 14px",fontSize:11,fontWeight:700,color:T.ink2,border:`1px solid ${T.border}`}}>Free</div>
-          }
-        </div>
-        {!isPro&&<button onClick={onOpenProModal} style={{background:T.terra,color:"#fff",border:"none",borderRadius:12,padding:"12px 24px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.3)"}}>Upgrade to Pro</button>}
-      </div>
+      {isPro
+        ? <div style={{...SECTION,background:`linear-gradient(135deg,${T.sage},#3D5E3F)`,border:"none"}}>
+            <div style={{display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:18}}>✨</span><div><div style={{fontSize:14,fontWeight:700,color:"#fff"}}>YarnHive Pro</div><div style={{fontSize:12,color:"rgba(255,255,255,.7)",marginTop:2}}>All features active</div></div></div>
+          </div>
+        : <div style={{...SECTION,background:`linear-gradient(135deg,${T.terra},#8B3A22)`,border:"none"}}>
+            <div style={{fontSize:14,fontWeight:700,color:"#fff",marginBottom:4}}>✨ Upgrade to Pro</div>
+            <div style={{fontSize:12,color:"rgba(255,255,255,.75)",lineHeight:1.5,marginBottom:12}}>Unlimited patterns, all imports, Hive Vision, cloud sync.</div>
+            <div onClick={onOpenProModal} style={{background:"rgba(255,255,255,.2)",borderRadius:10,padding:"10px",textAlign:"center",fontSize:14,fontWeight:700,color:"#fff",cursor:"pointer"}}>$9.99/mo</div>
+          </div>
+      }
 
       {DIVIDER}
 
@@ -2311,7 +2310,7 @@ const OnboardingScreen = ({onComplete,onSkip}) => {
         });
       } catch {}
     }
-    localStorage.setItem("yh_onboarding_complete","1");
+    localStorage.setItem("yh_profile_setup_shown","1");
     setSaving(false);
     onComplete();
   };
@@ -2385,12 +2384,20 @@ export default function YarnHive() {
   // Fetch starters on mount when authed
   useEffect(()=>{ if(authed) fetchStarterPatterns(); },[authed,fetchStarterPatterns]);
 
+  const isEmailConfirmed = () => {
+    const s = getSession(); if(!s?.access_token) return false;
+    try { const p=JSON.parse(atob(s.access_token.split(".")[1])); return !!p.email_confirmed_at; } catch { return false; }
+  };
+
   const handleNewSignup = () => {
     setAuthed(true);
     setView("collection");
-    setShowOnboarding(true);
+    if (!localStorage.getItem("yh_profile_setup_shown")) setShowOnboarding(true);
     setShowWelcomeBanner(true);
-    setTimeout(()=>{ setShowWelcomeBanner(false); setShowEmailBanner(true); },4000);
+    setTimeout(()=>{
+      setShowWelcomeBanner(false);
+      if (!isEmailConfirmed()) setShowEmailBanner(true);
+    },4000);
   };
 
   const handleSignIn = () => {
@@ -2398,6 +2405,7 @@ export default function YarnHive() {
     setView("collection");
     setShowWelcomeToast(true);
     setTimeout(()=>setShowWelcomeToast(false),3000);
+    if (!isEmailConfirmed()) setShowEmailBanner(true);
   };
 
   if(!authed) return <><CSS/><Auth onEnter={handleSignIn} onEnterAsNew={handleNewSignup} onEnterAsPro={()=>{setIsPro(true);setAuthed(true);}}/></>;
