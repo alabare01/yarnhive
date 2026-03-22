@@ -2533,7 +2533,8 @@ const ProfileCompletionPage = ({onComplete,onSkip}) => {
 };
 
 export default function YarnHive() {
-  const [authed,setAuthed]=useState(()=>!!supabaseAuth.getUser()),[isPro,setIsPro]=useState(false);
+  const [authed,setAuthed]=useState(false),[isPro,setIsPro]=useState(false);
+  const [authChecked,setAuthChecked]=useState(false);
   const [userPatterns,setUserPatterns]=useState([]);
   const [starterPatterns,setStarterPatterns]=useState([]);
   const [view,setView]=useState("collection"),[selected,setSelected]=useState(null),[navOpen,setNavOpen]=useState(false),[addOpen,setAddOpen]=useState(false),[showPaywall,setShowPaywall]=useState(false),[cat,setCat]=useState("All"),[search,setSearch]=useState("");
@@ -2545,6 +2546,39 @@ export default function YarnHive() {
   const{isTablet,isDesktop}=useBreakpoint();
   const allPatterns = [...userPatterns,...starterPatterns];
   const tier=useTier(isPro,userPatterns.length);
+
+  // Validate session against Supabase on mount
+  useEffect(()=>{
+    const validate = async () => {
+      const s = getSession();
+      if (!s?.refresh_token) { saveSession(null); setAuthed(false); setAuthChecked(true); return; }
+      // Check if JWT is still valid locally first
+      const localUser = supabaseAuth.getUser();
+      if (!localUser) { saveSession(null); setAuthed(false); setAuthChecked(true); return; }
+      // Verify with Supabase by refreshing the token
+      try {
+        const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+          method:"POST",
+          headers:{"apikey":SUPABASE_ANON_KEY,"Content-Type":"application/json"},
+          body:JSON.stringify({refresh_token:s.refresh_token}),
+        });
+        if (res.ok) {
+          const ns = await res.json();
+          saveSession(ns);
+          setAuthed(true);
+        } else {
+          // Session invalid server-side — clear it
+          saveSession(null);
+          setAuthed(false);
+        }
+      } catch {
+        // Network error — fall back to local JWT check (already passed above)
+        setAuthed(true);
+      }
+      setAuthChecked(true);
+    };
+    validate();
+  },[]);
 
   const handleSignOut = async () => { await supabaseAuth.signOut(); setAuthed(false); setIsPro(false); setUserPatterns([]); setStarterPatterns([]); };
 
@@ -2620,6 +2654,8 @@ export default function YarnHive() {
     if (!isEmailConfirmed()) setShowEmailBanner(true);
   };
 
+  // Show nothing until session is validated against Supabase
+  if(!authChecked) return <><CSS/><div style={{minHeight:"100vh",background:T.bg,display:"flex",alignItems:"center",justifyContent:"center"}}><div className="spinner" style={{width:28,height:28,border:`3px solid ${T.border}`,borderTopColor:T.terra,borderRadius:"50%"}}/></div></>;
   if(!authed) return <><CSS/><Auth onEnter={handleSignIn} onEnterAsNew={handleNewSignup} onEnterAsPro={()=>{setIsPro(true);setAuthed(true);}}/></>;
   if(view==="profileComplete") return <><CSS/><ProfileCompletionPage onComplete={()=>setView("collection")} onSkip={()=>{localStorage.setItem("yh_profile_complete_shown","1");setView("collection");}}/></>;
   if(view==="detail"&&selected) return <><CSS/><Detail p={selected} onBack={()=>setView("collection")} onSave={u=>{setUserPatterns(prev=>prev.map(p=>p.id===u.id?u:p));setStarterPatterns(prev=>prev.map(p=>p.id===u.id?u:p));setSelected(u);}}/></>;
