@@ -30,11 +30,13 @@ const getSession = () => { try { const r=localStorage.getItem("yh_session"); ret
 
 const supabaseAuth = {
   signUp: async (email, password) => {
+    console.log("[YarnHive] Signup request:", {supabaseUrl:SUPABASE_URL, redirectTo:APP_ORIGIN});
     const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
       method:"POST", headers:{"apikey":SUPABASE_ANON_KEY,"Content-Type":"application/json"},
       body: JSON.stringify({email, password, options:{emailRedirectTo:APP_ORIGIN}}),
     });
     const data = await res.json();
+    console.log("[YarnHive] Signup response:", {status:res.status, hasSession:!!data.session, confirmationSentAt:data.confirmation_sent_at||"none"});
     if(!res.ok) return {error: data};
     if(data.session) saveSession(data.session);
     return {data};
@@ -1280,13 +1282,21 @@ const ProfileSettingsView = ({isPro,onOpenProModal,onGoHome,onEmailConfirmed}) =
   const handleResendConfirm = async () => {
     setResending(true); setResendMsg(null);
     try {
+      const payload = {type:"signup",email:user.email,options:{emailRedirectTo:APP_ORIGIN}};
+      console.log("[YarnHive] Resend confirmation request:", {url:`${SUPABASE_URL}/auth/v1/resend`, payload, supabaseUrl:SUPABASE_URL});
       const res = await fetch(`${SUPABASE_URL}/auth/v1/resend`, {
         method:"POST",
         headers:{"apikey":SUPABASE_ANON_KEY,"Content-Type":"application/json"},
-        body:JSON.stringify({type:"signup",email:user.email,options:{emailRedirectTo:APP_ORIGIN}}),
+        body:JSON.stringify(payload),
       });
-      setResendMsg(res.ok ? {type:"ok",text:"Confirmation email sent."} : {type:"error",text:"Failed to send."});
-    } catch { setResendMsg({type:"error",text:"Network error."}); }
+      const body = await res.text();
+      console.log("[YarnHive] Resend confirmation response:", {status:res.status, ok:res.ok, body});
+      if (res.ok) {
+        setResendMsg({type:"ok",text:"Confirmation email sent. Check spam if you don't see it."});
+      } else {
+        setResendMsg({type:"error",text:`Failed to send (${res.status}). SMTP may not be configured in Supabase dashboard.`});
+      }
+    } catch (e) { console.error("[YarnHive] Resend confirmation error:", e); setResendMsg({type:"error",text:"Network error."}); }
     setResending(false);
   };
 
@@ -2359,10 +2369,21 @@ const OnboardingScreen = ({onComplete,onSkip}) => {
         });
       } catch {}
     }
-    localStorage.setItem("yh_profile_setup_shown","1");
     setSaving(false);
     setError(null);
     setStep(3);
+  };
+
+  const markOnboardingComplete = async () => {
+    if (user && session) {
+      try {
+        await fetch(`${SUPABASE_URL}/rest/v1/user_profiles?id=eq.${user.id}`, {
+          method:"PATCH",
+          headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${session.access_token}`,"Content-Type":"application/json","Prefer":"return=minimal"},
+          body:JSON.stringify({has_completed_onboarding:true}),
+        });
+      } catch {}
+    }
   };
 
   // Step 3 save — saves everything to DB then closes modal
@@ -2375,7 +2396,7 @@ const OnboardingScreen = ({onComplete,onSkip}) => {
         const res = await fetch(`${SUPABASE_URL}/rest/v1/user_profiles?id=eq.${user.id}`, {
           method:"PATCH",
           headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${session.access_token}`,"Content-Type":"application/json","Prefer":"return=minimal"},
-          body:JSON.stringify({first_name:firstName.trim()||null,last_name:lastName.trim()||null,display_name:displayName.trim()||null,username:handle||null,bio:bio.trim()||null,cell_phone:cellPhone.trim()||null,address_street:street.trim()||null,address_city:city.trim()||null,address_state:state.trim()||null,address_zip:zip.trim()||null,social_instagram:instagram.trim()||null,social_pinterest:pinterest.trim()||null,social_ravelry:ravelry.trim()||null}),
+          body:JSON.stringify({first_name:firstName.trim()||null,last_name:lastName.trim()||null,display_name:displayName.trim()||null,username:handle||null,bio:bio.trim()||null,cell_phone:cellPhone.trim()||null,address_street:street.trim()||null,address_city:city.trim()||null,address_state:state.trim()||null,address_zip:zip.trim()||null,social_instagram:instagram.trim()||null,social_pinterest:pinterest.trim()||null,social_ravelry:ravelry.trim()||null,has_completed_onboarding:true}),
         });
         if (!res.ok) {
           const d=await res.json().catch(()=>({}));
@@ -2388,8 +2409,8 @@ const OnboardingScreen = ({onComplete,onSkip}) => {
     onComplete();
   };
 
-  const handleSkip = () => { localStorage.setItem("yh_onboarding_complete","1"); onSkip(); };
-  const handleStep3Skip = () => { onSkip(); };
+  const handleSkip = () => { markOnboardingComplete(); onSkip(); };
+  const handleStep3Skip = () => { markOnboardingComplete(); onSkip(); };
 
   const trackable = [firstName,lastName,displayName,username,cellPhone,street,city,state,zip];
   const filled = trackable.filter(f=>f.trim()).length;
@@ -2526,18 +2547,13 @@ export default function YarnHive() {
   useEffect(()=>{
     const clearAuth = () => {
       saveSession(null);
-      localStorage.removeItem("yh_profile_setup_shown");
-      localStorage.removeItem("yh_profile_complete_shown");
-      localStorage.removeItem("yh_onboarding_complete");
       setAuthed(false);
     };
     const validate = async () => {
       const s = getSession();
       if (!s?.refresh_token) { clearAuth(); setAuthChecked(true); return; }
-      // Check if JWT is still valid locally first
       const localUser = supabaseAuth.getUser();
       if (!localUser) { clearAuth(); setAuthChecked(true); return; }
-      // Verify with Supabase by refreshing the token
       try {
         const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
           method:"POST",
@@ -2548,11 +2564,23 @@ export default function YarnHive() {
           const ns = await res.json();
           saveSession(ns);
           setAuthed(true);
+          // Check if onboarding was completed
+          try {
+            const uid = (() => { try { const p=JSON.parse(atob(ns.access_token.split(".")[1])); return p.sub; } catch { return null; } })();
+            if (uid) {
+              const pr = await fetch(`${SUPABASE_URL}/rest/v1/user_profiles?id=eq.${uid}&select=has_completed_onboarding`, {
+                headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${ns.access_token}`},
+              });
+              if (pr.ok) {
+                const rows = await pr.json();
+                if (rows[0] && !rows[0].has_completed_onboarding) setShowOnboarding(true);
+              }
+            }
+          } catch {}
         } else {
           clearAuth();
         }
       } catch {
-        // Network error — do not bypass auth, show welcome screen
         clearAuth();
       }
       setAuthChecked(true);
@@ -2629,7 +2657,7 @@ export default function YarnHive() {
   const handleNewSignup = () => {
     setAuthed(true);
     setView("collection");
-    if (!localStorage.getItem("yh_profile_setup_shown")) setShowOnboarding(true);
+    setShowOnboarding(true);
     setShowWelcomeBanner(true);
     setTimeout(()=>{
       setShowWelcomeBanner(false);
