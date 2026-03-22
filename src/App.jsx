@@ -971,7 +971,7 @@ const SidebarNav = ({view,setView,count,isPro,onAddPattern,onSignOut}) => {
       <div style={{position:"relative",height:160,overflow:"hidden",flexShrink:0}}>
         <Photo src="https://res.cloudinary.com/dmaupzhcx/image/upload/c_fill,g_center,w_400,h_320,z_0.7/v1774123693/yarnhive_sidebar_bee.jpg" alt="YarnHive bee" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
         <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(20,14,10,.85) 0%,rgba(20,14,10,.2) 100%)"}}/>
-        <div onClick={()=>setView("collection")} style={{position:"absolute",bottom:18,left:20,cursor:"pointer"}}><div style={{fontFamily:T.serif,fontSize:26,fontWeight:700,color:"#fff",lineHeight:1}}>YarnHive</div><div style={{fontSize:11,color:"rgba(255,255,255,.6)",marginTop:4}}>Your crochet hive</div></div>
+        <div onClick={()=>setView("collection")} style={{position:"absolute",bottom:18,left:20,cursor:"pointer",transition:"opacity .15s"}} onMouseEnter={e=>e.currentTarget.style.opacity=".8"} onMouseLeave={e=>e.currentTarget.style.opacity="1"}><div style={{fontFamily:T.serif,fontSize:26,fontWeight:700,color:"#fff",lineHeight:1}}>YarnHive</div><div style={{fontSize:11,color:"rgba(255,255,255,.6)",marginTop:4}}>Your crochet hive</div></div>
       </div>
       <div style={{padding:"16px 16px 8px"}}><button onClick={onAddPattern} style={{width:"100%",background:`linear-gradient(135deg,${T.terra},#8B3A22)`,color:"#fff",border:"none",borderRadius:12,padding:"12px",fontSize:14,fontWeight:700,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.4)",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><span style={{fontSize:18}}>+</span> Add Pattern</button></div>
       <div style={{flex:1,overflowY:"auto",padding:"8px 0"}}>
@@ -994,7 +994,7 @@ const SidebarNav = ({view,setView,count,isPro,onAddPattern,onSignOut}) => {
       </div>
       <div style={{padding:"0 16px 24px"}}>
         {isPro?<div style={{background:`linear-gradient(135deg,${T.sage},#3D5E3F)`,borderRadius:12,padding:"12px 14px",display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:16}}>✨</span><div><div style={{fontSize:12,fontWeight:700,color:"#fff"}}>YarnHive Pro</div><div style={{fontSize:11,color:"rgba(255,255,255,.7)"}}>All features active</div></div></div>
-        :<div style={{background:`linear-gradient(135deg,${T.terra},#8B3A22)`,borderRadius:12,padding:"14px"}}><div style={{fontSize:12,fontWeight:700,color:"#fff",marginBottom:3}}>✨ Upgrade to Pro</div><div style={{fontSize:11,color:"rgba(255,255,255,.75)",lineHeight:1.5,marginBottom:10}}>Unlimited patterns, all imports, Hive Vision, cloud sync.</div><div style={{background:"rgba(255,255,255,.2)",borderRadius:8,padding:"7px",textAlign:"center",fontSize:11,fontWeight:700,color:"#fff",cursor:"pointer"}}>$9.99/mo · $74.99/yr</div></div>}
+        :<div style={{background:`linear-gradient(135deg,${T.terra},#8B3A22)`,borderRadius:12,padding:"14px"}}><div style={{fontSize:12,fontWeight:700,color:"#fff",marginBottom:3}}>✨ Upgrade to Pro</div><div style={{fontSize:11,color:"rgba(255,255,255,.75)",lineHeight:1.5,marginBottom:10}}>Unlimited patterns, all imports, Hive Vision, cloud sync.</div><div style={{background:"rgba(255,255,255,.2)",borderRadius:8,padding:"8px",textAlign:"center",fontSize:12,fontWeight:700,color:"#fff",cursor:"pointer"}}>$9.99/mo</div></div>}
         {onSignOut&&<button onClick={onSignOut} style={{width:"100%",background:"none",border:"1px solid "+T.border,borderRadius:10,padding:"8px",fontSize:12,color:T.ink3,cursor:"pointer",marginTop:10,fontWeight:500}}>Sign out</button>}
       </div>
     </div>
@@ -1014,7 +1014,7 @@ const NavPanel = ({open,onClose,view,setView,count,isPro,onSignOut}) => {
         <div style={{position:"relative",height:130,overflow:"hidden",flexShrink:0}}>
           <Photo src="https://res.cloudinary.com/dmaupzhcx/image/upload/c_fill,g_center,w_400,h_320,z_0.7/v1774123693/yarnhive_sidebar_bee.jpg" alt="YarnHive bee" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
           <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(20,14,10,.8) 0%,rgba(20,14,10,.2) 100%)"}}/>
-          <div onClick={()=>go("collection")} style={{position:"absolute",bottom:16,left:18,cursor:"pointer"}}><div style={{fontFamily:T.serif,fontSize:22,fontWeight:700,color:"#fff",lineHeight:1}}>YarnHive</div><div style={{fontSize:11,color:"rgba(255,255,255,.65)",marginTop:3}}>Your crochet hive</div></div>
+          <div onClick={()=>go("collection")} style={{position:"absolute",bottom:16,left:18,cursor:"pointer",transition:"opacity .15s"}} onMouseEnter={e=>e.currentTarget.style.opacity=".8"} onMouseLeave={e=>e.currentTarget.style.opacity="1"}><div style={{fontFamily:T.serif,fontSize:22,fontWeight:700,color:"#fff",lineHeight:1}}>YarnHive</div><div style={{fontSize:11,color:"rgba(255,255,255,.65)",marginTop:3}}>Your crochet hive</div></div>
         </div>
         <div style={{flex:1,overflowY:"auto",paddingTop:6}}>
           {ITEMS.map(item=>{const active=view===item.key;return(
@@ -1036,7 +1036,7 @@ const NavPanel = ({open,onClose,view,setView,count,isPro,onSignOut}) => {
         </div>
         <div style={{padding:"0 18px 36px"}}>
           {isPro?<div style={{background:`linear-gradient(135deg,${T.sage},#3D5E3F)`,borderRadius:14,padding:"12px 14px",display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:18}}>✨</span><div><div style={{fontSize:12,fontWeight:700,color:"#fff"}}>YarnHive Pro</div><div style={{fontSize:11,color:"rgba(255,255,255,.7)"}}>All features active</div></div></div>
-          :<div style={{background:`linear-gradient(135deg,${T.terra},#8B3A22)`,borderRadius:14,padding:"14px 16px"}}><div style={{fontSize:13,fontWeight:700,color:"#fff",marginBottom:3}}>✨ Upgrade to Pro</div><div style={{fontSize:11,color:"rgba(255,255,255,.8)",lineHeight:1.5,marginBottom:10}}>Unlimited patterns, all imports, Hive Vision.</div><div style={{background:"rgba(255,255,255,.2)",borderRadius:8,padding:"8px",textAlign:"center",fontSize:12,fontWeight:700,color:"#fff",cursor:"pointer"}}>$9.99/mo · $74.99/yr</div></div>}
+          :<div style={{background:`linear-gradient(135deg,${T.terra},#8B3A22)`,borderRadius:12,padding:"14px 16px"}}><div style={{fontSize:12,fontWeight:700,color:"#fff",marginBottom:3}}>✨ Upgrade to Pro</div><div style={{fontSize:11,color:"rgba(255,255,255,.75)",lineHeight:1.5,marginBottom:10}}>Unlimited patterns, all imports, Hive Vision.</div><div style={{background:"rgba(255,255,255,.2)",borderRadius:8,padding:"8px",textAlign:"center",fontSize:12,fontWeight:700,color:"#fff",cursor:"pointer"}}>$9.99/mo</div></div>}
           {onSignOut&&<button onClick={onSignOut} style={{width:"100%",background:"none",border:"1px solid "+T.border,borderRadius:10,padding:"8px",fontSize:12,color:T.ink3,cursor:"pointer",marginTop:10,fontWeight:500}}>Sign out</button>}
         </div>
       </div>
@@ -1104,28 +1104,31 @@ const FormCard = ({cardStyle,isSignup,email,setEmail,pass,setPass,authError,hand
       <Field label="Email" placeholder="you@example.com" value={email} onChange={e=>setEmail(e.target.value)} type="email"/>
       <Field label="Password" placeholder="••••••••" value={pass} onChange={e=>setPass(e.target.value)} type="password"/>
       {!isSignup&&<div style={{textAlign:"right",marginBottom:16}}><span style={{fontSize:12,color:T.terra,cursor:"pointer",fontWeight:500}}>Forgot password?</span></div>}
-      {authError&&<div style={{background:"rgba(200,50,50,.08)",border:"1px solid rgba(200,50,50,.2)",borderRadius:10,padding:"10px 14px",fontSize:12,color:"#993333",lineHeight:1.5,marginBottom:8}}>{authError}</div>}
+      {authError&&<div style={{background:T.terraLt,border:"1px solid rgba(184,90,60,.2)",borderRadius:10,padding:"10px 14px",fontSize:12,color:T.terra,lineHeight:1.5,marginBottom:8}}>{authError}</div>}
       <button onClick={handleAuth} disabled={loading} style={{width:"100%",background:`linear-gradient(135deg,${T.terra},#7A2E14)`,color:"#fff",border:"none",borderRadius:14,padding:"15px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 8px 24px rgba(184,90,60,.45)",marginTop:8,opacity:loading?.6:1}}>{loading?"Please wait…":isSignup?"Create my YarnHive":"Sign in"}</button>
     </div>
   </div>
 );
 
 const EmailConfirmBanner = ({onDismiss}) => (
-  <div style={{background:"rgba(184,90,60,0.08)",border:"1px solid rgba(184,90,60,0.18)",padding:"10px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
-    <span style={{fontSize:13,color:T.terra,fontWeight:500,lineHeight:1.4}}>Confirm your email to unlock sharing features — check your inbox.</span>
-    <button onClick={onDismiss} style={{background:"none",border:"none",cursor:"pointer",color:T.terra,fontSize:18,lineHeight:1,padding:"0 2px",flexShrink:0,opacity:.6}}>×</button>
+  <div style={{background:T.terra,padding:"10px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
+    <span style={{fontSize:13,color:"#fff",fontWeight:500,lineHeight:1.4}}>Confirm your email to unlock sharing features — check your inbox.</span>
+    <button onClick={onDismiss} style={{background:"none",border:"none",cursor:"pointer",color:"#fff",fontSize:18,lineHeight:1,padding:"0 2px",flexShrink:0,opacity:.75}}>×</button>
   </div>
 );
 
-const ProfileSettingsView = ({isPro,onOpenProModal}) => {
+const ProfileSettingsView = ({isPro,onOpenProModal,onGoHome}) => {
   const [username,setUsername]=useState(""),[displayName,setDisplayName]=useState(""),[bio,setBio]=useState("");
   const [profileSaving,setProfileSaving]=useState(false),[profileMsg,setProfileMsg]=useState(null),[profileLoaded,setProfileLoaded]=useState(false);
+  const [saveBtnText,setSaveBtnText]=useState("Save Profile");
   const [curPass,setCurPass]=useState(""),[newPass,setNewPass]=useState(""),[passSaving,setPassSaving]=useState(false),[passMsg,setPassMsg]=useState(null);
   const [resending,setResending]=useState(false),[resendMsg,setResendMsg]=useState(null);
   const{isDesktop}=useBreakpoint();
   const user = supabaseAuth.getUser();
   const session = getSession();
   const emailConfirmed = session ? (() => { try { const p=JSON.parse(atob(session.access_token.split(".")[1])); return !!p.email_confirmed_at; } catch { return false; } })() : false;
+
+  const profilePct = Math.round((displayName.trim()?33:0)+(username.trim()?33:0)+(bio.trim()?34:0));
 
   useEffect(()=>{
     if (!user || profileLoaded) return;
@@ -1158,7 +1161,9 @@ const ProfileSettingsView = ({isPro,onOpenProModal}) => {
         if (d.message?.includes("unique") || d.code === "23505") { setProfileMsg({type:"error",text:"Username already taken."}); setProfileSaving(false); return; }
         setProfileMsg({type:"error",text:d.message||"Save failed."}); setProfileSaving(false); return;
       }
-      setProfileMsg({type:"ok",text:"Profile saved."});
+      setProfileMsg(null);
+      setSaveBtnText("Saved!");
+      setTimeout(()=>setSaveBtnText("Save Profile"),2000);
     } catch { setProfileMsg({type:"error",text:"Network error."}); }
     setProfileSaving(false);
   };
@@ -1191,12 +1196,26 @@ const ProfileSettingsView = ({isPro,onOpenProModal}) => {
     setResending(false);
   };
 
-  const SECTION = {background:T.surface,borderRadius:16,border:`1px solid ${T.border}`,padding:isDesktop?"24px 28px":"20px 18px",marginBottom:16};
+  const SECTION = {background:T.surface,borderRadius:16,border:`1px solid ${T.border}`,padding:isDesktop?"24px 28px":"20px 18px"};
   const SECTION_TITLE = {fontFamily:T.serif,fontSize:18,fontWeight:700,color:T.ink,marginBottom:16};
-  const Msg = ({msg}) => msg ? <div style={{background:msg.type==="ok"?"rgba(92,122,94,.1)":"rgba(200,50,50,.08)",border:"1px solid "+(msg.type==="ok"?"rgba(92,122,94,.2)":"rgba(200,50,50,.2)"),borderRadius:10,padding:"10px 14px",fontSize:12,color:msg.type==="ok"?T.sage:"#993333",lineHeight:1.5,marginBottom:8}}>{msg.text}</div> : null;
+  const DIVIDER = <div style={{height:1,background:T.border,margin:"16px 0"}}/>;
+  const Msg = ({msg}) => msg ? <div style={{background:msg.type==="ok"?"rgba(92,122,94,.1)":T.terraLt,border:"1px solid "+(msg.type==="ok"?"rgba(92,122,94,.2)":"rgba(184,90,60,.2)"),borderRadius:10,padding:"10px 14px",fontSize:12,color:msg.type==="ok"?T.sage:T.terra,lineHeight:1.5,marginBottom:8}}>{msg.text}</div> : null;
 
   return (
     <div style={{padding:isDesktop?"24px 0 80px":"16px 18px 100px",maxWidth:560}}>
+      <button onClick={onGoHome} style={{background:"none",border:"none",color:T.ink3,cursor:"pointer",fontSize:13,fontWeight:500,padding:0,marginBottom:16,display:"flex",alignItems:"center",gap:4}}>← Your Hive</button>
+
+      {/* Profile completion bar */}
+      <div style={{marginBottom:20}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+          <div style={{fontSize:11,color:T.ink3,fontWeight:500}}>Profile completion</div>
+          <div style={{fontSize:11,color:profilePct===100?T.sage:T.terra,fontWeight:600}}>{profilePct}%</div>
+        </div>
+        <div style={{height:4,background:T.linen,borderRadius:99,overflow:"hidden"}}>
+          <div style={{height:"100%",width:profilePct+"%",background:profilePct===100?T.sage:T.terra,borderRadius:99,transition:"width .3s ease"}}/>
+        </div>
+      </div>
+
       <div style={SECTION}>
         <div style={SECTION_TITLE}>Your Profile</div>
         <Field label="Display name" placeholder="e.g. Sarah" value={displayName} onChange={e=>setDisplayName(e.target.value)}/>
@@ -1209,8 +1228,10 @@ const ProfileSettingsView = ({isPro,onOpenProModal}) => {
         </div>
         <Field label="Bio" placeholder="Tell us about your craft..." value={bio} onChange={e=>setBio(e.target.value)} rows={3}/>
         <Msg msg={profileMsg}/>
-        <button onClick={handleProfileSave} disabled={profileSaving} style={{background:`linear-gradient(135deg,${T.terra},#7A2E14)`,color:"#fff",border:"none",borderRadius:12,padding:"12px 24px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.35)",opacity:profileSaving?.6:1}}>{profileSaving?"Saving…":"Save Profile"}</button>
+        <button onClick={handleProfileSave} disabled={profileSaving} style={{background:T.terra,color:"#fff",border:"none",borderRadius:12,padding:"12px 24px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.3)",opacity:profileSaving?.6:1}}>{profileSaving?"Saving…":saveBtnText}</button>
       </div>
+
+      {DIVIDER}
 
       <div style={SECTION}>
         <div style={SECTION_TITLE}>Account</div>
@@ -1220,10 +1241,10 @@ const ProfileSettingsView = ({isPro,onOpenProModal}) => {
         </div>
         <div style={{marginBottom:16}}>
           {emailConfirmed
-            ? <div style={{display:"inline-flex",alignItems:"center",gap:6,background:"rgba(92,122,94,.1)",borderRadius:8,padding:"6px 12px",fontSize:12,fontWeight:600,color:T.sage}}>Email confirmed</div>
+            ? <div style={{display:"inline-flex",alignItems:"center",gap:6,background:"rgba(92,122,94,.1)",borderRadius:99,padding:"5px 12px",fontSize:11,fontWeight:600,color:T.sage}}>Email confirmed</div>
             : <div>
-                <div style={{display:"inline-flex",alignItems:"center",gap:6,background:"rgba(200,50,50,.08)",borderRadius:8,padding:"6px 12px",fontSize:12,fontWeight:600,color:"#993333",marginBottom:8}}>Email not confirmed</div>
-                <div><button onClick={handleResendConfirm} disabled={resending} style={{background:"none",border:`1.5px solid ${T.terra}`,borderRadius:10,padding:"8px 16px",fontSize:13,fontWeight:600,color:T.terra,cursor:"pointer",opacity:resending?.6:1}}>{resending?"Sending…":"Resend confirmation email"}</button></div>
+                <div style={{display:"inline-flex",alignItems:"center",gap:6,background:T.terraLt,borderRadius:99,padding:"5px 12px",fontSize:11,fontWeight:600,color:T.terra,marginBottom:8}}>Email not confirmed</div>
+                <div><button onClick={handleResendConfirm} disabled={resending} style={{background:T.linen,border:`1px solid ${T.border}`,borderRadius:12,padding:"8px 16px",fontSize:13,fontWeight:600,color:T.ink,cursor:"pointer",opacity:resending?.6:1}}>{resending?"Sending…":"Resend confirmation email"}</button></div>
                 {resendMsg&&<Msg msg={resendMsg}/>}
               </div>
           }
@@ -1233,21 +1254,25 @@ const ProfileSettingsView = ({isPro,onOpenProModal}) => {
           <Field label="Current password" placeholder="••••••••" value={curPass} onChange={e=>setCurPass(e.target.value)} type="password"/>
           <Field label="New password" placeholder="••••••••" value={newPass} onChange={e=>setNewPass(e.target.value)} type="password"/>
           <Msg msg={passMsg}/>
-          <button onClick={handleChangePassword} disabled={passSaving} style={{background:"none",border:`1.5px solid ${T.terra}`,borderRadius:10,padding:"10px 20px",fontSize:13,fontWeight:600,color:T.terra,cursor:"pointer",opacity:passSaving?.6:1}}>{passSaving?"Saving…":"Update Password"}</button>
+          <button onClick={handleChangePassword} disabled={passSaving} style={{background:T.linen,border:`1px solid ${T.border}`,borderRadius:12,padding:"10px 20px",fontSize:13,fontWeight:600,color:T.ink,cursor:"pointer",opacity:passSaving?.6:1}}>{passSaving?"Saving…":"Update Password"}</button>
         </div>
       </div>
+
+      {DIVIDER}
 
       <div style={SECTION}>
         <div style={SECTION_TITLE}>Subscription</div>
         <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
           <div style={{fontSize:13,color:T.ink2}}>Current plan:</div>
           {isPro
-            ? <div style={{background:`linear-gradient(135deg,${T.sage},#3D5E3F)`,borderRadius:8,padding:"5px 14px",fontSize:12,fontWeight:700,color:"#fff"}}>Pro</div>
-            : <div style={{background:T.linen,borderRadius:8,padding:"5px 14px",fontSize:12,fontWeight:700,color:T.ink2,border:`1px solid ${T.border}`}}>Free</div>
+            ? <div style={{background:T.sage,borderRadius:99,padding:"5px 14px",fontSize:11,fontWeight:700,color:"#fff"}}>Pro</div>
+            : <div style={{background:T.linen,borderRadius:99,padding:"5px 14px",fontSize:11,fontWeight:700,color:T.ink2,border:`1px solid ${T.border}`}}>Free</div>
           }
         </div>
-        {!isPro&&<button onClick={onOpenProModal} style={{background:`linear-gradient(135deg,${T.terra},#7A2E14)`,color:"#fff",border:"none",borderRadius:12,padding:"12px 24px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.35)"}}>Upgrade to Pro</button>}
+        {!isPro&&<button onClick={onOpenProModal} style={{background:T.terra,color:"#fff",border:"none",borderRadius:12,padding:"12px 24px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.3)"}}>Upgrade to Pro</button>}
       </div>
+
+      {DIVIDER}
 
       <div style={SECTION}>
         <div style={SECTION_TITLE}>App Preferences</div>
@@ -2174,7 +2199,7 @@ export default function YarnHive() {
         <div style={{background:T.surface,borderBottom:`1px solid ${T.border}`,padding:"0 40px",height:64,display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:20,flexShrink:0}}>
           <div style={{fontFamily:T.serif,fontSize:24,fontWeight:700,color:T.ink}}>{TITLE_MAP[view]||"YarnHive"}</div>
           <div style={{display:"flex",alignItems:"center",gap:12}}>
-            {isPro&&<div style={{background:T.sageLt,borderRadius:8,padding:"4px 12px",fontSize:12,fontWeight:600,color:T.sage}}>✨ Pro</div>}
+            {isPro&&<div style={{background:T.sage,borderRadius:99,padding:"4px 12px",fontSize:11,fontWeight:700,color:"#fff"}}>✨ Pro</div>}
             <button onClick={openAddModal} style={{background:T.terra,color:"#fff",border:"none",borderRadius:10,padding:"10px 20px",fontSize:14,fontWeight:700,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.3)",display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:18}}>+</span> Add Pattern</button>
           </div>
         </div>
@@ -2185,7 +2210,7 @@ export default function YarnHive() {
           {view==="stash"&&<div style={{paddingTop:24}}><YarnStash/></div>}
           {view==="calculator"&&<div style={{paddingTop:24}}><Calculators/></div>}
           {view==="shopping"&&<div style={{paddingTop:24}}><ShoppingList patterns={patterns}/></div>}
-          {view==="profile"&&<ProfileSettingsView isPro={isPro} onOpenProModal={()=>setShowPaywall(true)}/>}
+          {view==="profile"&&<ProfileSettingsView isPro={isPro} onOpenProModal={()=>setShowPaywall(true)} onGoHome={()=>setView("collection")}/>}
         </div>
       </div>
     </div>
@@ -2210,7 +2235,7 @@ export default function YarnHive() {
         {view==="stash"&&<div style={{paddingTop:18}}><YarnStash/></div>}
         {view==="calculator"&&<div style={{paddingTop:18}}><Calculators/></div>}
         {view==="shopping"&&<div style={{paddingTop:18}}><ShoppingList patterns={patterns}/></div>}
-        {view==="profile"&&<ProfileSettingsView isPro={isPro} onOpenProModal={()=>setShowPaywall(true)}/>}
+        {view==="profile"&&<ProfileSettingsView isPro={isPro} onOpenProModal={()=>setShowPaywall(true)} onGoHome={()=>setView("collection")}/>}
       </div>
       <div style={{position:"fixed",bottom:28,left:"50%",transform:"translateX(-50%)",zIndex:30,pointerEvents:"none"}}>
         <button onClick={openAddModal} style={{background:`linear-gradient(135deg,${T.terra},#8B3A22)`,color:"#fff",border:"none",borderRadius:99,padding:"13px 26px",fontSize:14,fontWeight:700,cursor:"pointer",pointerEvents:"auto",boxShadow:"0 8px 28px rgba(184,90,60,.55)",display:"flex",alignItems:"center",gap:8,animation:"fabPulse 3s ease infinite"}}><span style={{fontSize:17}}>+</span> Add Pattern</button>
