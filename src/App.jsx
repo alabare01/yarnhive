@@ -28,10 +28,10 @@ const saveSession = (s) => { try { if(s) localStorage.setItem("yh_session",JSON.
 const getSession = () => { try { const r=localStorage.getItem("yh_session"); return r?JSON.parse(r):null; } catch{return null;} };
 
 const supabaseAuth = {
-  signUp: async (email, password, displayName) => {
+  signUp: async (email, password) => {
     const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
       method:"POST", headers:{"apikey":SUPABASE_ANON_KEY,"Content-Type":"application/json"},
-      body: JSON.stringify({email, password, data:{display_name:displayName}, options:{emailRedirectTo:"https://yarnhive.app"}}),
+      body: JSON.stringify({email, password, options:{emailRedirectTo:"https://yarnhive.app"}}),
     });
     const data = await res.json();
     if(!res.ok) return {error: data};
@@ -971,7 +971,7 @@ const SidebarNav = ({view,setView,count,isPro,onAddPattern,onSignOut}) => {
       <div style={{position:"relative",height:160,overflow:"hidden",flexShrink:0}}>
         <Photo src="https://res.cloudinary.com/dmaupzhcx/image/upload/c_fill,g_center,w_400,h_320,z_0.7/v1774123693/yarnhive_sidebar_bee.jpg" alt="YarnHive bee" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
         <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(20,14,10,.85) 0%,rgba(20,14,10,.2) 100%)"}}/>
-        <div style={{position:"absolute",bottom:18,left:20}}><div style={{fontFamily:T.serif,fontSize:26,fontWeight:700,color:"#fff",lineHeight:1}}>YarnHive</div><div style={{fontSize:11,color:"rgba(255,255,255,.6)",marginTop:4}}>Your crochet hive</div></div>
+        <div onClick={()=>setView("collection")} style={{position:"absolute",bottom:18,left:20,cursor:"pointer"}}><div style={{fontFamily:T.serif,fontSize:26,fontWeight:700,color:"#fff",lineHeight:1}}>YarnHive</div><div style={{fontSize:11,color:"rgba(255,255,255,.6)",marginTop:4}}>Your crochet hive</div></div>
       </div>
       <div style={{padding:"16px 16px 8px"}}><button onClick={onAddPattern} style={{width:"100%",background:`linear-gradient(135deg,${T.terra},#8B3A22)`,color:"#fff",border:"none",borderRadius:12,padding:"12px",fontSize:14,fontWeight:700,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.4)",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><span style={{fontSize:18}}>+</span> Add Pattern</button></div>
       <div style={{flex:1,overflowY:"auto",padding:"8px 0"}}>
@@ -983,7 +983,16 @@ const SidebarNav = ({view,setView,count,isPro,onAddPattern,onSignOut}) => {
           </div>
         );})}
       </div>
-      <div style={{padding:"12px 16px 24px"}}>
+      <div style={{padding:"0 0 8px"}}>
+        {(()=>{const active=view==="profile";return(
+          <div className="nav-item" onClick={()=>setView("profile")} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 20px",borderLeft:"3px solid "+(active?T.terra:"transparent"),background:active?T.terraLt:"transparent",cursor:"pointer",transition:"background .12s"}}>
+            <span style={{fontSize:18,width:24,textAlign:"center"}}>👤</span>
+            <div style={{flex:1}}><div style={{fontSize:14,fontWeight:active?600:400,color:active?T.terra:T.ink}}>Profile & Settings</div><div style={{fontSize:11,color:T.ink3,marginTop:1}}>Your account</div></div>
+            {active&&<div style={{width:6,height:6,borderRadius:99,background:T.terra}}/>}
+          </div>
+        );})()}
+      </div>
+      <div style={{padding:"0 16px 24px"}}>
         {isPro?<div style={{background:`linear-gradient(135deg,${T.sage},#3D5E3F)`,borderRadius:12,padding:"12px 14px",display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:16}}>✨</span><div><div style={{fontSize:12,fontWeight:700,color:"#fff"}}>YarnHive Pro</div><div style={{fontSize:11,color:"rgba(255,255,255,.7)"}}>All features active</div></div></div>
         :<div style={{background:`linear-gradient(135deg,${T.terra},#8B3A22)`,borderRadius:12,padding:"14px"}}><div style={{fontSize:12,fontWeight:700,color:"#fff",marginBottom:3}}>✨ Upgrade to Pro</div><div style={{fontSize:11,color:"rgba(255,255,255,.75)",lineHeight:1.5,marginBottom:10}}>Unlimited patterns, all imports, Hive Vision, cloud sync.</div><div style={{background:"rgba(255,255,255,.2)",borderRadius:8,padding:"7px",textAlign:"center",fontSize:11,fontWeight:700,color:"#fff",cursor:"pointer"}}>$9.99/mo · $74.99/yr</div></div>}
         {onSignOut&&<button onClick={onSignOut} style={{width:"100%",background:"none",border:"1px solid "+T.border,borderRadius:10,padding:"8px",fontSize:12,color:T.ink3,cursor:"pointer",marginTop:10,fontWeight:500}}>Sign out</button>}
@@ -1005,7 +1014,7 @@ const NavPanel = ({open,onClose,view,setView,count,isPro,onSignOut}) => {
         <div style={{position:"relative",height:130,overflow:"hidden",flexShrink:0}}>
           <Photo src="https://res.cloudinary.com/dmaupzhcx/image/upload/c_fill,g_center,w_400,h_320,z_0.7/v1774123693/yarnhive_sidebar_bee.jpg" alt="YarnHive bee" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
           <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(20,14,10,.8) 0%,rgba(20,14,10,.2) 100%)"}}/>
-          <div style={{position:"absolute",bottom:16,left:18}}><div style={{fontFamily:T.serif,fontSize:22,fontWeight:700,color:"#fff",lineHeight:1}}>YarnHive</div><div style={{fontSize:11,color:"rgba(255,255,255,.65)",marginTop:3}}>Your crochet hive</div></div>
+          <div onClick={()=>go("collection")} style={{position:"absolute",bottom:16,left:18,cursor:"pointer"}}><div style={{fontFamily:T.serif,fontSize:22,fontWeight:700,color:"#fff",lineHeight:1}}>YarnHive</div><div style={{fontSize:11,color:"rgba(255,255,255,.65)",marginTop:3}}>Your crochet hive</div></div>
         </div>
         <div style={{flex:1,overflowY:"auto",paddingTop:6}}>
           {ITEMS.map(item=>{const active=view===item.key;return(
@@ -1016,7 +1025,16 @@ const NavPanel = ({open,onClose,view,setView,count,isPro,onSignOut}) => {
             </div>
           );})}
         </div>
-        <div style={{padding:"14px 18px 36px"}}>
+        <div style={{padding:"0 0 8px"}}>
+          {(()=>{const active=view==="profile";return(
+            <div className="nav-item" onClick={()=>go("profile")} style={{display:"flex",alignItems:"center",gap:13,padding:"13px 20px",borderLeft:"3px solid "+(active?T.terra:"transparent"),background:active?T.terraLt:"transparent",cursor:"pointer",transition:"background .12s"}}>
+              <span style={{fontSize:20,width:26,textAlign:"center"}}>👤</span>
+              <div style={{flex:1}}><div style={{fontSize:14,fontWeight:active?600:400,color:active?T.terra:T.ink}}>Profile & Settings</div><div style={{fontSize:11,color:T.ink3,marginTop:1}}>Your account</div></div>
+              {active&&<div style={{width:6,height:6,borderRadius:99,background:T.terra}}/>}
+            </div>
+          );})()}
+        </div>
+        <div style={{padding:"0 18px 36px"}}>
           {isPro?<div style={{background:`linear-gradient(135deg,${T.sage},#3D5E3F)`,borderRadius:14,padding:"12px 14px",display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:18}}>✨</span><div><div style={{fontSize:12,fontWeight:700,color:"#fff"}}>YarnHive Pro</div><div style={{fontSize:11,color:"rgba(255,255,255,.7)"}}>All features active</div></div></div>
           :<div style={{background:`linear-gradient(135deg,${T.terra},#8B3A22)`,borderRadius:14,padding:"14px 16px"}}><div style={{fontSize:13,fontWeight:700,color:"#fff",marginBottom:3}}>✨ Upgrade to Pro</div><div style={{fontSize:11,color:"rgba(255,255,255,.8)",lineHeight:1.5,marginBottom:10}}>Unlimited patterns, all imports, Hive Vision.</div><div style={{background:"rgba(255,255,255,.2)",borderRadius:8,padding:"8px",textAlign:"center",fontSize:12,fontWeight:700,color:"#fff",cursor:"pointer"}}>$9.99/mo · $74.99/yr</div></div>}
           {onSignOut&&<button onClick={onSignOut} style={{width:"100%",background:"none",border:"1px solid "+T.border,borderRadius:10,padding:"8px",fontSize:12,color:T.ink3,cursor:"pointer",marginTop:10,fontWeight:500}}>Sign out</button>}
@@ -1099,60 +1117,143 @@ const EmailConfirmBanner = ({onDismiss}) => (
   </div>
 );
 
-const ProfileSetupModal = ({onComplete,onSkip}) => {
+const ProfileSettingsView = ({isPro,onOpenProModal}) => {
   const [username,setUsername]=useState(""),[displayName,setDisplayName]=useState(""),[bio,setBio]=useState("");
-  const [saving,setSaving]=useState(false),[error,setError]=useState(null);
+  const [profileSaving,setProfileSaving]=useState(false),[profileMsg,setProfileMsg]=useState(null),[profileLoaded,setProfileLoaded]=useState(false);
+  const [curPass,setCurPass]=useState(""),[newPass,setNewPass]=useState(""),[passSaving,setPassSaving]=useState(false),[passMsg,setPassMsg]=useState(null);
+  const [resending,setResending]=useState(false),[resendMsg,setResendMsg]=useState(null);
   const{isDesktop}=useBreakpoint();
+  const user = supabaseAuth.getUser();
+  const session = getSession();
+  const emailConfirmed = session ? (() => { try { const p=JSON.parse(atob(session.access_token.split(".")[1])); return !!p.email_confirmed_at; } catch { return false; } })() : false;
 
-  const handleSave = async () => {
+  useEffect(()=>{
+    if (!user || profileLoaded) return;
+    (async ()=>{
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/user_profiles?id=eq.${user.id}&select=username,display_name,bio`, {
+          headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${session.access_token}`},
+        });
+        if (res.ok) {
+          const rows = await res.json();
+          if (rows[0]) { setUsername(rows[0].username||""); setDisplayName(rows[0].display_name||""); setBio(rows[0].bio||""); }
+        }
+      } catch {}
+      setProfileLoaded(true);
+    })();
+  },[user?.id]);
+
+  const handleProfileSave = async () => {
     const handle = username.trim().replace(/^@/,"");
-    if (!handle) { setError("Username is required."); return; }
-    if (!/^[a-zA-Z0-9_]{2,30}$/.test(handle)) { setError("Username: 2-30 characters, letters/numbers/underscores only."); return; }
-    setSaving(true); setError(null);
-    const user = supabaseAuth.getUser();
-    if (!user) { setError("Not signed in."); setSaving(false); return; }
-    const session = getSession();
+    if (handle && !/^[a-zA-Z0-9_]{2,30}$/.test(handle)) { setProfileMsg({type:"error",text:"Username: 2-30 chars, letters/numbers/underscores only."}); return; }
+    setProfileSaving(true); setProfileMsg(null);
     try {
       const res = await fetch(`${SUPABASE_URL}/rest/v1/user_profiles?id=eq.${user.id}`, {
         method:"PATCH",
         headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${session.access_token}`,"Content-Type":"application/json","Prefer":"return=minimal"},
-        body:JSON.stringify({username:handle, display_name:displayName.trim()||null, bio:bio.trim()||null}),
+        body:JSON.stringify({username:handle||null, display_name:displayName.trim()||null, bio:bio.trim()||null}),
       });
       if (!res.ok) {
         const d = await res.json().catch(()=>({}));
-        if (d.message?.includes("unique") || d.code === "23505") { setError("Username already taken."); setSaving(false); return; }
-        setError(d.message || "Save failed."); setSaving(false); return;
+        if (d.message?.includes("unique") || d.code === "23505") { setProfileMsg({type:"error",text:"Username already taken."}); setProfileSaving(false); return; }
+        setProfileMsg({type:"error",text:d.message||"Save failed."}); setProfileSaving(false); return;
       }
-      localStorage.setItem("yh_has_completed_profile","1");
-      onComplete();
-    } catch { setError("Network error."); }
-    setSaving(false);
+      setProfileMsg({type:"ok",text:"Profile saved."});
+    } catch { setProfileMsg({type:"error",text:"Network error."}); }
+    setProfileSaving(false);
   };
 
-  const handleSkip = () => { localStorage.setItem("yh_has_completed_profile","1"); onSkip(); };
+  const handleChangePassword = async () => {
+    if (!newPass || newPass.length < 6) { setPassMsg({type:"error",text:"New password must be at least 6 characters."}); return; }
+    setPassSaving(true); setPassMsg(null);
+    try {
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+        method:"PUT",
+        headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${session.access_token}`,"Content-Type":"application/json"},
+        body:JSON.stringify({password:newPass}),
+      });
+      if (!res.ok) { const d = await res.json().catch(()=>({})); setPassMsg({type:"error",text:d.msg||d.error_description||"Failed."}); setPassSaving(false); return; }
+      setPassMsg({type:"ok",text:"Password updated."}); setCurPass(""); setNewPass("");
+    } catch { setPassMsg({type:"error",text:"Network error."}); }
+    setPassSaving(false);
+  };
+
+  const handleResendConfirm = async () => {
+    setResending(true); setResendMsg(null);
+    try {
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/resend`, {
+        method:"POST",
+        headers:{"apikey":SUPABASE_ANON_KEY,"Content-Type":"application/json"},
+        body:JSON.stringify({type:"signup",email:user.email,options:{emailRedirectTo:"https://yarnhive.app"}}),
+      });
+      setResendMsg(res.ok ? {type:"ok",text:"Confirmation email sent."} : {type:"error",text:"Failed to send."});
+    } catch { setResendMsg({type:"error",text:"Network error."}); }
+    setResending(false);
+  };
+
+  const SECTION = {background:T.surface,borderRadius:16,border:`1px solid ${T.border}`,padding:isDesktop?"24px 28px":"20px 18px",marginBottom:16};
+  const SECTION_TITLE = {fontFamily:T.serif,fontSize:18,fontWeight:700,color:T.ink,marginBottom:16};
+  const Msg = ({msg}) => msg ? <div style={{background:msg.type==="ok"?"rgba(92,122,94,.1)":"rgba(200,50,50,.08)",border:"1px solid "+(msg.type==="ok"?"rgba(92,122,94,.2)":"rgba(200,50,50,.2)"),borderRadius:10,padding:"10px 14px",fontSize:12,color:msg.type==="ok"?T.sage:"#993333",lineHeight:1.5,marginBottom:8}}>{msg.text}</div> : null;
 
   return (
-    <div style={{position:"fixed",inset:0,zIndex:700,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
-      <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.6)",backdropFilter:"blur(8px)"}}/>
-      <div style={{position:"relative",background:"#FDFAF7",borderRadius:22,padding:isDesktop?"40px 44px":"28px 24px",width:"100%",maxWidth:420,boxShadow:"0 24px 80px rgba(0,0,0,0.35)"}}>
-        <div style={{textAlign:"center",marginBottom:24}}>
-          <div style={{fontSize:36,marginBottom:8}}>🐝</div>
-          <div style={{fontFamily:T.serif,fontSize:24,fontWeight:700,color:T.ink,letterSpacing:"-.02em"}}>Welcome to YarnHive!</div>
-          <p style={{fontSize:13,color:T.ink3,marginTop:6,fontWeight:300}}>Set up your profile.</p>
-        </div>
-        <div>
-          <div style={{marginBottom:14}}>
-            <div style={{fontSize:11,color:T.ink3,textTransform:"uppercase",letterSpacing:".08em",marginBottom:5}}>Username *</div>
-            <div style={{position:"relative"}}>
-              <span style={{position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",color:T.ink3,fontSize:15,pointerEvents:"none"}}>@</span>
-              <input value={username} onChange={e=>setUsername(e.target.value)} placeholder="yourhandle" style={{width:"100%",padding:"13px 16px 13px 30px",background:T.linen,border:`1.5px solid ${T.border}`,borderRadius:12,color:T.ink,fontSize:15}} onFocus={e=>e.target.style.borderColor=T.terra} onBlur={e=>e.target.style.borderColor=T.border}/>
-            </div>
+    <div style={{padding:isDesktop?"24px 0 80px":"16px 18px 100px",maxWidth:560}}>
+      <div style={SECTION}>
+        <div style={SECTION_TITLE}>Your Profile</div>
+        <Field label="Display name" placeholder="e.g. Sarah" value={displayName} onChange={e=>setDisplayName(e.target.value)}/>
+        <div style={{marginBottom:14}}>
+          <div style={{fontSize:11,color:T.ink3,textTransform:"uppercase",letterSpacing:".08em",marginBottom:5}}>Username</div>
+          <div style={{position:"relative"}}>
+            <span style={{position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",color:T.ink3,fontSize:15,pointerEvents:"none"}}>@</span>
+            <input value={username} onChange={e=>setUsername(e.target.value)} placeholder="yourhandle" style={{width:"100%",padding:"13px 16px 13px 30px",background:T.linen,border:`1.5px solid ${T.border}`,borderRadius:12,color:T.ink,fontSize:15}} onFocus={e=>e.target.style.borderColor=T.terra} onBlur={e=>e.target.style.borderColor=T.border}/>
           </div>
-          <Field label="Display name" placeholder="e.g. Sarah" value={displayName} onChange={e=>setDisplayName(e.target.value)}/>
-          <Field label="Bio" placeholder="Tell us about your craft..." value={bio} onChange={e=>setBio(e.target.value)} rows={3}/>
-          {error&&<div style={{background:"rgba(200,50,50,.08)",border:"1px solid rgba(200,50,50,.2)",borderRadius:10,padding:"10px 14px",fontSize:12,color:"#993333",lineHeight:1.5,marginBottom:8}}>{error}</div>}
-          <button onClick={handleSave} disabled={saving} style={{width:"100%",background:`linear-gradient(135deg,${T.terra},#7A2E14)`,color:"#fff",border:"none",borderRadius:14,padding:"15px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 8px 24px rgba(184,90,60,.45)",marginTop:4,opacity:saving?.6:1}}>{saving?"Saving…":"Save profile"}</button>
-          <button onClick={handleSkip} style={{width:"100%",background:"none",border:"none",color:T.ink3,fontSize:13,cursor:"pointer",padding:"12px",fontWeight:500}}>Skip for now</button>
+        </div>
+        <Field label="Bio" placeholder="Tell us about your craft..." value={bio} onChange={e=>setBio(e.target.value)} rows={3}/>
+        <Msg msg={profileMsg}/>
+        <button onClick={handleProfileSave} disabled={profileSaving} style={{background:`linear-gradient(135deg,${T.terra},#7A2E14)`,color:"#fff",border:"none",borderRadius:12,padding:"12px 24px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.35)",opacity:profileSaving?.6:1}}>{profileSaving?"Saving…":"Save Profile"}</button>
+      </div>
+
+      <div style={SECTION}>
+        <div style={SECTION_TITLE}>Account</div>
+        <div style={{marginBottom:14}}>
+          <div style={{fontSize:11,color:T.ink3,textTransform:"uppercase",letterSpacing:".08em",marginBottom:5}}>Email</div>
+          <div style={{padding:"13px 16px",background:T.linen,border:`1.5px solid ${T.border}`,borderRadius:12,color:T.ink2,fontSize:15}}>{user?.email||"—"}</div>
+        </div>
+        <div style={{marginBottom:16}}>
+          {emailConfirmed
+            ? <div style={{display:"inline-flex",alignItems:"center",gap:6,background:"rgba(92,122,94,.1)",borderRadius:8,padding:"6px 12px",fontSize:12,fontWeight:600,color:T.sage}}>Email confirmed</div>
+            : <div>
+                <div style={{display:"inline-flex",alignItems:"center",gap:6,background:"rgba(200,50,50,.08)",borderRadius:8,padding:"6px 12px",fontSize:12,fontWeight:600,color:"#993333",marginBottom:8}}>Email not confirmed</div>
+                <div><button onClick={handleResendConfirm} disabled={resending} style={{background:"none",border:`1.5px solid ${T.terra}`,borderRadius:10,padding:"8px 16px",fontSize:13,fontWeight:600,color:T.terra,cursor:"pointer",opacity:resending?.6:1}}>{resending?"Sending…":"Resend confirmation email"}</button></div>
+                {resendMsg&&<Msg msg={resendMsg}/>}
+              </div>
+          }
+        </div>
+        <div style={{borderTop:`1px solid ${T.border}`,paddingTop:16}}>
+          <div style={{fontSize:13,fontWeight:600,color:T.ink,marginBottom:12}}>Change Password</div>
+          <Field label="Current password" placeholder="••••••••" value={curPass} onChange={e=>setCurPass(e.target.value)} type="password"/>
+          <Field label="New password" placeholder="••••••••" value={newPass} onChange={e=>setNewPass(e.target.value)} type="password"/>
+          <Msg msg={passMsg}/>
+          <button onClick={handleChangePassword} disabled={passSaving} style={{background:"none",border:`1.5px solid ${T.terra}`,borderRadius:10,padding:"10px 20px",fontSize:13,fontWeight:600,color:T.terra,cursor:"pointer",opacity:passSaving?.6:1}}>{passSaving?"Saving…":"Update Password"}</button>
+        </div>
+      </div>
+
+      <div style={SECTION}>
+        <div style={SECTION_TITLE}>Subscription</div>
+        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
+          <div style={{fontSize:13,color:T.ink2}}>Current plan:</div>
+          {isPro
+            ? <div style={{background:`linear-gradient(135deg,${T.sage},#3D5E3F)`,borderRadius:8,padding:"5px 14px",fontSize:12,fontWeight:700,color:"#fff"}}>Pro</div>
+            : <div style={{background:T.linen,borderRadius:8,padding:"5px 14px",fontSize:12,fontWeight:700,color:T.ink2,border:`1px solid ${T.border}`}}>Free</div>
+          }
+        </div>
+        {!isPro&&<button onClick={onOpenProModal} style={{background:`linear-gradient(135deg,${T.terra},#7A2E14)`,color:"#fff",border:"none",borderRadius:12,padding:"12px 24px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.35)"}}>Upgrade to Pro</button>}
+      </div>
+
+      <div style={SECTION}>
+        <div style={SECTION_TITLE}>App Preferences</div>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <div><div style={{fontSize:14,color:T.ink3}}>Dark mode</div><div style={{fontSize:11,color:T.ink3,opacity:.6,marginTop:2}}>Coming soon</div></div>
+          <div style={{width:44,height:26,borderRadius:13,background:T.border,opacity:.5,position:"relative",cursor:"not-allowed"}}><div style={{width:22,height:22,borderRadius:11,background:"#fff",position:"absolute",top:2,left:2,boxShadow:"0 1px 3px rgba(0,0,0,.15)"}}/></div>
         </div>
       </div>
     </div>
@@ -1170,7 +1271,7 @@ const Auth = ({onEnter,onEnterAsNew,onEnterAsPro}) => {
     setLoading(true);
     try {
       if (screen === "signup") {
-        const {data, error} = await supabaseAuth.signUp(email.trim(), pass, "");
+        const {data, error} = await supabaseAuth.signUp(email.trim(), pass);
         if (error) { setAuthError(error.msg || error.error_description || error.message || "Sign-up failed."); setLoading(false); return; }
         // If email confirmation required, sign in immediately anyway
         if (data && !data.session) {
@@ -2046,36 +2147,25 @@ const CollectionView = ({patterns,cat,setCat,search,setSearch,openDetail,onAddPa
 export default function YarnHive() {
   const [authed,setAuthed]=useState(()=>!!supabaseAuth.getUser()),[isPro,setIsPro]=useState(false),[patterns,setPatterns]=useState(SEED_PATTERNS),[view,setView]=useState("collection"),[selected,setSelected]=useState(null),[navOpen,setNavOpen]=useState(false),[addOpen,setAddOpen]=useState(false),[showPaywall,setShowPaywall]=useState(false),[cat,setCat]=useState("All"),[search,setSearch]=useState("");
   const [showEmailBanner,setShowEmailBanner]=useState(false);
-  const [showProfileSetup,setShowProfileSetup]=useState(false);
   const{isTablet,isDesktop}=useBreakpoint();
   const tier=useTier(isPro,patterns.length);
 
   const handleSignOut = async () => { await supabaseAuth.signOut(); setAuthed(false); setIsPro(false); };
 
-  const handleNewSignup = () => {
-    setAuthed(true);
-    setShowEmailBanner(true);
-    if (!localStorage.getItem("yh_has_completed_profile")) setShowProfileSetup(true);
-  };
+  const handleNewSignup = () => { setAuthed(true); setShowEmailBanner(true); };
 
-  const handleSignIn = () => {
-    setAuthed(true);
-    if (!localStorage.getItem("yh_has_completed_profile")) setShowProfileSetup(true);
-  };
-
-  if(!authed) return <><CSS/><Auth onEnter={handleSignIn} onEnterAsNew={handleNewSignup} onEnterAsPro={()=>{setIsPro(true);setAuthed(true);}}/></>;
+  if(!authed) return <><CSS/><Auth onEnter={()=>setAuthed(true)} onEnterAsNew={handleNewSignup} onEnterAsPro={()=>{setIsPro(true);setAuthed(true);}}/></>;
   if(view==="detail"&&selected) return <><CSS/><Detail p={selected} onBack={()=>setView("collection")} onSave={u=>{setPatterns(prev=>prev.map(p=>p.id===u.id?u:p));setSelected(u);}}/></>;
 
   const openDetail=p=>{setSelected(p);setView("detail");};
   const handleAddPattern=p=>{setPatterns(prev=>[p,...prev]);setView("collection");};
   const openAddModal=()=>{if(tier.atCap){setShowPaywall(true);return;}setAddOpen(true);};
   const inProgress=patterns.filter(p=>{const v=pct(p);return v>0&&v<100;});
-  const TITLE_MAP={collection:"Your Hive",wip:"In Progress",browse:"Browse Sites",stash:"Yarn Stash",calculator:"Calculators",shopping:"Shopping List"};
+  const TITLE_MAP={collection:"Your Hive",wip:"In Progress",browse:"Browse Sites",stash:"Yarn Stash",calculator:"Calculators",shopping:"Shopping List",profile:"Profile & Settings"};
 
   if(isDesktop) return (
     <div style={{display:"flex",minHeight:"100vh",width:"100%",background:T.bg,fontFamily:T.sans,position:"relative"}}>
       <CSS/>
-      {showProfileSetup&&<ProfileSetupModal onComplete={()=>setShowProfileSetup(false)} onSkip={()=>setShowProfileSetup(false)}/>}
       {showPaywall&&<PaywallGate patternCount={patterns.length} onClose={()=>setShowPaywall(false)} onUpgrade={()=>setShowPaywall(false)}/>}
       {addOpen&&<AddPatternModal onClose={()=>setAddOpen(false)} onSave={handleAddPattern} isPro={isPro} patternCount={patterns.length}/>}
       <SidebarNav view={view} setView={setView} count={patterns.length} isPro={isPro} onAddPattern={openAddModal} onSignOut={handleSignOut}/>
@@ -2095,6 +2185,7 @@ export default function YarnHive() {
           {view==="stash"&&<div style={{paddingTop:24}}><YarnStash/></div>}
           {view==="calculator"&&<div style={{paddingTop:24}}><Calculators/></div>}
           {view==="shopping"&&<div style={{paddingTop:24}}><ShoppingList patterns={patterns}/></div>}
+          {view==="profile"&&<ProfileSettingsView isPro={isPro} onOpenProModal={()=>setShowPaywall(true)}/>}
         </div>
       </div>
     </div>
@@ -2104,7 +2195,6 @@ export default function YarnHive() {
     <div style={{fontFamily:T.sans,background:T.bg,minHeight:"100vh",maxWidth:isTablet?680:430,margin:"0 auto",display:"flex",flexDirection:"column",position:"relative"}}>
       <CSS/>
       <NavPanel open={navOpen} onClose={()=>setNavOpen(false)} view={view} setView={setView} count={patterns.length} isPro={isPro} onSignOut={handleSignOut}/>
-      {showProfileSetup&&<ProfileSetupModal onComplete={()=>setShowProfileSetup(false)} onSkip={()=>setShowProfileSetup(false)}/>}
       {showPaywall&&<PaywallGate patternCount={patterns.length} onClose={()=>setShowPaywall(false)} onUpgrade={()=>setShowPaywall(false)}/>}
       {addOpen&&<AddPatternModal onClose={()=>setAddOpen(false)} onSave={handleAddPattern} isPro={isPro} patternCount={patterns.length}/>}
       {showEmailBanner&&<EmailConfirmBanner onDismiss={()=>setShowEmailBanner(false)}/>}
@@ -2120,6 +2210,7 @@ export default function YarnHive() {
         {view==="stash"&&<div style={{paddingTop:18}}><YarnStash/></div>}
         {view==="calculator"&&<div style={{paddingTop:18}}><Calculators/></div>}
         {view==="shopping"&&<div style={{paddingTop:18}}><ShoppingList patterns={patterns}/></div>}
+        {view==="profile"&&<ProfileSettingsView isPro={isPro} onOpenProModal={()=>setShowPaywall(true)}/>}
       </div>
       <div style={{position:"fixed",bottom:28,left:"50%",transform:"translateX(-50%)",zIndex:30,pointerEvents:"none"}}>
         <button onClick={openAddModal} style={{background:`linear-gradient(135deg,${T.terra},#8B3A22)`,color:"#fff",border:"none",borderRadius:99,padding:"13px 26px",fontSize:14,fontWeight:700,cursor:"pointer",pointerEvents:"auto",boxShadow:"0 8px 28px rgba(184,90,60,.55)",display:"flex",alignItems:"center",gap:8,animation:"fabPulse 3s ease infinite"}}><span style={{fontSize:17}}>+</span> Add Pattern</button>
