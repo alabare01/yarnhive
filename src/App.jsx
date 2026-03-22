@@ -2216,6 +2216,7 @@ const CollectionView = ({userPatterns,starterPatterns,cat,setCat,search,setSearc
   const filteredUser=userPatterns.filter(p=>(cat==="All"||p.cat===cat)&&(!search||p.title.toLowerCase().includes(search.toLowerCase())));
   const filteredStarter=starterPatterns.filter(p=>(cat==="All"||p.cat===cat)&&(!search||p.title.toLowerCase().includes(search.toLowerCase())));
   const inProgress=allPatterns.filter(p=>{const v=pct(p);return (v>0&&v<100)||(p.isStarter&&p.rows&&p.rows.length>0&&v<100);});
+  const pad=isDesktop?"0":"0 18px";
   return (
     <>
       <HiveFeedStrip hasPatterns={userPatterns.length>0} setView={setView}/>
@@ -2227,7 +2228,19 @@ const CollectionView = ({userPatterns,starterPatterns,cat,setCat,search,setSearc
           <HScrollRow itemCount={inProgress.length}>{inProgress.map(p=><ShelfCard key={p.id} p={p} onClick={()=>openDetail(p)}/>)}</HScrollRow>
         </div>
       )}
-      <div style={{padding:isDesktop?"24px 0 10px":"16px 18px 10px"}}>
+      {/* Starter Collection */}
+      {filteredStarter.length>0&&(
+        <div style={{padding:isDesktop?"16px 0":"16px 18px"}}>
+          <div style={{marginBottom:12}}>
+            <div style={{fontSize:10,color:T.ink3,textTransform:"uppercase",letterSpacing:".09em",fontWeight:600}}>🎁 Starter Collection</div>
+            <div style={{fontSize:11,color:T.ink3,marginTop:4,lineHeight:1.5}}>Free patterns to get you started</div>
+          </div>
+          <div className="pattern-grid">
+            {filteredStarter.map((p,i)=><PatternCard key={p.id} p={p} delay={i*.04} onClick={()=>openDetail(p)}/>)}
+          </div>
+        </div>
+      )}
+      <div style={{padding:isDesktop?"16px 0 10px":"16px 18px 10px"}}>
         <div style={{display:"flex",alignItems:"center",background:T.surface,border:`1.5px solid ${T.border}`,borderRadius:12,padding:"10px 14px",gap:9}}>
           <span style={{color:T.ink3,fontSize:15}}>🔍</span>
           <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search your hive…" style={{border:"none",background:"transparent",flex:1,fontSize:14,color:T.ink,outline:"none"}} onFocus={e=>e.currentTarget.parentNode.style.borderColor=T.terra} onBlur={e=>e.currentTarget.parentNode.style.borderColor=T.border}/>
@@ -2238,32 +2251,19 @@ const CollectionView = ({userPatterns,starterPatterns,cat,setCat,search,setSearc
       </div>
       {!isPro&&(
         <div style={{margin:isDesktop?"0 0 16px":"0 18px 16px",background:T.linen,borderRadius:12,padding:"10px 14px",border:`1px solid ${T.border}`,display:"flex",alignItems:"center",gap:12}}>
-          <div style={{flex:1}}><div style={{fontSize:11,color:T.ink2,marginBottom:5,fontWeight:500}}>{tier.userCount}/{TIER_CONFIG.free.patternCap} free patterns · {tier.userCount<TIER_CONFIG.free.patternCap?"all features available":"upgrade to add more"}</div><Bar val={(tier.userCount/TIER_CONFIG.free.patternCap)*100} color={tier.atCap?T.terra:T.terra} h={4}/></div>
+          <div style={{flex:1}}><div style={{fontSize:11,color:T.ink2,marginBottom:5,fontWeight:500}}>{tier.userCount}/{TIER_CONFIG.free.patternCap} free patterns · {tier.userCount<TIER_CONFIG.free.patternCap?"all features available":"upgrade to add more"}</div><Bar val={(tier.userCount/TIER_CONFIG.free.patternCap)*100} color={T.terra} h={4}/></div>
           {tier.atCap&&<button onClick={onAddPattern} style={{background:T.terra,color:"#fff",border:"none",borderRadius:8,padding:"7px 12px",fontSize:11,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>Upgrade</button>}
         </div>
       )}
       {/* User Patterns */}
-      <div style={{padding:isDesktop?"0":"0 18px"}}>
+      <div style={{padding:pad}}>
         <div style={{fontSize:10,color:T.ink3,textTransform:"uppercase",letterSpacing:".09em",fontWeight:600,marginBottom:12}}>Your Patterns</div>
       </div>
-      <div className="pattern-grid" style={{padding:isDesktop?"0 0 16px":"0 18px 16px"}}>
+      <div className="pattern-grid" style={{padding:isDesktop?"0 0 80px":"0 18px 120px"}}>
         {filteredUser.length===0
           ?<div style={{gridColumn:"1/-1",textAlign:"center",padding:"40px 20px"}}><div style={{fontSize:48,marginBottom:14}}>🧶</div><div style={{fontFamily:T.serif,fontSize:18,color:T.ink2,marginBottom:8}}>Your hive is empty</div><div style={{fontSize:13,color:T.ink3,lineHeight:1.6,marginBottom:20}}>Add your first pattern or start with a starter below.</div><button onClick={onAddPattern} style={{background:T.terra,color:"#fff",border:"none",borderRadius:12,padding:"12px 24px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.3)"}}>+ Add Your First Pattern</button></div>
           :filteredUser.map((p,i)=><PatternCard key={p.id} p={p} delay={i*.04} onClick={()=>openDetail(p)}/>)}
       </div>
-      {/* Starter Patterns */}
-      {filteredStarter.length>0&&(
-        <div style={{paddingBottom:isDesktop?80:120}}>
-          <div style={{padding:isDesktop?"16px 0 12px":"16px 18px 12px"}}>
-            <div style={{fontSize:10,color:T.ink3,textTransform:"uppercase",letterSpacing:".09em",fontWeight:600}}>🎁 Starter Collection</div>
-            <div style={{fontSize:11,color:T.ink3,marginTop:4,lineHeight:1.5}}>Free patterns to get you started — these don't count toward your {TIER_CONFIG.free.patternCap} free slots.</div>
-          </div>
-          <div style={{display:"flex",gap:14,overflowX:"auto",padding:"0 18px",WebkitOverflowScrolling:"touch"}}>
-            {filteredStarter.map(p=><div key={p.id} style={{width:200,minWidth:200,flexShrink:0}}><PatternCard p={p} onClick={()=>openDetail(p)}/></div>)}
-          </div>
-        </div>
-      )}
-      {filteredStarter.length===0&&<div style={{height:isDesktop?80:120}}/>}
     </>
   );
 };
@@ -2276,10 +2276,9 @@ const WelcomeToast = ({visible}) => (
   </div>
 );
 
-const WelcomeBanner = ({onDismiss}) => (
-  <div style={{background:T.terra,padding:"12px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
+const WelcomeBanner = ({visible}) => (
+  <div style={{background:T.terra,padding:"10px 16px",display:"flex",alignItems:"center",gap:8,opacity:visible?1:0,maxHeight:visible?50:0,overflow:"hidden",transition:"opacity .4s ease, max-height .4s ease"}}>
     <span style={{fontSize:13,color:"#fff",fontWeight:500,lineHeight:1.4}}>Welcome to YarnHive! 🐝 Your starter patterns are ready — start exploring.</span>
-    <button onClick={onDismiss} style={{background:"none",border:"none",cursor:"pointer",color:"#fff",fontSize:18,lineHeight:1,padding:"0 2px",flexShrink:0,opacity:.75}}>×</button>
   </div>
 );
 
@@ -2316,25 +2315,23 @@ const OnboardingScreen = ({onComplete,onSkip}) => {
   return (
     <div style={{minHeight:"100vh",background:T.bg,fontFamily:T.sans,display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
       <CSS/>
-      <div style={{width:"100%",maxWidth:420}}>
-        <div style={{textAlign:"center",marginBottom:32}}>
+      <div style={{width:"100%",maxWidth:480,background:"rgba(250,247,243,0.88)",backdropFilter:"blur(36px) saturate(1.6) brightness(1.05)",WebkitBackdropFilter:"blur(36px) saturate(1.6) brightness(1.05)",borderRadius:28,boxShadow:"0 40px 100px rgba(0,0,0,0.12), 0 0 0 1px rgba(255,255,255,0.45) inset, 0 2px 0 rgba(255,255,255,0.7) inset",border:"1px solid rgba(255,255,255,0.38)",padding:isDesktop?"44px 48px 40px":"28px 24px 32px"}}>
+        <div style={{textAlign:"center",marginBottom:28}}>
           <div style={{fontSize:48,marginBottom:12}}>🐝</div>
           <div style={{fontFamily:T.serif,fontSize:isDesktop?32:26,fontWeight:700,color:T.ink,lineHeight:1.1,letterSpacing:"-.02em"}}>Set up your profile</div>
           <p style={{fontSize:14,color:T.ink3,marginTop:8,lineHeight:1.6}}>Let the hive know who you are.</p>
         </div>
-        <div style={{background:T.surface,borderRadius:20,border:`1px solid ${T.border}`,padding:isDesktop?"32px 36px":"24px 20px"}}>
-          <Field label="Display name" placeholder="e.g. Sarah" value={displayName} onChange={e=>setDisplayName(e.target.value)}/>
-          <div style={{marginBottom:14}}>
-            <div style={{fontSize:11,color:T.ink3,textTransform:"uppercase",letterSpacing:".08em",marginBottom:5}}>Username</div>
-            <div style={{position:"relative"}}>
-              <span style={{position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",color:T.ink3,fontSize:15,pointerEvents:"none"}}>@</span>
-              <input value={username} onChange={e=>setUsername(e.target.value)} placeholder="yourhandle" style={{width:"100%",padding:"13px 16px 13px 30px",background:T.linen,border:`1.5px solid ${T.border}`,borderRadius:12,color:T.ink,fontSize:15}} onFocus={e=>e.target.style.borderColor=T.terra} onBlur={e=>e.target.style.borderColor=T.border}/>
-            </div>
+        <Field label="Display name" placeholder="e.g. Sarah" value={displayName} onChange={e=>setDisplayName(e.target.value)}/>
+        <div style={{marginBottom:14}}>
+          <div style={{fontSize:11,color:T.ink3,textTransform:"uppercase",letterSpacing:".08em",marginBottom:5}}>Username</div>
+          <div style={{position:"relative"}}>
+            <span style={{position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",color:T.ink3,fontSize:15,pointerEvents:"none"}}>@</span>
+            <input value={username} onChange={e=>setUsername(e.target.value)} placeholder="yourhandle" style={{width:"100%",padding:"13px 16px 13px 30px",background:T.linen,border:`1.5px solid ${T.border}`,borderRadius:12,color:T.ink,fontSize:15}} onFocus={e=>e.target.style.borderColor=T.terra} onBlur={e=>e.target.style.borderColor=T.border}/>
           </div>
-          {error&&<div style={{background:T.terraLt,border:"1px solid rgba(184,90,60,.2)",borderRadius:10,padding:"10px 14px",fontSize:12,color:T.terra,lineHeight:1.5,marginBottom:8}}>{error}</div>}
-          <button onClick={handleSave} disabled={saving} style={{width:"100%",background:T.terra,color:"#fff",border:"none",borderRadius:14,padding:"15px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.3)",marginTop:4,opacity:saving?.6:1}}>{saving?"Setting up…":"Set up my profile"}</button>
-          <div style={{textAlign:"center",marginTop:12}}><button onClick={handleSkip} style={{background:"none",border:"none",color:T.ink3,fontSize:13,cursor:"pointer",fontWeight:500}}>Skip for now</button></div>
         </div>
+        {error&&<div style={{background:T.terraLt,border:"1px solid rgba(184,90,60,.2)",borderRadius:10,padding:"10px 14px",fontSize:12,color:T.terra,lineHeight:1.5,marginBottom:8}}>{error}</div>}
+        <button onClick={handleSave} disabled={saving} style={{width:"100%",background:T.terra,color:"#fff",border:"none",borderRadius:14,padding:"15px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.3)",marginTop:4,opacity:saving?.6:1}}>{saving?"Setting up…":"Set up my profile"}</button>
+        <div style={{textAlign:"center",marginTop:12}}><button onClick={handleSkip} style={{background:"none",border:"none",color:T.ink3,fontSize:13,cursor:"pointer",fontWeight:500}}>Skip for now</button></div>
       </div>
     </div>
   );
@@ -2358,18 +2355,20 @@ export default function YarnHive() {
 
   const fetchStarterPatterns = useCallback(async () => {
     try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/starter_patterns?is_active=eq.true&order=sort_order.asc`, {
-        headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${SUPABASE_ANON_KEY}`},
+      const res = await fetch("https://vbtsdyxvqqwxjzpuseaf.supabase.co/rest/v1/starter_patterns?is_active=eq.true&order=sort_order.asc", {
+        headers:{"apikey":"sb_publishable_aWb45OmRG4563HUnVil3BA_yZMdPDgz","Authorization":"Bearer sb_publishable_aWb45OmRG4563HUnVil3BA_yZMdPDgz"},
       });
       if (res.ok) {
-        const rows = await res.json();
-        const starters = rows.map(r=>({
-          id:"starter_"+r.id, title:r.title||r.name||"Starter Pattern", source:"YarnHive Starter Collection",
-          cat:r.category||"Blankets", photo:STARTER_PHOTO_MAP[r.category]||PHOTOS.blanket,
-          hook:r.hook_size||"5.0mm", weight:r.yarn_weight||"Worsted", rating:5,
-          yardage:r.yardage||0, skeins:0, skeinYards:0,
-          notes:r.description||"", rows:(() => { try { const parsed=Array.isArray(r.rows)?r.rows:JSON.parse(r.rows||"[]"); return parsed.map(row=>({...row,done:false})); } catch { return []; } })(),
-          materials:(() => { try { return Array.isArray(r.materials)?r.materials:JSON.parse(r.materials||"[]"); } catch { return []; } })(),
+        const data = await res.json();
+        const starters = data.map(p=>({
+          id:"starter_"+p.id, title:p.title, source:p.source||"YarnHive Starter Collection",
+          cat:p.cat, hook:p.hook, weight:p.weight, yardage:p.yardage||0,
+          notes:p.notes||"",
+          photo:p.cat==="Amigurumi"?PHOTOS.granny:p.cat==="Wearables"?PHOTOS.cardigan:PHOTOS.blanket,
+          materials:Array.isArray(p.materials)?p.materials:[],
+          rows:Array.isArray(p.rows)?p.rows.map(r=>({...r,done:false})):[],
+          rating:0, skeins:0, skeinYards:200,
+          gauge:{stitches:12,rows:16,size:4}, dimensions:{width:50,height:60},
           isStarter:true,
         }));
         setStarterPatterns(starters);
@@ -2382,8 +2381,8 @@ export default function YarnHive() {
 
   const handleNewSignup = () => {
     setAuthed(true);
-    setShowEmailBanner(true);
     setShowWelcomeBanner(true);
+    setTimeout(()=>{ setShowWelcomeBanner(false); setShowEmailBanner(true); },4000);
     if (!localStorage.getItem("yh_onboarding_complete")) { setShowOnboarding(true); }
     else { setView("collection"); }
   };
@@ -2414,8 +2413,8 @@ export default function YarnHive() {
       <WelcomeToast visible={showWelcomeToast}/>
       <SidebarNav view={view} setView={setView} count={userPatterns.length} isPro={isPro} onAddPattern={openAddModal} onSignOut={handleSignOut} onUpgrade={()=>setShowProModal(true)}/>
       <div style={{flex:1,minWidth:0,overflowY:"auto",display:"flex",flexDirection:"column"}}>
-        {showEmailBanner&&<EmailConfirmBanner onDismiss={()=>setShowEmailBanner(false)}/>}
-        {showWelcomeBanner&&<WelcomeBanner onDismiss={()=>setShowWelcomeBanner(false)}/>}
+        <WelcomeBanner visible={showWelcomeBanner}/>
+        {showEmailBanner&&!showWelcomeBanner&&<EmailConfirmBanner onDismiss={()=>setShowEmailBanner(false)}/>}
         <div style={{background:T.surface,borderBottom:`1px solid ${T.border}`,padding:"0 40px",height:64,display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:20,flexShrink:0}}>
           <div style={{fontFamily:T.serif,fontSize:24,fontWeight:700,color:T.ink}}>{TITLE_MAP[view]||"YarnHive"}</div>
           <div style={{display:"flex",alignItems:"center",gap:12}}>
