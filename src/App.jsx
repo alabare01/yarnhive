@@ -953,7 +953,7 @@ const AddPatternModal = ({onClose,onSave,isPro,patternCount}) => {
 };
 
 const SidebarNav = ({view,setView,count,isPro,onAddPattern,onSignOut,onUpgrade}) => {
-  const ITEMS=[{key:"collection",label:"Your Hive",sub:count+" saved",icon:"🧶"},{key:"wip",label:"In Progress",sub:"Currently making",icon:"🪡"},{key:"browse",label:"Browse Sites",sub:"Find free patterns",icon:"🌐"},{key:"stash",label:"Yarn Stash",sub:"Manage your yarn",icon:"🎀"},{key:"calculator",label:"Calculators",sub:"Gauge, yardage & more",icon:"🧮"},{key:"shopping",label:"Shopping List",sub:"Auto-generated",icon:"🛒"}];
+  const ITEMS=[{key:"collection",label:"Your Hive",sub:count+" saved",icon:"🧶"},{key:"wip",label:"Builds in Progress",sub:"Currently making",icon:"🪡"},{key:"browse",label:"Browse Sites",sub:"Find free patterns",icon:"🌐"},{key:"stash",label:"Yarn Stash",sub:"Manage your yarn",icon:"🎀"},{key:"calculator",label:"Calculators",sub:"Gauge, yardage & more",icon:"🧮"},{key:"shopping",label:"Shopping List",sub:"Auto-generated",icon:"🛒"}];
   return (
     <div style={{width:260,background:T.surface,borderRight:`1px solid ${T.border}`,height:"100vh",position:"sticky",top:0,display:"flex",flexDirection:"column",flexShrink:0}}>
       <div onClick={()=>setView("collection")} style={{position:"relative",height:160,overflow:"hidden",flexShrink:0,cursor:"pointer",transition:"opacity .15s"}} onMouseEnter={e=>e.currentTarget.style.opacity=".85"} onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
@@ -964,8 +964,8 @@ const SidebarNav = ({view,setView,count,isPro,onAddPattern,onSignOut,onUpgrade})
       <div style={{padding:"16px 16px 8px"}}><button onClick={onAddPattern} style={{width:"100%",background:`linear-gradient(135deg,${T.terra},#8B3A22)`,color:"#fff",border:"none",borderRadius:12,padding:"12px",fontSize:14,fontWeight:700,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.4)",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><span style={{fontSize:18}}>+</span> Add Pattern</button></div>
       <div style={{flex:1,overflowY:"auto",padding:"8px 0"}}>
         {ITEMS.map(item=>{const active=view===item.key;return(
-          <div key={item.key} className="nav-item" onClick={()=>setView(item.key)} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 20px",borderLeft:"3px solid "+(active?T.terra:"transparent"),background:active?T.terraLt:"transparent",cursor:"pointer",transition:"background .12s"}}>
-            <div style={{width:32,height:32,borderRadius:8,background:active?T.terraLt:T.linen,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"background .12s"}}><span style={{fontSize:16}}>{item.icon}</span></div>
+          <div key={item.key} className="nav-item" onClick={()=>setView(item.key)} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 20px",borderLeft:"3px solid "+(active?T.terra:"transparent"),background:active?T.terraLt:"transparent",cursor:"pointer",transition:"background .12s"}}>
+            <span style={{fontSize:18,width:24,textAlign:"center"}}>{item.icon}</span>
             <div style={{flex:1}}><div style={{fontSize:14,fontWeight:active?600:400,color:active?T.terra:T.ink}}>{item.label}</div><div style={{fontSize:11,color:T.ink3,marginTop:1}}>{item.sub}</div></div>
             {active&&<div style={{width:6,height:6,borderRadius:99,background:T.terra}}/>}
           </div>
@@ -973,8 +973,8 @@ const SidebarNav = ({view,setView,count,isPro,onAddPattern,onSignOut,onUpgrade})
       </div>
       <div style={{padding:"0 0 8px"}}>
         {(()=>{const active=view==="profile";return(
-          <div className="nav-item" onClick={()=>setView("profile")} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 20px",borderLeft:"3px solid "+(active?T.terra:"transparent"),background:active?T.terraLt:"transparent",cursor:"pointer",transition:"background .12s"}}>
-            <div style={{width:32,height:32,borderRadius:8,background:active?T.terraLt:T.linen,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"background .12s"}}><span style={{fontSize:16}}>👤</span></div>
+          <div className="nav-item" onClick={()=>setView("profile")} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 20px",borderLeft:"3px solid "+(active?T.terra:"transparent"),background:active?T.terraLt:"transparent",cursor:"pointer",transition:"background .12s"}}>
+            <span style={{fontSize:18,width:24,textAlign:"center"}}>👤</span>
             <div style={{flex:1}}><div style={{fontSize:14,fontWeight:active?600:400,color:active?T.terra:T.ink}}>Profile & Settings</div><div style={{fontSize:11,color:T.ink3,marginTop:1}}>Your account</div></div>
             {active&&<div style={{width:6,height:6,borderRadius:99,background:T.terra}}/>}
           </div>
@@ -994,7 +994,7 @@ const NavPanel = ({open,onClose,view,setView,count,isPro,onSignOut,onUpgrade}) =
   const dismiss=()=>{setClosing(true);setTimeout(()=>{setClosing(false);onClose();},220);};
   const go=v=>{setView(v);dismiss();};
   if(!open) return null;
-  const ITEMS=[{key:"collection",label:"Your Hive",sub:count+" patterns saved",icon:"🧶"},{key:"wip",label:"In Progress",sub:"Currently making",icon:"🪡"},{key:"browse",label:"Browse Sites",sub:"Find free patterns",icon:"🌐"},{key:"stash",label:"Yarn Stash",sub:"Manage your yarn",icon:"🎀"},{key:"calculator",label:"Calculators",sub:"Gauge, yardage & more",icon:"🧮"},{key:"shopping",label:"Shopping List",sub:"Auto-generated needs",icon:"🛒"}];
+  const ITEMS=[{key:"collection",label:"Your Hive",sub:count+" patterns saved",icon:"🧶"},{key:"wip",label:"Builds in Progress",sub:"Currently making",icon:"🪡"},{key:"browse",label:"Browse Sites",sub:"Find free patterns",icon:"🌐"},{key:"stash",label:"Yarn Stash",sub:"Manage your yarn",icon:"🎀"},{key:"calculator",label:"Calculators",sub:"Gauge, yardage & more",icon:"🧮"},{key:"shopping",label:"Shopping List",sub:"Auto-generated needs",icon:"🛒"}];
   return (
     <div style={{position:"fixed",inset:0,zIndex:100}}>
       <div className={closing?"dim-out":"dim-in"} onClick={dismiss} style={{position:"absolute",inset:0,background:"rgba(28,23,20,.52)",backdropFilter:"blur(3px)"}}/>
@@ -1006,8 +1006,8 @@ const NavPanel = ({open,onClose,view,setView,count,isPro,onSignOut,onUpgrade}) =
         </div>
         <div style={{flex:1,overflowY:"auto",paddingTop:6}}>
           {ITEMS.map(item=>{const active=view===item.key;return(
-            <div key={item.key} className="nav-item" onClick={()=>go(item.key)} style={{display:"flex",alignItems:"center",gap:12,padding:"11px 20px",borderLeft:"3px solid "+(active?T.terra:"transparent"),background:active?T.terraLt:"transparent",cursor:"pointer",transition:"background .12s"}}>
-              <div style={{width:32,height:32,borderRadius:8,background:active?T.terraLt:T.linen,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"background .12s"}}><span style={{fontSize:16}}>{item.icon}</span></div>
+            <div key={item.key} className="nav-item" onClick={()=>go(item.key)} style={{display:"flex",alignItems:"center",gap:13,padding:"13px 20px",borderLeft:"3px solid "+(active?T.terra:"transparent"),background:active?T.terraLt:"transparent",cursor:"pointer",transition:"background .12s"}}>
+              <span style={{fontSize:20,width:26,textAlign:"center"}}>{item.icon}</span>
               <div style={{flex:1}}><div style={{fontSize:14,fontWeight:active?600:400,color:active?T.terra:T.ink}}>{item.label}</div><div style={{fontSize:11,color:T.ink3,marginTop:1}}>{item.sub}</div></div>
               {active&&<div style={{width:6,height:6,borderRadius:99,background:T.terra}}/>}
             </div>
@@ -1015,8 +1015,8 @@ const NavPanel = ({open,onClose,view,setView,count,isPro,onSignOut,onUpgrade}) =
         </div>
         <div style={{padding:"0 0 8px"}}>
           {(()=>{const active=view==="profile";return(
-            <div className="nav-item" onClick={()=>go("profile")} style={{display:"flex",alignItems:"center",gap:12,padding:"11px 20px",borderLeft:"3px solid "+(active?T.terra:"transparent"),background:active?T.terraLt:"transparent",cursor:"pointer",transition:"background .12s"}}>
-              <div style={{width:32,height:32,borderRadius:8,background:active?T.terraLt:T.linen,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"background .12s"}}><span style={{fontSize:16}}>👤</span></div>
+            <div className="nav-item" onClick={()=>go("profile")} style={{display:"flex",alignItems:"center",gap:13,padding:"13px 20px",borderLeft:"3px solid "+(active?T.terra:"transparent"),background:active?T.terraLt:"transparent",cursor:"pointer",transition:"background .12s"}}>
+              <span style={{fontSize:20,width:26,textAlign:"center"}}>👤</span>
               <div style={{flex:1}}><div style={{fontSize:14,fontWeight:active?600:400,color:active?T.terra:T.ink}}>Profile & Settings</div><div style={{fontSize:11,color:T.ink3,marginTop:1}}>Your account</div></div>
               {active&&<div style={{width:6,height:6,borderRadius:99,background:T.terra}}/>}
             </div>
@@ -1822,7 +1822,7 @@ const PatternCard = ({p,onClick,delay=0}) => {
       <div style={{position:"relative",height:160,overflow:"hidden",background:T.linen}}>
         <Photo src={p.photo} alt={p.title} style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center center"}}/>
         <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(28,23,20,.5) 0%,transparent 55%)"}}/>
-        {p.isStarter?<div style={{position:"absolute",top:10,left:10,background:"rgba(184,90,60,.85)",backdropFilter:"blur(4px)",color:"#fff",fontSize:9,fontWeight:700,padding:"3px 8px",borderRadius:99}}>🎁 Starter</div>
+        {p.isStarter?<div style={{position:"absolute",top:10,left:10,background:"rgba(184,90,60,.85)",backdropFilter:"blur(4px)",color:"#fff",fontSize:9,fontWeight:700,padding:"3px 8px",borderRadius:99}}>🎁 Free</div>
         :done===100?<div style={{position:"absolute",top:10,right:10,background:T.sage,color:"#fff",fontSize:9,fontWeight:700,padding:"3px 8px",borderRadius:99,letterSpacing:".07em"}}>DONE</div>
         :done>0&&done<100?<><div style={{position:"absolute",top:10,right:10,background:"rgba(28,23,20,.65)",backdropFilter:"blur(4px)",color:"#fff",fontSize:10,fontWeight:600,padding:"3px 8px",borderRadius:99}}>{done}%</div><div style={{position:"absolute",bottom:0,left:0,right:0}}><Bar val={done} color="rgba(255,255,255,.8)" h={3} bg="transparent"/></div></>
         :null}
@@ -1913,7 +1913,7 @@ const ShareCardModal = ({pattern,onClose}) => {
         <div style={{width:36,height:3,background:T.border,borderRadius:99,margin:"0 auto 20px"}}/>
         <div style={{background:`linear-gradient(135deg,${T.terra},#6B2A10)`,borderRadius:18,padding:"20px",marginBottom:16,position:"relative",overflow:"hidden"}}>
           <div style={{position:"relative"}}>
-            <div style={{fontSize:11,color:"rgba(255,255,255,.6)",textTransform:"uppercase",letterSpacing:".1em",marginBottom:6}}>{isComplete?"🎉 Finished Object":"🪡 In Progress — "+done+"%"}</div>
+            <div style={{fontSize:11,color:"rgba(255,255,255,.6)",textTransform:"uppercase",letterSpacing:".1em",marginBottom:6}}>{isComplete?"🎉 Finished Object":"🪡 Build in Progress — "+done+"%"}</div>
             <div style={{fontFamily:T.serif,fontSize:22,fontWeight:700,color:"#fff",marginBottom:4,lineHeight:1.2}}>{pattern.title}</div>
             <div style={{fontSize:12,color:"rgba(255,255,255,.65)",marginBottom:12}}>{[pattern.hook&&"Hook "+pattern.hook,pattern.weight,pattern.cat].filter(Boolean).join(" · ")}</div>
             {!isComplete&&<div style={{background:"rgba(255,255,255,.15)",borderRadius:99,height:6,overflow:"hidden",marginBottom:10}}><div style={{width:done+"%",height:"100%",background:"#fff",borderRadius:99}}/></div>}
@@ -2178,24 +2178,31 @@ const ShoppingList = ({patterns}) => {
   );
 };
 
-const FEED_CARDS = [
-  {id:"welcome",bg:`linear-gradient(135deg,${T.terra},#8B3A22)`,color:"#fff",title:"Welcome to YarnHive!",sub:"Your hive is ready. Start adding patterns.",emoji:"🐝",isWelcome:true},
-  {id:"community",bg:`linear-gradient(135deg,${T.sage},#3D5E3F)`,color:"#fff",title:"847 makers active this week",sub:"You're part of the hive now.",emoji:"🧶"},
-  {id:"tip",bg:`linear-gradient(135deg,${T.gold},#8B6914)`,color:"#fff",title:"Block your finished pieces",sub:"For a professional look every time.",emoji:"💡"},
-  {id:"seasonal",bg:T.terraLt,color:T.ink,title:"Spring patterns trending",sub:"Browse the latest seasonal picks.",emoji:"🌸",action:"browse"},
-  {id:"milestone",bg:T.linen,color:T.ink,border:`1.5px solid ${T.terra}`,title:"Earn your first badge",sub:"Complete a pattern to unlock it.",emoji:"⭐"},
-];
-
 const HiveFeedStrip = ({hasPatterns,setView}) => {
-  const{isDesktop}=useBreakpoint();
-  const cards = hasPatterns ? [{id:"streak",bg:`linear-gradient(135deg,${T.terra},#8B3A22)`,color:"#fff",title:"You're on a roll!",sub:"Keep your making streak going.",emoji:"🔥"},...FEED_CARDS.slice(1)] : FEED_CARDS;
+  const cards = hasPatterns
+    ? [{id:"streak",type:"gradient",bg:"linear-gradient(135deg,#B85A3C,#7A2E14)",title:"You're on a roll! 🔥",sub:"Keep your making streak going."},
+       {id:"community",type:"gradient",bg:"linear-gradient(135deg,#5C7A5E,#3D5E3F)",title:"847 makers active",sub:"this week"},
+       {id:"tip",type:"gradient",bg:"linear-gradient(135deg,#B8902C,#8B6914)",title:"Pro tip 💡",sub:"Block finished pieces for a pro look"},
+       {id:"seasonal",type:"image",src:PHOTOS.blanket,title:"Spring patterns 🌸",sub:"Browse trending now →",action:"browse"},
+       {id:"milestone",type:"gradient",bg:"linear-gradient(135deg,#B85A3C,#7A2E14)",title:"Complete your first pattern ⭐",sub:"Earn your Yarn Curious badge"}]
+    : [{id:"welcome",type:"image",src:PHOTOS.world,title:"Welcome to YarnHive 🐝",sub:"Your hive is ready"},
+       {id:"community",type:"gradient",bg:"linear-gradient(135deg,#5C7A5E,#3D5E3F)",title:"847 makers active",sub:"this week"},
+       {id:"tip",type:"gradient",bg:"linear-gradient(135deg,#B8902C,#8B6914)",title:"Pro tip 💡",sub:"Block finished pieces for a pro look"},
+       {id:"seasonal",type:"image",src:PHOTOS.blanket,title:"Spring patterns 🌸",sub:"Browse trending now →",action:"browse"},
+       {id:"milestone",type:"gradient",bg:"linear-gradient(135deg,#B85A3C,#7A2E14)",title:"Complete your first pattern ⭐",sub:"Earn your Yarn Curious badge"}];
   return (
-    <div style={{padding:isDesktop?"16px 0 8px":"16px 0 8px",overflow:"hidden"}}>
-      <div style={{display:"flex",gap:12,overflowX:"auto",padding:isDesktop?"0":"0 18px",WebkitOverflowScrolling:"touch"}}>
+    <div style={{padding:"16px 0 8px",overflow:"visible"}}>
+      <div style={{display:"flex",gap:12,overflowX:"auto",padding:"0 18px",WebkitOverflowScrolling:"touch"}}>
         {cards.map(c=>(
-          <div key={c.id} onClick={c.action==="browse"?()=>setView("browse"):undefined} style={{width:220,minWidth:220,height:100,borderRadius:16,padding:16,background:c.bg,color:c.color,border:c.border||"none",display:"flex",flexDirection:"column",justifyContent:"space-between",cursor:c.action?"pointer":"default",flexShrink:0}}>
-            <span style={{fontSize:20}}>{c.emoji}</span>
-            <div><div style={{fontSize:13,fontWeight:600,lineHeight:1.3}}>{c.title}</div><div style={{fontSize:11,opacity:.7,marginTop:2,lineHeight:1.3}}>{c.sub}</div></div>
+          <div key={c.id} onClick={c.action==="browse"?()=>setView("browse"):undefined} style={{width:240,minWidth:240,height:120,borderRadius:20,overflow:"hidden",position:"relative",cursor:c.action?"pointer":"default",flexShrink:0}}>
+            {c.type==="image"
+              ?<><img src={c.src} alt="" style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}}/><div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(28,23,20,.7) 0%,rgba(28,23,20,.2) 100%)"}}/></>
+              :<div style={{position:"absolute",inset:0,background:c.bg}}/>
+            }
+            <div style={{position:"relative",zIndex:1,padding:16,display:"flex",flexDirection:"column",justifyContent:"flex-end",height:"100%"}}>
+              <div style={{color:"#fff",fontSize:15,fontWeight:700,lineHeight:1.3}}>{c.title}</div>
+              <div style={{color:"rgba(255,255,255,.75)",fontSize:12,marginTop:3,lineHeight:1.3}}>{c.sub}</div>
+            </div>
           </div>
         ))}
       </div>
@@ -2208,7 +2215,7 @@ const CollectionView = ({userPatterns,starterPatterns,cat,setCat,search,setSearc
   const allPatterns = [...userPatterns,...starterPatterns];
   const filteredUser=userPatterns.filter(p=>(cat==="All"||p.cat===cat)&&(!search||p.title.toLowerCase().includes(search.toLowerCase())));
   const filteredStarter=starterPatterns.filter(p=>(cat==="All"||p.cat===cat)&&(!search||p.title.toLowerCase().includes(search.toLowerCase())));
-  const inProgress=allPatterns.filter(p=>{const v=pct(p);return v>0&&v<100;});
+  const inProgress=allPatterns.filter(p=>{const v=pct(p);return (v>0&&v<100)||(p.isStarter&&p.rows&&p.rows.length>0&&v<100);});
   return (
     <>
       <HiveFeedStrip hasPatterns={userPatterns.length>0} setView={setView}/>
@@ -2246,12 +2253,14 @@ const CollectionView = ({userPatterns,starterPatterns,cat,setCat,search,setSearc
       </div>
       {/* Starter Patterns */}
       {filteredStarter.length>0&&(
-        <div style={{padding:isDesktop?"0 0 80px":"0 0 120px"}}>
+        <div style={{paddingBottom:isDesktop?80:120}}>
           <div style={{padding:isDesktop?"16px 0 12px":"16px 18px 12px"}}>
-            <div style={{fontSize:10,color:T.ink3,textTransform:"uppercase",letterSpacing:".09em",fontWeight:600}}>🎁 Your Starter Collection</div>
+            <div style={{fontSize:10,color:T.ink3,textTransform:"uppercase",letterSpacing:".09em",fontWeight:600}}>🎁 Starter Collection</div>
             <div style={{fontSize:11,color:T.ink3,marginTop:4,lineHeight:1.5}}>Free patterns to get you started — these don't count toward your {TIER_CONFIG.free.patternCap} free slots.</div>
           </div>
-          <HScrollRow itemCount={filteredStarter.length}>{filteredStarter.map(p=><ShelfCard key={p.id} p={p} onClick={()=>openDetail(p)}/>)}</HScrollRow>
+          <div style={{display:"flex",gap:14,overflowX:"auto",padding:"0 18px",WebkitOverflowScrolling:"touch"}}>
+            {filteredStarter.map(p=><div key={p.id} style={{width:200,minWidth:200,flexShrink:0}}><PatternCard p={p} onClick={()=>openDetail(p)}/></div>)}
+          </div>
         </div>
       )}
       {filteredStarter.length===0&&<div style={{height:isDesktop?80:120}}/>}
@@ -2359,7 +2368,7 @@ export default function YarnHive() {
           cat:r.category||"Blankets", photo:STARTER_PHOTO_MAP[r.category]||PHOTOS.blanket,
           hook:r.hook_size||"5.0mm", weight:r.yarn_weight||"Worsted", rating:5,
           yardage:r.yardage||0, skeins:0, skeinYards:0,
-          notes:r.description||"", rows:(() => { try { return Array.isArray(r.rows)?r.rows:JSON.parse(r.rows||"[]"); } catch { return []; } })(),
+          notes:r.description||"", rows:(() => { try { const parsed=Array.isArray(r.rows)?r.rows:JSON.parse(r.rows||"[]"); return parsed.map(row=>({...row,done:false})); } catch { return []; } })(),
           materials:(() => { try { return Array.isArray(r.materials)?r.materials:JSON.parse(r.materials||"[]"); } catch { return []; } })(),
           isStarter:true,
         }));
@@ -2393,8 +2402,8 @@ export default function YarnHive() {
   const openDetail=p=>{setSelected(p);setView("detail");};
   const handleAddPattern=p=>{setUserPatterns(prev=>[p,...prev]);setView("collection");};
   const openAddModal=()=>{if(tier.atCap){setShowPaywall(true);return;}setAddOpen(true);};
-  const inProgress=allPatterns.filter(p=>{const v=pct(p);return v>0&&v<100;});
-  const TITLE_MAP={collection:"Your Hive",wip:"In Progress",browse:"Browse Sites",stash:"Yarn Stash",calculator:"Calculators",shopping:"Shopping List",profile:"Profile & Settings"};
+  const inProgress=allPatterns.filter(p=>{const v=pct(p);return (v>0&&v<100)||(p.isStarter&&p.rows&&p.rows.length>0&&v<100);});
+  const TITLE_MAP={collection:"Your Hive",wip:"Builds in Progress",browse:"Browse Sites",stash:"Yarn Stash",calculator:"Calculators",shopping:"Shopping List",profile:"Profile & Settings"};
 
   if(isDesktop) return (
     <div style={{display:"flex",minHeight:"100vh",width:"100%",background:T.bg,fontFamily:T.sans,position:"relative"}}>
