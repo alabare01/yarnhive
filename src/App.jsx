@@ -146,6 +146,7 @@ const CSS = () => (
       .h-scroll > * { flex-shrink:unset !important; }
     }
     input:focus, textarea:focus, select:focus { outline:none; }
+    input[type="password"]::placeholder { opacity:.4; }
     @media(hover:hover) { .nav-item:hover { background:#F4EDE3 !important; } .site-row:hover { background:#F4EDE3 !important; } }
   `}</style>
 );
@@ -1089,12 +1090,13 @@ const FormCard = ({cardStyle,isSignup,email,setEmail,pass,setPass,confirmPass,se
   <div style={cardStyle}>
     <button onClick={onBack} style={{background:"none",border:"none",color:T.terra,cursor:"pointer",fontSize:13,fontWeight:600,padding:0,marginBottom:24,display:"flex",alignItems:"center",gap:6}}>← Back</button>
     <div style={{textAlign:"center",marginBottom:8}}>
+      {isSignup&&<div style={{fontSize:11,color:T.ink3,fontWeight:500,letterSpacing:".06em",marginBottom:6}}>Step 1 of 3</div>}
       <div style={{fontFamily:T.serif,fontSize:26,color:T.ink,letterSpacing:"-.02em",fontWeight:700}}>{isSignup?"Create account":"Welcome back"}</div>
       <p style={{fontSize:13,color:T.ink3,marginTop:4,fontWeight:300}}>{isSignup?"Start your pattern collection":"Your hive is waiting"}</p>
     </div>
     <div style={{marginTop:20}} onKeyDown={onKey}>
       <Field label="Email" placeholder="you@example.com" value={email} onChange={e=>setEmail(e.target.value)} type="email"/>
-      <Field label="Password" placeholder="••••••••" value={pass} onChange={e=>setPass(e.target.value)} type="password"/>
+      <div style={isSignup?{opacity:1}:undefined}><Field label="Password" placeholder="••••••••" value={pass} onChange={e=>setPass(e.target.value)} type="password"/></div>
       {isSignup&&<>
         <Field label="Confirm password" placeholder="••••••••" value={confirmPass} onChange={e=>setConfirmPass(e.target.value)} type="password"/>
         {mismatch&&<div style={{fontSize:12,color:T.terra,marginTop:-8,marginBottom:10}}>Passwords don't match</div>}
@@ -2360,6 +2362,7 @@ const OnboardingScreen = ({onComplete,onSkip}) => {
       <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.55)",backdropFilter:"blur(8px)"}}/>
       <div style={{position:"relative",zIndex:1,width:"100%",maxWidth:480,background:"rgba(250,247,243,0.95)",backdropFilter:"blur(36px) saturate(1.6) brightness(1.05)",WebkitBackdropFilter:"blur(36px) saturate(1.6) brightness(1.05)",borderRadius:28,boxShadow:"0 40px 100px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.45) inset, 0 2px 0 rgba(255,255,255,0.7) inset",border:"1px solid rgba(255,255,255,0.38)",padding:isDesktop?"44px 48px 40px":"28px 24px 32px",margin:"auto 0"}}>
         <div style={{textAlign:"center",marginBottom:28}}>
+          <div style={{fontSize:11,color:T.ink3,fontWeight:500,letterSpacing:".06em",marginBottom:10}}>Step 2 of 3</div>
           <div style={{fontSize:48,marginBottom:12}}>🐝</div>
           <div style={{fontFamily:T.serif,fontSize:isDesktop?32:26,fontWeight:700,color:T.ink,lineHeight:1.1,letterSpacing:"-.02em"}}>Set up your profile</div>
           <p style={{fontSize:14,color:T.ink3,marginTop:8,lineHeight:1.6}}>Let the hive know who you are.</p>
@@ -2378,7 +2381,10 @@ const OnboardingScreen = ({onComplete,onSkip}) => {
         </div>
         <Field label="Cell phone" placeholder="e.g. (555) 123-4567" value={cellPhone} onChange={e=>setCellPhone(e.target.value)} type="tel"/>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 0 14px"}}>
-          <div style={{fontSize:13,color:T.ink2,fontWeight:500}}>Text me updates about my patterns</div>
+          <div>
+            <div style={{fontSize:13,color:T.ink2,fontWeight:500}}>Text me updates from YarnHive</div>
+            <div style={{fontSize:11,color:T.ink3,marginTop:2}}>Pattern drops, community updates, and more.</div>
+          </div>
           <button onClick={()=>setSmsOptIn(!smsOptIn)} style={{width:44,height:26,borderRadius:13,background:smsOptIn?T.sage:T.border,border:"none",position:"relative",cursor:"pointer",transition:"background .2s ease",flexShrink:0}}>
             <div style={{width:22,height:22,borderRadius:11,background:"#fff",position:"absolute",top:2,left:smsOptIn?20:2,boxShadow:"0 1px 3px rgba(0,0,0,.15)",transition:"left .2s ease"}}/>
           </button>
@@ -2464,6 +2470,7 @@ const ProfileCompletionPage = ({onComplete,onSkip}) => {
       <div style={{flex:1,display:"flex",justifyContent:"center",padding:isDesktop?"0 40px 60px":"0 18px 60px"}}>
         <div style={{width:"100%",maxWidth:560}}>
           <div style={{textAlign:"center",marginBottom:28}}>
+            <div style={{fontSize:11,color:T.ink3,fontWeight:500,letterSpacing:".06em",marginBottom:10}}>Step 3 of 3</div>
             <div style={{fontSize:48,marginBottom:12}}>🐝</div>
             <div style={{fontFamily:T.serif,fontSize:isDesktop?30:24,fontWeight:700,color:T.ink,lineHeight:1.1,letterSpacing:"-.02em"}}>Complete your profile</div>
             <p style={{fontSize:14,color:T.ink3,marginTop:8,lineHeight:1.6}}>All fields are optional — fill in what you'd like.</p>
@@ -2657,7 +2664,7 @@ export default function YarnHive() {
   // Show nothing until session is validated against Supabase
   if(!authChecked) return <><CSS/><div style={{minHeight:"100vh",background:T.bg,display:"flex",alignItems:"center",justifyContent:"center"}}><div className="spinner" style={{width:28,height:28,border:`3px solid ${T.border}`,borderTopColor:T.terra,borderRadius:"50%"}}/></div></>;
   if(!authed) return <><CSS/><Auth onEnter={handleSignIn} onEnterAsNew={handleNewSignup} onEnterAsPro={()=>{setIsPro(true);setAuthed(true);}}/></>;
-  if(view==="profileComplete") return <><CSS/><ProfileCompletionPage onComplete={()=>setView("collection")} onSkip={()=>{localStorage.setItem("yh_profile_complete_shown","1");setView("collection");}}/></>;
+  if(view==="profileComplete") return <><CSS/><ProfileCompletionPage onComplete={()=>setView("profile")} onSkip={()=>{localStorage.setItem("yh_profile_complete_shown","1");setView("collection");}}/></>;
   if(view==="detail"&&selected) return <><CSS/><Detail p={selected} onBack={()=>setView("collection")} onSave={u=>{setUserPatterns(prev=>prev.map(p=>p.id===u.id?u:p));setStarterPatterns(prev=>prev.map(p=>p.id===u.id?u:p));setSelected(u);}}/></>;
 
   const openDetail=p=>{setSelected(p);setView("detail");};
