@@ -157,7 +157,7 @@ const CSS = () => (
   `}</style>
 );
 
-const pct = p => p.rows.length ? Math.round(p.rows.filter(r=>r.done).length/p.rows.length*100) : 0;
+const pct = p => { const checkable=(p.rows||[]).filter(r=>!r.isHeader); return checkable.length ? Math.round(checkable.filter(r=>r.done).length/checkable.length*100) : 0; };
 
 const DEFAULT_STARTERS = [
   {id:"starter_granny",title:"Granny Square",cat:"Blankets",hook:"5.0mm",weight:"Worsted",yardage:120,notes:"",source:"YarnHive Starter",photo:PHOTOS.blanket,materials:[],rating:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:12,height:12},isStarter:true,rows:[
@@ -222,6 +222,78 @@ const uploadPatternFile = async (file, onProgress) => {
     console.error("[YarnHive] File upload error:", e);
     return null;
   }
+};
+
+// Extract pattern data from PDF/image using Gemini Vision
+const extractPatternFromPDF = async (cloudinaryUrl, filename, mimeType) => {
+  if (!GEMINI_API_KEY) throw new Error("Gemini API key not configured");
+  const prompt = `You are a crochet pattern extraction specialist. Analyze this crochet pattern and extract all structured data. Return ONLY valid JSON with no markdown, no backticks, no explanation.
+
+Return this exact structure:
+{"title":"string","designer":"string","source_url":null,"finished_size":"string","difficulty":"Beginner or Intermediate or Advanced","yarn_weight":"string","hook_size":"string","gauge":"string or null","materials":[{"name":"string","amount":"string","notes":"string"}],"abbreviations":[{"abbr":"string","meaning":"string"}],"pattern_notes":"string","components":[{"name":"string","make_count":1,"rows":[{"id":"rnd-1","label":"RND 1","text":"full instruction text","stitch_count":null}]}],"assembly_notes":"string","image_description":"string"}
+
+Extract every round and row instruction as individual row entries. For multi-round instructions like 'RND 5-7 sc 24 (24) (3 RNDs total)', expand them into individual rows: RND 5, RND 6, RND 7 each with the same instruction. Be thorough -- extract every component, every round, every material.`;
+
+  const body = {
+    contents: [{
+      parts: [
+        { text: prompt },
+        { file_data: { mime_type: mimeType || "application/pdf", file_uri: cloudinaryUrl } }
+      ]
+    }],
+    generationConfig: { temperature: 0.1, maxOutputTokens: 8192 }
+  };
+
+  // Try inline_data approach for images, file_data for PDFs
+  const isImage = mimeType && mimeType.startsWith("image");
+  if (isImage) {
+    // For images, fetch and convert to base64
+    try {
+      const imgRes = await fetch(cloudinaryUrl);
+      const blob = await imgRes.blob();
+      const base64 = await new Promise(r => { const reader = new FileReader(); reader.onload = () => r(reader.result.split(",")[1]); reader.readAsDataURL(blob); });
+      body.contents[0].parts[1] = { inline_data: { mime_type: mimeType, data: base64 } };
+    } catch (e) {
+      console.warn("[YarnHive] Image base64 conversion failed, trying URL approach");
+    }
+  }
+
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    console.error("[YarnHive] Gemini API error:", res.status, errText);
+    throw new Error("Gemini extraction failed: " + res.status);
+  }
+
+  const data = await res.json();
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+  // Strip markdown fences if present
+  const cleaned = text.replace(/^```json?\s*/i, "").replace(/```\s*$/i, "").trim();
+  try {
+    return JSON.parse(cleaned);
+  } catch (e) {
+    console.error("[YarnHive] JSON parse failed:", cleaned.substring(0, 200));
+    throw new Error("Could not parse extraction results");
+  }
+};
+
+// Build rows array from extracted components
+const buildRowsFromComponents = (components) => {
+  const rows = [];
+  let rowId = 1;
+  (components || []).forEach(comp => {
+    const label = comp.name + (comp.make_count > 1 ? ` (MAKE ${comp.make_count})` : "");
+    rows.push({ id: "header-" + (comp.name || rowId).toLowerCase().replace(/\s+/g, "-"), text: "── " + label.toUpperCase() + " ──", isHeader: true, done: false, note: "" });
+    (comp.rows || []).forEach(r => {
+      rows.push({ id: "row-" + rowId++, text: (r.label ? r.label + ": " : "") + r.text + (r.stitch_count ? " (" + r.stitch_count + ")" : ""), done: false, note: "" });
+    });
+  });
+  return rows;
 };
 
 const estYards = p => {
@@ -918,25 +990,75 @@ const URLImportForm = ({onSave}) => {
 };
 
 const PDFUploadForm = ({onSave}) => {
-  const [file,setFile]=useState(null),[loading,setLoading]=useState(false),[preview,setPreview]=useState(null);
-  const handleFile=(e)=>{const f=e.target.files?.[0];if(!f)return;setFile(f);setLoading(true);setTimeout(()=>{setPreview({title:f.name.replace(/\.(pdf|jpg|png|jpeg)$/i,"").replace(/[-_]/g," "),source:"PDF Upload",cat:"Uncategorized",hook:"",weight:"",yardage:0,notes:"Extracted from uploaded document.",materials:[],rows:[{id:1,text:"Row 1: Extracted from document",done:false,note:""},{id:2,text:"Row 2: Continue as written",done:false,note:""}],photo:PILL[Math.floor(Math.random()*PILL.length)],smartNote:"Some fields were incomplete — estimated gauge and yardage filled in automatically."});setLoading(false);},1600);};
+  const [stage,setStage]=useState("pick");
+  const [progress,setProgress]=useState(0);
+  const [stageText,setStageText]=useState("");
+  const [extracted,setExtracted]=useState(null);
+  const [fileInfo,setFileInfo]=useState(null);
+  const [errorMsg,setErrorMsg]=useState("");
+  const [editTitle,setEditTitle]=useState("");
+  const [editDesigner,setEditDesigner]=useState("");
+  const [editHook,setEditHook]=useState("");
+  const [editWeight,setEditWeight]=useState("");
+  const handleFile=async(e)=>{
+    const f=e.target.files?.[0];if(!f)return;
+    try{
+      setStage("uploading");setStageText("Uploading your pattern...");setProgress(10);
+      const intv1=setInterval(()=>setProgress(p=>Math.min(p+3,30)),200);
+      const uploaded=await uploadPatternFile(f);
+      clearInterval(intv1);
+      if(!uploaded){setStage("error");setErrorMsg("Upload failed — check your connection and try again.");return;}
+      setFileInfo({url:uploaded.url,name:uploaded.filename,type:uploaded.type});setProgress(33);
+      setStage("extracting");setStageText("Reading your pattern...");
+      const intv2=setInterval(()=>setProgress(p=>Math.min(p+1,62)),300);
+      let result;
+      try{result=await extractPatternFromPDF(uploaded.url,uploaded.filename,f.type);}
+      catch(ex){clearInterval(intv2);console.error("[YarnHive] Extraction failed:",ex);setStage("error");setErrorMsg("We couldn't read this pattern automatically. You can still save it manually.");setExtracted({title:f.name.replace(/\.(pdf|jpg|png|jpeg)$/i,"").replace(/[-_]/g," "),components:[],materials:[],pattern_notes:"",hook_size:"",yarn_weight:"",designer:"",difficulty:"",assembly_notes:""});return;}
+      clearInterval(intv2);setProgress(66);
+      setStage("building");setStageText("Building your workspace...");
+      await new Promise(r=>setTimeout(r,600));setProgress(100);
+      setExtracted(result);setEditTitle(result.title||"");setEditDesigner(result.designer||"");setEditHook(result.hook_size||"");setEditWeight(result.yarn_weight||"");
+      await new Promise(r=>setTimeout(r,400));setStage("review");
+    }catch(ex){console.error("[YarnHive] PDF import error:",ex);setStage("error");setErrorMsg("Something went wrong. Try again or use manual entry.");}
+  };
+  const handleSave=()=>{
+    const rows=buildRowsFromComponents(extracted.components);
+    const mats=(extracted.materials||[]).map((m,i)=>({id:i+1,name:m.name||"",amount:m.amount||"",yardage:0,notes:m.notes||""}));
+    onSave({id:Date.now(),title:editTitle||"Imported Pattern",source:editDesigner||"PDF Import",cat:"Uncategorized",hook:editHook||"",weight:editWeight||"",notes:extracted.pattern_notes||"",yardage:0,rating:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:50,height:60},materials:mats,rows,photo:PILL[Math.floor(Math.random()*PILL.length)],source_file_url:fileInfo?.url||"",source_file_name:fileInfo?.name||"",source_file_type:fileInfo?.type||"",extracted_by_ai:true,components:extracted.components||[],assembly_notes:extracted.assembly_notes||"",difficulty:extracted.difficulty||""});
+  };
+  const handleFallbackSave=()=>{onSave({id:Date.now(),title:extracted?.title||"Imported Pattern",source:"PDF Import",cat:"Uncategorized",hook:"",weight:"",notes:"",yardage:0,rating:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:50,height:60},materials:[],rows:[],photo:PILL[Math.floor(Math.random()*PILL.length)],source_file_url:fileInfo?.url||"",source_file_name:fileInfo?.name||"",source_file_type:fileInfo?.type||""});};
+  if(stage==="pick") return (
+    <div style={{paddingBottom:8}}>
+      <div style={{fontSize:13,color:T.ink2,lineHeight:1.7,marginBottom:14}}>Upload your pattern — PDF or photo. We'll read it and set up your workspace.</div>
+      <label style={{display:"block",cursor:"pointer"}}><div style={{border:`2px dashed ${T.border}`,borderRadius:16,padding:"36px 20px",textAlign:"center",background:T.linen,transition:"border-color .2s"}} onMouseEnter={e=>e.currentTarget.style.borderColor=T.terra} onMouseLeave={e=>e.currentTarget.style.borderColor=T.border}><div style={{fontSize:40,marginBottom:10}}>📄</div><div style={{fontFamily:T.serif,fontSize:17,color:T.ink,marginBottom:6}}>Upload your pattern</div><div style={{fontSize:13,color:T.ink3,marginBottom:14}}>PDF or photo — we'll read it and set up your workspace</div><div style={{background:T.terra,color:"#fff",borderRadius:10,padding:"10px 20px",fontSize:13,fontWeight:600,display:"inline-block"}}>Choose File</div></div><input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFile} style={{display:"none"}}/></label>
+    </div>
+  );
+  if(stage==="uploading"||stage==="extracting"||stage==="building") return (
+    <div style={{padding:"40px 0",textAlign:"center"}}>
+      <div style={{fontSize:36,marginBottom:16}}>{stage==="building"?"✓":"🔎"}</div>
+      <div style={{fontFamily:T.serif,fontSize:18,color:T.ink,marginBottom:8}}>{stageText}</div>
+      {stage==="extracting"&&<div style={{fontSize:12,color:T.ink3,marginBottom:16}}>This takes 10–20 seconds for detailed patterns</div>}
+      <div style={{height:8,background:T.linen,borderRadius:99,overflow:"hidden",margin:"0 auto",maxWidth:300}}><div className={stage==="extracting"?"progress-bar-fill":""} style={{height:"100%",width:progress+"%",background:stage==="building"?T.sage:T.terra,borderRadius:99,transition:"width .4s ease"}}/></div>
+    </div>
+  );
+  if(stage==="error") return (
+    <div style={{padding:"24px 0"}}>
+      <div style={{background:T.terraLt,borderRadius:14,padding:"20px",border:`1px solid rgba(184,90,60,.2)`,marginBottom:16}}><div style={{fontSize:14,fontWeight:600,color:T.terra,marginBottom:6}}>Extraction incomplete</div><div style={{fontSize:13,color:T.ink2,lineHeight:1.6}}>{errorMsg}</div></div>
+      {fileInfo&&<Btn onClick={handleFallbackSave}>Save with file attached (manual entry)</Btn>}
+      <div style={{marginTop:8}}><Btn variant="ghost" onClick={()=>{setStage("pick");setProgress(0);setErrorMsg("");}}>Try another file</Btn></div>
+    </div>
+  );
+  const totalRows=(extracted?.components||[]).reduce((s,c)=>(s+(c.rows||[]).length),0);
   return (
     <div style={{paddingBottom:8}}>
-      <div style={{fontSize:13,color:T.ink2,lineHeight:1.7,marginBottom:14}}>Upload a PDF pattern, photo of a printed pattern, or any scanned document.</div>
-      {!file&&<label style={{display:"block",cursor:"pointer"}}><div style={{border:`2px dashed ${T.border}`,borderRadius:16,padding:"36px 20px",textAlign:"center",background:T.linen}}><div style={{fontSize:40,marginBottom:10}}>📄</div><div style={{fontFamily:T.serif,fontSize:17,color:T.ink,marginBottom:6}}>Drop your pattern here</div><div style={{fontSize:13,color:T.ink3,marginBottom:14}}>PDF, JPG, PNG — up to 20MB</div><div style={{background:T.terra,color:"#fff",borderRadius:10,padding:"10px 20px",fontSize:13,fontWeight:600,display:"inline-block"}}>Choose File</div></div><input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFile} style={{display:"none"}}/></label>}
-      {loading&&<div style={{textAlign:"center",padding:"36px 0"}}><div style={{fontSize:36,marginBottom:10}}>🔎</div><div style={{fontFamily:T.serif,fontSize:16,color:T.ink2}}>Reading your pattern…</div></div>}
-      {preview&&!loading&&(
-        <div className="fu" style={{background:T.linen,borderRadius:16,border:`1px solid ${T.border}`,overflow:"hidden"}}>
-          <div style={{height:90,overflow:"hidden"}}><Photo src={preview.photo} alt="pattern" style={{width:"100%",height:"100%"}}/></div>
-          <div style={{padding:"14px"}}>
-            <div style={{fontFamily:T.serif,fontSize:17,color:T.ink,marginBottom:4}}>{preview.title}</div>
-            <div style={{fontSize:12,color:T.ink3,marginBottom:10}}>{preview.rows.length} rows extracted</div>
-            {preview.smartNote&&<div style={{background:T.sageLt,borderRadius:8,padding:"8px 12px",marginBottom:12,display:"flex",gap:8}}><span>✨</span><span style={{fontSize:12,color:T.sage}}>{preview.smartNote}</span></div>}
-            <Btn onClick={()=>onSave({id:Date.now(),rating:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:50,height:60},...preview})}>Save to Your Hive</Btn>
-            <div style={{marginTop:8}}><Btn variant="ghost" onClick={()=>{setFile(null);setPreview(null);}}>Upload different file</Btn></div>
-          </div>
-        </div>
-      )}
+      <div style={{background:T.sageLt,borderRadius:12,padding:"12px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:16}}>✓</span><span style={{fontSize:13,color:T.sage,fontWeight:600}}>We read your pattern — does this look right?</span></div>
+      <Field label="Pattern title" value={editTitle} onChange={e=>setEditTitle(e.target.value)} placeholder="Pattern name"/>
+      <Field label="Designer" value={editDesigner} onChange={e=>setEditDesigner(e.target.value)} placeholder="Designer name"/>
+      <div style={{display:"flex",gap:10,marginBottom:14}}><div style={{flex:1}}><Field label="Hook size" value={editHook} onChange={e=>setEditHook(e.target.value)} placeholder="5.0mm"/></div><div style={{flex:1}}><Field label="Yarn weight" value={editWeight} onChange={e=>setEditWeight(e.target.value)} placeholder="Worsted"/></div></div>
+      {(extracted?.materials||[]).length>0&&<div style={{marginBottom:14}}><div style={{fontSize:11,color:T.ink3,textTransform:"uppercase",letterSpacing:".08em",marginBottom:6}}>Materials ({extracted.materials.length})</div>{extracted.materials.map((m,i)=><div key={i} style={{fontSize:13,color:T.ink2,padding:"4px 0",borderBottom:`1px solid ${T.border}`}}>{m.name}{m.amount?" — "+m.amount:""}</div>)}</div>}
+      {(extracted?.components||[]).length>0&&<div style={{marginBottom:16}}><div style={{fontSize:11,color:T.ink3,textTransform:"uppercase",letterSpacing:".08em",marginBottom:8}}>Components found ({extracted.components.length})</div>{extracted.components.map((c,i)=>(<div key={i} style={{background:T.linen,borderRadius:12,padding:"12px 14px",marginBottom:8,border:`1px solid ${T.border}`}}><div style={{fontSize:14,fontWeight:600,color:T.ink,marginBottom:4}}>{c.name}{c.make_count>1?" × "+c.make_count:""}</div><div style={{fontSize:11,color:T.ink3,marginBottom:6}}>{(c.rows||[]).length} rows</div>{(c.rows||[]).slice(0,3).map((r,j)=><div key={j} style={{fontSize:12,color:T.ink2,lineHeight:1.5,padding:"2px 0"}}>{r.label}: {r.text?.substring(0,60)}{r.text?.length>60?"…":""}</div>)}{(c.rows||[]).length>3&&<div style={{fontSize:11,color:T.ink3,fontStyle:"italic",marginTop:4}}>+{(c.rows||[]).length-3} more rows</div>}</div>))}<div style={{fontSize:12,color:T.terra,fontWeight:600,marginTop:4}}>{totalRows} total rows ready to build</div></div>}
+      <Btn onClick={handleSave}>Looks good — save pattern</Btn>
+      <div style={{marginTop:8}}><Btn variant="ghost" onClick={()=>{setStage("pick");setProgress(0);setExtracted(null);}}>Try a different file</Btn></div>
     </div>
   );
 };
@@ -2212,7 +2334,7 @@ const SourceFileViewer = ({url,name,type,onClose}) => {
         </div>
         <div style={{flex:1,overflow:"auto",padding:0}}>
           {isImage?<img src={url} alt={name} style={{width:"100%",display:"block"}}/>
-          :<iframe src={url} title={name} style={{width:"100%",height:"80vh",border:"none"}}/>}
+          :<iframe src={"https://docs.google.com/viewer?url="+encodeURIComponent(url)+"&embedded=true"} title={name} style={{width:"100%",height:"80vh",border:"none"}}/>}
         </div>
       </div>
     </div>
@@ -2237,8 +2359,8 @@ const Detail = ({p,onBack,onSave}) => {
   };
   const prevDone=useRef(pct({...p,rows:p.rows}));
   const{isDesktop}=useBreakpoint();
-  const done=pct({...p,rows}),currentRowIdx=rows.findIndex(r=>!r.done);
-  const toggle=id=>{const next=rows.map(r=>r.id===id?{...r,done:!r.done}:r);setRows(next);onSave({...p,rows:next});const newDone=pct({...p,rows:next}),prev=prevDone.current;for(const m of [25,50,75,100]){if(prev<m&&newDone>=m){setMilestone(m);break;}}prevDone.current=newDone;};
+  const done=pct({...p,rows}),currentRowIdx=rows.findIndex(r=>!r.done&&!r.isHeader);
+  const toggle=id=>{const r=rows.find(x=>x.id===id);if(r?.isHeader)return;const next=rows.map(r=>r.id===id?{...r,done:!r.done}:r);setRows(next);onSave({...p,rows:next});const newDone=pct({...p,rows:next}),prev=prevDone.current;for(const m of [25,50,75,100]){if(prev<m&&newDone>=m){setMilestone(m);break;}}prevDone.current=newDone;};
   const addRow=()=>{if(!newRow.trim())return;const next=[...rows,{id:Date.now(),text:newRow.trim(),done:false,note:""}];setRows(next);onSave({...p,rows:next});setNewRow("");};
   const save=()=>{onSave({...draft,rows});setEditing(false);};
   const updateNote=(id,note)=>{const next=rows.map(r=>r.id===id?{...r,note}:r);setRows(next);onSave({...p,rows:next});setNoteSaved(true);setTimeout(()=>setNoteSaved(false),2000);};
@@ -2363,7 +2485,7 @@ const Detail = ({p,onBack,onSave}) => {
               <div style={{fontSize:13,color:T.ink3,lineHeight:1.6,marginBottom:20}}>Add rows to start building this pattern step by step.</div>
               <button onClick={()=>{if(!editing)setEditing(true);}} style={{background:T.terra,color:"#fff",border:"none",borderRadius:12,padding:"12px 24px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.3)"}}>Add Rows</button>
             </div>
-          ):(()=>{const seenAbbr=new Set();return rows.map((r,i)=>{const isCurrent=i===currentRowIdx,newAbbr=r.done?[]:findNewAbbr(r.text,seenAbbr);return(
+          ):(()=>{const seenAbbr=new Set();return rows.map((r,i)=>{if(r.isHeader) return(<div key={r.id} style={{padding:"16px 0 6px"}}><div style={{fontSize:11,fontWeight:700,color:T.terra,letterSpacing:".08em",textTransform:"uppercase"}}>{r.text}</div></div>);const isCurrent=i===currentRowIdx,newAbbr=r.done?[]:findNewAbbr(r.text,seenAbbr);return(
             <div key={r.id} style={{borderBottom:`1px solid ${T.border}`}}>
               <div onClick={()=>toggle(r.id)} style={{display:"flex",gap:13,alignItems:"flex-start",cursor:"pointer",background:isCurrent?"rgba(184,90,60,.04)":"transparent",padding:"14px 8px",margin:"0 -8px"}}>
                 <div style={{width:26,height:26,borderRadius:7,flexShrink:0,marginTop:1,background:r.done?T.terra:T.surface,border:"1.5px solid "+(r.done?T.terra:isCurrent?T.terra:T.border),display:"flex",alignItems:"center",justifyContent:"center",transition:"all .2s",boxShadow:r.done?"0 2px 8px rgba(184,90,60,.3)":isCurrent?"0 0 0 3px rgba(184,90,60,.15)":"none"}}>
@@ -2373,9 +2495,8 @@ const Detail = ({p,onBack,onSave}) => {
                   {isCurrent&&<div style={{fontSize:10,color:T.terra,fontWeight:600,letterSpacing:".06em",marginBottom:2}}>CURRENT ROW</div>}
                   {!isCurrent&&<div style={{fontSize:10,color:T.ink3,letterSpacing:".06em",marginBottom:2}}>ROW {i+1}</div>}
                   <div style={{fontSize:14,lineHeight:1.6,color:r.done?T.ink3:T.ink,textDecoration:r.done?"line-through":"none"}}>{r.text}</div>
-                  {r.note&&<div style={{fontSize:12,color:T.ink3,fontStyle:"italic",marginTop:4}}>📝 {r.note}</div>}
                 </div>
-                <button onClick={e=>{e.stopPropagation();setNoteEdit(noteEdit===r.id?null:r.id);}} style={{background:"none",border:"none",fontSize:14,cursor:"pointer",padding:"4px",flexShrink:0,position:"relative"}}>{r.note?<span style={{color:T.terra}}>📝</span>:<span style={{display:"inline-block",width:8,height:8,borderRadius:99,background:T.border}}/>}</button>
+                <button onClick={e=>{e.stopPropagation();setNoteEdit(noteEdit===r.id?null:r.id);}} style={{background:"none",border:"none",fontSize:14,cursor:"pointer",padding:"4px",flexShrink:0,position:"relative"}}><span style={{color:r.note?T.terra:T.ink3,opacity:r.note?1:.5}}>📝</span></button>
               </div>
               {r.note&&noteEdit!==r.id&&<div onClick={e=>{e.stopPropagation();setNoteEdit(r.id);}} style={{padding:"0 8px 10px 47px",fontSize:12,color:T.ink3,fontStyle:"italic",cursor:"pointer"}}>📝 {r.note}</div>}
               {newAbbr.length>0&&<div style={{padding:"0 8px 10px 47px",display:"flex",flexWrap:"wrap",gap:6}} onClick={e=>e.stopPropagation()}>{newAbbr.map(a=><button key={a.raw} onClick={e=>{e.stopPropagation();window.open(a.url,"_blank","noopener,noreferrer");}} style={{display:"flex",alignItems:"center",gap:5,background:"#FF0000",color:"#fff",border:"none",borderRadius:8,padding:"5px 10px",fontSize:11,fontWeight:600,cursor:"pointer",boxShadow:"0 2px 8px rgba(255,0,0,.3)"}}><span style={{fontSize:10}}>▶</span><span>{a.raw}</span><span style={{opacity:.8,fontWeight:400}}>— {a.full}</span></button>)}</div>}
@@ -3073,7 +3194,7 @@ export default function YarnHive() {
         const res=await fetch(`${SUPABASE_URL}/rest/v1/patterns`,{
           method:"POST",
           headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${session.access_token}`,"Content-Type":"application/json","Prefer":"return=representation"},
-          body:JSON.stringify({user_id:user.id,title:p.title||"",cat:p.cat||"",source:p.source||"",source_url:p.source_url||"",notes:p.notes||"",difficulty:p.difficulty||"",yarn_weight:p.weight||"",hook_size:p.hook||"",gauge:p.gauge||{},tags:p.tags||[],is_ai_generated:!!p.is_ai_generated,is_starter:!!p.isStarter,image_url:p.image_url||"",photo:p.photo||"",row_count:(p.rows||[]).length,materials:p.materials||[],rows:p.rows||[],rating:p.rating||0,yardage:p.yardage||0,skeins:p.skeins||0,skein_yards:p.skeinYards||200,dimensions:p.dimensions||{},weight:p.weight||"",hook:p.hook||"",source_file_url:p.source_file_url||null,source_file_name:p.source_file_name||null,source_file_type:p.source_file_type||null}),
+          body:JSON.stringify({user_id:user.id,title:p.title||"",cat:p.cat||"",source:p.source||"",source_url:p.source_url||"",notes:p.notes||"",difficulty:p.difficulty||"",yarn_weight:p.weight||"",hook_size:p.hook||"",gauge:p.gauge||{},tags:p.tags||[],is_ai_generated:!!p.is_ai_generated,is_starter:!!p.isStarter,image_url:p.image_url||"",photo:p.photo||"",row_count:(p.rows||[]).length,materials:p.materials||[],rows:p.rows||[],rating:p.rating||0,yardage:p.yardage||0,skeins:p.skeins||0,skein_yards:p.skeinYards||200,dimensions:p.dimensions||{},weight:p.weight||"",hook:p.hook||"",source_file_url:p.source_file_url||null,source_file_name:p.source_file_name||null,source_file_type:p.source_file_type||null,extracted_by_ai:!!p.extracted_by_ai,components:p.components||null}),
         });
         console.log("[YarnHive] INSERT response status:", res.status);
         if(res.ok){
