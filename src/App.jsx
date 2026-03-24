@@ -3050,7 +3050,95 @@ const OnboardingScreen = ({onComplete,onBackToAuth}) => {
   );
 };
 
+// ─── MASTER DOC VIEWER (private, no app chrome) ──────────────────────────────
+const MasterDocView = () => {
+  const [pw,setPw]=useState(()=>sessionStorage.getItem("yh_master_pw")||"");
+  const [doc,setDoc]=useState(null);
+  const [error,setError]=useState("");
+  const [loading,setLoading]=useState(false);
+  const [markedReady,setMarkedReady]=useState(false);
+
+  // Inject marked.js + noindex meta
+  useEffect(()=>{
+    const meta=document.createElement("meta");meta.name="robots";meta.content="noindex, nofollow";document.head.appendChild(meta);
+    if(!document.getElementById("marked-js")){
+      const s=document.createElement("script");s.id="marked-js";s.src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js";
+      s.onload=()=>setMarkedReady(true);document.head.appendChild(s);
+    } else setMarkedReady(true);
+    return ()=>{try{document.head.removeChild(meta);}catch{}};
+  },[]);
+
+  const fetchDoc=async(password)=>{
+    setLoading(true);setError("");
+    try{
+      const res=await fetch("/api/master-doc",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password})});
+      if(res.status===401){setError("Incorrect password");setLoading(false);return;}
+      if(!res.ok){setError("Failed to load document");setLoading(false);return;}
+      const data=await res.json();
+      setDoc(data);sessionStorage.setItem("yh_master_pw",password);
+    }catch(e){setError("Network error");}
+    setLoading(false);
+  };
+
+  // Auto-submit on mount if password in sessionStorage
+  useEffect(()=>{if(pw)fetchDoc(pw);},[]);
+
+  const renderMarkdown=(content)=>{
+    if(!markedReady||!window.marked)return content;
+    try{return window.marked.parse(content);}catch{return content;}
+  };
+
+  if(doc) return (
+    <div style={{minHeight:"100vh",background:"#FAF7F3",fontFamily:'"DM Sans",-apple-system,sans-serif'}}>
+      <style>{`
+        .md-doc h1,.md-doc h2,.md-doc h3{font-family:"Playfair Display",Georgia,serif;color:#1C1714;margin:1.5em 0 .5em;}
+        .md-doc h1{font-size:32px;border-bottom:2px solid #E2D8CC;padding-bottom:12px;}
+        .md-doc h2{font-size:24px;color:#B85A3C;}
+        .md-doc h3{font-size:18px;}
+        .md-doc p{line-height:1.8;color:#5C4F44;margin:.8em 0;}
+        .md-doc ul,.md-doc ol{padding-left:24px;color:#5C4F44;line-height:1.8;}
+        .md-doc table{width:100%;border-collapse:collapse;margin:1em 0;}
+        .md-doc th,.md-doc td{border:1px solid #E2D8CC;padding:10px 14px;text-align:left;font-size:14px;}
+        .md-doc th{background:#F0EBE3;font-weight:600;color:#1C1714;}
+        .md-doc code{background:#F0EBE3;padding:2px 6px;border-radius:4px;font-size:13px;font-family:monospace;}
+        .md-doc pre{background:#F0EBE3;padding:16px;border-radius:10px;overflow-x:auto;margin:1em 0;}
+        .md-doc pre code{background:none;padding:0;}
+        .md-doc a{color:#B85A3C;text-decoration:underline;}
+        .md-doc blockquote{border-left:4px solid #B85A3C;margin:1em 0;padding:8px 16px;background:#F5E2DA;border-radius:0 8px 8px 0;}
+      `}</style>
+      <div style={{maxWidth:900,margin:"0 auto",padding:"40px 24px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:32}}>
+          <div>
+            <div style={{fontFamily:'"Playfair Display",Georgia,serif',fontSize:28,fontWeight:700,color:"#1C1714"}}>YarnHive Master Doc</div>
+            <div style={{fontSize:13,color:"#9E8E82",marginTop:4}}>Version {doc.version} · Updated {new Date(doc.updated_at).toLocaleDateString()}</div>
+          </div>
+          <button onClick={()=>{sessionStorage.removeItem("yh_master_pw");setDoc(null);setPw("");}} style={{background:"#F0EBE3",border:"1px solid #E2D8CC",borderRadius:8,padding:"8px 16px",fontSize:13,color:"#5C4F44",cursor:"pointer"}}>Lock</button>
+        </div>
+        {doc.change_summary&&<div style={{background:"#F5E2DA",borderRadius:10,padding:"12px 16px",marginBottom:24,fontSize:13,color:"#B85A3C",lineHeight:1.6}}>Latest changes: {doc.change_summary}</div>}
+        <div className="md-doc" dangerouslySetInnerHTML={{__html:renderMarkdown(doc.content)}}/>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{minHeight:"100vh",background:"#FAF7F3",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:'"DM Sans",-apple-system,sans-serif'}}>
+      <div style={{width:"100%",maxWidth:380,padding:"40px 32px",background:"#FAF7F3",borderRadius:20,border:"1px solid #E2D8CC",boxShadow:"0 8px 32px rgba(139,90,60,.08)"}}>
+        <div style={{textAlign:"center",marginBottom:28}}>
+          <div style={{fontSize:40,marginBottom:12}}>🐝</div>
+          <div style={{fontFamily:'"Playfair Display",Georgia,serif',fontSize:22,fontWeight:700,color:"#1C1714"}}>YarnHive Master Doc</div>
+          <div style={{fontSize:13,color:"#9E8E82",marginTop:6}}>Enter password to view</div>
+        </div>
+        <input value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==="Enter"&&fetchDoc(pw)} type="password" placeholder="Password" style={{width:"100%",padding:"13px 16px",background:"#EDE8E0",border:"1.5px solid #E2D8CC",borderRadius:12,color:"#1C1714",fontSize:15,marginBottom:12,outline:"none"}}/>
+        {error&&<div style={{fontSize:12,color:"#B85A3C",marginBottom:10}}>{error}</div>}
+        <button onClick={()=>fetchDoc(pw)} disabled={loading||!pw} style={{width:"100%",background:"#B85A3C",color:"#fff",border:"none",borderRadius:12,padding:"14px",fontSize:15,fontWeight:600,cursor:"pointer",opacity:loading?.6:1}}>{loading?"Loading…":"View Doc"}</button>
+      </div>
+    </div>
+  );
+};
+
 export default function YarnHive() {
+  // Private route: /master-doc
+  if(typeof window!=="undefined"&&window.location.pathname==="/master-doc") return <MasterDocView/>;
   const [authed,setAuthed]=useState(false),[isPro,setIsPro]=useState(false);
   const [authChecked,setAuthChecked]=useState(false);
   const [userPatterns,setUserPatterns]=useState([]);
