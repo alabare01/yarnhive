@@ -242,7 +242,9 @@ const extractPatternFromPDF = async (base64Data, filename, mimeType) => {
 Return this exact structure:
 {"title":"string","designer":"string","source_url":null,"finished_size":"string","difficulty":"Beginner or Intermediate or Advanced","yarn_weight":"string","hook_size":"string","gauge":"string or null","materials":[{"name":"string","amount":"string","notes":"string"}],"abbreviations":[{"abbr":"string","meaning":"string"}],"pattern_notes":"string","components":[{"name":"string","make_count":1,"rows":[{"id":"rnd-1","label":"RND 1","text":"full instruction text","stitch_count":null}]}],"assembly_notes":"string","image_description":"string"}
 
-Extract every round and row instruction as individual row entries. For multi-round instructions like 'RND 5-7 sc 24 (24) (3 RNDs total)', expand them into individual rows: RND 5, RND 6, RND 7 each with the same instruction. Be thorough -- extract every component, every round, every material.`;
+Extract every round and row instruction as individual row entries. For multi-round instructions like 'RND 5-7 sc 24 (24) (3 RNDs total)', expand them into individual rows: RND 5, RND 6, RND 7 each with the same instruction. Be thorough -- extract every component, every round, every material.
+
+Ensure the JSON is complete and valid. Do not truncate.`;
 
   const body = {
     contents: [{
@@ -251,7 +253,7 @@ Extract every round and row instruction as individual row entries. For multi-rou
         { inline_data: { mime_type: mimeType || "application/pdf", data: base64Data } }
       ]
     }],
-    generationConfig: { temperature: 0.1, maxOutputTokens: 8192 }
+    generationConfig: { temperature: 0.1, maxOutputTokens: 65536 }
   };
 
   console.log("[YarnHive] Sending Gemini request, parts:", body.contents[0].parts.length, "model: gemini-2.5-flash");
