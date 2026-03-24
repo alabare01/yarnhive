@@ -240,7 +240,7 @@ const extractPatternFromPDF = async (base64Data, filename, mimeType) => {
   const prompt = `You are a crochet pattern extraction specialist. Analyze this crochet pattern and extract all structured data. Return ONLY valid JSON with no markdown, no backticks, no explanation.
 
 Return this exact structure:
-{"title":"string","designer":"string","source_url":null,"finished_size":"string","difficulty":"Beginner or Intermediate or Advanced","yarn_weight":"string","hook_size":"string","gauge":"string or null","materials":[{"name":"string","amount":"string","notes":"string"}],"abbreviations":[{"abbr":"string","meaning":"string"}],"pattern_notes":"string","components":[{"name":"string","make_count":1,"rows":[{"id":"rnd-1","label":"RND 1","text":"full instruction text","stitch_count":null,"action_item":false}]}],"assembly_notes":"string","image_description":"string"}
+{"title":"string","designer":"string","source_url":null,"finished_size":"string","difficulty":"Beginner or Intermediate or Advanced","yarn_weight":"string","hook_size":"string","gauge":"string or null","materials":[{"name":"string","amount":"string","notes":"string"}],"abbreviations":[{"abbr":"string","meaning":"string"}],"abbreviations_map":{"mr":"magic ring","sc":"single crochet"},"suggested_resources":[{"label":"string","url":"string"}],"pattern_notes":"string","components":[{"name":"string","make_count":1,"rows":[{"id":"rnd-1","label":"RND 1","text":"full instruction text","stitch_count":null,"action_item":false,"repeat_brackets":[{"sequence":"string","count":2}]}]}],"assembly_notes":"string","image_description":"string"}
 
 For patterns worked in the round, use 'RND' as the label prefix (RND 1, RND 2, etc). For patterns worked in rows, use 'ROW'. Detect from context which applies per component.
 
@@ -253,6 +253,12 @@ For components like 'FLIPPER (MAKE 2)', make_count should be 2. Always extract m
 After all construction components, extract any assembly, finishing, or detail sections as a final component named 'ASSEMBLY & FINISHING'. Extract each distinct step as a row. Examples: 'Place safety eyes between RND 5 and 6', 'Attach flippers to body at RND 9-14'. Use label: 'STEP' and action_item: true for all assembly rows.
 
 Extract pattern_notes as a single string containing all special technique notes, tension notes, and construction tips. Include: special stitch methods, decrease methods, tension guidance, and technique-specific instructions.
+
+Extract abbreviations_map as a flat key-value object mapping each abbreviation to its full meaning, e.g. {"mr":"magic ring","sc":"single crochet","inc":"increase","dec":"decrease"}. Source this from the abbreviations/legend section of the pattern. Default to empty object {} if none found.
+
+Extract suggested_resources as an array of {label, url} objects from any "Suggested Tutorials", "Resources", or hyperlink sections in the pattern. Default to empty array [] if none found.
+
+For each row/round, extract repeat_brackets: an array of bracket repeat patterns found in that instruction. For example, "Round 16: (6 sc, inc) x 2 -- 16 sts" should produce repeat_brackets: [{"sequence":"6 sc, inc","count":2}]. Look for patterns like (sequence) x N, [sequence] x N, or *sequence* repeat N times. If a row has no bracket repeats, set repeat_brackets: [].
 
 Be thorough -- extract every component, every round, every material. Ensure the JSON is complete and valid. Do not truncate.`;
 
@@ -361,7 +367,7 @@ const buildRowsFromComponents = (components) => {
       const prefix = isAction ? "📌 " : "";
       const labelText = r.label ? r.label + ": " : "";
       const stitchSuffix = r.stitch_count ? " (" + r.stitch_count + ")" : "";
-      rows.push({ id: "row-" + rowId++, text: prefix + labelText + r.text + stitchSuffix, done: false, note: "", isAction, componentName: comp.name });
+      rows.push({ id: "row-" + rowId++, text: prefix + labelText + r.text + stitchSuffix, done: false, note: "", isAction, componentName: comp.name, repeat_brackets: r.repeat_brackets || [] });
     });
   });
   return rows;
@@ -1104,7 +1110,7 @@ const PDFUploadForm = ({onSave}) => {
   const handleSave=()=>{
     const rows=buildRowsFromComponents(extracted.components);
     const mats=(extracted.materials||[]).map((m,i)=>({id:i+1,name:m.name||"",amount:m.amount||"",yardage:0,notes:m.notes||""}));
-    onSave({id:Date.now(),title:editTitle||"Imported Pattern",source:editDesigner||"PDF Import",cat:"Uncategorized",hook:editHook||"",weight:editWeight||"",notes:extracted.pattern_notes||"",yardage:0,rating:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:50,height:60},materials:mats,rows,photo:PILL[Math.floor(Math.random()*PILL.length)],source_file_url:fileInfo?.url||"",source_file_name:fileInfo?.name||"",source_file_type:fileInfo?.type||"",extracted_by_ai:true,components:extracted.components||[],assembly_notes:extracted.assembly_notes||"",difficulty:extracted.difficulty||""});
+    onSave({id:Date.now(),title:editTitle||"Imported Pattern",source:editDesigner||"PDF Import",cat:"Uncategorized",hook:editHook||"",weight:editWeight||"",notes:extracted.pattern_notes||"",yardage:0,rating:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:50,height:60},materials:mats,rows,photo:PILL[Math.floor(Math.random()*PILL.length)],source_file_url:fileInfo?.url||"",source_file_name:fileInfo?.name||"",source_file_type:fileInfo?.type||"",extracted_by_ai:true,components:extracted.components||[],assembly_notes:extracted.assembly_notes||"",difficulty:extracted.difficulty||"",abbreviations_map:extracted.abbreviations_map||{},suggested_resources:extracted.suggested_resources||[]});
   };
   const handleFallbackSave=()=>{onSave({id:Date.now(),title:extracted?.title||"Imported Pattern",source:"PDF Import",cat:"Uncategorized",hook:"",weight:"",notes:"",yardage:0,rating:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:50,height:60},materials:[],rows:[],photo:PILL[Math.floor(Math.random()*PILL.length)],source_file_url:fileInfo?.url||"",source_file_name:fileInfo?.name||"",source_file_type:fileInfo?.type||""});};
   if(stage==="pick") return (
