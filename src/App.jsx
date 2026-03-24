@@ -159,8 +159,8 @@ const CSS = () => (
 
 const pct = p => p.rows.length ? Math.round(p.rows.filter(r=>r.done).length/p.rows.length*100) : 0;
 
-const makeStarterPatterns = () => [
-  {id:"onboard_granny_"+Date.now(),title:"Granny Square",cat:"Blankets",hook:"5.0mm",weight:"Worsted",yardage:120,notes:"",source:"YarnHive Starter",photo:PHOTOS.blanket,materials:[],rating:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:12,height:12},isStarter:true,rows:[
+const DEFAULT_STARTERS = [
+  {id:"starter_granny",title:"Granny Square",cat:"Blankets",hook:"5.0mm",weight:"Worsted",yardage:120,notes:"",source:"YarnHive Starter",photo:PHOTOS.blanket,materials:[],rating:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:12,height:12},isStarter:true,rows:[
     {id:1,text:"Magic ring, ch 3 (counts as first dc), 2 dc in ring, ch 2, [3 dc in ring, ch 2] 3 times, sl st to top of ch-3 to join.",done:false,note:""},
     {id:2,text:"Sl st to ch-2 sp, ch 3, 2 dc in same sp, ch 1, [3 dc, ch 2, 3 dc in next ch-2 sp, ch 1] 3 times, 3 dc in first sp, ch 2, sl st to join.",done:false,note:""},
     {id:3,text:"Sl st to ch-2 corner sp, ch 3, 2 dc in same sp, ch 2, 3 dc in same sp, ch 1, 3 dc in ch-1 sp, ch 1, [corner, ch 1, 3 dc in ch-1 sp, ch 1] repeat, sl st to join.",done:false,note:""},
@@ -168,7 +168,7 @@ const makeStarterPatterns = () => [
     {id:5,text:"Repeat Row 4 to expand square one more round.",done:false,note:""},
     {id:6,text:"Final round: sc evenly around entire square, working 3 sc in each corner. Fasten off and weave in ends.",done:false,note:""},
   ]},
-  {id:"onboard_amigurumi_"+Date.now(),title:"Amigurumi Ball",cat:"Amigurumi",hook:"3.5mm",weight:"DK",yardage:40,notes:"",source:"YarnHive Starter",photo:PHOTOS.granny,materials:[],rating:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:4,height:4},isStarter:true,rows:[
+  {id:"starter_amigurumi",title:"Amigurumi Ball",cat:"Amigurumi",hook:"3.5mm",weight:"DK",yardage:40,notes:"",source:"YarnHive Starter",photo:PHOTOS.granny,materials:[],rating:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:4,height:4},isStarter:true,rows:[
     {id:11,text:"Magic ring, 6 sc in ring. (6)",done:false,note:""},
     {id:12,text:"2 sc in each st around. (12)",done:false,note:""},
     {id:13,text:"[ Sc in next st, 2 sc in next st ] repeat around. (18)",done:false,note:""},
@@ -176,7 +176,7 @@ const makeStarterPatterns = () => [
     {id:15,text:"[ Sc in next st, sc2tog ] repeat around. (12) — stuff with fiberfill now.",done:false,note:""},
     {id:16,text:"Sc2tog around. (6) — fasten off, close opening, weave in ends.",done:false,note:""},
   ]},
-  {id:"onboard_beanie_"+Date.now(),title:"Basic Beanie",cat:"Wearables",hook:"5.0mm",weight:"Worsted",yardage:150,notes:"",source:"YarnHive Starter",photo:PHOTOS.cardigan,materials:[],rating:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:10,height:8},isStarter:true,rows:[
+  {id:"starter_beanie",title:"Basic Beanie",cat:"Wearables",hook:"5.0mm",weight:"Worsted",yardage:150,notes:"",source:"YarnHive Starter",photo:PHOTOS.cardigan,materials:[],rating:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:10,height:8},isStarter:true,rows:[
     {id:21,text:"Magic ring, 6 sc. (6)",done:false,note:""},
     {id:22,text:"2 sc in each st. (12)",done:false,note:""},
     {id:23,text:"[ Sc, 2 sc in next ] repeat. (18)",done:false,note:""},
@@ -186,13 +186,13 @@ const makeStarterPatterns = () => [
     {id:27,text:"Continue even rounds until beanie measures 7.5 inches total.",done:false,note:""},
     {id:28,text:"Last round: sl st in each st around. Fasten off, weave in ends.",done:false,note:""},
   ]},
-  {id:"onboard_dishcloth_"+Date.now(),title:"Simple Dishcloth",cat:"Home",hook:"5.0mm",weight:"Cotton",yardage:80,notes:"",source:"YarnHive Starter",photo:PHOTOS.pillow,materials:[],rating:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:8,height:8},isStarter:true,rows:[
+  {id:"starter_dishcloth",title:"Simple Dishcloth",cat:"Home",hook:"5.0mm",weight:"Cotton",yardage:80,notes:"",source:"YarnHive Starter",photo:PHOTOS.pillow,materials:[],rating:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:8,height:8},isStarter:true,rows:[
     {id:31,text:"Ch 25. Sc in 2nd ch from hook and in each ch across. (24 sc)",done:false,note:""},
     {id:32,text:"Ch 1, turn. Sc in each st across. (24)",done:false,note:""},
     {id:33,text:"Repeat Row 2. Continue until piece is roughly square.",done:false,note:""},
     {id:34,text:"Final row: ch 1, turn, sc across. Fasten off, weave in ends.",done:false,note:""},
   ]},
-  {id:"onboard_magicring_"+Date.now(),title:"Magic Ring Practice Swatch",cat:"Amigurumi",hook:"4.0mm",weight:"Worsted",yardage:30,notes:"",source:"YarnHive Starter",photo:PHOTOS.granny,materials:[],rating:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:5,height:5},isStarter:true,rows:[
+  {id:"starter_magicring",title:"Magic Ring Practice Swatch",cat:"Amigurumi",hook:"4.0mm",weight:"Worsted",yardage:30,notes:"",source:"YarnHive Starter",photo:PHOTOS.granny,materials:[],rating:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:5,height:5},isStarter:true,rows:[
     {id:41,text:"Make a magic ring. Ch 1, work 6 sc into ring, pull tight to close. (6)",done:false,note:""},
     {id:42,text:"2 sc in each st around. (12)",done:false,note:""},
     {id:43,text:"[ Sc in next st, 2 sc in next ] repeat around. (18)",done:false,note:""},
@@ -201,6 +201,7 @@ const makeStarterPatterns = () => [
     {id:46,text:"Sl st in next st. Fasten off. This is your gauge swatch — keep it!",done:false,note:""},
   ]},
 ];
+const makeStarterPatterns = () => DEFAULT_STARTERS.map(p=>({...p,rows:p.rows.map(r=>({...r}))}));
 const estYards = p => {
   if (p.yardage > 0) return p.yardage;
   return (p.materials||[]).reduce((s,m) => {
@@ -1006,9 +1007,10 @@ const AddPatternModal = ({onClose,onSave,isPro,patternCount}) => {
   );
 };
 
-const SidebarNav = ({view,setView,count,isPro,onAddPattern,onSignOut,onUpgrade,userPatterns=[]}) => {
+const SidebarNav = ({view,setView,count,isPro,onAddPattern,onSignOut,onUpgrade,userPatterns=[],allPatterns=[]}) => {
   const starterC=userPatterns.filter(p=>p.isStarter).length;const addedC=userPatterns.filter(p=>!p.isStarter).length;
-  const ITEMS=[{key:"collection",label:"Your Hive",sub:starterC+" starter"+(starterC!==1?"s":"")+" · "+addedC+" added",icon:"🧶"},{key:"wip",label:"Builds in Progress",sub:"Currently making",icon:"🪡"},{key:"browse",label:"Browse Sites",sub:"Find free patterns",icon:"🌐"},{key:"stash",label:"Yarn Stash",sub:"Manage your yarn",icon:"🎀"},{key:"calculator",label:"Calculators",sub:"Gauge, yardage & more",icon:"🧮"},{key:"shopping",label:"Shopping List",sub:"Auto-generated",icon:"🛒"}];
+  const wipCount=allPatterns.filter(p=>p.status==="in_progress"||p.started).filter(p=>pct(p)<100).length;
+  const ITEMS=[{key:"collection",label:"Your Hive",sub:starterC+" starter"+(starterC!==1?"s":"")+" · "+addedC+" added",icon:"🧶"},{key:"wip",label:"Builds in Progress",sub:wipCount>0?wipCount+" active":"Currently making",icon:"🪡"},{key:"browse",label:"Browse Sites",sub:"Find free patterns",icon:"🌐"},{key:"stash",label:"Yarn Stash",sub:"Manage your yarn",icon:"🎀"},{key:"calculator",label:"Calculators",sub:"Gauge, yardage & more",icon:"🧮"},{key:"shopping",label:"Shopping List",sub:"Auto-generated",icon:"🛒"}];
   return (
     <div style={{width:260,background:T.surface,borderRight:`1px solid ${T.border}`,height:"100vh",position:"sticky",top:0,display:"flex",flexDirection:"column",flexShrink:0}}>
       <div onClick={()=>setView("collection")} style={{position:"relative",height:160,overflow:"hidden",flexShrink:0,cursor:"pointer",transition:"opacity .15s"}} onMouseEnter={e=>e.currentTarget.style.opacity=".85"} onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
@@ -1519,7 +1521,7 @@ const WaitlistPopup = () => {
   );
 };
 
-const Auth = ({onEnter,onEnterAsNew,onEnterAsPro}) => {
+const Auth = ({onEnter,onEnterAsNew}) => {
   const [screen,setScreen]=useState("welcome"),[email,setEmail]=useState(""),[pass,setPass]=useState(""),[confirmPass,setConfirmPass]=useState("");
   const [loading,setLoading]=useState(false),[authError,setAuthError]=useState(null);
   const{isDesktop}=useBreakpoint();
@@ -1762,9 +1764,8 @@ const Auth = ({onEnter,onEnterAsNew,onEnterAsPro}) => {
         </div>
       </div>
       <Badges onBadgeClick={setActiveModal}/>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:16,paddingTop:12,borderTop:"1px solid rgba(28,23,20,.06)"}}>
+      <div style={{marginTop:16,paddingTop:12,borderTop:"1px solid rgba(28,23,20,.06)"}}>
         <span style={{fontSize:9,color:T.ink3,opacity:.4,letterSpacing:".06em"}}>{APP_VERSION}</span>
-        <button onClick={onEnterAsPro} style={{background:"rgba(92,122,94,.12)",border:"1px solid rgba(92,122,94,.22)",borderRadius:7,padding:"4px 11px",fontSize:10,color:T.sage,cursor:"pointer",fontWeight:500}}>🔑 Dev</button>
       </div>
     </div>
   );
@@ -2003,22 +2004,56 @@ const BrowseSitesView = ({onSavePattern}) => {
   );
 };
 
-const PatternCard = ({p,onClick,delay=0}) => {
+const DeleteConfirmModal = ({pattern,isPro,onCancel,onDelete,onPark,onGoPro}) => (
+  <div style={{position:"fixed",inset:0,zIndex:600,display:"flex",alignItems:"center",justifyContent:"center",padding:24,fontFamily:T.sans}}>
+    <div onClick={onCancel} style={{position:"absolute",inset:0,background:"rgba(0,0,0,.4)"}}/>
+    <div className="fu" style={{position:"relative",zIndex:1,width:"100%",maxWidth:380,background:T.modal,borderRadius:20,padding:"32px 28px",boxShadow:"0 16px 48px rgba(139,90,60,.18)"}}>
+      <div style={{fontFamily:T.serif,fontSize:18,fontWeight:700,color:T.ink,marginBottom:8}}>Delete this pattern?</div>
+      <div style={{fontSize:13,color:T.ink3,lineHeight:1.6,marginBottom:20}}>{isPro?"This pattern will be permanently removed.":"This pattern will be removed from your library. It will still count toward your pattern limit."}</div>
+      {!isPro&&<>
+        <button onClick={onPark} style={{width:"100%",background:T.sageLt,color:T.sage,border:`1px solid ${T.sage}`,borderRadius:12,padding:"12px",fontSize:13,fontWeight:600,cursor:"pointer",marginBottom:6}}>Park it instead</button>
+        <div style={{fontSize:11,color:T.ink3,marginBottom:12,lineHeight:1.5,textAlign:"center"}}>Parking saves your progress and frees up your active view.<br/><span onClick={onGoPro} style={{color:T.terra,cursor:"pointer",fontWeight:600}}>Go Pro for unlimited patterns →</span></div>
+      </>}
+      <button onClick={onDelete} style={{width:"100%",background:"#C0392B",color:"#fff",border:"none",borderRadius:12,padding:"12px",fontSize:13,fontWeight:600,cursor:"pointer",marginBottom:6}}>Delete</button>
+      <button onClick={onCancel} style={{width:"100%",background:T.linen,color:T.ink2,border:`1px solid ${T.border}`,borderRadius:12,padding:"11px",fontSize:13,fontWeight:500,cursor:"pointer"}}>Cancel</button>
+    </div>
+  </div>
+);
+
+const PatternCard = ({p,onClick,onPark,onUnpark,onDelete,delay=0}) => {
   const done=pct(p);
+  const [menuOpen,setMenuOpen]=useState(false);
+  const isParked=p.status==="parked";
   return (
-    <div className="card fu" onClick={onClick} style={{background:T.surface,borderRadius:16,overflow:"hidden",border:`1px solid ${T.border}`,cursor:"pointer",animationDelay:delay+"s"}}>
+    <div className="card fu" onClick={onClick} style={{background:T.surface,borderRadius:16,overflow:"hidden",border:`1px solid ${T.border}`,cursor:"pointer",animationDelay:delay+"s",position:"relative"}}>
       <div style={{position:"relative",height:160,overflow:"hidden",background:T.linen}}>
         <Photo src={p.photo} alt={p.title} style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center center"}}/>
         <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(28,23,20,.5) 0%,transparent 55%)"}}/>
-        {p.isStarter?<div style={{position:"absolute",top:10,left:10,background:"rgba(184,144,44,.9)",backdropFilter:"blur(4px)",color:"#fff",fontSize:9,fontWeight:600,padding:"3px 8px",borderRadius:99}}>Free Starter</div>
+        {isParked?<div style={{position:"absolute",top:10,left:10,background:"rgba(92,79,68,.8)",backdropFilter:"blur(4px)",color:"#fff",fontSize:9,fontWeight:600,padding:"3px 8px",borderRadius:99}}>Parked</div>
+        :p.isStarter?<div style={{position:"absolute",top:10,left:10,background:"rgba(184,144,44,.9)",backdropFilter:"blur(4px)",color:"#fff",fontSize:9,fontWeight:600,padding:"3px 8px",borderRadius:99}}>Free Starter</div>
         :done===100?<div style={{position:"absolute",top:10,right:10,background:T.sage,color:"#fff",fontSize:9,fontWeight:700,padding:"3px 8px",borderRadius:99,letterSpacing:".07em"}}>DONE</div>
         :done>0&&done<100?<><div style={{position:"absolute",top:10,right:10,background:"rgba(28,23,20,.65)",backdropFilter:"blur(4px)",color:"#fff",fontSize:10,fontWeight:600,padding:"3px 8px",borderRadius:99}}>{done}%</div><div style={{position:"absolute",bottom:0,left:0,right:0}}><Bar val={done} color="rgba(255,255,255,.8)" h={3} bg="transparent"/></div></>
         :null}
+        {!isParked&&!p.isStarter&&done===0&&!p.started&&p.rows&&p.rows.length>0&&<div style={{position:"absolute",top:10,right:10,background:"rgba(92,122,94,.85)",backdropFilter:"blur(4px)",color:"#fff",fontSize:9,fontWeight:600,padding:"3px 8px",borderRadius:99}}>Ready to build</div>}
         {!p.isStarter&&p.snapConfidence&&<div style={{position:"absolute",top:10,left:10,background:"rgba(184,90,60,.85)",backdropFilter:"blur(4px)",color:"#fff",fontSize:9,fontWeight:700,padding:"3px 8px",borderRadius:99}}>🐝 {p.snapConfidence}%</div>}
       </div>
       <div style={{padding:"12px 14px 16px"}}>
-        <div style={{fontSize:10,color:T.ink3,textTransform:"uppercase",letterSpacing:".08em",marginBottom:3}}>{p.cat}</div>
-        <div style={{fontFamily:T.serif,fontSize:15,fontWeight:500,color:T.ink,lineHeight:1.3,marginBottom:7}}>{p.title}</div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:10,color:T.ink3,textTransform:"uppercase",letterSpacing:".08em",marginBottom:3}}>{p.cat}</div>
+            <div style={{fontFamily:T.serif,fontSize:15,fontWeight:500,color:T.ink,lineHeight:1.3,marginBottom:7}}>{p.title}</div>
+          </div>
+          {!p.isStarter&&(onPark||onDelete)&&<div style={{position:"relative",flexShrink:0}}>
+            <button onClick={e=>{e.stopPropagation();setMenuOpen(!menuOpen);}} style={{background:"none",border:"none",cursor:"pointer",color:T.ink3,fontSize:18,padding:"2px 4px",lineHeight:1}}>⋮</button>
+            {menuOpen&&<div onClick={e=>e.stopPropagation()} style={{position:"absolute",right:0,top:24,background:T.modal,border:`1px solid ${T.border}`,borderRadius:10,boxShadow:"0 8px 24px rgba(139,90,60,.12)",zIndex:10,minWidth:150,overflow:"hidden"}}>
+              {isParked
+                ?<div onClick={()=>{setMenuOpen(false);onUnpark&&onUnpark(p);}} style={{padding:"10px 14px",fontSize:13,color:T.ink,cursor:"pointer",borderBottom:`1px solid ${T.border}`}} onMouseEnter={e=>e.currentTarget.style.background=T.linen} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>Unpark</div>
+                :<div onClick={()=>{setMenuOpen(false);onPark&&onPark(p);}} style={{padding:"10px 14px",fontSize:13,color:T.ink,cursor:"pointer",borderBottom:`1px solid ${T.border}`}} onMouseEnter={e=>e.currentTarget.style.background=T.linen} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>Park for later</div>
+              }
+              <div onClick={()=>{setMenuOpen(false);onDelete&&onDelete(p);}} style={{padding:"10px 14px",fontSize:13,color:"#C0392B",cursor:"pointer"}} onMouseEnter={e=>e.currentTarget.style.background=T.linen} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>Delete pattern</div>
+            </div>}
+          </div>}
+        </div>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}><Stars val={p.rating} ro/><span style={{fontSize:11,color:T.ink3}}>{p.source}</span></div>
         {p.isStarter&&<div style={{fontSize:10,color:T.ink3,opacity:.6,marginTop:6,fontStyle:"italic"}}>A gift from YarnHive — yours to keep</div>}
       </div>
@@ -2124,13 +2159,14 @@ const ShareCardModal = ({pattern,onClose}) => {
 
 const Detail = ({p,onBack,onSave}) => {
   const [rows,setRows]=useState(p.rows),[tab,setTab]=useState("materials"),[newRow,setNewRow]=useState(""),[editing,setEditing]=useState(false),[draft,setDraft]=useState({...p}),[showScale,setShowScale]=useState(false),[noteEdit,setNoteEdit]=useState(null),[showShare,setShowShare]=useState(false),[milestone,setMilestone]=useState(null);
+  const [noteSaved,setNoteSaved]=useState(false);
   const prevDone=useRef(pct({...p,rows:p.rows}));
   const{isDesktop}=useBreakpoint();
   const done=pct({...p,rows}),currentRowIdx=rows.findIndex(r=>!r.done);
   const toggle=id=>{const next=rows.map(r=>r.id===id?{...r,done:!r.done}:r);setRows(next);onSave({...p,rows:next});const newDone=pct({...p,rows:next}),prev=prevDone.current;for(const m of [25,50,75,100]){if(prev<m&&newDone>=m){setMilestone(m);break;}}prevDone.current=newDone;};
   const addRow=()=>{if(!newRow.trim())return;const next=[...rows,{id:Date.now(),text:newRow.trim(),done:false,note:""}];setRows(next);onSave({...p,rows:next});setNewRow("");};
   const save=()=>{onSave({...draft,rows});setEditing(false);};
-  const updateNote=(id,note)=>{const next=rows.map(r=>r.id===id?{...r,note}:r);setRows(next);onSave({...p,rows:next});};
+  const updateNote=(id,note)=>{const next=rows.map(r=>r.id===id?{...r,note}:r);setRows(next);onSave({...p,rows:next});setNoteSaved(true);setTimeout(()=>setNoteSaved(false),2000);};
   const yardDisplay=estYards(p)>0?"~"+estYards(p)+(p.yardage>0?" yds":" yds (est.)"):"Not listed";
   const skeinDisplay=estSkeins(p)>0?"~"+estSkeins(p)+(p.skeins>0?" skeins":" skeins (est.)"):"Not listed";
   return (
@@ -2245,7 +2281,14 @@ const Detail = ({p,onBack,onSave}) => {
           </div>
         </>)}
         {tab==="rows"&&(<>
-          {(()=>{const seenAbbr=new Set();return rows.map((r,i)=>{const isCurrent=i===currentRowIdx,newAbbr=r.done?[]:findNewAbbr(r.text,seenAbbr);return(
+          {rows.length===0?(
+            <div style={{textAlign:"center",padding:"48px 20px"}}>
+              <div style={{fontSize:40,marginBottom:14}}>🧶</div>
+              <div style={{fontFamily:T.serif,fontSize:18,fontWeight:600,color:T.ink2,marginBottom:8}}>No rows added yet</div>
+              <div style={{fontSize:13,color:T.ink3,lineHeight:1.6,marginBottom:20}}>Add rows to start building this pattern step by step.</div>
+              <button onClick={()=>{if(!editing)setEditing(true);}} style={{background:T.terra,color:"#fff",border:"none",borderRadius:12,padding:"12px 24px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.3)"}}>Add Rows</button>
+            </div>
+          ):(()=>{const seenAbbr=new Set();return rows.map((r,i)=>{const isCurrent=i===currentRowIdx,newAbbr=r.done?[]:findNewAbbr(r.text,seenAbbr);return(
             <div key={r.id} style={{borderBottom:`1px solid ${T.border}`}}>
               <div onClick={()=>toggle(r.id)} style={{display:"flex",gap:13,alignItems:"flex-start",cursor:"pointer",background:isCurrent?"rgba(184,90,60,.04)":"transparent",padding:"14px 8px",margin:"0 -8px"}}>
                 <div style={{width:26,height:26,borderRadius:7,flexShrink:0,marginTop:1,background:r.done?T.terra:T.surface,border:"1.5px solid "+(r.done?T.terra:isCurrent?T.terra:T.border),display:"flex",alignItems:"center",justifyContent:"center",transition:"all .2s",boxShadow:r.done?"0 2px 8px rgba(184,90,60,.3)":isCurrent?"0 0 0 3px rgba(184,90,60,.15)":"none"}}>
@@ -2257,10 +2300,11 @@ const Detail = ({p,onBack,onSave}) => {
                   <div style={{fontSize:14,lineHeight:1.6,color:r.done?T.ink3:T.ink,textDecoration:r.done?"line-through":"none"}}>{r.text}</div>
                   {r.note&&<div style={{fontSize:12,color:T.ink3,fontStyle:"italic",marginTop:4}}>📝 {r.note}</div>}
                 </div>
-                <button onClick={e=>{e.stopPropagation();setNoteEdit(noteEdit===r.id?null:r.id);}} style={{background:"none",border:"none",fontSize:14,cursor:"pointer",padding:"4px",color:r.note?T.terra:T.border,flexShrink:0}}>📝</button>
+                <button onClick={e=>{e.stopPropagation();setNoteEdit(noteEdit===r.id?null:r.id);}} style={{background:"none",border:"none",fontSize:14,cursor:"pointer",padding:"4px",flexShrink:0,position:"relative"}}>{r.note?<span style={{color:T.terra}}>📝</span>:<span style={{display:"inline-block",width:8,height:8,borderRadius:99,background:T.border}}/>}</button>
               </div>
+              {r.note&&noteEdit!==r.id&&<div onClick={e=>{e.stopPropagation();setNoteEdit(r.id);}} style={{padding:"0 8px 10px 47px",fontSize:12,color:T.ink3,fontStyle:"italic",cursor:"pointer"}}>📝 {r.note}</div>}
               {newAbbr.length>0&&<div style={{padding:"0 8px 10px 47px",display:"flex",flexWrap:"wrap",gap:6}} onClick={e=>e.stopPropagation()}>{newAbbr.map(a=><button key={a.raw} onClick={e=>{e.stopPropagation();window.open(a.url,"_blank","noopener,noreferrer");}} style={{display:"flex",alignItems:"center",gap:5,background:"#FF0000",color:"#fff",border:"none",borderRadius:8,padding:"5px 10px",fontSize:11,fontWeight:600,cursor:"pointer",boxShadow:"0 2px 8px rgba(255,0,0,.3)"}}><span style={{fontSize:10}}>▶</span><span>{a.raw}</span><span style={{opacity:.8,fontWeight:400}}>— {a.full}</span></button>)}</div>}
-              {noteEdit===r.id&&<div style={{padding:"0 8px 12px 47px"}}><input value={r.note} onChange={e=>updateNote(r.id,e.target.value)} placeholder="Add a note for this row…" style={{width:"100%",padding:"9px 12px",background:T.linen,border:`1.5px solid ${T.terra}`,borderRadius:9,fontSize:13,color:T.ink,outline:"none"}}/></div>}
+              {noteEdit===r.id&&<div style={{padding:"0 8px 12px 47px",display:"flex",alignItems:"center",gap:8}}><input value={r.note} onChange={e=>updateNote(r.id,e.target.value)} placeholder="Add a note for this row…" style={{flex:1,padding:"9px 12px",background:T.linen,border:`1.5px solid ${T.terra}`,borderRadius:9,fontSize:13,color:T.ink,outline:"none"}}/>{noteSaved&&<span style={{fontSize:11,color:T.sage,fontWeight:600,flexShrink:0}}>Note saved</span>}</div>}
             </div>
           );});})()}
           <div style={{display:"flex",gap:8,marginTop:16}}>
@@ -2390,6 +2434,34 @@ const ShoppingList = () => {
   );
 };
 
+const ReadyToBuildPrompt = ({pattern,onStartBuilding,onViewDetails,onDismiss}) => (
+  <div style={{position:"fixed",inset:0,zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",padding:24,fontFamily:T.sans}}>
+    <div onClick={onDismiss} style={{position:"absolute",inset:0,background:"rgba(0,0,0,.35)"}}/>
+    <div className="fu" style={{position:"relative",zIndex:1,width:"100%",maxWidth:360,background:T.modal,borderRadius:20,padding:"32px 28px",textAlign:"center",boxShadow:"0 16px 48px rgba(139,90,60,.18)"}}>
+      <div style={{fontFamily:T.serif,fontSize:18,fontWeight:700,color:T.ink,marginBottom:6}}>Ready to start building?</div>
+      <div style={{fontSize:13,color:T.ink3,marginBottom:20,lineHeight:1.5}}>{pattern?.title}</div>
+      <button onClick={onStartBuilding} style={{width:"100%",background:T.terra,color:"#fff",border:"none",borderRadius:12,padding:"13px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.3)",marginBottom:8}}>Start Building</button>
+      <button onClick={onViewDetails} style={{width:"100%",background:T.linen,color:T.ink2,border:`1px solid ${T.border}`,borderRadius:12,padding:"12px",fontSize:13,fontWeight:500,cursor:"pointer"}}>View Details</button>
+    </div>
+  </div>
+);
+
+const PatternCreatedOverlay = ({pattern,onStartBuilding,onGoToHive}) => {
+  useEffect(()=>{const t=setTimeout(onGoToHive,8000);return()=>clearTimeout(t);},[]);
+  return (
+    <div style={{position:"fixed",inset:0,zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",padding:24,fontFamily:T.sans}}>
+      <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,.4)",backdropFilter:"blur(8px)"}}/>
+      <div className="fu" style={{position:"relative",zIndex:1,width:"100%",maxWidth:420,background:T.modal,borderRadius:24,padding:"48px 40px",textAlign:"center",boxShadow:"0 20px 60px rgba(139,90,60,.2)"}}>
+        <div style={{width:64,height:64,borderRadius:"50%",background:T.sageLt,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 20px",fontSize:28}}>✓</div>
+        <div style={{fontFamily:T.serif,fontSize:24,fontWeight:700,color:T.ink,marginBottom:8}}>Your pattern is ready to build</div>
+        <div style={{fontFamily:T.serif,fontSize:18,color:T.terra,marginBottom:28}}>{pattern?.title||"Untitled Pattern"}</div>
+        <button onClick={onStartBuilding} style={{width:"100%",background:T.terra,color:"#fff",border:"none",borderRadius:14,padding:"15px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.3)",marginBottom:10}}>Start Building</button>
+        <button onClick={onGoToHive} style={{width:"100%",background:T.linen,color:T.ink2,border:`1px solid ${T.border}`,borderRadius:14,padding:"14px",fontSize:14,fontWeight:500,cursor:"pointer"}}>Go to Your Hive</button>
+      </div>
+    </div>
+  );
+};
+
 const CAROUSEL_CARDS = [
   {id:"welcome",type:"image",src:"https://res.cloudinary.com/dmaupzhcx/image/upload/c_fill,w_400,h_200,g_center/v1774116735/yarnhive_bg_v2.jpg",title:"Welcome to The Hive",sub:"Your crafting journey starts here"},
   {id:"community",type:"solid",bg:"#2C5F4A",title:"847 makers active",sub:"this week"},
@@ -2457,13 +2529,14 @@ const EmptySlotCard = ({onClick,slotIndex=0}) => (
   </div>
 );
 
-const CollectionView = ({userPatterns,starterPatterns,cat,setCat,search,setSearch,openDetail,onAddPattern,isPro,tier,setView}) => {
+const CollectionView = ({userPatterns,starterPatterns,cat,setCat,search,setSearch,openDetail,onAddPattern,isPro,tier,setView,onPark,onUnpark,onDelete}) => {
   const{isDesktop}=useBreakpoint();
   const allPatterns = [...userPatterns,...starterPatterns];
-  const starterPats=userPatterns.filter(p=>p.isStarter);
-  const addedPats=userPatterns.filter(p=>!p.isStarter);
-  const filteredAll=[...starterPats,...addedPats,...starterPatterns].filter(p=>(cat==="All"||p.cat===cat)&&(!search||p.title.toLowerCase().includes(search.toLowerCase())));
-  const inProgress=allPatterns.filter(p=>{const v=pct(p);return v>0&&v<100;});
+  const visible=allPatterns.filter(p=>p.status!=="deleted");
+  const starterPats=visible.filter(p=>p.isStarter);
+  const addedPats=visible.filter(p=>!p.isStarter);
+  const filteredAll=[...starterPats,...addedPats].filter(p=>(cat==="All"||p.cat===cat)&&(!search||p.title.toLowerCase().includes(search.toLowerCase())));
+  const inProgress=visible.filter(p=>{const v=pct(p);return v>0&&v<100;});
   const [viewMode,setViewMode]=useState("grid");
   const pad=isDesktop?"0":"0 18px";
   const emptySlots=isPro?0:Math.max(0,TIER_CONFIG.free.patternCap-addedPats.length);
@@ -2500,7 +2573,7 @@ const CollectionView = ({userPatterns,starterPatterns,cat,setCat,search,setSearc
       {/* Unified grid */}
       {viewMode==="grid"?(
         <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:20,padding:isDesktop?"0 0 80px":"0 18px 120px"}}>
-          {filteredAll.map((p,i)=><PatternCard key={p.id} p={p} delay={i*.04} onClick={()=>openDetail(p)}/>)}
+          {filteredAll.map((p,i)=><PatternCard key={p.id} p={p} delay={i*.04} onClick={()=>openDetail(p)} onPark={onPark} onUnpark={onUnpark} onDelete={onDelete}/>)}
           {!isPro&&cat==="All"&&!search&&Array.from({length:emptySlots}).map((_,i)=><EmptySlotCard key={"slot_"+i} slotIndex={i} onClick={onAddPattern}/>)}
         </div>
       ):(
@@ -2639,7 +2712,7 @@ export default function YarnHive() {
   const [authed,setAuthed]=useState(false),[isPro,setIsPro]=useState(false);
   const [authChecked,setAuthChecked]=useState(false);
   const [userPatterns,setUserPatterns]=useState([]);
-  const [starterPatterns,setStarterPatterns]=useState([]);
+  const [starterPatterns,setStarterPatterns]=useState(()=>makeStarterPatterns());
   const [view,setView]=useState("collection"),[selected,setSelected]=useState(null),[navOpen,setNavOpen]=useState(false),[addOpen,setAddOpen]=useState(false),[showPaywall,setShowPaywall]=useState(false),[cat,setCat]=useState("All"),[search,setSearch]=useState("");
   const [showEmailBanner,setShowEmailBanner]=useState(false);
   const [showWelcomeBanner,setShowWelcomeBanner]=useState(false);
@@ -2647,6 +2720,8 @@ export default function YarnHive() {
   const [showProModal,setShowProModal]=useState(false);
   const [showOnboarding,setShowOnboarding]=useState(false);
   const [justCompletedOnboarding,setJustCompletedOnboarding]=useState(false);
+  const [createdPattern,setCreatedPattern]=useState(null);
+  const [readyPromptPattern,setReadyPromptPattern]=useState(null);
   const{isTablet,isDesktop}=useBreakpoint();
   const allPatterns = [...userPatterns,...starterPatterns];
   const userStarterCount=userPatterns.filter(p=>p.isStarter).length;
@@ -2697,7 +2772,7 @@ export default function YarnHive() {
     validate();
   },[]);
 
-  const handleSignOut = async () => { await supabaseAuth.signOut(); setAuthed(false); setIsPro(false); setUserPatterns([]); setStarterPatterns([]); };
+  const handleSignOut = async () => { await supabaseAuth.signOut(); setAuthed(false); setIsPro(false); setUserPatterns([]); };
 
   // FIX 1 — Browser back/forward navigation
   const setViewWithHistory = (v) => {
@@ -2715,31 +2790,51 @@ export default function YarnHive() {
     return ()=>window.removeEventListener("popstate",handlePop);
   },[]);
 
-  const fetchStarterPatterns = useCallback(async () => {
-    try {
-      const res = await fetch("https://vbtsdyxvqqwxjzpuseaf.supabase.co/rest/v1/starter_patterns?is_active=eq.true&order=sort_order.asc", {
-        headers:{"apikey":"sb_publishable_aWb45OmRG4563HUnVil3BA_yZMdPDgz","Authorization":"Bearer sb_publishable_aWb45OmRG4563HUnVil3BA_yZMdPDgz"},
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const starters = data.map(p=>({
-          id:"starter_"+p.id, title:p.title, source:p.source||"YarnHive Starter Collection",
-          cat:p.cat, hook:p.hook, weight:p.weight, yardage:p.yardage||0,
-          notes:p.notes||"",
-          photo:p.cat==="Amigurumi"?PHOTOS.granny:p.cat==="Wearables"?PHOTOS.cardigan:PHOTOS.blanket,
-          materials:Array.isArray(p.materials)?p.materials:[],
-          rows:Array.isArray(p.rows)?p.rows.map(r=>({...r,done:false})):[],
-          rating:0, skeins:0, skeinYards:200,
-          gauge:{stitches:12,rows:16,size:4}, dimensions:{width:50,height:60},
-          isStarter:true,
-        }));
-        setStarterPatterns(starters);
-      }
-    } catch {}
-  },[]);
+  // Starter patterns are hardcoded in DEFAULT_STARTERS — no DB fetch needed
 
-  // Fetch starters on mount when authed
-  useEffect(()=>{ if(authed) fetchStarterPatterns(); },[authed,fetchStarterPatterns]);
+  // Fetch user's saved patterns from Supabase on login
+  useEffect(()=>{
+    console.log("[YarnHive] Pattern fetch triggered, authed:", authed, "authChecked:", authChecked);
+    if(!authed||!authChecked) return;
+    const user=supabaseAuth.getUser();
+    const session=getSession();
+    console.log("[YarnHive] Pattern fetch user id:", user?.id);
+    if(!user||!session) return;
+    (async()=>{
+      try{
+        const res=await fetch(`${SUPABASE_URL}/rest/v1/patterns?user_id=eq.${user.id}&order=created_at.desc`,{
+          headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${session.access_token}`},
+        });
+        if(res.ok){
+          const data=await res.json();
+          console.log("[YarnHive] Pattern fetch raw response:", JSON.stringify(data));
+          console.log("[YarnHive] Pattern fetch count:", data.length);
+          if(data.length>0){
+            const patterns=data.map(r=>({
+              id:r.id,_supabaseId:r.id,title:r.title||"",cat:r.cat||"",source:r.source||"",source_url:r.source_url||"",
+              notes:r.notes||"",photo:r.photo||r.image_url||"",hook:r.hook||r.hook_size||"",weight:r.weight||r.yarn_weight||"",
+              yardage:r.yardage||0,materials:r.materials||[],rows:(r.rows||[]).map(row=>({...row,done:!!row.done})),
+              rating:r.rating||0,skeins:r.skeins||0,skeinYards:r.skein_yards||200,
+              gauge:r.gauge||{stitches:12,rows:16,size:4},dimensions:r.dimensions||{},
+              isStarter:!!r.is_starter,is_ai_generated:!!r.is_ai_generated,difficulty:r.difficulty||"",tags:r.tags||[],started:r.status==="in_progress",
+            }));
+            setUserPatterns(prev=>{
+              // Keep local-only patterns (starters, unsaved) that aren't in Supabase
+              const supaIds=new Set(patterns.map(p=>p.id));
+              const localOnly=prev.filter(p=>!supaIds.has(p.id)&&!supaIds.has(p._supabaseId));
+              console.log("[YarnHive] Merge: Supabase patterns:", patterns.length, "local-only kept:", localOnly.length, localOnly.map(p=>p.title));
+              return [...patterns,...localOnly];
+            });
+          }else{
+            console.log("[YarnHive] No patterns in Supabase for this user, keeping local state as-is");
+          }
+        }else{
+          const errText=await res.text();
+          console.error("[YarnHive] Patterns fetch failed:", res.status, errText);
+        }
+      }catch(e){console.error("[YarnHive] Fetch patterns error:",e);}
+    })();
+  },[authed,authChecked]);
 
   const isEmailConfirmed = () => {
     const s = getSession(); if(!s?.access_token) return false;
@@ -2822,24 +2917,117 @@ export default function YarnHive() {
 
   // Show nothing until session is validated against Supabase
   if(!authChecked) return <><CSS/><div style={{minHeight:"100vh",background:T.bg,display:"flex",alignItems:"center",justifyContent:"center"}}><div className="spinner" style={{width:28,height:28,border:`3px solid ${T.border}`,borderTopColor:T.terra,borderRadius:"50%"}}/></div></>;
-  if(!authed) return <><CSS/><WaitlistPopup/><Auth onEnter={handleSignIn} onEnterAsNew={handleNewSignup} onEnterAsPro={()=>{setIsPro(true);setAuthed(true);}}/></>;
-  if(view==="detail"&&selected) return <><CSS/><Detail p={selected} onBack={()=>{if(history.state?.view)history.back();else setView("collection");}} onSave={u=>{setUserPatterns(prev=>prev.map(p=>p.id===u.id?u:p));setStarterPatterns(prev=>prev.map(p=>p.id===u.id?u:p));setSelected(u);}}/></>;
+  if(!authed) return <><CSS/><WaitlistPopup/><Auth onEnter={handleSignIn} onEnterAsNew={handleNewSignup}/></>;
+  const detailOnSave=u=>{
+    setUserPatterns(prev=>prev.map(p=>p.id===u.id?u:p));setStarterPatterns(prev=>prev.map(p=>p.id===u.id?u:p));setSelected(u);
+    const user=supabaseAuth.getUser();const session=getSession();
+    const pid=u._supabaseId||u.id;
+    if(user&&session&&typeof pid==="string"&&!pid.startsWith("local_")&&!pid.startsWith("onboard_")&&!pid.startsWith("starter_")){
+      fetch(`${SUPABASE_URL}/rest/v1/patterns?id=eq.${pid}&user_id=eq.${user.id}`,{
+        method:"PATCH",
+        headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${session.access_token}`,"Content-Type":"application/json","Prefer":"return=minimal"},
+        body:JSON.stringify({rows:u.rows||[],row_count:(u.rows||[]).length,updated_at:new Date().toISOString()}),
+      }).then(r=>{console.log("[YarnHive] Row progress PATCH status:",r.status,"for pattern:",pid);if(!r.ok)r.text().then(t=>console.error("[YarnHive] Row PATCH error body:",t));}).catch(e=>console.error("[YarnHive] Row progress save error:",e));
+    }
+  };
+  const detailOnBack=()=>{if(history.state?.view)history.back();else setView("collection");};
+  if(view==="detail"&&selected&&!isDesktop) return <><CSS/><Detail p={selected} onBack={detailOnBack} onSave={detailOnSave}/></>;
 
-  const openDetail=p=>{setSelected(p);setViewWithHistory("detail");};
-  const handleAddPattern=p=>{setUserPatterns(prev=>[p,...prev]);setViewWithHistory("collection");};
+  const startAndOpenPattern=(p)=>{
+    const updated={...p,started:true};
+    setUserPatterns(prev=>prev.map(x=>x.id===p.id?updated:x));
+    setStarterPatterns(prev=>prev.map(x=>x.id===p.id?updated:x));
+    setSelected(updated);
+    // Persist started status to Supabase
+    const user=supabaseAuth.getUser();const session=getSession();
+    const pid=p._supabaseId||p.id;
+    if(user&&session&&typeof pid==="string"&&!pid.startsWith("local_")&&!pid.startsWith("starter_")){
+      fetch(`${SUPABASE_URL}/rest/v1/patterns?id=eq.${pid}&user_id=eq.${user.id}`,{
+        method:"PATCH",headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${session.access_token}`,"Content-Type":"application/json","Prefer":"return=minimal"},
+        body:JSON.stringify({status:"in_progress"}),
+      }).catch(e=>console.error("[YarnHive] Start pattern error:",e));
+    }
+    setViewWithHistory("detail");
+  };
+  const openDetail=p=>{
+    // Show "Ready to build?" prompt for unstarted patterns with rows
+    if(!p.started&&!p.isStarter&&p.rows&&p.rows.length>0&&pct(p)===0){
+      setReadyPromptPattern(p);
+      return;
+    }
+    // Auto-start starter patterns on first open
+    if(!p.started&&p.rows&&p.rows.length>0){
+      startAndOpenPattern(p);
+    } else {
+      setSelected(p);
+      setViewWithHistory("detail");
+    }
+  };
+  const handleAddPattern=async(p)=>{
+    const user=supabaseAuth.getUser();
+    const session=getSession();
+    // Optimistically add to local state
+    const localId=p.id||"local_"+Date.now();
+    const localPattern={...p,id:localId};
+    setUserPatterns(prev=>[localPattern,...prev]);
+    setCreatedPattern(localPattern);
+    // Persist to Supabase
+    if(user&&session){
+      try{
+        const res=await fetch(`${SUPABASE_URL}/rest/v1/patterns`,{
+          method:"POST",
+          headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${session.access_token}`,"Content-Type":"application/json","Prefer":"return=representation"},
+          body:JSON.stringify({user_id:user.id,title:p.title||"",cat:p.cat||"",source:p.source||"",source_url:p.source_url||"",notes:p.notes||"",difficulty:p.difficulty||"",yarn_weight:p.weight||"",hook_size:p.hook||"",gauge:p.gauge||{},tags:p.tags||[],is_ai_generated:!!p.is_ai_generated,is_starter:!!p.isStarter,image_url:p.image_url||"",photo:p.photo||"",row_count:(p.rows||[]).length,materials:p.materials||[],rows:p.rows||[],rating:p.rating||0,yardage:p.yardage||0,skeins:p.skeins||0,skein_yards:p.skeinYards||200,dimensions:p.dimensions||{},weight:p.weight||"",hook:p.hook||""}),
+        });
+        console.log("[YarnHive] INSERT response status:", res.status);
+        if(res.ok){
+          const rows=await res.json();
+          console.log("[YarnHive] INSERT response body:", JSON.stringify(rows));
+          if(rows[0]?.id){
+            console.log("[YarnHive] Pattern saved with Supabase ID:", rows[0].id);
+            // Update local state with Supabase ID
+            setUserPatterns(prev=>prev.map(pat=>pat.id===localId?{...pat,id:rows[0].id,_supabaseId:rows[0].id}:pat));
+            setCreatedPattern(prev=>prev&&prev.id===localId?{...prev,id:rows[0].id,_supabaseId:rows[0].id}:prev);
+          }
+        }else{const errText=await res.text();console.error("[YarnHive] Pattern save failed:",res.status,errText);}
+      }catch(e){console.error("[YarnHive] Pattern save error:",e);}
+    }
+  };
   const openAddModal=()=>{if(tier.atCap){setShowPaywall(true);return;}setAddOpen(true);};
-  const inProgress=allPatterns.filter(p=>{const v=pct(p);return (v>0&&v<100)||(p.isStarter&&p.rows&&p.rows.length>0&&v<100);});
+  const [deleteTarget,setDeleteTarget]=useState(null);
+  const updatePatternStatus=(p,status)=>{
+    const updated={...p,status};
+    setUserPatterns(prev=>prev.map(x=>x.id===p.id?updated:x));
+    setStarterPatterns(prev=>prev.map(x=>x.id===p.id?updated:x));
+    const user=supabaseAuth.getUser();const session=getSession();
+    const pid=p._supabaseId||p.id;
+    if(user&&session&&typeof pid==="string"&&!pid.startsWith("local_")&&!pid.startsWith("starter_")){
+      fetch(`${SUPABASE_URL}/rest/v1/patterns?id=eq.${pid}&user_id=eq.${user.id}`,{
+        method:"PATCH",headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${session.access_token}`,"Content-Type":"application/json","Prefer":"return=minimal"},
+        body:JSON.stringify({status,updated_at:new Date().toISOString()}),
+      }).catch(e=>console.error("[YarnHive] Status update error:",e));
+    }
+  };
+  const handleParkPattern=(p)=>updatePatternStatus(p,"parked");
+  const handleUnparkPattern=(p)=>updatePatternStatus(p,"active");
+  const handleDeletePattern=(p)=>setDeleteTarget(p);
+  const confirmDelete=()=>{if(deleteTarget){updatePatternStatus(deleteTarget,"deleted");setDeleteTarget(null);}};
+  const parkInsteadOfDelete=()=>{if(deleteTarget){updatePatternStatus(deleteTarget,"parked");setDeleteTarget(null);}};
+  const inProgress=allPatterns.filter(p=>{const v=pct(p);return p.status!=="deleted"&&p.status!=="parked"&&((p.status==="in_progress"&&v<100)||(p.started&&v<100)||(v>0&&v<100));});
   const TITLE_MAP={collection:"Your Hive",wip:"Builds in Progress",browse:"Browse Sites",stash:"Yarn Stash",calculator:"Calculators",shopping:"Shopping List",profile:"Profile & Settings"};
 
   if(isDesktop) return (
     <div style={{display:"flex",minHeight:"100vh",width:"100%",background:T.bg,fontFamily:T.sans,position:"relative"}}>
       <CSS/>
-      {showOnboarding&&<OnboardingScreen onComplete={()=>{setShowOnboarding(false);setJustCompletedOnboarding(true);localStorage.removeItem("yh_welcome_dismissed");setUserPatterns(prev=>[...makeStarterPatterns(),...prev]);setView("profile");}} onBackToAuth={async()=>{setShowOnboarding(false);await supabaseAuth.signOut();setAuthed(false);setIsPro(false);setUserPatterns([]);setStarterPatterns([]);}}/>}
+      {showOnboarding&&<OnboardingScreen onComplete={()=>{setShowOnboarding(false);setJustCompletedOnboarding(true);localStorage.removeItem("yh_welcome_dismissed");setView("profile");}} onBackToAuth={async()=>{setShowOnboarding(false);await supabaseAuth.signOut();setAuthed(false);setIsPro(false);setUserPatterns([]);}}/>}
       {showPaywall&&<PaywallGate patternCount={userPatterns.length} onClose={()=>setShowPaywall(false)} onUpgrade={()=>setShowPaywall(false)}/>}
       {showProModal&&<ProInfoModal onClose={()=>setShowProModal(false)}/>}
       {addOpen&&<AddPatternModal onClose={()=>setAddOpen(false)} onSave={handleAddPattern} isPro={isPro} patternCount={userPatterns.length}/>}
+      {createdPattern&&<PatternCreatedOverlay pattern={createdPattern} onStartBuilding={()=>{const p=createdPattern;setCreatedPattern(null);startAndOpenPattern(p);}} onGoToHive={()=>{setCreatedPattern(null);setViewWithHistory("collection");}}/>}
+      {readyPromptPattern&&<ReadyToBuildPrompt pattern={readyPromptPattern} onStartBuilding={()=>{const p=readyPromptPattern;setReadyPromptPattern(null);startAndOpenPattern(p);}} onViewDetails={()=>{const p=readyPromptPattern;setReadyPromptPattern(null);setSelected(p);setViewWithHistory("detail");}} onDismiss={()=>setReadyPromptPattern(null)}/>}
+      {deleteTarget&&<DeleteConfirmModal pattern={deleteTarget} isPro={isPro} onCancel={()=>setDeleteTarget(null)} onDelete={confirmDelete} onPark={parkInsteadOfDelete} onGoPro={()=>{setDeleteTarget(null);setShowProModal(true);}}/>}
       <WelcomeToast visible={showWelcomeToast}/>
-      <SidebarNav view={view} setView={setViewWithHistory} count={userPatterns.length} isPro={isPro} onAddPattern={openAddModal} onSignOut={handleSignOut} onUpgrade={()=>setShowProModal(true)} userPatterns={userPatterns}/>
+      <SidebarNav view={view} setView={setViewWithHistory} count={userPatterns.length} isPro={isPro} onAddPattern={openAddModal} onSignOut={handleSignOut} onUpgrade={()=>setShowProModal(true)} userPatterns={userPatterns} allPatterns={allPatterns}/>
       <div style={{flex:1,minWidth:0,overflowY:"auto",display:"flex",flexDirection:"column"}}>
         <WelcomeBanner visible={showWelcomeBanner}/>
         {showEmailBanner&&!showWelcomeBanner&&<EmailConfirmBanner onDismiss={handleDismissEmailBanner} onResend={handleResendEmail}/>}
@@ -2851,8 +3039,9 @@ export default function YarnHive() {
           </div>
         </div>
         <div style={{flex:1,padding:"0 40px"}}>
-          {view==="collection"&&<CollectionView userPatterns={userPatterns} starterPatterns={starterPatterns} cat={cat} setCat={setCat} search={search} setSearch={setSearch} openDetail={openDetail} onAddPattern={openAddModal} isPro={isPro} tier={tier} setView={setViewWithHistory}/>}
+          {view==="collection"&&<CollectionView userPatterns={userPatterns} starterPatterns={starterPatterns} cat={cat} setCat={setCat} search={search} setSearch={setSearch} openDetail={openDetail} onAddPattern={openAddModal} isPro={isPro} tier={tier} setView={setViewWithHistory} onPark={handleParkPattern} onUnpark={handleUnparkPattern} onDelete={handleDeletePattern}/>}
           {view==="wip"&&<div style={{padding:"24px 0 80px"}}>{inProgress.length===0?<div style={{textAlign:"center",padding:"80px 20px"}}><div style={{fontSize:48,marginBottom:14}}>🪡</div><div style={{fontFamily:T.serif,fontSize:20,color:T.ink2,marginBottom:8}}>Nothing in progress</div><div style={{fontSize:14,color:T.ink3}}>Open a pattern and start checking off rows.</div></div>:<div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:20}}>{inProgress.map((p,i)=>{const v=pct(p),done=p.rows.filter(r=>r.done).length;return(<div key={p.id} className="card fu" onClick={()=>openDetail(p)} style={{background:T.card,borderRadius:16,overflow:"hidden",border:`1px solid ${T.border}`,cursor:"pointer",animationDelay:i*.06+"s"}}><div style={{position:"relative",height:140,overflow:"hidden",background:T.linen}}><Photo src={p.photo} alt={p.title} style={{width:"100%",height:"100%",objectFit:"cover"}}/><div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(28,23,20,.5) 0%,transparent 55%)"}}/><div style={{position:"absolute",bottom:0,left:0,right:0}}><Bar val={v} color="rgba(255,255,255,.85)" h={4} bg="rgba(0,0,0,.2)"/></div>{p.isStarter&&<div style={{position:"absolute",top:8,left:8,background:"rgba(184,144,44,.9)",color:"#fff",fontSize:9,fontWeight:600,padding:"3px 8px",borderRadius:99}}>Free Starter</div>}</div><div style={{padding:"12px 14px 14px"}}><div style={{fontSize:10,color:T.ink3,textTransform:"uppercase",letterSpacing:".07em",marginBottom:3}}>{p.cat}</div><div style={{fontFamily:T.serif,fontSize:14,fontWeight:500,color:T.ink,lineHeight:1.3,marginBottom:6}}>{p.title}</div><div style={{fontSize:11,color:T.ink3,marginBottom:8}}>{done} of {p.rows.length} rows complete</div><button style={{width:"100%",background:T.terra,color:"#fff",border:"none",borderRadius:8,padding:"8px",fontSize:12,fontWeight:600,cursor:"pointer"}}>Continue →</button></div></div>);})}</div>}</div>}
+          {view==="detail"&&selected&&<div style={{margin:"0 -40px"}}><Detail p={selected} onBack={detailOnBack} onSave={detailOnSave}/></div>}
           {view==="browse"&&<BrowseSitesView onSavePattern={handleAddPattern}/>}
           {view==="stash"&&<div style={{paddingTop:24}}><YarnStash/></div>}
           {view==="calculator"&&<div style={{paddingTop:24}}><Calculators/></div>}
@@ -2866,12 +3055,15 @@ export default function YarnHive() {
   return (
     <div style={{fontFamily:T.sans,background:T.bg,minHeight:"100vh",maxWidth:isTablet?680:430,margin:"0 auto",display:"flex",flexDirection:"column",position:"relative"}}>
       <CSS/>
-      {showOnboarding&&<OnboardingScreen onComplete={()=>{setShowOnboarding(false);setJustCompletedOnboarding(true);localStorage.removeItem("yh_welcome_dismissed");setUserPatterns(prev=>[...makeStarterPatterns(),...prev]);setView("profile");}} onBackToAuth={async()=>{setShowOnboarding(false);await supabaseAuth.signOut();setAuthed(false);setIsPro(false);setUserPatterns([]);setStarterPatterns([]);}}/>}
+      {showOnboarding&&<OnboardingScreen onComplete={()=>{setShowOnboarding(false);setJustCompletedOnboarding(true);localStorage.removeItem("yh_welcome_dismissed");setView("profile");}} onBackToAuth={async()=>{setShowOnboarding(false);await supabaseAuth.signOut();setAuthed(false);setIsPro(false);setUserPatterns([]);}}/>}
       <WelcomeToast visible={showWelcomeToast}/>
       <NavPanel open={navOpen} onClose={()=>setNavOpen(false)} view={view} setView={setViewWithHistory} count={userPatterns.length} isPro={isPro} onSignOut={handleSignOut} onUpgrade={()=>setShowProModal(true)}/>
       {showPaywall&&<PaywallGate patternCount={userPatterns.length} onClose={()=>setShowPaywall(false)} onUpgrade={()=>setShowPaywall(false)}/>}
       {showProModal&&<ProInfoModal onClose={()=>setShowProModal(false)}/>}
       {addOpen&&<AddPatternModal onClose={()=>setAddOpen(false)} onSave={handleAddPattern} isPro={isPro} patternCount={userPatterns.length}/>}
+      {createdPattern&&<PatternCreatedOverlay pattern={createdPattern} onStartBuilding={()=>{const p=createdPattern;setCreatedPattern(null);startAndOpenPattern(p);}} onGoToHive={()=>{setCreatedPattern(null);setViewWithHistory("collection");}}/>}
+      {readyPromptPattern&&<ReadyToBuildPrompt pattern={readyPromptPattern} onStartBuilding={()=>{const p=readyPromptPattern;setReadyPromptPattern(null);startAndOpenPattern(p);}} onViewDetails={()=>{const p=readyPromptPattern;setReadyPromptPattern(null);setSelected(p);setViewWithHistory("detail");}} onDismiss={()=>setReadyPromptPattern(null)}/>}
+      {deleteTarget&&<DeleteConfirmModal pattern={deleteTarget} isPro={isPro} onCancel={()=>setDeleteTarget(null)} onDelete={confirmDelete} onPark={parkInsteadOfDelete} onGoPro={()=>{setDeleteTarget(null);setShowProModal(true);}}/>}
       {showEmailBanner&&<EmailConfirmBanner onDismiss={handleDismissEmailBanner} onResend={handleResendEmail}/>}
       {showWelcomeBanner&&<WelcomeBanner onDismiss={()=>setShowWelcomeBanner(false)}/>}
       <div style={{background:T.surface,borderBottom:`1px solid ${T.border}`,padding:"0 18px",height:56,display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:20,flexShrink:0}}>
@@ -2880,7 +3072,7 @@ export default function YarnHive() {
         <button onClick={openAddModal} style={{background:T.terra,border:"none",borderRadius:9,width:34,height:34,cursor:"pointer",color:"#fff",fontSize:20,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 10px rgba(184,90,60,.4)"}}>+</button>
       </div>
       <div style={{flex:1,overflowY:"auto",paddingBottom:100}}>
-        {view==="collection"&&<CollectionView userPatterns={userPatterns} starterPatterns={starterPatterns} cat={cat} setCat={setCat} search={search} setSearch={setSearch} openDetail={openDetail} onAddPattern={openAddModal} isPro={isPro} tier={tier} setView={setViewWithHistory}/>}
+        {view==="collection"&&<CollectionView userPatterns={userPatterns} starterPatterns={starterPatterns} cat={cat} setCat={setCat} search={search} setSearch={setSearch} openDetail={openDetail} onAddPattern={openAddModal} isPro={isPro} tier={tier} setView={setViewWithHistory} onPark={handleParkPattern} onUnpark={handleUnparkPattern} onDelete={handleDeletePattern}/>}
         {view==="wip"&&<div style={{padding:"16px 18px 80px"}}>{inProgress.length===0?<div style={{textAlign:"center",padding:"60px 20px"}}><div style={{fontSize:48,marginBottom:14}}>🪡</div><div style={{fontFamily:T.serif,fontSize:18,color:T.ink2,marginBottom:8}}>Nothing in progress</div><div style={{fontSize:13,color:T.ink3,lineHeight:1.6}}>Open a pattern and start checking off rows.</div></div>:<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>{inProgress.map((p,i)=><PatternCard key={p.id} p={p} delay={i*.06} onClick={()=>openDetail(p)}/>)}</div>}</div>}
         {view==="browse"&&<BrowseSitesView onSavePattern={handleAddPattern}/>}
         {view==="stash"&&<div style={{paddingTop:18}}><YarnStash/></div>}
