@@ -225,8 +225,16 @@ const uploadPatternFile = async (file, onProgress) => {
 };
 
 // Extract pattern data from PDF/image using Gemini Vision
-const extractPatternFromPDF = async (cloudinaryUrl, filename, mimeType) => {
-  console.log("[YarnHive] Gemini extraction starting for:", cloudinaryUrl, "mime:", mimeType);
+// Convert File to base64 (call before Cloudinary upload)
+const fileToBase64 = (file) => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  reader.onload = () => resolve(reader.result.split(",")[1]);
+  reader.onerror = reject;
+  reader.readAsDataURL(file);
+});
+
+const extractPatternFromPDF = async (base64Data, filename, mimeType) => {
+  console.log("[YarnHive] Gemini extraction starting, mime:", mimeType, "base64 length:", base64Data.length);
   if (!GEMINI_API_KEY) { console.error("[YarnHive] No Gemini API key"); throw new Error("Gemini API key not configured"); }
 
   const prompt = `You are a crochet pattern extraction specialist. Analyze this crochet pattern and extract all structured data. Return ONLY valid JSON with no markdown, no backticks, no explanation.
@@ -236,36 +244,11 @@ Return this exact structure:
 
 Extract every round and row instruction as individual row entries. For multi-round instructions like 'RND 5-7 sc 24 (24) (3 RNDs total)', expand them into individual rows: RND 5, RND 6, RND 7 each with the same instruction. Be thorough -- extract every component, every round, every material.`;
 
-  // Always fetch file and convert to base64 (file_data with external URLs doesn't work)
-  console.log("[YarnHive] Fetching file for base64 conversion...");
-  let base64, fileMime;
-  try {
-    const fileRes = await fetch(cloudinaryUrl);
-    if (!fileRes.ok) throw new Error("Failed to fetch file: " + fileRes.status);
-    const blob = await fileRes.blob();
-    // Size check: skip extraction for files over 10MB
-    if (blob.size > 10 * 1024 * 1024) {
-      console.warn("[YarnHive] File too large for extraction:", (blob.size/1024/1024).toFixed(1), "MB");
-      throw new Error("Pattern file is too large for automatic reading. File saved — add rows manually.");
-    }
-    fileMime = mimeType || blob.type || "application/pdf";
-    base64 = await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result.split(",")[1]);
-      reader.onerror = () => reject(new Error("FileReader failed"));
-      reader.readAsDataURL(blob);
-    });
-    console.log("[YarnHive] Base64 conversion complete, size:", base64.length, "chars, mime:", fileMime);
-  } catch (e) {
-    console.error("[YarnHive] File fetch/conversion error:", e);
-    throw e;
-  }
-
   const body = {
     contents: [{
       parts: [
         { text: prompt },
-        { inline_data: { mime_type: fileMime, data: base64 } }
+        { inline_data: { mime_type: mimeType || "application/pdf", data: base64Data } }
       ]
     }],
     generationConfig: { temperature: 0.1, maxOutputTokens: 8192 }
@@ -1062,17 +1045,26 @@ const PDFUploadForm = ({onSave}) => {
   const [editWeight,setEditWeight]=useState("");
   const handleFile=async(e)=>{
     const f=e.target.files?.[0];if(!f)return;
+    // Size check before anything
+    if(f.size>10*1024*1024){setStage("error");setErrorMsg("Pattern file is too large for automatic reading (max 10MB). Try a smaller file.");return;}
     try{
+      // Convert to base64 FIRST (before Cloudinary upload) for Gemini
+      console.log("[YarnHive] Converting file to base64...", f.name, f.type, (f.size/1024).toFixed(0)+"KB");
+      const base64Data=await fileToBase64(f);
+      const fileMime=f.type||"application/pdf";
+      console.log("[YarnHive] Base64 ready, length:", base64Data.length);
+      // Stage 1: Upload to Cloudinary for storage
       setStage("uploading");setStageText("Uploading your pattern...");setProgress(10);
       const intv1=setInterval(()=>setProgress(p=>Math.min(p+3,30)),200);
       const uploaded=await uploadPatternFile(f);
       clearInterval(intv1);
       if(!uploaded){setStage("error");setErrorMsg("Upload failed — check your connection and try again.");return;}
       setFileInfo({url:uploaded.url,name:uploaded.filename,type:uploaded.type});setProgress(33);
+      // Stage 2: Extract with Gemini using local base64 (no re-fetch needed)
       setStage("extracting");setStageText("Reading your pattern...");
       const intv2=setInterval(()=>setProgress(p=>Math.min(p+1,62)),300);
       let result;
-      try{result=await extractPatternFromPDF(uploaded.url,uploaded.filename,f.type);}
+      try{result=await extractPatternFromPDF(base64Data,f.name,fileMime);}
       catch(ex){clearInterval(intv2);console.error("[YarnHive] Extraction failed:",ex);setStage("error");setErrorMsg("We couldn't read this pattern automatically. You can still save it manually.");setExtracted({title:f.name.replace(/\.(pdf|jpg|png|jpeg)$/i,"").replace(/[-_]/g," "),components:[],materials:[],pattern_notes:"",hook_size:"",yarn_weight:"",designer:"",difficulty:"",assembly_notes:""});return;}
       clearInterval(intv2);setProgress(66);
       setStage("building");setStageText("Building your workspace...");
