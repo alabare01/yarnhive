@@ -326,7 +326,7 @@ const extractPatternFromPDF = async (textOrBase64, filename, mimeType, isTextMod
   const prompt = `You are a crochet pattern extraction specialist. Analyze this crochet pattern and extract all structured data. Return ONLY valid JSON with no markdown, no backticks, no explanation.
 
 Return this exact structure:
-{"title":"string","designer":"string","source_url":null,"finished_size":"string","difficulty":"Beginner or Intermediate or Advanced","yarn_weight":"string","hook_size":"string","gauge":"string or null","materials":[{"name":"string","amount":"string","notes":"string"}],"abbreviations":[{"abbr":"string","meaning":"string"}],"abbreviations_map":{"mr":"magic ring","sc":"single crochet"},"suggested_resources":[{"label":"string","url":"string"}],"pattern_notes":"string","components":[{"name":"string","make_count":1,"rows":[{"id":"rnd-1","label":"RND 1","text":"full instruction text","stitch_count":null,"action_item":false,"repeat_brackets":[{"sequence":"string","count":2}]}]}],"assembly_notes":"string","image_description":"string"}
+{"title":"string","designer":"string","source_url":null,"finished_size":"string","difficulty":"Beginner or Intermediate or Advanced","yarn_weight":"string","hook_size":"string","gauge":"string or null","materials":[{"name":"string","amount":"string","notes":"string"}],"abbreviations":[{"abbr":"string","meaning":"string"}],"abbreviations_map":{"mr":"magic ring","sc":"single crochet"},"suggested_resources":[{"label":"string","url":"string"}],"pattern_notes":"string","components":[{"name":"string","make_count":1,"independent":false,"rows":[{"id":"rnd-1","label":"RND 1","text":"full instruction text","stitch_count":null,"action_item":false,"repeat_brackets":[{"sequence":"string","count":2}]}]}],"assembly_notes":"string","image_description":"string"}
 
 For patterns worked in the round, use 'RND' as the label prefix (RND 1, RND 2, etc). For patterns worked in rows, use 'ROW'. Detect from context which applies per component.
 
@@ -335,6 +335,8 @@ For any instruction covering multiple rounds like 'RND 10-23: sc x40 (24) (14 RN
 For mid-pattern instructions that are not stitch rows (examples: 'Place the eyes now', 'Begin stuffing', 'PM in front post', 'See page 7 for details') -- include these as rows with label 'NOTE' and set action_item: true. These are critical build steps not stitch instructions.
 
 For components like 'FLIPPER (MAKE 2)', make_count should be 2. Always extract make_count as a number, default 1 if not specified.
+
+Each component has an "independent" boolean field, default false. Set independent: true ONLY when the pattern explicitly says a component can be made separately or simultaneously — e.g. "make 2 separately", "can be worked at the same time", "set aside and make another", "work independently". If the pattern does not say this, leave independent: false so the app enforces linear build order.
 
 After all construction components, extract any assembly, finishing, or detail sections as a final component named 'ASSEMBLY & FINISHING'. Extract each distinct step as a row. Examples: 'Place safety eyes between RND 5 and 6', 'Attach flippers to body at RND 9-14'. Use label: 'STEP' and action_item: true for all assembly rows.
 
@@ -448,7 +450,7 @@ const buildRowsFromComponents = (components) => {
   (components || []).forEach(comp => {
     const makeCount = comp.make_count || 1;
     const label = comp.name + (makeCount > 1 ? ` (MAKE ${makeCount})` : "");
-    rows.push({ id: "header-" + (comp.name || rowId).toLowerCase().replace(/\s+/g, "-"), text: "── " + label.toUpperCase() + " ──", isHeader: true, done: false, note: "", componentName: comp.name, makeCount });
+    rows.push({ id: "header-" + (comp.name || rowId).toLowerCase().replace(/\s+/g, "-"), text: "── " + label.toUpperCase() + " ──", isHeader: true, done: false, note: "", componentName: comp.name, makeCount, independent: !!comp.independent });
     (comp.rows || []).forEach(r => {
       const isAction = !!r.action_item;
       const prefix = isAction ? "📌 " : "";
@@ -2818,8 +2820,37 @@ const Detail = ({p,onBack,onSave}) => {
       body:JSON.stringify({cover_image_url:thumb}),
     }).then(r=>{if(r.ok){console.log("[Wovely] Backfilled cover_image_url for",pid);onSave({...p,rows,cover_image_url:thumb,photo:thumb});}}).catch(()=>{});
   },[]);
+  // ── Section locking logic ──
+  const linearSections=useMemo(()=>{
+    const secs=[];let cur={header:null,rows:[],startIdx:0};
+    rows.forEach((r,i)=>{if(r.isHeader){if(cur.header||cur.rows.length)secs.push(cur);cur={header:r,rows:[],startIdx:i+1};}else cur.rows.push({...r,_gi:i});});
+    if(cur.header||cur.rows.length)secs.push(cur);
+    return secs;
+  },[rows]);
+  const isSectionComplete=sec=>sec.rows.length>0&&sec.rows.every(r=>r.done);
+  const isAssemblySection=sec=>sec.header&&/assembly|finishing/i.test(sec.header.text);
+  const isSectionIndependent=sec=>!!sec.header?.independent;
+  const isSectionLocked=(sec,si)=>{
+    if(!sec.header)return false;
+    if(isSectionIndependent(sec))return false;
+    if(isAssemblySection(sec)){return linearSections.some((s,i)=>i!==si&&!isAssemblySection(s)&&!isSectionComplete(s));}
+    for(let i=si-1;i>=0;i--){if(isSectionIndependent(linearSections[i]))continue;if(!isSectionComplete(linearSections[i]))return true;break;}
+    return false;
+  };
+  const isRowCheckable=(globalIdx,sec,si)=>{
+    if(isSectionLocked(sec,si))return false;
+    const idxInSec=sec.rows.findIndex(r=>r._gi===globalIdx);
+    if(idxInSec<0)return false;
+    const row=rows[globalIdx];
+    if(row.done)return true;
+    for(let i=0;i<idxInSec;i++){if(!sec.rows[i].done)return false;}
+    return true;
+  };
   const handleDotTap=(globalIdx,dotIdx)=>{
     const row=rows[globalIdx];if(!row)return;
+    // Respect row linearity — only allow dot taps on checkable rows
+    let dotSecIdx=-1;for(let si=0;si<linearSections.length;si++){if(linearSections[si].rows.some(sr=>sr._gi===globalIdx)){dotSecIdx=si;break;}}
+    if(dotSecIdx>=0&&!isRowCheckable(globalIdx,linearSections[dotSecIdx],dotSecIdx))return;
     const rb=(row.repeat_brackets||[]).find(b=>b.count>1);if(!rb)return;
     const dots=[...(row.dot_state&&row.dot_state.length===rb.count?row.dot_state:Array(rb.count).fill(null))];
     dots[dotIdx]=nextDotColor(dots[dotIdx]);
@@ -2845,16 +2876,55 @@ const Detail = ({p,onBack,onSave}) => {
   const prevDone=useRef(pct({...p,rows:p.rows}));
   const{isDesktop}=useBreakpoint();
   const done=pct({...p,rows}),currentRowIdx=rows.findIndex(r=>!r.done&&!r.isHeader);
-  const toggle=id=>{const r=rows.find(x=>x.id===id);if(r?.isHeader)return;const wasChecked=r.done;const next=rows.map(r=>{if(r.id!==id)return r;const updated={...r,done:!r.done};if(wasChecked&&r.dot_state){const rb=(r.repeat_brackets||[]).find(b=>b.count>1);updated.dot_state=Array(rb?rb.count:0).fill(null);}return updated;});setRows(next);onSave({...p,rows:next});const newDone=pct({...p,rows:next}),prev=prevDone.current;for(const m of [25,50,75,100]){if(prev<m&&newDone>=m){setMilestone(m);break;}}prevDone.current=newDone;};
+  const toggle=id=>{const r=rows.find(x=>x.id===id);if(r?.isHeader)return;
+    const globalIdx=rows.findIndex(x=>x.id===id);
+    // Find which section this row belongs to
+    let secIdx=-1;for(let si=0;si<linearSections.length;si++){if(linearSections[si].rows.some(sr=>sr._gi===globalIdx)){secIdx=si;break;}}
+    if(secIdx<0)return;
+    if(!isRowCheckable(globalIdx,linearSections[secIdx],secIdx))return;
+    const wasChecked=r.done;
+    let next;
+    if(wasChecked){
+      // Unchecking: cascade — uncheck this row and ALL rows after it in this section
+      const sec=linearSections[secIdx];
+      const idxInSec=sec.rows.findIndex(sr=>sr._gi===globalIdx);
+      const toUncheck=new Set(sec.rows.slice(idxInSec).map(sr=>sr._gi));
+      // Also cascade to dependent sections: if this section was complete and now won't be,
+      // uncheck all rows in sections that depend on it (non-independent subsequent + assembly)
+      const wasComplete=isSectionComplete(sec);
+      if(wasComplete){
+        for(let si2=0;si2<linearSections.length;si2++){
+          if(si2===secIdx)continue;
+          const s2=linearSections[si2];
+          if(isSectionIndependent(s2))continue;
+          // Assembly depends on all; others depend on previous non-independent
+          const dependsOnThis=isAssemblySection(s2)||(si2>secIdx&&(()=>{for(let k=si2-1;k>=0;k--){if(!isSectionIndependent(linearSections[k]))return k===secIdx;}return false;})());
+          if(dependsOnThis)s2.rows.forEach(sr=>toUncheck.add(sr._gi));
+        }
+      }
+      next=rows.map((row,i)=>{
+        if(!toUncheck.has(i))return row;
+        const updated={...row,done:false};
+        if(row.dot_state){const rb=(row.repeat_brackets||[]).find(b=>b.count>1);updated.dot_state=Array(rb?rb.count:0).fill(null);}
+        return updated;
+      });
+    } else {
+      // Checking: just check this single row
+      next=rows.map(row=>{if(row.id!==id)return row;return{...row,done:true};});
+    }
+    setRows(next);onSave({...p,rows:next});const newDone=pct({...p,rows:next}),prev=prevDone.current;for(const m of [25,50,75,100]){if(prev<m&&newDone>=m){setMilestone(m);break;}}prevDone.current=newDone;};
   const addRow=()=>{if(!newRow.trim())return;const next=[...rows,{id:Date.now(),text:newRow.trim(),done:false,note:""}];setRows(next);onSave({...p,rows:next});setNewRow("");};
   const save=()=>{onSave({...draft,rows});setEditing(false);};
   const updateNote=(id,note)=>{const next=rows.map(r=>r.id===id?{...r,note}:r);setRows(next);onSave({...p,rows:next});setNoteSaved(true);setTimeout(()=>setNoteSaved(false),2000);};
   const yardDisplay=estYards(p)>0?"~"+estYards(p)+(p.yardage>0?" yds":" yds (est.)"):"Not listed";
   const skeinDisplay=estSkeins(p)>0?"~"+estSkeins(p)+(p.skeins>0?" skeins":" skeins (est.)"):"Not listed";
   const detailPhoto=p.cover_image_url||pdfThumbUrl(p.source_file_url)||p.photo;
+  const rawSource=p.source_file_url||p.source_url||null;
+  const sourceLink=rawSource&&!rawSource.startsWith("http")?"https://res.cloudinary.com/dmaupzhcx/raw/upload/"+rawSource:rawSource;
   return (
-    <div style={{display:"flex",flexDirection:"column",height:"100vh",background:T.bg,overflow:"hidden"}}>
+    <div style={{display:"flex",flexDirection:"column",height:"100vh",background:T.bg,overflow:"hidden",position:"relative"}}>
       <CSS/>
+      {sourceLink&&<button onClick={()=>{console.log("[Wovely] Source clicked. Full pattern:",JSON.stringify(p,null,2));window.open(sourceLink,"_blank","noopener,noreferrer");}} style={{position:"fixed",bottom:24,right:24,zIndex:50,background:"#B85A3C",color:"#FAF7F3",border:"none",borderRadius:99,padding:"10px 18px",cursor:"pointer",boxShadow:"0 4px 16px rgba(139,90,60,.35)",fontSize:13,fontWeight:600,display:"flex",alignItems:"center",gap:6}}>📄 Source →</button>}
       {showScale&&<ScaleModal pattern={p} onClose={()=>setShowScale(false)}/>}
       {showShare&&<ShareCardModal pattern={{...p,rows}} onClose={()=>setShowShare(false)}/>}
       {milestone&&(
@@ -2980,50 +3050,50 @@ const Detail = ({p,onBack,onSave}) => {
               <button onClick={()=>{if(!editing)setEditing(true);}} style={{background:T.terra,color:"#fff",border:"none",borderRadius:12,padding:"12px 24px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.3)"}}>Add Rows</button>
             </div>
           ):(()=>{
-            // Group rows into sections by header rows
-            const sections=[];let current={header:null,rows:[]};
-            rows.forEach(r=>{if(r.isHeader){if(current.header||current.rows.length)sections.push(current);current={header:r,rows:[]};}else current.rows.push(r);});
-            if(current.header||current.rows.length)sections.push(current);
-            // Find first incomplete section
-            const firstIncomplete=sections.findIndex(s=>s.rows.some(r=>!r.done));
             const seenAbbr=new Set();
-            return sections.map((sec,si)=>{
+            // Find previous section name for locked tooltip
+            const prevSectionName=(si)=>{for(let i=si-1;i>=0;i--){if(!linearSections[i].header?.independent&&linearSections[i].header)return linearSections[i].header.text.replace(/──/g,"").replace(/━━━/g,"").trim();}return"previous component";};
+            return linearSections.map((sec,si)=>{
               const secKey=sec.header?.id||"sec-"+si;
               const secDone=sec.rows.filter(r=>r.done).length;
               const secTotal=sec.rows.length;
               const secComplete=secTotal>0&&secDone===secTotal;
-              const defaultOpen=si===firstIncomplete||(!sec.header);
-              const open=expandedSections[secKey]!==undefined?expandedSections[secKey]:defaultOpen;
-              const toggleSec=()=>setExpandedSections(prev=>({...prev,[secKey]:!open}));
-              return (<div key={secKey} style={{marginBottom:8}}>
-                {sec.header&&<button onClick={toggleSec} style={{width:"100%",background:secComplete?T.sageLt:T.linen,border:`1px solid ${secComplete?"rgba(92,122,94,.3)":T.border}`,borderRadius:open?"10px 10px 0 0":10,padding:"12px 14px",cursor:"pointer",display:"flex",alignItems:"center",gap:10,textAlign:"left"}}>
-                  <span style={{fontSize:12,color:T.ink3}}>{open?"▼":"▶"}</span>
+              const locked=isSectionLocked(sec,si);
+              const defaultOpen=!locked&&(sec.rows.some(r=>!r.done)||!sec.header);
+              const open=locked?false:(expandedSections[secKey]!==undefined?expandedSections[secKey]:defaultOpen);
+              const toggleSec=()=>{if(!locked)setExpandedSections(prev=>({...prev,[secKey]:!open}));};
+              return (<div key={secKey} style={{marginBottom:8,opacity:locked?.55:1,transition:"opacity .2s"}}>
+                {sec.header&&<button onClick={toggleSec} style={{width:"100%",background:locked?"#E8E4DF":secComplete?T.sageLt:T.linen,border:`1px solid ${locked?"#D5D0CA":secComplete?"rgba(92,122,94,.3)":T.border}`,borderRadius:open?"10px 10px 0 0":10,padding:"12px 14px",cursor:locked?"default":"pointer",display:"flex",alignItems:"center",gap:10,textAlign:"left"}} title={locked?(isAssemblySection(sec)?"Complete all components first":"Complete "+prevSectionName(si)+" first"):""}>
+                  {locked?<span style={{fontSize:14,color:T.ink3}}>🔒</span>:<span style={{fontSize:12,color:T.ink3}}>{open?"▼":"▶"}</span>}
                   <div style={{flex:1}}>
-                    <div style={{fontSize:13,fontWeight:700,color:secComplete?T.sage:T.terra}}>{sec.header.text.replace(/──/g,"").trim()}{secComplete?" ✓":""}</div>
-                    <div style={{fontSize:11,color:T.ink3,marginTop:2}}>{secDone} of {secTotal} complete</div>
+                    <div style={{fontSize:13,fontWeight:700,color:locked?T.ink3:secComplete?T.sage:T.terra}}>{sec.header.text.replace(/──/g,"").trim()}{secComplete?" ✓":""}</div>
+                    {locked
+                      ?<div style={{fontSize:11,color:T.ink3,marginTop:2}}>{isAssemblySection(sec)?"Complete all components first":"Complete "+prevSectionName(si)+" first"}</div>
+                      :<div style={{fontSize:11,color:T.ink3,marginTop:2}}>{secDone} of {secTotal} complete</div>}
                   </div>
-                  {sec.header.makeCount>1&&<div style={{background:T.gold,color:"#fff",borderRadius:99,padding:"2px 8px",fontSize:10,fontWeight:700}}>×{sec.header.makeCount}</div>}
-                  <div style={{width:60}}><Bar val={secTotal?secDone/secTotal*100:0} color={secComplete?T.sage:T.terra} h={3}/></div>
+                  {sec.header.makeCount>1&&<div style={{background:locked?"#B8B2AA":T.gold,color:"#fff",borderRadius:99,padding:"2px 8px",fontSize:10,fontWeight:700}}>×{sec.header.makeCount}</div>}
+                  <div style={{width:60}}><Bar val={secTotal?secDone/secTotal*100:0} color={locked?"#B8B2AA":secComplete?T.sage:T.terra} h={3}/></div>
                 </button>}
-                {(open||!sec.header)&&<div style={{border:sec.header?`1px solid ${T.border}`:"none",borderTop:"none",borderRadius:sec.header?"0 0 10px 10px":0,overflow:"hidden"}}>
-                  {sec.rows.map((r,i)=>{const globalIdx=rows.indexOf(r);const isCurrent=globalIdx===currentRowIdx;const newAbbr=r.done?[]:findNewAbbr(r.text,seenAbbr);return(
-            <div key={r.id} style={{borderBottom:`1px solid ${T.border}`,background:r.isAction?"rgba(184,144,44,.06)":"transparent"}}>
-              <div onClick={()=>toggle(r.id)} style={{display:"flex",gap:13,alignItems:"flex-start",cursor:"pointer",background:isCurrent?"rgba(184,90,60,.04)":"transparent",padding:"14px 8px",margin:"0 -8px"}}>
-                <div style={{width:26,height:26,borderRadius:7,flexShrink:0,marginTop:1,background:r.done?T.terra:T.surface,border:"1.5px solid "+(r.done?T.terra:isCurrent?T.terra:T.border),display:"flex",alignItems:"center",justifyContent:"center",transition:"all .2s",boxShadow:r.done?"0 2px 8px rgba(184,90,60,.3)":isCurrent?"0 0 0 3px rgba(184,90,60,.15)":"none"}}>
-                  {r.done&&<span style={{color:"#fff",fontSize:13,fontWeight:700}}>✓</span>}{!r.done&&isCurrent&&<div style={{width:8,height:8,borderRadius:99,background:T.terra}}/>}
+                {(open||!sec.header)&&!locked&&<div style={{border:sec.header?`1px solid ${T.border}`:"none",borderTop:"none",borderRadius:sec.header?"0 0 10px 10px":0,overflow:"hidden"}}>
+                  {sec.rows.map((r,i)=>{const globalIdx=rows.indexOf(r);const isCurrent=globalIdx===currentRowIdx;const rowLocked=!r.done&&!isRowCheckable(globalIdx,sec,si);const newAbbr=r.done?[]:findNewAbbr(r.text,seenAbbr);return(
+            <div key={r.id} style={{borderBottom:`1px solid ${T.border}`,background:r.isAction&&!rowLocked?"rgba(184,144,44,.06)":"transparent"}}>
+              <div onClick={()=>{if(!rowLocked)toggle(r.id);}} style={{display:"flex",gap:13,alignItems:"flex-start",cursor:rowLocked?"default":"pointer",background:isCurrent&&!rowLocked?"rgba(184,90,60,.04)":"transparent",padding:"14px 8px",margin:"0 -8px",opacity:rowLocked?.45:1,transition:"opacity .15s"}}>
+                <div style={{width:26,height:26,borderRadius:7,flexShrink:0,marginTop:1,background:r.done?T.terra:rowLocked?"#E8E4DF":T.surface,border:"1.5px solid "+(r.done?T.terra:isCurrent&&!rowLocked?T.terra:rowLocked?"#D5D0CA":T.border),display:"flex",alignItems:"center",justifyContent:"center",transition:"all .2s",boxShadow:r.done?"0 2px 8px rgba(184,90,60,.3)":isCurrent&&!rowLocked?"0 0 0 3px rgba(184,90,60,.15)":"none"}}>
+                  {r.done&&<span style={{color:"#fff",fontSize:13,fontWeight:700}}>✓</span>}{!r.done&&isCurrent&&!rowLocked&&<div style={{width:8,height:8,borderRadius:99,background:T.terra}}/>}
                 </div>
                 <div style={{flex:1,minWidth:0}}>
-                  {isCurrent&&<div style={{fontSize:10,color:T.terra,fontWeight:600,letterSpacing:".06em",marginBottom:2}}>CURRENT ROW</div>}
-                  {!isCurrent&&r.isAction&&<div style={{fontSize:10,color:T.gold,fontWeight:600,letterSpacing:".06em",marginBottom:2}}>ACTION</div>}
-                  {!isCurrent&&!r.isAction&&<div style={{fontSize:10,color:T.ink3,letterSpacing:".06em",marginBottom:2}}>ROW {globalIdx+1}</div>}
-                  <div style={{fontSize:14,lineHeight:1.6,color:r.done?T.ink3:T.ink,textDecoration:r.done?"line-through":"none"}}>{r.text}</div>
+                  {isCurrent&&!rowLocked&&<div style={{fontSize:10,color:T.terra,fontWeight:600,letterSpacing:".06em",marginBottom:2}}>CURRENT ROW</div>}
+                  {!isCurrent&&r.isAction&&!rowLocked&&<div style={{fontSize:10,color:T.gold,fontWeight:600,letterSpacing:".06em",marginBottom:2}}>ACTION</div>}
+                  {!isCurrent&&!r.isAction&&!rowLocked&&<div style={{fontSize:10,color:T.ink3,letterSpacing:".06em",marginBottom:2}}>ROW {globalIdx+1}</div>}
+                  {rowLocked&&<div style={{fontSize:10,color:T.ink3,letterSpacing:".06em",marginBottom:2}}>ROW {globalIdx+1}</div>}
+                  <div style={{fontSize:14,lineHeight:1.6,color:r.done?T.ink3:rowLocked?"#B8B2AA":T.ink,textDecoration:r.done?"line-through":"none"}}>{r.text}</div>
                 </div>
-                <button onClick={e=>{e.stopPropagation();setNoteEdit(noteEdit===r.id?null:r.id);}} style={{background:"none",border:"none",fontSize:14,cursor:"pointer",padding:"4px",flexShrink:0,position:"relative"}}><span style={{color:r.note?T.terra:T.ink3,opacity:r.note?1:.5}}>📝</span></button>
+                {!rowLocked&&<button onClick={e=>{e.stopPropagation();setNoteEdit(noteEdit===r.id?null:r.id);}} style={{background:"none",border:"none",fontSize:14,cursor:"pointer",padding:"4px",flexShrink:0,position:"relative"}}><span style={{color:r.note?T.terra:T.ink3,opacity:r.note?1:.5}}>📝</span></button>}
               </div>
-              {!r.done&&(r.repeat_brackets||[]).some(b=>b.count>1)&&<div style={{padding:"0 8px 10px 47px"}}><SubCounter row={r} globalIdx={globalIdx} onDotTap={handleDotTap}/></div>}
-              {r.note&&noteEdit!==r.id&&<div onClick={e=>{e.stopPropagation();setNoteEdit(r.id);}} style={{padding:"0 8px 10px 47px",fontSize:12,color:T.ink3,fontStyle:"italic",cursor:"pointer"}}>📝 {r.note}</div>}
-              {newAbbr.length>0&&<div style={{padding:"0 8px 10px 47px",display:"flex",flexWrap:"wrap",gap:4}} onClick={e=>e.stopPropagation()}>{newAbbr.map(a=><button key={a.raw} onClick={e=>{e.stopPropagation();window.open(a.url,"_blank","noopener,noreferrer");}} style={{background:"transparent",color:T.terra,border:"1px solid rgba(184,90,60,0.4)",borderRadius:4,padding:"2px 6px",fontSize:10,fontWeight:500,cursor:"pointer"}}>{a.raw}</button>)}</div>}
-              {noteEdit===r.id&&<div style={{padding:"0 8px 12px 47px",display:"flex",alignItems:"center",gap:8}}><input value={r.note} onChange={e=>updateNote(r.id,e.target.value)} placeholder="Add a note for this row…" style={{flex:1,padding:"9px 12px",background:T.linen,border:`1.5px solid ${T.terra}`,borderRadius:9,fontSize:13,color:T.ink,outline:"none"}}/>{noteSaved&&<span style={{fontSize:11,color:T.sage,fontWeight:600,flexShrink:0}}>Note saved</span>}</div>}
+              {!r.done&&!rowLocked&&(r.repeat_brackets||[]).some(b=>b.count>1)&&<div style={{padding:"0 8px 10px 47px"}}><SubCounter row={r} globalIdx={globalIdx} onDotTap={handleDotTap}/></div>}
+              {r.note&&noteEdit!==r.id&&!rowLocked&&<div onClick={e=>{e.stopPropagation();setNoteEdit(r.id);}} style={{padding:"0 8px 10px 47px",fontSize:12,color:T.ink3,fontStyle:"italic",cursor:"pointer"}}>📝 {r.note}</div>}
+              {newAbbr.length>0&&!rowLocked&&<div style={{padding:"0 8px 10px 47px",display:"flex",flexWrap:"wrap",gap:4}} onClick={e=>e.stopPropagation()}>{newAbbr.map(a=><button key={a.raw} onClick={e=>{e.stopPropagation();window.open(a.url,"_blank","noopener,noreferrer");}} style={{background:"transparent",color:T.terra,border:"1px solid rgba(184,90,60,0.4)",borderRadius:4,padding:"2px 6px",fontSize:10,fontWeight:500,cursor:"pointer"}}>{a.raw}</button>)}</div>}
+              {noteEdit===r.id&&!rowLocked&&<div style={{padding:"0 8px 12px 47px",display:"flex",alignItems:"center",gap:8}}><input value={r.note} onChange={e=>updateNote(r.id,e.target.value)} placeholder="Add a note for this row…" style={{flex:1,padding:"9px 12px",background:T.linen,border:`1.5px solid ${T.terra}`,borderRadius:9,fontSize:13,color:T.ink,outline:"none"}}/>{noteSaved&&<span style={{fontSize:11,color:T.sage,fontWeight:600,flexShrink:0}}>Note saved</span>}</div>}
             </div>
           );})}
                 </div>}
@@ -3035,10 +3105,6 @@ const Detail = ({p,onBack,onSave}) => {
             <button onClick={addRow} style={{background:T.terra,color:"#fff",border:"none",borderRadius:11,padding:"10px 18px",fontSize:22,cursor:"pointer",lineHeight:1,boxShadow:"0 4px 12px rgba(184,90,60,.35)"}}>+</button>
           </div>
         </>)}
-        {/* Source file direct link */}
-        {tab==="rows"&&p.source_file_url&&p.source_file_url.length>0&&<div style={{position:"fixed",bottom:24,left:"50%",transform:"translateX(-50%)",zIndex:100}}>
-          <button onClick={()=>window.open(p.source_file_url,"_blank","noopener,noreferrer")} style={{background:T.card,color:T.terra,border:`1.5px solid ${T.border}`,borderRadius:99,padding:"10px 20px",fontSize:13,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(139,90,60,.15)",display:"flex",alignItems:"center",gap:6}}>View Source Pattern →</button>
-        </div>}
         {tab==="materials"&&(
           <div style={{marginTop:16,borderTop:`1px solid ${T.border}`,paddingTop:14}}>
             <input ref={attachRef} type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={handleAttachFile} style={{display:"none"}}/>
@@ -4027,6 +4093,7 @@ export default function Wovely() {
   const [readyPromptPattern,setReadyPromptPattern]=useState(null);
   const [deleteTarget,setDeleteTarget]=useState(null);
   const [coverPickerTarget,setCoverPickerTarget]=useState(null);
+  const [patternsLoaded,setPatternsLoaded]=useState(false);
   const{isTablet,isDesktop}=useBreakpoint();
   const allPatterns = [...userPatterns,...starterPatterns];
   const userStarterCount=userPatterns.filter(p=>p.isStarter).length;
@@ -4145,6 +4212,7 @@ export default function Wovely() {
           console.error("[Wovely] Patterns fetch failed:", res.status, errText);
         }
       }catch(e){console.error("[Wovely] Fetch patterns error:",e);}
+      setPatternsLoaded(true);
     })();
   },[authed,authChecked]);
 
@@ -4157,8 +4225,8 @@ export default function Wovely() {
     const allP=[...userPatterns,...starterPatterns];
     const match=allP.find(p=>String(p.id)===pid||String(p._supabaseId)===pid);
     if(match) setSelected(match);
-    else if(authed&&authChecked&&allP.length>0) navigate("/hive",{replace:true});
-  },[view,location.pathname,userPatterns,starterPatterns,authed,authChecked]);
+    else if(authed&&authChecked&&patternsLoaded) navigate("/hive",{replace:true});
+  },[view,location.pathname,userPatterns,starterPatterns,authed,authChecked,patternsLoaded]);
 
   // /hive-vision route: open add-pattern modal (Hive Vision tab) and redirect to /hive
   useEffect(()=>{

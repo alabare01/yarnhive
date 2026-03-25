@@ -63,13 +63,16 @@ Schema:
   "yardage": 0,
   "notes": "1-2 sentence description of the pattern",
   "materials": [{"id": 1, "name": "material name", "amount": "amount", "yardage": 0}],
-  "rows": [{"id": 1, "text": "exact instruction", "done": false, "note": ""}]
+  "components": [{"name": "string", "make_count": 1, "independent": false, "rows": [{"id": 1, "text": "exact instruction", "done": false, "note": ""}]}]
 }
 
 Important:
-- Extract EVERY instruction as its own rows entry
+- Group instructions into named components (e.g. "Body", "Arm", "Assembly & Finishing")
+- Extract EVERY instruction as its own rows entry within its component
 - Include foundation chain, every round or row, assembly steps, finishing
 - Keep instruction text exactly as written
+- Set independent: true on a component ONLY when the pattern explicitly says it can be worked separately or simultaneously (e.g. "make 2 separately", "can be worked at the same time"). Default is false.
+- If the pattern has no clear components, use a single component with name matching the pattern title
 - If no crochet pattern exists return: {"error": "No crochet pattern found"}
 
 Page content:
@@ -109,12 +112,29 @@ ${text}`;
 
     if (parsed.error) return res.status(422).json({ error: parsed.error });
 
-    const rows = (parsed.rows || []).map((r, i) => ({
-      id: Date.now() + i,
-      text: r.text || "",
-      done: false,
-      note: "",
-    }));
+    // Build rows from components if available, otherwise fall back to flat rows
+    let rows;
+    if (parsed.components && parsed.components.length > 0) {
+      rows = [];
+      let rowId = 1;
+      parsed.components.forEach(comp => {
+        const makeCount = comp.make_count || 1;
+        const label = comp.name + (makeCount > 1 ? ` (MAKE ${makeCount})` : "");
+        rows.push({ id: Date.now() + rowId, text: "── " + label.toUpperCase() + " ──", isHeader: true, done: false, note: "", componentName: comp.name, makeCount, independent: !!comp.independent });
+        rowId++;
+        (comp.rows || []).forEach(r => {
+          rows.push({ id: Date.now() + rowId, text: r.text || "", done: false, note: "", componentName: comp.name });
+          rowId++;
+        });
+      });
+    } else {
+      rows = (parsed.rows || []).map((r, i) => ({
+        id: Date.now() + i,
+        text: r.text || "",
+        done: false,
+        note: "",
+      }));
+    }
 
     return res.status(200).json({ ...parsed, rows, thumbnail_url });
 
