@@ -1,10 +1,9 @@
 export default async function handler(req, res) {
-  // CORS — match existing master-doc endpoint
+  // CORS — wovely.app is primary
   const origin = req.headers.origin || "";
   const allowed = [
     "https://wovely.app",
-    "https://yarnhive.app",
-    "https://yarnhive.com",
+    "https://www.wovely.app",
     "http://localhost:5173",
   ];
   if (allowed.includes(origin)) {

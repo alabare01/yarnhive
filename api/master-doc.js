@@ -1,7 +1,7 @@
 export default async function handler(req, res) {
-  // CORS — allow yarnhive.app, yarnhive.com, and wovely.app
+  // CORS — wovely.app is primary
   const origin = req.headers.origin || "";
-  const allowed = ["https://yarnhive.app", "https://yarnhive.com", "https://wovely.app", "https://www.wovely.app", "http://localhost:5173"];
+  const allowed = ["https://wovely.app", "https://www.wovely.app", "http://localhost:5173"];
   if (allowed.includes(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin);
   }
