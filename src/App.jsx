@@ -237,8 +237,8 @@ const uploadPatternFile = async (file, onProgress) => {
   }
 };
 
-// Extract pattern data from PDF/image using Gemini Vision
-// Convert File to base64 (call before Cloudinary upload)
+// Extract pattern data from PDF/image using Gemini
+// Convert File to base64 (used for images only, not PDFs)
 const fileToBase64 = (file) => new Promise((resolve, reject) => {
   const reader = new FileReader();
   reader.onload = () => resolve(reader.result.split(",")[1]);
@@ -246,8 +246,81 @@ const fileToBase64 = (file) => new Promise((resolve, reject) => {
   reader.readAsDataURL(file);
 });
 
-const extractPatternFromPDF = async (base64Data, filename, mimeType) => {
-  console.log("[YarnHive] Gemini extraction starting, mime:", mimeType, "base64 length:", base64Data.length);
+// Extract text from PDF using pdf.js — no image payload, works on any PDF size
+const extractTextFromPDF = async (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        if (!window.pdfjsLib) {
+          await new Promise((res, rej) => {
+            const script = document.createElement("script");
+            script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+            script.onload = res; script.onerror = rej;
+            document.head.appendChild(script);
+          });
+          window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+        }
+        const typedArray = new Uint8Array(e.target.result);
+        const pdf = await window.pdfjsLib.getDocument({ data: typedArray }).promise;
+        console.log("[YarnHive] PDF loaded, pages:", pdf.numPages);
+        let fullText = "";
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const content = await page.getTextContent();
+          const pageText = content.items.map(item => item.str).join(" ");
+          fullText += `\n--- PAGE ${i} ---\n${pageText}`;
+        }
+        console.log("[YarnHive] PDF text extracted, chars:", fullText.length);
+        resolve(fullText);
+      } catch (err) {
+        console.error("[YarnHive] pdf.js text extraction failed:", err);
+        reject(err);
+      }
+    };
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(file);
+  });
+};
+
+// Render page 1 of PDF to canvas — local cover image, no Cloudinary plan required
+const renderPDFCoverImage = async (file) => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        if (!window.pdfjsLib) {
+          await new Promise((res, rej) => {
+            const script = document.createElement("script");
+            script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+            script.onload = res; script.onerror = rej;
+            document.head.appendChild(script);
+          });
+          window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+        }
+        const typedArray = new Uint8Array(e.target.result);
+        const pdf = await window.pdfjsLib.getDocument({ data: typedArray }).promise;
+        const page = await pdf.getPage(1);
+        const viewport = page.getViewport({ scale: 1.5 });
+        const canvas = document.createElement("canvas");
+        canvas.width = viewport.width; canvas.height = viewport.height;
+        const ctx = canvas.getContext("2d");
+        await page.render({ canvasContext: ctx, viewport }).promise;
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+        console.log("[YarnHive] PDF page 1 rendered for cover, size:", dataUrl.length);
+        resolve(dataUrl);
+      } catch (err) {
+        console.warn("[YarnHive] PDF cover render failed:", err);
+        resolve(null);
+      }
+    };
+    reader.onerror = () => resolve(null);
+    reader.readAsArrayBuffer(file);
+  });
+};
+
+const extractPatternFromPDF = async (textOrBase64, filename, mimeType, isTextMode) => {
+  console.log("[YarnHive] Gemini extraction starting, mode:", isTextMode ? "text" : "base64", "mime:", mimeType);
   if (!GEMINI_API_KEY) { console.error("[YarnHive] No Gemini API key"); throw new Error("Gemini API key not configured"); }
 
   const prompt = `You are a crochet pattern extraction specialist. Analyze this crochet pattern and extract all structured data. Return ONLY valid JSON with no markdown, no backticks, no explanation.
@@ -275,13 +348,14 @@ For each row/round, extract repeat_brackets: an array of bracket repeat patterns
 
 Be thorough -- extract every component, every round, every material. Ensure the JSON is complete and valid. Do not truncate.`;
 
+  // Text mode: send extracted text directly (PDFs) — tiny payload, fast, reliable
+  // Base64 mode: send raw file data (images like jpg/png)
+  const parts = isTextMode
+    ? [{ text: prompt + "\n\nPATTERN TEXT:\n" + textOrBase64 }]
+    : [{ text: prompt }, { inline_data: { mime_type: mimeType || "image/jpeg", data: textOrBase64 } }];
+
   const body = {
-    contents: [{
-      parts: [
-        { text: prompt },
-        { inline_data: { mime_type: mimeType || "application/pdf", data: base64Data } }
-      ]
-    }],
+    contents: [{ parts }],
     generationConfig: { temperature: 0.1, maxOutputTokens: 65536 }
   };
 
@@ -1243,31 +1317,45 @@ const PDFUploadForm = ({onSave}) => {
     // Size check before anything
     if(f.size>10*1024*1024){setStage("error");setErrorMsg("Pattern file is too large for automatic reading (max 10MB). Try a smaller file.");return;}
     try{
-      // Convert to base64 FIRST (before Cloudinary upload) for Gemini
-      console.log("[YarnHive] Converting file to base64...", f.name, f.type, (f.size/1024).toFixed(0)+"KB");
-      const base64Data=await fileToBase64(f);
       const fileMime=f.type||"application/pdf";
-      console.log("[YarnHive] Base64 ready, length:", base64Data.length);
-      // Stage 1: Upload to Cloudinary for storage
+      const isPDF=fileMime==="application/pdf"||f.name.toLowerCase().endsWith(".pdf");
+      console.log("[YarnHive] File:", f.name, f.type, (f.size/1024).toFixed(0)+"KB", "isPDF:", isPDF);
+      // Stage 1: Upload to Cloudinary + render cover (parallel)
       setStage("uploading");setStageText("Uploading your pattern...");setProgress(10);
       const intv1=setInterval(()=>setProgress(p=>Math.min(p+3,30)),200);
-      const uploaded=await uploadPatternFile(f);
+      // Run upload and cover render in parallel
+      const [uploaded, pdfCoverDataUrl] = await Promise.all([
+        uploadPatternFile(f),
+        isPDF ? renderPDFCoverImage(f) : Promise.resolve(null)
+      ]);
       clearInterval(intv1);
       if(!uploaded){setStage("error");setErrorMsg("Upload failed — check your connection and try again.");return;}
-      // Generate PDF page-1 thumbnail via Cloudinary transform
-      let coverUrl=null;
-      try{
-        const u=uploaded.url;
-        const idx=u.indexOf("/upload/");
-        if(idx!==-1) coverUrl=u.slice(0,idx+8)+"fl_attachment:false/pg_1/w_400,h_400,c_fill/"+u.slice(idx+8);
-      }catch(e){console.warn("[YarnHive] Cover thumbnail generation failed:",e);}
-      setFileInfo({url:uploaded.url,name:uploaded.filename,type:uploaded.type,coverUrl});setProgress(33);
-      // Stage 2: Extract with Gemini using local base64 (no re-fetch needed)
+      // Upload PDF cover image to Cloudinary if we rendered one
+      let coverCloudinaryUrl=null;
+      if(pdfCoverDataUrl){
+        try{
+          const coverUpload=await uploadToCloudinary(pdfCoverDataUrl,"yarnhive_covers");
+          if(coverUpload) coverCloudinaryUrl=coverUpload.url;
+          console.log("[YarnHive] PDF cover uploaded:", coverCloudinaryUrl);
+        }catch(e){console.warn("[YarnHive] Cover upload failed:",e);}
+      }
+      setFileInfo({url:uploaded.url,name:uploaded.filename,type:uploaded.type,coverUrl:coverCloudinaryUrl});setProgress(33);
+      // Stage 2: Extract — text mode for PDFs (fast), base64 for images
       setStage("extracting");setStageText("Reading your pattern...");
       const intv2=setInterval(()=>setProgress(p=>Math.min(p+1,62)),300);
       let result;
-      try{result=await extractPatternFromPDF(base64Data,f.name,fileMime);}
-      catch(ex){clearInterval(intv2);console.error("[YarnHive] Extraction failed:",ex);setStage("error");setErrorMsg("We couldn't read this pattern automatically. You can still save it manually.");setExtracted({title:f.name.replace(/\.(pdf|jpg|png|jpeg)$/i,"").replace(/[-_]/g," "),components:[],materials:[],pattern_notes:"",hook_size:"",yarn_weight:"",designer:"",difficulty:"",assembly_notes:""});return;}
+      try{
+        if(isPDF){
+          console.log("[YarnHive] Using pdf.js text extraction for PDF...");
+          const pdfText=await extractTextFromPDF(f);
+          result=await extractPatternFromPDF(pdfText,f.name,fileMime,true);
+        } else {
+          console.log("[YarnHive] Using base64 extraction for image...");
+          const base64Data=await fileToBase64(f);
+          result=await extractPatternFromPDF(base64Data,f.name,fileMime,false);
+        }
+      }
+      catch(ex){clearInterval(intv2);console.error("[YarnHive] Extraction failed:",ex);setStage("error");setErrorMsg("We couldn't read this pattern automatically.");setExtracted({title:f.name.replace(/\.(pdf|jpg|png|jpeg)$/i,"").replace(/[-_]/g," "),components:[],materials:[],pattern_notes:"",hook_size:"",yarn_weight:"",designer:"",difficulty:"",assembly_notes:""});return;}
       clearInterval(intv2);setProgress(66);
       setStage("building");setStageText("Building your workspace...");
       await new Promise(r=>setTimeout(r,600));setProgress(100);
@@ -1298,9 +1386,22 @@ const PDFUploadForm = ({onSave}) => {
   );
   if(stage==="error") return (
     <div style={{padding:"24px 0"}}>
-      <div style={{background:T.terraLt,borderRadius:14,padding:"20px",border:`1px solid rgba(184,90,60,.2)`,marginBottom:16}}><div style={{fontSize:14,fontWeight:600,color:T.terra,marginBottom:6}}>Extraction incomplete</div><div style={{fontSize:13,color:T.ink2,lineHeight:1.6}}>{errorMsg}</div></div>
-      {fileInfo&&<Btn onClick={handleFallbackSave}>Save with file attached (manual entry)</Btn>}
-      <div style={{marginTop:8}}><Btn variant="ghost" onClick={()=>{setStage("pick");setProgress(0);setErrorMsg("");}}>Try another file</Btn></div>
+      <div style={{fontSize:36,textAlign:"center",marginBottom:12}}>🐝</div>
+      <div style={{fontFamily:T.serif,fontSize:17,color:T.ink,textAlign:"center",marginBottom:6}}>This one stumped us</div>
+      <div style={{fontSize:13,color:T.ink2,textAlign:"center",lineHeight:1.7,marginBottom:20}}>
+        {fileInfo ? "We saved your file. Tap below to start building — your PDF will be right there as you go." : "We had trouble reading this pattern. Try another file or enter your rows manually."}
+      </div>
+      {fileInfo&&(
+        <div style={{background:T.sageLt,borderRadius:14,padding:"16px",marginBottom:12,display:"flex",alignItems:"center",gap:12}}>
+          <span style={{fontSize:20}}>📎</span>
+          <div style={{flex:1}}>
+            <div style={{fontSize:13,fontWeight:600,color:T.sage,marginBottom:2}}>Pattern saved with file attached</div>
+            <div style={{fontSize:12,color:T.ink2}}>You can view it anytime while building your rows</div>
+          </div>
+        </div>
+      )}
+      {fileInfo&&<Btn onClick={handleFallbackSave}>Start building — view PDF as I go</Btn>}
+      <div style={{marginTop:8}}><Btn variant="ghost" onClick={()=>{setStage("pick");setProgress(0);setErrorMsg("");}}>Try a different file</Btn></div>
     </div>
   );
   const totalRows=(extracted?.components||[]).reduce((s,c)=>(s+(c.rows||[]).length),0);
@@ -1314,8 +1415,8 @@ const PDFUploadForm = ({onSave}) => {
         {!coverUrl&&fileInfo?.coverUrl&&!coverFailed&&<div style={{marginBottom:10,borderRadius:10,overflow:"hidden",border:`1px solid ${T.border}`,width:120,height:120}}><img src={fileInfo.coverUrl} alt="PDF cover" onError={()=>setCoverFailed(true)} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/></div>}
         {!coverUrl&&coverFailed&&<div style={{marginBottom:10,width:120,height:120,borderRadius:10,background:T.linen,border:`1px solid ${T.border}`,display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:11,color:T.ink3,textAlign:"center",padding:8}}>No preview</span></div>}
         <div style={{display:"flex",gap:6,marginBottom:10}}>
-          {["pdf","photo","library"].map(t=>(
-            <button key={t} onClick={()=>setCoverTab(t)} style={{background:coverTab===t?T.terra:"transparent",color:coverTab===t?"#fff":T.ink3,border:`1px solid ${coverTab===t?T.terra:T.border}`,borderRadius:8,padding:"5px 10px",fontSize:11,fontWeight:coverTab===t?600:400,cursor:"pointer"}}>{t==="pdf"?"From PDF":t==="photo"?"Take Photo":"Our Library"}</button>
+          {["photo","library"].map(t=>(
+            <button key={t} onClick={()=>setCoverTab(t)} style={{background:coverTab===t?T.terra:"transparent",color:coverTab===t?"#fff":T.ink3,border:`1px solid ${coverTab===t?T.terra:T.border}`,borderRadius:8,padding:"5px 10px",fontSize:11,fontWeight:coverTab===t?600:400,cursor:"pointer"}}>{t==="photo"?"📷 My Photo":"🖼️ Our Library"}</button>
           ))}
         </div>
         {coverTab==="pdf"&&(
