@@ -3109,8 +3109,8 @@ const Detail = ({p,onBack,onSave}) => {
           </div>
         </>)}
         {/* Source file direct link */}
-        {tab==="rows"&&p.source_file_url&&p.source_file_url.length>0&&<div style={{position:"fixed",bottom:24,left:"50%",transform:"translateX(-50%)",zIndex:100}}>
-          <button onClick={()=>window.open(p.source_file_url,"_blank","noopener,noreferrer")} style={{background:T.card,color:T.terra,border:`1.5px solid ${T.border}`,borderRadius:99,padding:"10px 20px",fontSize:13,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(139,90,60,.15)",display:"flex",alignItems:"center",gap:6}}>View Source Pattern →</button>
+        {tab==="rows"&&p.source_file_url&&p.source_file_url.length>0&&<div style={{position:"fixed",bottom:24,left:"50%",transform:"translateX(-50%)",zIndex:200}}>
+          <button onClick={()=>window.open(p.source_file_url,"_blank","noopener,noreferrer")} style={{background:T.terra,color:"#fff",border:"none",borderRadius:99,padding:"10px 20px",fontSize:13,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.35)",display:"flex",alignItems:"center",gap:6}}>📄 View Source Pattern →</button>
         </div>}
         {tab==="materials"&&(
           <div style={{marginTop:16,borderTop:`1px solid ${T.border}`,paddingTop:14}}>
