@@ -3134,6 +3134,7 @@ const Detail = ({p,onBack,onSave}) => {
           </div>
         )}
       </div>
+      {p.source_file_url&&tab==="rows"&&<button onClick={()=>window.open(p.source_file_url,"_blank","noopener,noreferrer")} style={{position:"fixed",bottom:24,left:"50%",transform:"translateX(-50%)",zIndex:200,background:T.terra,color:"#fff",border:"none",borderRadius:999,padding:"12px 24px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.4)",whiteSpace:"nowrap"}}>📄 View Source Pattern →</button>}
     </div>
   );
 };
