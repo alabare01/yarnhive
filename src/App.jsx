@@ -2808,6 +2808,8 @@ const Detail = ({p,onBack,onSave}) => {
   const [noteSaved,setNoteSaved]=useState(false);
   const [attachUploading,setAttachUploading]=useState(false);
   const [expandedSections,setExpandedSections]=useState({});
+  const [rowEditing,setRowEditing]=useState(null); // {id, text} when editing a row inline
+
   // Backfill cover_image_url from PDF source file
   useEffect(()=>{
     if(p.cover_image_url||!p.source_file_url||!p.source_file_url.endsWith(".pdf"))return;
@@ -2830,15 +2832,7 @@ const Detail = ({p,onBack,onSave}) => {
   const isSectionComplete=sec=>sec.rows.length>0&&sec.rows.every(r=>r.done);
   const isAssemblySection=sec=>sec.header&&/assembly|finishing/i.test(sec.header.text);
   const isSectionIndependent=sec=>!!sec.header?.independent;
-  const isSectionLocked=(sec,si)=>{
-    if(!sec.header)return false;
-    if(isSectionIndependent(sec))return false;
-    // First non-independent section is never locked
-    if(!linearSections.slice(0,si).some(s=>!isSectionIndependent(s)))return false;
-    if(isAssemblySection(sec)){return linearSections.some((s,j)=>j!==si&&!isAssemblySection(s)&&!isSectionComplete(s));}
-    for(let j=si-1;j>=0;j--){if(isSectionIndependent(linearSections[j]))continue;if(!isSectionComplete(linearSections[j]))return true;break;}
-    return false;
-  };
+  const isSectionLocked=()=>false;
   const isRowCheckable=(globalIdx,sec,si)=>{
     if(isSectionLocked(sec,si))return false;
     const idxInSec=sec.rows.findIndex(r=>r._gi===globalIdx);
@@ -2920,6 +2914,7 @@ const Detail = ({p,onBack,onSave}) => {
     for(const m of [25,50,75,100]){if(prev<m&&newDone>=m){setMilestone(m);break;}}
     prevDone.current=newDone;
   };
+  const saveRowText=(id,newText)=>{if(!newText.trim())return;const next=rows.map(r=>r.id===id?{...r,text:newText.trim()}:r);setRows(next);onSave({...p,rows:next});setRowEditing(null);};
   const addRow=()=>{if(!newRow.trim())return;const next=[...rows,{id:Date.now(),text:newRow.trim(),done:false,note:""}];setRows(next);onSave({...p,rows:next});setNewRow("");};
   const save=()=>{onSave({...draft,rows});setEditing(false);};
   const updateNote=(id,note)=>{const next=rows.map(r=>r.id===id?{...r,note}:r);setRows(next);onSave({...p,rows:next});setNoteSaved(true);setTimeout(()=>setNoteSaved(false),2000);};
@@ -3055,29 +3050,25 @@ const Detail = ({p,onBack,onSave}) => {
             </div>
           ):(()=>{
             const seenAbbr=new Set();
-            const prevSectionName=(si)=>{for(let j=si-1;j>=0;j--){if(!linearSections[j].header?.independent&&linearSections[j].header)return linearSections[j].header.text.replace(/──/g,"").replace(/━━━/g,"").trim();}return"previous component";};
             return linearSections.map((sec,si)=>{
               const secKey=sec.header?.id||"sec-"+si;
               const secDone=sec.rows.filter(r=>r.done).length;
               const secTotal=sec.rows.length;
               const secComplete=secTotal>0&&secDone===secTotal;
-              const locked=isSectionLocked(sec,si);
-              const defaultOpen=!locked&&(sec.rows.some(r=>!r.done)||!sec.header);
-              const open=locked?false:(expandedSections[secKey]!==undefined?expandedSections[secKey]:defaultOpen);
-              const toggleSec=()=>{if(!locked)setExpandedSections(prev=>({...prev,[secKey]:!open}));};
-              return (<div key={secKey} style={{marginBottom:8,opacity:locked?.55:1,transition:"opacity .2s"}}>
-                {sec.header&&<button onClick={toggleSec} style={{width:"100%",background:locked?"#E8E4DF":secComplete?T.sageLt:T.linen,border:`1px solid ${locked?"#D5D0CA":secComplete?"rgba(92,122,94,.3)":T.border}`,borderRadius:open?"10px 10px 0 0":10,padding:"12px 14px",cursor:locked?"default":"pointer",display:"flex",alignItems:"center",gap:10,textAlign:"left"}} title={locked?(isAssemblySection(sec)?"Complete all components first":"Complete "+prevSectionName(si)+" first"):""}>
-                  {locked?<span style={{fontSize:14,color:T.ink3}}>🔒</span>:<span style={{fontSize:12,color:T.ink3}}>{open?"▼":"▶"}</span>}
+              const defaultOpen=sec.rows.some(r=>!r.done)||!sec.header;
+              const open=expandedSections[secKey]!==undefined?expandedSections[secKey]:defaultOpen;
+              const toggleSec=()=>setExpandedSections(prev=>({...prev,[secKey]:!open}));
+              return (<div key={secKey} style={{marginBottom:8}}>
+                {sec.header&&<button onClick={toggleSec} style={{width:"100%",background:secComplete?T.sageLt:T.linen,border:`1px solid ${secComplete?"rgba(92,122,94,.3)":T.border}`,borderRadius:open?"10px 10px 0 0":10,padding:"12px 14px",cursor:"pointer",display:"flex",alignItems:"center",gap:10,textAlign:"left"}}>
+                  <span style={{fontSize:12,color:T.ink3}}>{open?"▼":"▶"}</span>
                   <div style={{flex:1}}>
-                    <div style={{fontSize:13,fontWeight:700,color:locked?T.ink3:secComplete?T.sage:T.terra}}>{sec.header.text.replace(/──/g,"").trim()}{secComplete?" ✓":""}</div>
-                    {locked
-                      ?<div style={{fontSize:11,color:T.ink3,marginTop:2}}>{isAssemblySection(sec)?"Complete all components first":"Complete "+prevSectionName(si)+" first"}</div>
-                      :<div style={{fontSize:11,color:T.ink3,marginTop:2}}>{secDone} of {secTotal} complete</div>}
+                    <div style={{fontSize:13,fontWeight:700,color:secComplete?T.sage:T.terra}}>{sec.header.text.replace(/──/g,"").trim()}{secComplete?" ✓":""}</div>
+                    <div style={{fontSize:11,color:T.ink3,marginTop:2}}>{secDone} of {secTotal} complete</div>
                   </div>
-                  {sec.header.makeCount>1&&<div style={{background:locked?"#B8B2AA":T.gold,color:"#fff",borderRadius:99,padding:"2px 8px",fontSize:10,fontWeight:700}}>×{sec.header.makeCount}</div>}
-                  <div style={{width:60}}><Bar val={secTotal?secDone/secTotal*100:0} color={locked?"#B8B2AA":secComplete?T.sage:T.terra} h={3}/></div>
+                  {sec.header.makeCount>1&&<div style={{background:T.gold,color:"#fff",borderRadius:99,padding:"2px 8px",fontSize:10,fontWeight:700}}>×{sec.header.makeCount}</div>}
+                  <div style={{width:60}}><Bar val={secTotal?secDone/secTotal*100:0} color={secComplete?T.sage:T.terra} h={3}/></div>
                 </button>}
-                {(open||!sec.header)&&!locked&&<div style={{border:sec.header?`1px solid ${T.border}`:"none",borderTop:"none",borderRadius:sec.header?"0 0 10px 10px":0,overflow:"hidden"}}>
+                {(open||!sec.header)&&<div style={{border:sec.header?`1px solid ${T.border}`:"none",borderTop:"none",borderRadius:sec.header?"0 0 10px 10px":0,overflow:"hidden"}}>
                   {sec.rows.map((r,i)=>{const globalIdx=r._gi;const isCurrent=globalIdx===currentRowIdx;const rowLocked=!r.done&&!isRowCheckable(globalIdx,sec,si);const newAbbr=r.done?[]:findNewAbbr(r.text,seenAbbr);return(
             <div key={r.id} style={{borderBottom:`1px solid ${T.border}`,background:r.isAction&&!rowLocked?"rgba(184,144,44,.06)":"transparent"}}>
               <div onClick={()=>{if(!rowLocked)toggle(r.id);}} style={{display:"flex",gap:13,alignItems:"flex-start",cursor:rowLocked?"default":"pointer",background:isCurrent&&!rowLocked?"rgba(184,90,60,.04)":"transparent",padding:"14px 8px",margin:"0 -8px",opacity:rowLocked?.45:1,transition:"opacity .15s"}}>
@@ -3089,9 +3080,18 @@ const Detail = ({p,onBack,onSave}) => {
                   {!isCurrent&&r.isAction&&!rowLocked&&<div style={{fontSize:10,color:T.gold,fontWeight:600,letterSpacing:".06em",marginBottom:2}}>ACTION</div>}
                   {!isCurrent&&!r.isAction&&!rowLocked&&<div style={{fontSize:10,color:T.ink3,letterSpacing:".06em",marginBottom:2}}>ROW {i+1}</div>}
                   {rowLocked&&<div style={{fontSize:10,color:T.ink3,letterSpacing:".06em",marginBottom:2}}>ROW {i+1}</div>}
-                  <div style={{fontSize:14,lineHeight:1.6,color:r.done?T.ink3:rowLocked?"#B8B2AA":T.ink,textDecoration:r.done?"line-through":"none"}}>{r.text}</div>
+                  {rowEditing?.id===r.id
+                    ?<div style={{display:"flex",gap:6,alignItems:"center"}} onClick={e=>e.stopPropagation()}>
+                      <input autoFocus value={rowEditing.text} onChange={e=>setRowEditing({...rowEditing,text:e.target.value})} onKeyDown={e=>{if(e.key==="Enter")saveRowText(r.id,rowEditing.text);if(e.key==="Escape")setRowEditing(null);}} style={{flex:1,padding:"6px 10px",background:T.linen,border:`1.5px solid ${T.terra}`,borderRadius:8,fontSize:13,color:T.ink,outline:"none",lineHeight:1.5}}/>
+                      <button onClick={()=>saveRowText(r.id,rowEditing.text)} style={{background:T.sage,border:"none",borderRadius:6,padding:"5px 8px",color:"#fff",fontSize:12,cursor:"pointer",fontWeight:700}}>✓</button>
+                      <button onClick={()=>setRowEditing(null)} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,padding:"5px 8px",color:T.ink3,fontSize:12,cursor:"pointer"}}>✕</button>
+                    </div>
+                    :<div style={{fontSize:14,lineHeight:1.6,color:r.done?T.ink3:rowLocked?"#B8B2AA":T.ink,textDecoration:r.done?"line-through":"none"}}>{r.text}</div>}
                 </div>
-                {!rowLocked&&<button onClick={e=>{e.stopPropagation();setNoteEdit(noteEdit===r.id?null:r.id);}} style={{background:"none",border:"none",fontSize:14,cursor:"pointer",padding:"4px",flexShrink:0,position:"relative"}}><span style={{color:r.note?T.terra:T.ink3,opacity:r.note?1:.5}}>📝</span></button>}
+                {!rowLocked&&rowEditing?.id!==r.id&&<div style={{display:"flex",gap:2,flexShrink:0}}>
+                  <button onClick={e=>{e.stopPropagation();setRowEditing({id:r.id,text:r.text});setNoteEdit(null);}} style={{background:"none",border:"none",fontSize:13,cursor:"pointer",padding:"4px",color:T.ink3,opacity:.5}} title="Edit row">✏️</button>
+                  <button onClick={e=>{e.stopPropagation();setNoteEdit(noteEdit===r.id?null:r.id);}} style={{background:"none",border:"none",fontSize:14,cursor:"pointer",padding:"4px"}}><span style={{color:r.note?T.terra:T.ink3,opacity:r.note?1:.5}}>📝</span></button>
+                </div>}
               </div>
               {!r.done&&!rowLocked&&(r.repeat_brackets||[]).some(b=>b.count>1)&&<div style={{padding:"0 8px 10px 47px"}}><SubCounter row={r} globalIdx={globalIdx} onDotTap={handleDotTap}/></div>}
               {r.note&&noteEdit!==r.id&&!rowLocked&&<div onClick={e=>{e.stopPropagation();setNoteEdit(r.id);}} style={{padding:"0 8px 10px 47px",fontSize:12,color:T.ink3,fontStyle:"italic",cursor:"pointer"}}>📝 {r.note}</div>}
