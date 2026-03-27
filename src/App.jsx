@@ -1467,8 +1467,11 @@ const ChangelogPage = () => {
 export default function Wovely() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [authed,setAuthed]=useState(false),[isPro,setIsPro]=useState(false);
-  const [authChecked,setAuthChecked]=useState(false);
+  // Instant session restore: if a local session exists, assume authed immediately
+  // to avoid login screen flicker. The async validate() will correct if expired.
+  const _hasLocalSession = !!getSession()?.access_token && !!supabaseAuth.getUser();
+  const [authed,setAuthed]=useState(_hasLocalSession),[isPro,setIsPro]=useState(false);
+  const [authChecked,setAuthChecked]=useState(_hasLocalSession);
   const [userPatterns,setUserPatterns]=useState([]);
   const [starterPatterns,setStarterPatterns]=useState(()=>makeStarterPatterns());
   // Derive view from URL path instead of state
@@ -1534,7 +1537,7 @@ export default function Wovely() {
     validate();
   },[]);
 
-  const handleSignOut = async () => { await supabaseAuth.signOut(); setAuthed(false); setIsPro(false); setUserPatterns([]); navigate("/"); };
+  const handleSignOut = async () => { await supabaseAuth.signOut(); setAuthed(false); setIsPro(false); setUserPatterns([]); localStorage.removeItem("yh_last_url"); navigate("/"); };
 
   // Navigation helper — translates view keys to URL paths
   const navigateToView = useCallback((v, patternId) => {
@@ -1617,6 +1620,16 @@ export default function Wovely() {
     else if(authed&&authChecked&&allP.length>0) navigate("/hive",{replace:true});
   },[view,location.pathname,userPatterns,starterPatterns,authed,authChecked]);
 
+  // Last URL memory: save pattern detail URLs, clear on dashboard return
+  useEffect(()=>{
+    if(!authed) return;
+    if(location.pathname.startsWith("/hive/") && patternIdFromPath(location.pathname)){
+      localStorage.setItem("yh_last_url",location.pathname);
+    } else if(location.pathname==="/hive"){
+      localStorage.removeItem("yh_last_url");
+    }
+  },[location.pathname,authed]);
+
   // /hive-vision route: open add-pattern modal (Hive Vision tab) and redirect to /hive
   useEffect(()=>{
     if(view==="hive-vision"&&authed){
@@ -1698,7 +1711,8 @@ export default function Wovely() {
 
   const handleSignIn = () => {
     setAuthed(true);
-    navigate("/hive");
+    const lastUrl=localStorage.getItem("yh_last_url");
+    navigate(lastUrl&&lastUrl.startsWith("/hive/")?lastUrl:"/hive");
     setShowWelcomeToast(true);
     setTimeout(()=>setShowWelcomeToast(false),3000);
     showEmailBannerIfNeeded();
@@ -1715,8 +1729,12 @@ export default function Wovely() {
     if(location.pathname!=="/") return <Navigate to="/" replace/>;
     return <><CSS/><WaitlistPopup/><Auth onEnter={handleSignIn} onEnterAsNew={handleNewSignup}/></>;
   }
-  // Authed users on root redirect to /hive
-  if(location.pathname==="/") return <Navigate to="/hive" replace/>;
+  // Authed users on root redirect to last URL (pattern detail) or /hive
+  if(location.pathname==="/"){
+    const lastUrl=localStorage.getItem("yh_last_url");
+    if(lastUrl&&lastUrl.startsWith("/hive/")) return <Navigate to={lastUrl} replace/>;
+    return <Navigate to="/hive" replace/>;
+  }
   // Unknown routes redirect to /hive
   const knownPaths=["/hive","/builds","/browse","/stash","/tools","/shopping","/profile","/hive-vision","/master-doc"];
   if(!knownPaths.some(p=>location.pathname===p||location.pathname.startsWith("/hive/"))) return <Navigate to="/hive" replace/>;
