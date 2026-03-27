@@ -1473,6 +1473,7 @@ export default function Wovely() {
   const [authed,setAuthed]=useState(_hasLocalSession),[isPro,setIsPro]=useState(false);
   const [authChecked,setAuthChecked]=useState(_hasLocalSession);
   const [userPatterns,setUserPatterns]=useState([]);
+  const [patternsFetched,setPatternsFetched]=useState(false);
   const [starterPatterns,setStarterPatterns]=useState(()=>makeStarterPatterns());
   // Derive view from URL path instead of state
   const view = viewFromPath(location.pathname);
@@ -1600,15 +1601,18 @@ export default function Wovely() {
           }else{
             console.log("[Wovely] No patterns in Supabase for this user, keeping local state as-is");
           }
+          setPatternsFetched(true);
         }else{
           const errText=await res.text();
           console.error("[Wovely] Patterns fetch failed:", res.status, errText);
+          setPatternsFetched(true);
         }
-      }catch(e){console.error("[Wovely] Fetch patterns error:",e);}
+      }catch(e){console.error("[Wovely] Fetch patterns error:",e);setPatternsFetched(true);}
     })();
   },[authed,authChecked]);
 
   // Deep-link resolution: when URL is /hive/:id, resolve selected pattern from loaded data
+  // Wait for patternsFetched so instant session restore doesn't redirect before patterns load
   useEffect(()=>{
     if(view!=="detail") return;
     const pid=patternIdFromPath(location.pathname);
@@ -1617,8 +1621,8 @@ export default function Wovely() {
     const allP=[...userPatterns,...starterPatterns];
     const match=allP.find(p=>String(p.id)===pid||String(p._supabaseId)===pid);
     if(match) setSelected(match);
-    else if(authed&&authChecked&&allP.length>0) navigate("/hive",{replace:true});
-  },[view,location.pathname,userPatterns,starterPatterns,authed,authChecked]);
+    else if(authed&&authChecked&&patternsFetched&&allP.length>0) navigate("/hive",{replace:true});
+  },[view,location.pathname,userPatterns,starterPatterns,authed,authChecked,patternsFetched]);
 
   // Last URL memory: save pattern detail URLs, clear on dashboard return
   useEffect(()=>{
