@@ -909,114 +909,136 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade}) => {
     </div>
   );
   const totalRows=(extracted?.components||[]).reduce((s,c)=>(s+(c.rows||[]).length),0);
+  const heroImg=coverUrl||fileInfo?.coverUrl||null;
+  const [matExpanded,setMatExpanded]=useState(false);
+  const [compExpanded,setCompExpanded]=useState({});
+  const matList=(extracted?.materials||[]);
+  const matSummary=matList.length>3?matList.slice(0,2).map(m=>m.name).join(", ")+" +"+( matList.length-2)+" more":matList.map(m=>m.name).join(", ");
   return (
-    <div style={{paddingBottom:8}}>
-      <div style={{background:T.sageLt,borderRadius:12,padding:"12px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:16}}>✓</span><span style={{fontSize:13,color:T.sage,fontWeight:600}}>We read your pattern — does this look right?</span></div>
-      {/* Two-column: Cover image (left) + Stitch Check (right) */}
-      <div style={{display:"flex",gap:12,alignItems:"flex-start",marginBottom:16}}>
-        {/* Left: cover image + buttons */}
-        <div style={{flexShrink:0,width:120}}>
-          <div style={{fontSize:11,color:T.ink2,textTransform:"uppercase",letterSpacing:".08em",marginBottom:8}}>Cover</div>
-          {coverUrl?<div onClick={()=>coverTab==="photo"&&coverFileRef.current?.click()} style={{marginBottom:8,borderRadius:10,overflow:"hidden",border:`2px solid ${T.terra}`,width:120,height:120,cursor:coverTab==="photo"?"pointer":"default"}}><img src={coverUrl} alt="Cover" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/></div>
-          :fileInfo?.coverUrl&&!coverFailed?<div onClick={()=>coverTab==="photo"&&coverFileRef.current?.click()} style={{marginBottom:8,borderRadius:10,overflow:"hidden",border:`1px solid ${T.border}`,width:120,height:120,cursor:coverTab==="photo"?"pointer":"default"}}><img src={fileInfo.coverUrl} alt="PDF cover" onError={()=>setCoverFailed(true)} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/></div>
-          :<div onClick={()=>coverFileRef.current?.click()} style={{marginBottom:8,width:120,height:120,borderRadius:10,background:T.linen,border:`1.5px dashed ${T.border}`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",cursor:"pointer",gap:4}}><span style={{fontSize:20}}>📷</span><span style={{fontSize:10,color:T.ink3}}>Add cover</span></div>}
-          <div style={{display:"flex",gap:4,marginBottom:6,flexWrap:"wrap"}}>
-            {["photo","library"].map(t=>(
-              <button key={t} onClick={()=>setCoverTab(t)} style={{background:coverTab===t?T.terra:"transparent",color:coverTab===t?"#fff":T.ink3,border:`1px solid ${coverTab===t?T.terra:T.border}`,borderRadius:6,padding:"4px 8px",fontSize:10,fontWeight:coverTab===t?600:400,cursor:"pointer"}}>{t==="photo"?"📷 Photo":"🖼️ Library"}</button>
-            ))}
+    <div style={{paddingBottom:8,background:"#FAF7F2",margin:"-0px -22px -40px",padding:"0 22px 40px"}}>
+      <input ref={coverFileRef} type="file" accept="image/*" onChange={async(e)=>{
+        const f=e.target.files?.[0];if(!f)return;setCoverUploading(true);
+        const fd=new FormData();fd.append("file",f);fd.append("upload_preset","yarnhive_patterns");fd.append("transformation","c_fill,g_auto,ar_16:9");
+        try{const res=await fetch("https://api.cloudinary.com/v1_1/dmaupzhcx/image/upload",{method:"POST",body:fd});if(res.ok){const d=await res.json();setCoverUrl(d.secure_url);}}catch{}
+        setCoverUploading(false);
+      }} style={{display:"none"}}/>
+      {/* ── HERO ZONE ── */}
+      <div style={{position:"relative",height:200,margin:"0 -22px",overflow:"hidden",background:"#1C1714"}}>
+        {heroImg&&<><img src={heroImg} alt="" style={{position:"absolute",width:"100%",height:"100%",objectFit:"cover",filter:"blur(20px) saturate(1.2) brightness(0.6)",transform:"scale(1.1)",pointerEvents:"none"}}/>
+        <img src={heroImg} alt={editTitle} style={{position:"absolute",left:"50%",transform:"translateX(-50%)",height:"100%",width:"auto",objectFit:"contain",zIndex:1}}/></>}
+        {!heroImg&&<div style={{position:"absolute",inset:0,background:`linear-gradient(135deg,${T.terra},#6B2A10)`}}/>}
+        <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(20,14,10,.85) 0%,rgba(20,14,10,.15) 60%)",zIndex:2}}/>
+        <div style={{position:"absolute",bottom:16,left:22,right:80,zIndex:3}}>
+          <div style={{fontFamily:T.serif,fontSize:22,fontWeight:700,color:"#fff",lineHeight:1.15,textShadow:"0 2px 8px rgba(0,0,0,.4)",marginBottom:4}}>{editTitle||"Untitled Pattern"}</div>
+          {editDesigner&&<div style={{fontSize:12,color:"rgba(255,255,255,.7)"}}>{editDesigner}</div>}
+        </div>
+        <button onClick={handleSave} style={{position:"absolute",top:14,right:22,zIndex:3,background:"rgba(255,255,255,.2)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.25)",borderRadius:99,padding:"7px 16px",color:"#fff",fontSize:12,fontWeight:600,cursor:"pointer"}}>Looks good ✓</button>
+        <button onClick={()=>coverFileRef.current?.click()} style={{position:"absolute",top:14,left:22,zIndex:3,background:"rgba(255,255,255,.15)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.2)",borderRadius:99,padding:"5px 12px",color:"rgba(255,255,255,.8)",fontSize:11,cursor:"pointer"}}>📷 Change Cover</button>
+      </div>
+      {/* ── CONTENT ZONE: two columns ── */}
+      <div style={{display:"flex",gap:24,marginTop:20}}>
+        {/* LEFT 58% */}
+        <div style={{flex:"0 0 58%",minWidth:0}}>
+          {/* Ghost input fields */}
+          <div style={{marginBottom:12}}>
+            <div style={{fontSize:9,color:T.ink3,textTransform:"uppercase",letterSpacing:".1em",marginBottom:4}}>Pattern Title</div>
+            <input value={editTitle} onChange={e=>setEditTitle(e.target.value)} placeholder="Pattern name" style={{width:"100%",padding:"6px 0",border:"none",borderBottom:"1px solid transparent",background:"transparent",fontSize:16,fontWeight:600,fontFamily:T.serif,color:T.ink,outline:"none"}} onFocus={e=>e.target.style.borderBottomColor=T.terra} onBlur={e=>e.target.style.borderBottomColor="transparent"}/>
           </div>
-          <input ref={coverFileRef} type="file" accept="image/*" capture="environment" onChange={async(e)=>{
-            const f=e.target.files?.[0];if(!f)return;
-            setCoverUploading(true);
-            const fd=new FormData();fd.append("file",f);fd.append("upload_preset","yarnhive_patterns");fd.append("transformation","c_fill,g_auto,ar_16:9");
-            try{const res=await fetch("https://api.cloudinary.com/v1_1/dmaupzhcx/image/upload",{method:"POST",body:fd});if(res.ok){const d=await res.json();setCoverUrl(d.secure_url);}}catch{}
-            setCoverUploading(false);
-          }} style={{display:"none"}}/>
-          {coverTab==="library"&&<div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
-            {ALL_CAT_ENTRIES.map(([cat,url])=>(
-              <div key={cat} onClick={()=>setCoverUrl(url)} style={{width:36,height:36,borderRadius:6,overflow:"hidden",cursor:"pointer",border:coverUrl===url?`2px solid ${T.terra}`:`1px solid ${T.border}`,flexShrink:0}}>
-                <img src={url} alt={cat} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
+          <div style={{marginBottom:16}}>
+            <div style={{fontSize:9,color:T.ink3,textTransform:"uppercase",letterSpacing:".1em",marginBottom:4}}>Designer</div>
+            <input value={editDesigner} onChange={e=>setEditDesigner(e.target.value)} placeholder="Designer name" style={{width:"100%",padding:"6px 0",border:"none",borderBottom:"1px solid transparent",background:"transparent",fontSize:13,color:T.ink2,outline:"none"}} onFocus={e=>e.target.style.borderBottomColor=T.terra} onBlur={e=>e.target.style.borderBottomColor="transparent"}/>
+          </div>
+          {/* Pill badges */}
+          <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:16}}>
+            {editHook&&<span style={{background:T.terraLt,color:T.terra,borderRadius:99,padding:"4px 10px",fontSize:10,fontWeight:600}}>Hook {editHook}</span>}
+            {editWeight&&<span style={{background:T.sageLt,color:T.sage,borderRadius:99,padding:"4px 10px",fontSize:10,fontWeight:600}}>{editWeight}</span>}
+            {totalRows>0&&<span style={{background:T.linen,color:T.ink2,borderRadius:99,padding:"4px 10px",fontSize:10,fontWeight:500}}>{totalRows} rows</span>}
+          </div>
+          {/* Materials — collapsible single line */}
+          {matList.length>0&&<div style={{marginBottom:16}}>
+            <div style={{fontSize:9,color:T.ink3,textTransform:"uppercase",letterSpacing:".1em",marginBottom:6}}>Materials</div>
+            {matExpanded?<div>{matList.map((m,i)=><div key={i} style={{fontSize:12,color:T.ink2,padding:"3px 0"}}>{m.name}{m.amount?" — "+m.amount:""}</div>)}<button onClick={()=>setMatExpanded(false)} style={{background:"none",border:"none",color:T.terra,fontSize:11,cursor:"pointer",padding:0,marginTop:4}}>Show less</button></div>
+            :<div style={{display:"flex",alignItems:"center",gap:6}}><span style={{fontSize:12,color:T.ink2,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{matSummary}</span>{matList.length>3&&<button onClick={()=>setMatExpanded(true)} style={{background:"none",border:"none",color:T.terra,fontSize:11,cursor:"pointer",padding:0,flexShrink:0}}>Show all</button>}</div>}
+          </div>}
+          {/* Components — accordion */}
+          {(extracted?.components||[]).length>0&&<div style={{marginBottom:16}}>
+            <div style={{fontSize:9,color:T.ink3,textTransform:"uppercase",letterSpacing:".1em",marginBottom:8}}>Components ({extracted.components.length})</div>
+            {extracted.components.map((c,i)=>{const open=!!compExpanded[i];return(
+              <div key={i} style={{marginBottom:6}}>
+                <button onClick={()=>setCompExpanded(p=>({...p,[i]:!open}))} style={{width:"100%",background:T.surface,border:`1px solid ${T.border}`,borderRadius:open?"10px 10px 0 0":10,padding:"10px 14px",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",textAlign:"left"}}>
+                  <span style={{fontSize:13,fontWeight:600,color:T.ink}}>{c.name}{c.make_count>1?" × "+c.make_count:""}</span>
+                  <span style={{fontSize:11,color:T.ink3}}>{(c.rows||[]).length} rows {open?"▼":"▶"}</span>
+                </button>
+                {open&&<div style={{border:`1px solid ${T.border}`,borderTop:"none",borderRadius:"0 0 10px 10px",padding:"8px 14px",background:T.linen}}>
+                  {(c.rows||[]).slice(0,5).map((r,j)=><div key={j} style={{fontSize:11,color:T.ink2,lineHeight:1.5,padding:"2px 0"}}>{r.label}: {r.text?.substring(0,60)}{r.text?.length>60?"…":""}</div>)}
+                  {(c.rows||[]).length>5&&<div style={{fontSize:10,color:T.ink3,marginTop:4}}>+{(c.rows||[]).length-5} more</div>}
+                </div>}
               </div>
-            ))}
+            );})}
           </div>}
         </div>
-        {/* Right: Stitch Check banner */}
-        <div style={{flex:1,minHeight:120,display:"flex",flexDirection:"column"}}>
+        {/* RIGHT 42% — Stitch Check */}
+        <div style={{flex:"0 0 42%",minWidth:0}}>
           {validating?(
-            <div style={{flex:1,background:T.linen,borderRadius:12,padding:"16px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:10,border:`1px solid ${T.border}`}}>
+            <div style={{background:T.surface,borderRadius:16,padding:20,boxShadow:"0 4px 20px rgba(139,90,60,.08)",border:`1px solid ${T.border}`,display:"flex",flexDirection:"column",alignItems:"center",gap:10}}>
               <div style={{fontSize:28,animation:"pulse 1.5s ease infinite"}}>🧶</div>
-              <div style={{fontSize:13,fontWeight:600,color:T.ink,textAlign:"center"}}>Analyzing pattern...</div>
-              <div style={{fontSize:11,color:T.ink3,textAlign:"center",lineHeight:1.5}}>Checking stitch math and structure</div>
-              <div style={{width:"80%",height:4,background:T.border,borderRadius:99,overflow:"hidden",marginTop:4}}>
+              <div style={{fontSize:12,fontWeight:600,color:T.ink}}>Analyzing pattern...</div>
+              <div style={{width:"100%",height:4,background:T.border,borderRadius:99,overflow:"hidden"}}>
                 <div className="progress-bar-fill" style={{height:"100%",width:"60%",borderRadius:99}}/>
               </div>
             </div>
           ):validationReport?(isPro?(
-            /* ── PRO: full result ── */
-            <div style={{flex:1,background:badgeForScore(validationReport.score).bg,border:`1.5px solid ${badgeForScore(validationReport.score).color}`,borderRadius:12,padding:"16px",display:"flex",flexDirection:"column",justifyContent:"center"}}>
-              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
-                <span style={{fontSize:20}}>{badgeForScore(validationReport.score).emoji}</span>
+            <div style={{background:T.surface,borderRadius:16,padding:20,boxShadow:"0 4px 20px rgba(139,90,60,.08)",border:`1px solid ${T.border}`}}>
+              <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:12}}>
                 <div>
-                  <div style={{fontSize:13,fontWeight:700,color:badgeForScore(validationReport.score).color}}>{badgeForScore(validationReport.score).label}</div>
-                  <div style={{fontSize:22,fontWeight:700,fontFamily:T.serif,color:badgeForScore(validationReport.score).color,lineHeight:1}}>{validationReport.score}%</div>
+                  <div style={{fontSize:12,fontWeight:700,color:badgeForScore(validationReport.score).color,marginBottom:2}}>{badgeForScore(validationReport.score).label}</div>
+                  <div style={{fontSize:10,color:T.ink3}}>Stitch Check</div>
+                </div>
+                <div style={{width:56,height:56,borderRadius:"50%",border:`3px solid ${badgeForScore(validationReport.score).color}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                  <span style={{fontSize:18,fontWeight:700,fontFamily:T.serif,color:badgeForScore(validationReport.score).color}}>{validationReport.score}%</span>
                 </div>
               </div>
-              {validationReport.checks?.find(c=>c.status!=="pass")&&<div style={{fontSize:11,color:T.ink2,lineHeight:1.5,marginBottom:8}}>{validationReport.checks.find(c=>c.status!=="pass")?.detail}</div>}
-              <button onClick={()=>setShowFullReport(true)} style={{background:"none",border:"none",color:T.terra,cursor:"pointer",fontSize:12,fontWeight:600,padding:0,textDecoration:"underline",textAlign:"left"}}>View Full Report →</button>
+              {(validationReport.checks||[]).slice(0,3).map(c=>(
+                <div key={c.id} style={{display:"flex",gap:6,alignItems:"center",marginBottom:4}}>
+                  <span style={{fontSize:11}}>{CHECK_ICON[c.status]||"❓"}</span>
+                  <span style={{fontSize:11,color:T.ink2}}>{c.label}</span>
+                </div>
+              ))}
+              <button onClick={()=>setShowFullReport(true)} style={{background:"none",border:"none",color:T.terra,cursor:"pointer",fontSize:11,fontWeight:600,padding:0,marginTop:8,textDecoration:"underline"}}>Full Report →</button>
             </div>
           ):(
-            /* ── FREE: frosted-glass teaser ── */
-            <div style={{flex:1,background:badgeForScore(validationReport.score).bg,border:`1.5px solid ${badgeForScore(validationReport.score).color}`,borderRadius:12,overflow:"hidden",display:"flex",flexDirection:"column"}}>
-              <div style={{padding:"12px 14px",flex:1}}>
-                {/* Row 1: category label — fully visible */}
-                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8}}>
-                  <span style={{fontSize:14}}>{badgeForScore(validationReport.score).emoji}</span>
-                  <span style={{fontSize:12,fontWeight:700,color:badgeForScore(validationReport.score).color}}>{badgeForScore(validationReport.score).label}</span>
+            <div style={{background:T.surface,borderRadius:16,padding:20,boxShadow:"0 4px 20px rgba(139,90,60,.08)",border:`1px solid ${T.border}`}}>
+              <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:12}}>
+                <div>
+                  <div style={{fontSize:12,fontWeight:700,color:badgeForScore(validationReport.score).color,marginBottom:2}}>{badgeForScore(validationReport.score).label}</div>
+                  <div style={{fontSize:10,color:T.ink3}}>Stitch Check</div>
                 </div>
-                {/* Row 2: score bar visible, number frosted */}
-                <div style={{marginBottom:10}}>
-                  <div style={{height:6,background:T.border,borderRadius:99,overflow:"hidden",marginBottom:4}}>
-                    <div style={{width:validationReport.score+"%",height:"100%",background:badgeForScore(validationReport.score).color,borderRadius:99,transition:"width .4s ease"}}/>
-                  </div>
-                  <span style={{fontSize:18,fontWeight:700,fontFamily:T.serif,color:badgeForScore(validationReport.score).color,filter:"blur(6px)",WebkitFilter:"blur(6px)",userSelect:"none"}}>{validationReport.score}%</span>
+                <div style={{width:56,height:56,borderRadius:"50%",border:`3px solid ${badgeForScore(validationReport.score).color}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                  <span style={{fontSize:18,fontWeight:700,fontFamily:T.serif,color:badgeForScore(validationReport.score).color,filter:"blur(8px)",WebkitFilter:"blur(8px)",userSelect:"none"}}>{validationReport.score}%</span>
                 </div>
-                {/* Row 3: first check — truncated with fade */}
-                {validationReport.checks?.slice(0,1).map(c=>(
-                  <div key={c.id} style={{display:"flex",gap:6,alignItems:"flex-start",marginBottom:6}}>
-                    <span style={{fontSize:11,flexShrink:0,marginTop:1}}>{CHECK_ICON[c.status]||"❓"}</span>
-                    <div style={{fontSize:10,color:T.ink2,lineHeight:1.5,overflow:"hidden",position:"relative",maxHeight:30}}>
-                      <span style={{fontWeight:600}}>{c.label}:</span> {c.detail?.substring(0,50)}
-                      <div style={{position:"absolute",right:0,top:0,bottom:0,width:50,background:`linear-gradient(to right,transparent,${badgeForScore(validationReport.score).bg})`}}/>
-                    </div>
-                  </div>
-                ))}
-                {/* Row 4: locked checks with dot placeholders */}
-                {validationReport.checks?.slice(1,3).map((c,i)=>(
-                  <div key={c.id||i} style={{display:"flex",gap:6,alignItems:"center",marginBottom:3}}>
-                    <span style={{fontSize:10,color:T.ink3,flexShrink:0}}>{CHECK_ICON[c.status]||"❓"}</span>
-                    <span style={{fontSize:10,fontWeight:600,color:T.ink3}}>{c.label}</span>
-                    <span style={{fontSize:10,color:T.border,flex:1}}>••••••••••••</span>
-                    <span style={{fontSize:9}}>🔒</span>
-                  </div>
-                ))}
               </div>
-              {/* Row 5: CTA */}
-              <div style={{padding:"10px 14px 12px",borderTop:`1px solid ${T.border}`,background:"rgba(255,255,255,.4)"}}>
-                <div style={{fontSize:10,fontWeight:600,color:T.ink,marginBottom:2}}>🔒 Unlock your full Stitch Check report</div>
-                <div style={{fontSize:10,color:T.ink3,marginBottom:6,lineHeight:1.4}}>See exactly what we found — upgrade to Pro</div>
-                <button onClick={onUpgrade} style={{width:"100%",background:T.terra,color:"#fff",border:"none",borderRadius:8,padding:"8px",fontSize:11,fontWeight:600,cursor:"pointer",boxShadow:"0 2px 8px rgba(184,90,60,.25)"}}>Upgrade to Pro — $9.99/mo</button>
+              {validationReport.checks?.slice(0,2).map((c,i)=>(
+                <div key={c.id||i} style={{display:"flex",gap:6,alignItems:"center",marginBottom:4}}>
+                  <span style={{fontSize:11}}>{CHECK_ICON[c.status]||"❓"}</span>
+                  <span style={{fontSize:11,color:T.ink2}}>{c.label}</span>
+                  <div style={{flex:1,height:12,background:`linear-gradient(to right,${T.ink3}22,transparent)`,borderRadius:4}}/>
+                </div>
+              ))}
+              <div style={{borderTop:`1px solid ${T.border}`,marginTop:8,paddingTop:8}}>
+                <div style={{fontSize:10,color:T.ink3,marginBottom:6}}>🔒 Unlock full report</div>
+                <button onClick={onUpgrade} style={{background:T.terra,color:"#fff",border:"none",borderRadius:99,padding:"6px 16px",fontSize:10,fontWeight:600,cursor:"pointer"}}>Upgrade to Pro</button>
               </div>
             </div>
           )):(
-            <div style={{flex:1,background:T.linen,borderRadius:12,padding:"16px",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:T.ink3,border:`1px solid ${T.border}`}}>Stitch Check unavailable</div>
+            <div style={{background:T.surface,borderRadius:16,padding:20,boxShadow:"0 4px 20px rgba(139,90,60,.08)",border:`1px solid ${T.border}`,display:"flex",alignItems:"center",justifyContent:"center",minHeight:120,fontSize:11,color:T.ink3}}>Stitch Check unavailable</div>
           )}
         </div>
       </div>
-      {/* Full Stitch Check report overlay */}
+      {/* Full report overlay */}
       {showFullReport&&validationReport&&(
         <div style={{position:"fixed",inset:0,zIndex:700,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
           <div onClick={()=>setShowFullReport(false)} style={{position:"absolute",inset:0,background:"rgba(0,0,0,.6)",backdropFilter:"blur(4px)"}}/>
-          <div style={{position:"relative",zIndex:1,background:T.surface,borderRadius:20,width:"100%",maxWidth:480,maxHeight:"85vh",overflow:"auto",padding:"24px 22px 32px"}}>
+          <div style={{position:"relative",zIndex:1,background:"#FAF7F2",borderRadius:20,width:"100%",maxWidth:480,maxHeight:"85vh",overflow:"auto",padding:"24px 22px 32px"}}>
             <button onClick={()=>setShowFullReport(false)} style={{position:"absolute",top:14,right:16,background:T.linen,border:"none",borderRadius:99,width:30,height:30,cursor:"pointer",fontSize:16,color:T.ink3,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
             <div style={{fontFamily:T.serif,fontSize:18,color:T.ink,marginBottom:16}}>Stitch Check Report</div>
             <div style={{background:badgeForScore(validationReport.score).bg,border:`2px solid ${badgeForScore(validationReport.score).color}`,borderRadius:14,padding:"16px",marginBottom:14,textAlign:"center"}}>
@@ -1031,17 +1053,15 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade}) => {
               </div>
             ))}
             {validationReport.summary&&<div style={{background:T.linen,borderRadius:12,padding:"12px 14px",marginTop:10,border:`1px solid ${T.border}`}}><div style={{fontSize:11,fontWeight:700,color:T.terra,marginBottom:4}}>Bev says:</div><div style={{fontSize:12,color:T.ink2,lineHeight:1.6}}>{validationReport.summary}</div></div>}
-            <button onClick={()=>setShowFullReport(false)} style={{marginTop:14,width:"100%",background:T.terra,color:"#fff",border:"none",borderRadius:12,padding:"13px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.3)"}}>Import Anyway →</button>
+            <button onClick={()=>setShowFullReport(false)} style={{marginTop:14,width:"100%",background:T.terra,color:"#fff",border:"none",borderRadius:99,padding:"13px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.3)"}}>Import Anyway →</button>
           </div>
         </div>
       )}
-      <Field label="Pattern title" value={editTitle} onChange={e=>setEditTitle(e.target.value)} placeholder="Pattern name"/>
-      <Field label="Designer" value={editDesigner} onChange={e=>setEditDesigner(e.target.value)} placeholder="Designer name"/>
-      <div style={{display:"flex",gap:10,marginBottom:14}}><div style={{flex:1}}><Field label="Hook size" value={editHook} onChange={e=>setEditHook(e.target.value)} placeholder="5.0mm"/></div><div style={{flex:1}}><Field label="Yarn weight" value={editWeight} onChange={e=>setEditWeight(e.target.value)} placeholder="Worsted"/></div></div>
-      {(extracted?.materials||[]).length>0&&<div style={{marginBottom:14}}><div style={{fontSize:11,color:T.ink3,textTransform:"uppercase",letterSpacing:".08em",marginBottom:6}}>Materials ({extracted.materials.length})</div>{extracted.materials.map((m,i)=><div key={i} style={{fontSize:13,color:T.ink2,padding:"4px 0",borderBottom:`1px solid ${T.border}`}}>{m.name}{m.amount?" — "+m.amount:""}</div>)}</div>}
-      {(extracted?.components||[]).length>0&&<div style={{marginBottom:16}}><div style={{fontSize:11,color:T.ink3,textTransform:"uppercase",letterSpacing:".08em",marginBottom:8}}>Components found ({extracted.components.length})</div>{extracted.components.map((c,i)=>(<div key={i} style={{background:T.linen,borderRadius:12,padding:"12px 14px",marginBottom:8,border:`1px solid ${T.border}`}}><div style={{fontSize:14,fontWeight:600,color:T.ink,marginBottom:4}}>{c.name}{c.make_count>1?" × "+c.make_count:""}</div><div style={{fontSize:11,color:T.ink3,marginBottom:6}}>{(c.rows||[]).length} rows</div>{(c.rows||[]).slice(0,3).map((r,j)=><div key={j} style={{fontSize:12,color:T.ink2,lineHeight:1.5,padding:"2px 0"}}>{r.label}: {r.text?.substring(0,60)}{r.text?.length>60?"…":""}</div>)}{(c.rows||[]).length>3&&<div style={{fontSize:11,color:T.ink3,fontStyle:"italic",marginTop:4}}>+{(c.rows||[]).length-3} more rows</div>}</div>))}<div style={{fontSize:12,color:T.terra,fontWeight:600,marginTop:4}}>{totalRows} total rows ready to build</div></div>}
-      <Btn onClick={handleSave}>Looks good — save pattern</Btn>
-      <div style={{marginTop:8}}><Btn variant="ghost" onClick={()=>{setStage("pick");setProgress(0);setExtracted(null);}}>Try a different file</Btn></div>
+      {/* Section spacing */}
+      <div style={{height:20}}/>
+      {/* Accept/Save — full width terracotta */}
+      <button onClick={handleSave} style={{width:"100%",background:`linear-gradient(135deg,${T.terra},#8B3A22)`,color:"#fff",border:"none",borderRadius:99,padding:"15px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 8px 28px rgba(184,90,60,.5)",marginBottom:8}}>Looks good — save pattern</button>
+      <button onClick={()=>{setStage("pick");setProgress(0);setExtracted(null);}} style={{width:"100%",background:"transparent",color:T.ink3,border:"none",borderRadius:99,padding:"10px",fontSize:13,cursor:"pointer"}}>Try a different file</button>
     </div>
   );
 };
