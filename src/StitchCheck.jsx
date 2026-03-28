@@ -228,4 +228,5 @@ const StitchCheck = () => {
   );
 };
 
+export { VALIDATION_PROMPT, BADGE, badgeForScore, CHECK_ICON };
 export default StitchCheck;

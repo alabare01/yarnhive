@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { T, useBreakpoint, Field } from "./theme.jsx";
 import { PILL } from "./constants.js";
 import { SUPABASE_URL, SUPABASE_ANON_KEY, supabaseAuth, getSession } from "./supabase.js";
+import { VALIDATION_PROMPT, BADGE, badgeForScore, CHECK_ICON } from "./StitchCheck.jsx";
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
 
@@ -734,7 +735,7 @@ const URLImportForm = ({onSave,Btn,Photo}) => {
   );
 };
 
-const PDFUploadForm = ({onSave,Btn}) => {
+const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade}) => {
   const [stage,setStage]=useState("pick");
   const [progress,setProgress]=useState(0);
   const [stageText,setStageText]=useState("");
@@ -753,6 +754,9 @@ const PDFUploadForm = ({onSave,Btn}) => {
   const [complexityStats,setComplexityStats]=useState(null); // {pages, textLen}
   const [validationFlags,setValidationFlags]=useState([]);
   const [flagsDismissed,setFlagsDismissed]=useState(false);
+  const [validationReport,setValidationReport]=useState(null); // Stitch Check result
+  const [validating,setValidating]=useState(false);
+  const [showFullReport,setShowFullReport]=useState(false);
   const coverFileRef=useRef(null);
   const handleFile=async(e)=>{
     const f=e.target.files?.[0];if(!f)return;
@@ -792,11 +796,11 @@ const PDFUploadForm = ({onSave,Btn}) => {
       // Stage 2: Extract — text mode for PDFs (fast), base64 for images
       setStage("extracting");setStageText("Reading your pattern...");
       const intv2=setInterval(()=>setProgress(p=>Math.min(p+1,62)),300);
-      let result;
+      let result;let extractedText=null;
       try{
         if(isPDF){
           console.log("[Wovely] Using pdf.js text extraction for PDF...");
-          const pdfText=await extractTextFromPDF(f);
+          const pdfText=await extractTextFromPDF(f);extractedText=pdfText;
           // Detect complexity from page count + text density
           const pageMatches=(pdfText.match(/--- PAGE \d+ ---/g)||[]).length;
           const textLen=pdfText.replace(/--- PAGE \d+ ---/g,"").replace(/\s+/g," ").trim().length;
@@ -826,6 +830,25 @@ const PDFUploadForm = ({onSave,Btn}) => {
       for(let i=1;i<rndNums.length;i++){if(rndNums[i]-rndNums[i-1]>2) flags.push("Gap detected between round "+rndNums[i-1]+" and "+rndNums[i]);}
       if(complexityStats&&complexityStats.pages>=5&&allRows.length<10) flags.push("Only "+allRows.length+" rows from a "+complexityStats.pages+"-page pattern");
       setValidationFlags(flags);
+      // Pro users: run Stitch Check in background (non-blocking)
+      if(isPro&&extractedText){
+        setValidating(true);
+        (async()=>{
+          try{
+            const controller=new AbortController();
+            const timeout=setTimeout(()=>controller.abort(),90000);
+            const vr=await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,{
+              method:"POST",headers:{"Content-Type":"application/json"},
+              body:JSON.stringify({contents:[{parts:[{text:VALIDATION_PROMPT+"\n\nPATTERN TEXT:\n"+extractedText}]}],generationConfig:{temperature:0.1,maxOutputTokens:65536}}),
+              signal:controller.signal,
+            });
+            clearTimeout(timeout);
+            const rawText=await vr.text();
+            if(vr.ok){const d=JSON.parse(rawText);const raw=d.candidates?.[0]?.content?.parts?.[0]?.text||"";const parsed=JSON.parse(raw.replace(/```json/g,"").replace(/```/g,"").trim());setValidationReport(parsed);}
+          }catch(e){console.warn("[Wovely] Stitch Check background validation failed:",e);}
+          setValidating(false);
+        })();
+      }
       await new Promise(r=>setTimeout(r,400));setStage("review");
     }catch(ex){console.error("[Wovely] PDF import error:",ex);setStage("error");setErrorMsg("Something went wrong. Try again or use manual entry.");}
   };
@@ -833,7 +856,7 @@ const PDFUploadForm = ({onSave,Btn}) => {
     const rows=buildRowsFromComponents(extracted.components);
     const mats=(extracted.materials||[]).map((m,i)=>({id:i+1,name:m.name||"",amount:m.amount||"",yardage:0,notes:m.notes||""}));
     const finalCover=coverUrl||fileInfo?.coverUrl||null;
-    onSave({id:Date.now(),title:editTitle||"Imported Pattern",source:editDesigner||"PDF Import",cat:"Uncategorized",hook:editHook||"",weight:editWeight||"",notes:extracted.pattern_notes||"",yardage:0,rating:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:50,height:60},materials:mats,rows,photo:finalCover||PILL[Math.floor(Math.random()*PILL.length)],cover_image_url:finalCover,source_file_url:fileInfo?.url||"",source_file_name:fileInfo?.name||"",source_file_type:fileInfo?.type||"",extracted_by_ai:true,components:extracted.components||[],assembly_notes:extracted.assembly_notes||"",difficulty:extracted.difficulty||"",abbreviations_map:extracted.abbreviations_map||{},suggested_resources:extracted.suggested_resources||[],validation_flags:validationFlags.length>0?validationFlags:null});
+    onSave({id:Date.now(),title:editTitle||"Imported Pattern",source:editDesigner||"PDF Import",cat:"Uncategorized",hook:editHook||"",weight:editWeight||"",notes:extracted.pattern_notes||"",yardage:0,rating:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:50,height:60},materials:mats,rows,photo:finalCover||PILL[Math.floor(Math.random()*PILL.length)],cover_image_url:finalCover,source_file_url:fileInfo?.url||"",source_file_name:fileInfo?.name||"",source_file_type:fileInfo?.type||"",extracted_by_ai:true,components:extracted.components||[],assembly_notes:extracted.assembly_notes||"",difficulty:extracted.difficulty||"",abbreviations_map:extracted.abbreviations_map||{},suggested_resources:extracted.suggested_resources||[],validation_flags:validationFlags.length>0?validationFlags:null,validation_report:validationReport||null});
   };
   const handleFallbackSave=()=>{onSave({id:Date.now(),title:extracted?.title||"Imported Pattern",source:"PDF Import",cat:"Uncategorized",hook:"",weight:"",notes:"",yardage:0,rating:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:50,height:60},materials:[],rows:[],photo:fileInfo?.coverUrl||PILL[Math.floor(Math.random()*PILL.length)],cover_image_url:fileInfo?.coverUrl||null,source_file_url:fileInfo?.url||"",source_file_name:fileInfo?.name||"",source_file_type:fileInfo?.type||""});};
   if(stage==="pick") return (
@@ -889,11 +912,6 @@ const PDFUploadForm = ({onSave,Btn}) => {
   return (
     <div style={{paddingBottom:8}}>
       <div style={{background:T.sageLt,borderRadius:12,padding:"12px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:16}}>✓</span><span style={{fontSize:13,color:T.sage,fontWeight:600}}>We read your pattern — does this look right?</span></div>
-      {validationFlags.length>0&&!flagsDismissed&&<div style={{background:"#FFF8EC",border:"1px solid #F0D9A8",borderRadius:12,padding:"12px 14px",marginBottom:16,display:"flex",alignItems:"flex-start",gap:8}}>
-        <span style={{fontSize:14,flexShrink:0}}>⚠️</span>
-        <div style={{flex:1,fontSize:12,color:"#8B6914",lineHeight:1.6}}>Stitch Check flagged some potential issues with this pattern. Pro users can run a full Stitch Check report after import.</div>
-        <button onClick={()=>setFlagsDismissed(true)} style={{background:"none",border:"none",color:"#8B6914",cursor:"pointer",fontSize:16,padding:"0 2px",flexShrink:0,lineHeight:1,opacity:.6}}>×</button>
-      </div>}
       {/* Cover image picker */}
       <div style={{marginBottom:16}}>
         <div style={{fontSize:11,color:T.ink2,textTransform:"uppercase",letterSpacing:".08em",marginBottom:8}}>Pattern Cover Image</div>
@@ -932,6 +950,49 @@ const PDFUploadForm = ({onSave,Btn}) => {
           </div>
         )}
       </div>
+      {/* Stitch Check banner */}
+      {isPro?(
+        validating?<div style={{background:T.linen,borderRadius:12,padding:"12px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:10}}><div className="spinner" style={{width:16,height:16,border:`2px solid ${T.border}`,borderTopColor:T.terra,borderRadius:"50%",flexShrink:0}}/><span style={{fontSize:13,color:T.ink2}}>Running Stitch Check...</span></div>
+        :validationReport?<div style={{background:badgeForScore(validationReport.score).bg,border:`1.5px solid ${badgeForScore(validationReport.score).color}`,borderRadius:12,padding:"12px 16px",marginBottom:16}}>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:validationReport.summary?6:0}}>
+            <span style={{fontSize:16}}>{badgeForScore(validationReport.score).emoji}</span>
+            <span style={{fontSize:13,fontWeight:600,color:badgeForScore(validationReport.score).color}}>{badgeForScore(validationReport.score).label}</span>
+            <span style={{fontSize:14,fontWeight:700,color:badgeForScore(validationReport.score).color,marginLeft:"auto"}}>{validationReport.score}%</span>
+          </div>
+          {validationReport.checks?.find(c=>c.status!=="pass")&&<div style={{fontSize:12,color:T.ink2,lineHeight:1.5,marginBottom:8}}>{validationReport.checks.find(c=>c.status!=="pass")?.detail}</div>}
+          <button onClick={()=>setShowFullReport(true)} style={{background:"none",border:"none",color:T.terra,cursor:"pointer",fontSize:12,fontWeight:600,padding:0,textDecoration:"underline"}}>View Full Report →</button>
+        </div>
+        :<div style={{background:T.linen,borderRadius:12,padding:"10px 16px",marginBottom:16,fontSize:12,color:T.ink3}}>Stitch Check unavailable</div>
+      ):(
+        <div style={{background:`linear-gradient(135deg,${T.terraLt},${T.card})`,borderRadius:12,padding:"14px 16px",marginBottom:16,border:`1px solid ${T.border}`}}>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><span style={{fontSize:14}}>🔒</span><span style={{fontSize:13,fontWeight:600,color:T.ink}}>Stitch Check — Know before you stitch</span></div>
+          <div style={{fontSize:12,color:T.ink2,lineHeight:1.6,marginBottom:10}}>Wovely can analyze this pattern for math errors and inconsistencies before you start crocheting.</div>
+          <button onClick={onUpgrade} style={{width:"100%",background:T.terra,color:"#fff",border:"none",borderRadius:10,padding:"10px",fontSize:13,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.3)"}}>Upgrade to Pro — $9.99/mo</button>
+        </div>
+      )}
+      {/* Full Stitch Check report overlay */}
+      {showFullReport&&validationReport&&(
+        <div style={{position:"fixed",inset:0,zIndex:700,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+          <div onClick={()=>setShowFullReport(false)} style={{position:"absolute",inset:0,background:"rgba(0,0,0,.6)",backdropFilter:"blur(4px)"}}/>
+          <div style={{position:"relative",zIndex:1,background:T.surface,borderRadius:20,width:"100%",maxWidth:480,maxHeight:"85vh",overflow:"auto",padding:"24px 22px 32px"}}>
+            <button onClick={()=>setShowFullReport(false)} style={{position:"absolute",top:14,right:16,background:T.linen,border:"none",borderRadius:99,width:30,height:30,cursor:"pointer",fontSize:16,color:T.ink3,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
+            <div style={{fontFamily:T.serif,fontSize:18,color:T.ink,marginBottom:16}}>Stitch Check Report</div>
+            <div style={{background:badgeForScore(validationReport.score).bg,border:`2px solid ${badgeForScore(validationReport.score).color}`,borderRadius:14,padding:"16px",marginBottom:14,textAlign:"center"}}>
+              <div style={{fontSize:28,marginBottom:4}}>{badgeForScore(validationReport.score).emoji}</div>
+              <div style={{fontFamily:T.serif,fontSize:18,fontWeight:700,color:badgeForScore(validationReport.score).color}}>{badgeForScore(validationReport.score).label}</div>
+              <div style={{fontFamily:T.serif,fontSize:36,fontWeight:700,color:badgeForScore(validationReport.score).color,lineHeight:1}}>{validationReport.score}%</div>
+            </div>
+            {(validationReport.checks||[]).map(c=>(
+              <div key={c.id} style={{background:T.surface,border:`1px solid ${T.border}`,borderRadius:10,padding:"10px 12px",marginBottom:6,display:"flex",gap:8,alignItems:"flex-start"}}>
+                <span style={{fontSize:14,flexShrink:0}}>{CHECK_ICON[c.status]||"❓"}</span>
+                <div style={{flex:1}}><div style={{fontSize:12,fontWeight:600,color:T.ink,marginBottom:2}}>{c.label}</div><div style={{fontSize:11,color:T.ink2,lineHeight:1.5}}>{c.detail}</div></div>
+              </div>
+            ))}
+            {validationReport.summary&&<div style={{background:T.linen,borderRadius:12,padding:"12px 14px",marginTop:10,border:`1px solid ${T.border}`}}><div style={{fontSize:11,fontWeight:700,color:T.terra,marginBottom:4}}>Bev says:</div><div style={{fontSize:12,color:T.ink2,lineHeight:1.6}}>{validationReport.summary}</div></div>}
+            <button onClick={()=>setShowFullReport(false)} style={{marginTop:14,width:"100%",background:T.terra,color:"#fff",border:"none",borderRadius:12,padding:"13px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.3)"}}>Import Anyway →</button>
+          </div>
+        </div>
+      )}
       <Field label="Pattern title" value={editTitle} onChange={e=>setEditTitle(e.target.value)} placeholder="Pattern name"/>
       <Field label="Designer" value={editDesigner} onChange={e=>setEditDesigner(e.target.value)} placeholder="Designer name"/>
       <div style={{display:"flex",gap:10,marginBottom:14}}><div style={{flex:1}}><Field label="Hook size" value={editHook} onChange={e=>setEditHook(e.target.value)} placeholder="5.0mm"/></div><div style={{flex:1}}><Field label="Yarn weight" value={editWeight} onChange={e=>setEditWeight(e.target.value)} placeholder="Worsted"/></div></div>
@@ -978,7 +1039,7 @@ const BrowserImport = ({onSave,Btn,Photo}) => {
   );
 };
 
-const AddPatternModal = ({onClose,onSave,isPro,patternCount,Btn,Photo,Bar,WireframeViewer}) => {
+const AddPatternModal = ({onClose,onSave,isPro,patternCount,Btn,Photo,Bar,WireframeViewer,onUpgrade}) => {
   const [method,setMethod]=useState(null),[closing,setClosing]=useState(false);
   const{isDesktop}=useBreakpoint();
   const dismiss=()=>{setClosing(true);setTimeout(()=>{setClosing(false);onClose();},220);};
@@ -1024,7 +1085,7 @@ const AddPatternModal = ({onClose,onSave,isPro,patternCount,Btn,Photo,Bar,Wirefr
           {!method&&<MethodList/>}
           {method==="manual"&&<ManualEntryForm onSave={handleSave} Btn={Btn}/>}
           {method==="url"&&<URLImportForm onSave={handleSave} Btn={Btn} Photo={Photo}/>}
-          {method==="pdf"&&<PDFUploadForm onSave={handleSave} Btn={Btn}/>}
+          {method==="pdf"&&<PDFUploadForm onSave={handleSave} Btn={Btn} isPro={isPro} onUpgrade={()=>{if(onUpgrade){dismiss();onUpgrade();}}}/>}
           {method==="browser"&&<BrowserImport onSave={handleSave} Btn={Btn} Photo={Photo}/>}
           {method==="snap"&&<HiveVisionForm onSave={handleSave} Btn={Btn} Bar={Bar} WireframeViewer={WireframeViewer}/>}
         </div>
@@ -1047,7 +1108,7 @@ const AddPatternModal = ({onClose,onSave,isPro,patternCount,Btn,Photo,Bar,Wirefr
           {!method&&<MethodList/>}
           {method==="manual"&&<ManualEntryForm onSave={handleSave} Btn={Btn}/>}
           {method==="url"&&<URLImportForm onSave={handleSave} Btn={Btn} Photo={Photo}/>}
-          {method==="pdf"&&<PDFUploadForm onSave={handleSave} Btn={Btn}/>}
+          {method==="pdf"&&<PDFUploadForm onSave={handleSave} Btn={Btn} isPro={isPro} onUpgrade={()=>{if(onUpgrade){dismiss();onUpgrade();}}}/>}
           {method==="browser"&&<BrowserImport onSave={handleSave} Btn={Btn} Photo={Photo}/>}
           {method==="snap"&&<HiveVisionForm onSave={handleSave} Btn={Btn} Bar={Bar} WireframeViewer={WireframeViewer}/>}
         </div>
