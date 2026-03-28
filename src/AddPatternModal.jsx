@@ -751,6 +751,8 @@ const PDFUploadForm = ({onSave,Btn}) => {
   const [coverUploading,setCoverUploading]=useState(false);
   const [complexity,setComplexity]=useState(null); // null | "simple" | "detailed" | "complex"
   const [complexityStats,setComplexityStats]=useState(null); // {pages, textLen}
+  const [validationFlags,setValidationFlags]=useState([]);
+  const [flagsDismissed,setFlagsDismissed]=useState(false);
   const coverFileRef=useRef(null);
   const handleFile=async(e)=>{
     const f=e.target.files?.[0];if(!f)return;
@@ -816,6 +818,14 @@ const PDFUploadForm = ({onSave,Btn}) => {
       setStage("building");setStageText("Building your workspace...");
       await new Promise(r=>setTimeout(r,600));setProgress(100);
       setExtracted(result);setEditTitle(result.title||"");setEditDesigner(result.designer||"");setEditHook(result.hook_size||"");setEditWeight(result.yarn_weight||"");
+      // Import failsafe: lightweight validation flags
+      const allRows=(result.components||[]).flatMap(c=>(c.rows||[]));
+      const flags=[];
+      if(allRows.length<3) flags.push("Fewer than 3 rows extracted");
+      const rndNums=allRows.map(r=>{const m=(r.label||"").match(/\d+/);return m?parseInt(m[0]):null;}).filter(Boolean);
+      for(let i=1;i<rndNums.length;i++){if(rndNums[i]-rndNums[i-1]>2) flags.push("Gap detected between round "+rndNums[i-1]+" and "+rndNums[i]);}
+      if(complexityStats&&complexityStats.pages>=5&&allRows.length<10) flags.push("Only "+allRows.length+" rows from a "+complexityStats.pages+"-page pattern");
+      setValidationFlags(flags);
       await new Promise(r=>setTimeout(r,400));setStage("review");
     }catch(ex){console.error("[Wovely] PDF import error:",ex);setStage("error");setErrorMsg("Something went wrong. Try again or use manual entry.");}
   };
@@ -823,7 +833,7 @@ const PDFUploadForm = ({onSave,Btn}) => {
     const rows=buildRowsFromComponents(extracted.components);
     const mats=(extracted.materials||[]).map((m,i)=>({id:i+1,name:m.name||"",amount:m.amount||"",yardage:0,notes:m.notes||""}));
     const finalCover=coverUrl||fileInfo?.coverUrl||null;
-    onSave({id:Date.now(),title:editTitle||"Imported Pattern",source:editDesigner||"PDF Import",cat:"Uncategorized",hook:editHook||"",weight:editWeight||"",notes:extracted.pattern_notes||"",yardage:0,rating:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:50,height:60},materials:mats,rows,photo:finalCover||PILL[Math.floor(Math.random()*PILL.length)],cover_image_url:finalCover,source_file_url:fileInfo?.url||"",source_file_name:fileInfo?.name||"",source_file_type:fileInfo?.type||"",extracted_by_ai:true,components:extracted.components||[],assembly_notes:extracted.assembly_notes||"",difficulty:extracted.difficulty||"",abbreviations_map:extracted.abbreviations_map||{},suggested_resources:extracted.suggested_resources||[]});
+    onSave({id:Date.now(),title:editTitle||"Imported Pattern",source:editDesigner||"PDF Import",cat:"Uncategorized",hook:editHook||"",weight:editWeight||"",notes:extracted.pattern_notes||"",yardage:0,rating:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:50,height:60},materials:mats,rows,photo:finalCover||PILL[Math.floor(Math.random()*PILL.length)],cover_image_url:finalCover,source_file_url:fileInfo?.url||"",source_file_name:fileInfo?.name||"",source_file_type:fileInfo?.type||"",extracted_by_ai:true,components:extracted.components||[],assembly_notes:extracted.assembly_notes||"",difficulty:extracted.difficulty||"",abbreviations_map:extracted.abbreviations_map||{},suggested_resources:extracted.suggested_resources||[],validation_flags:validationFlags.length>0?validationFlags:null});
   };
   const handleFallbackSave=()=>{onSave({id:Date.now(),title:extracted?.title||"Imported Pattern",source:"PDF Import",cat:"Uncategorized",hook:"",weight:"",notes:"",yardage:0,rating:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:50,height:60},materials:[],rows:[],photo:fileInfo?.coverUrl||PILL[Math.floor(Math.random()*PILL.length)],cover_image_url:fileInfo?.coverUrl||null,source_file_url:fileInfo?.url||"",source_file_name:fileInfo?.name||"",source_file_type:fileInfo?.type||""});};
   if(stage==="pick") return (
@@ -879,6 +889,11 @@ const PDFUploadForm = ({onSave,Btn}) => {
   return (
     <div style={{paddingBottom:8}}>
       <div style={{background:T.sageLt,borderRadius:12,padding:"12px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:16}}>✓</span><span style={{fontSize:13,color:T.sage,fontWeight:600}}>We read your pattern — does this look right?</span></div>
+      {validationFlags.length>0&&!flagsDismissed&&<div style={{background:"#FFF8EC",border:"1px solid #F0D9A8",borderRadius:12,padding:"12px 14px",marginBottom:16,display:"flex",alignItems:"flex-start",gap:8}}>
+        <span style={{fontSize:14,flexShrink:0}}>⚠️</span>
+        <div style={{flex:1,fontSize:12,color:"#8B6914",lineHeight:1.6}}>Stitch Check flagged some potential issues with this pattern. Pro users can run a full Stitch Check report after import.</div>
+        <button onClick={()=>setFlagsDismissed(true)} style={{background:"none",border:"none",color:"#8B6914",cursor:"pointer",fontSize:16,padding:"0 2px",flexShrink:0,lineHeight:1,opacity:.6}}>×</button>
+      </div>}
       {/* Cover image picker */}
       <div style={{marginBottom:16}}>
         <div style={{fontSize:11,color:T.ink2,textTransform:"uppercase",letterSpacing:".08em",marginBottom:8}}>Pattern Cover Image</div>

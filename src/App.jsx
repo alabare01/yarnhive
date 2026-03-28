@@ -4,6 +4,7 @@ import { T, useBreakpoint, Field } from "./theme.jsx";
 import { SUPABASE_URL, SUPABASE_ANON_KEY, APP_ORIGIN, saveSession, getSession, supabaseAuth } from "./supabase.js";
 import { PHOTOS, PILL, APP_VERSION } from "./constants.js";
 import Calculators from "./Calculators.jsx";
+import StitchCheck from "./StitchCheck.jsx";
 import Auth, { WaitlistPopup } from "./Auth.jsx";
 import PatternHeader from "./PatternHeader.jsx";
 import RowManager, { ensureRepeatBrackets } from "./RowManager.jsx";
@@ -19,8 +20,8 @@ if (typeof document !== "undefined" && !document.getElementById("sb-font")) {
 }
 
 // ─── ROUTE ↔ VIEW MAPPING ───────────────────────────────────────────────────
-const VIEW_TO_PATH = {collection:"/hive",detail:"/hive",wip:"/builds",browse:"/browse",stash:"/stash",calculator:"/tools",shopping:"/shopping",profile:"/profile"};
-const PATH_TO_VIEW = {"/hive":"collection","/builds":"wip","/browse":"browse","/stash":"stash","/tools":"calculator","/shopping":"shopping","/profile":"profile","/hive-vision":"hive-vision"};
+const VIEW_TO_PATH = {collection:"/hive",detail:"/hive",wip:"/builds",browse:"/browse",stash:"/stash",calculator:"/tools","stitch-check":"/stitch-check",shopping:"/shopping",profile:"/profile"};
+const PATH_TO_VIEW = {"/hive":"collection","/builds":"wip","/browse":"browse","/stash":"stash","/tools":"calculator","/stitch-check":"stitch-check","/shopping":"shopping","/profile":"profile","/hive-vision":"hive-vision"};
 const viewFromPath = (pathname) => {
   if(pathname.startsWith("/hive/")) return "detail";
   return PATH_TO_VIEW[pathname] || "collection";
@@ -433,7 +434,7 @@ const PaywallGate = ({onClose,onUpgrade,patternCount}) => (
 const SidebarNav = ({view,onNavigate,count,isPro,onAddPattern,onSignOut,onUpgrade,userPatterns=[],allPatterns=[]}) => {
   const starterC=DEFAULT_STARTERS.length;const addedC=userPatterns.filter(p=>!p.isStarter).length;
   const wipCount=allPatterns.filter(p=>!p.isStarter&&(p.status==="in_progress"||p.started)).filter(p=>pct(p)<100).length;
-  const ITEMS=[{key:"collection",label:"Your Hive",sub:starterC+" starter"+(starterC!==1?"s":"")+" · "+addedC+" added",icon:"🧶"},{key:"wip",label:"Builds in Progress",sub:wipCount>0?wipCount+" active":"Currently making",icon:"🪡"},{key:"browse",label:"Browse Sites",sub:"Find free patterns",icon:"🌐"},{key:"stash",label:"Yarn Stash",sub:"Manage your yarn",icon:"🎀"},{key:"calculator",label:"Calculators",sub:"Gauge, yardage & more",icon:"🧮"},{key:"shopping",label:"Shopping List",sub:"Auto-generated",icon:"🛒"}];
+  const ITEMS=[{key:"collection",label:"Your Hive",sub:starterC+" starter"+(starterC!==1?"s":"")+" · "+addedC+" added",icon:"🧶"},{key:"wip",label:"Builds in Progress",sub:wipCount>0?wipCount+" active":"Currently making",icon:"🪡"},{key:"browse",label:"Browse Sites",sub:"Find free patterns",icon:"🌐"},{key:"stash",label:"Yarn Stash",sub:"Manage your yarn",icon:"🎀"},{key:"calculator",label:"Calculators",sub:"Gauge, yardage & more",icon:"🧮"},{key:"stitch-check",label:"Stitch Check",sub:isPro?"Validate any pattern":"Pro feature",icon:"🛡️",proOnly:true},{key:"shopping",label:"Shopping List",sub:"Auto-generated",icon:"🛒"}];
   return (
     <div style={{width:260,background:T.surface,borderRight:`1px solid ${T.border}`,height:"100vh",position:"sticky",top:0,display:"flex",flexDirection:"column",flexShrink:0}}>
       <div onClick={()=>onNavigate("collection")} style={{position:"relative",height:160,overflow:"hidden",flexShrink:0,cursor:"pointer",transition:"opacity .15s"}} onMouseEnter={e=>e.currentTarget.style.opacity=".85"} onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
@@ -443,11 +444,12 @@ const SidebarNav = ({view,onNavigate,count,isPro,onAddPattern,onSignOut,onUpgrad
       </div>
       <div style={{padding:"16px 16px 8px"}}><button onClick={onAddPattern} style={{width:"100%",background:`linear-gradient(135deg,${T.terra},#8B3A22)`,color:"#fff",border:"none",borderRadius:12,padding:"12px",fontSize:14,fontWeight:700,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.4)",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><span style={{fontSize:18}}>+</span> Add Pattern</button></div>
       <div style={{flex:1,overflowY:"auto",padding:"8px 0"}}>
-        {ITEMS.map(item=>{const active=view===item.key;return(
-          <div key={item.key} className="nav-item" onClick={()=>onNavigate(item.key)} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 20px",borderLeft:"3px solid "+(active?T.terra:"transparent"),background:active?T.terraLt:"transparent",cursor:"pointer",transition:"background .12s"}}>
+        {ITEMS.map(item=>{const active=view===item.key;const locked=item.proOnly&&!isPro;return(
+          <div key={item.key} className="nav-item" onClick={()=>{if(locked){onUpgrade();return;}onNavigate(item.key);}} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 20px",borderLeft:"3px solid "+(active?T.terra:"transparent"),background:active?T.terraLt:"transparent",cursor:"pointer",transition:"background .12s",opacity:locked?.55:1}}>
             <span style={{fontSize:18,width:24,textAlign:"center"}}>{item.icon}</span>
             <div style={{flex:1}}><div style={{fontSize:14,fontWeight:active?600:400,color:active?T.terra:T.ink}}>{item.label}</div><div style={{fontSize:11,color:T.ink3,marginTop:1}}>{item.sub}</div></div>
-            {active&&<div style={{width:6,height:6,borderRadius:99,background:T.terra}}/>}
+            {locked&&<span style={{fontSize:12,color:T.ink3}}>🔒</span>}
+            {active&&!locked&&<div style={{width:6,height:6,borderRadius:99,background:T.terra}}/>}
           </div>
         );})}
       </div>
@@ -474,7 +476,7 @@ const NavPanel = ({open,onClose,view,onNavigate,count,isPro,onSignOut,onUpgrade}
   const dismiss=()=>{setClosing(true);setTimeout(()=>{setClosing(false);onClose();},220);};
   const go=v=>{onNavigate(v);dismiss();};
   if(!open) return null;
-  const ITEMS=[{key:"collection",label:"Your Hive",sub:count+" patterns",icon:"🧶"},{key:"wip",label:"Builds in Progress",sub:"Currently making",icon:"🪡"},{key:"browse",label:"Browse Sites",sub:"Find free patterns",icon:"🌐"},{key:"stash",label:"Yarn Stash",sub:"Manage your yarn",icon:"🎀"},{key:"calculator",label:"Calculators",sub:"Gauge, yardage & more",icon:"🧮"},{key:"shopping",label:"Shopping List",sub:"Auto-generated needs",icon:"🛒"}];
+  const ITEMS=[{key:"collection",label:"Your Hive",sub:count+" patterns",icon:"🧶"},{key:"wip",label:"Builds in Progress",sub:"Currently making",icon:"🪡"},{key:"browse",label:"Browse Sites",sub:"Find free patterns",icon:"🌐"},{key:"stash",label:"Yarn Stash",sub:"Manage your yarn",icon:"🎀"},{key:"calculator",label:"Calculators",sub:"Gauge, yardage & more",icon:"🧮"},{key:"stitch-check",label:"Stitch Check",sub:isPro?"Validate any pattern":"Pro feature",icon:"🛡️",proOnly:true},{key:"shopping",label:"Shopping List",sub:"Auto-generated needs",icon:"🛒"}];
   return (
     <div style={{position:"fixed",inset:0,zIndex:100}}>
       <div className={closing?"dim-out":"dim-in"} onClick={dismiss} style={{position:"absolute",inset:0,background:"rgba(28,23,20,.52)",backdropFilter:"blur(3px)"}}/>
@@ -485,11 +487,12 @@ const NavPanel = ({open,onClose,view,onNavigate,count,isPro,onSignOut,onUpgrade}
           <div style={{position:"absolute",bottom:16,left:18}}><div style={{fontFamily:T.serif,fontSize:22,fontWeight:700,color:"#fff",lineHeight:1}}>Wovely</div><div style={{fontSize:11,color:"rgba(255,255,255,.65)",marginTop:3}}>Your crochet hive</div></div>
         </div>
         <div style={{flex:1,overflowY:"auto",paddingTop:6}}>
-          {ITEMS.map(item=>{const active=view===item.key;return(
-            <div key={item.key} className="nav-item" onClick={()=>go(item.key)} style={{display:"flex",alignItems:"center",gap:13,padding:"13px 20px",borderLeft:"3px solid "+(active?T.terra:"transparent"),background:active?T.terraLt:"transparent",cursor:"pointer",transition:"background .12s"}}>
+          {ITEMS.map(item=>{const active=view===item.key;const locked=item.proOnly&&!isPro;return(
+            <div key={item.key} className="nav-item" onClick={()=>{if(locked){onUpgrade();dismiss();return;}go(item.key);}} style={{display:"flex",alignItems:"center",gap:13,padding:"13px 20px",borderLeft:"3px solid "+(active?T.terra:"transparent"),background:active?T.terraLt:"transparent",cursor:"pointer",transition:"background .12s",opacity:locked?.55:1}}>
               <span style={{fontSize:20,width:26,textAlign:"center"}}>{item.icon}</span>
               <div style={{flex:1}}><div style={{fontSize:14,fontWeight:active?600:400,color:active?T.terra:T.ink}}>{item.label}</div><div style={{fontSize:11,color:T.ink3,marginTop:1}}>{item.sub}</div></div>
-              {active&&<div style={{width:6,height:6,borderRadius:99,background:T.terra}}/>}
+              {locked&&<span style={{fontSize:12,color:T.ink3}}>🔒</span>}
+              {active&&!locked&&<div style={{width:6,height:6,borderRadius:99,background:T.terra}}/>}
             </div>
           );})}
         </div>
@@ -1750,7 +1753,7 @@ export default function Wovely() {
   // Authed users on root redirect to /hive
   if(location.pathname==="/") return <Navigate to="/hive" replace/>;
   // Unknown routes redirect to /hive
-  const knownPaths=["/hive","/builds","/browse","/stash","/tools","/shopping","/profile","/hive-vision","/master-doc"];
+  const knownPaths=["/hive","/builds","/browse","/stash","/tools","/stitch-check","/shopping","/profile","/hive-vision","/master-doc"];
   if(!knownPaths.some(p=>location.pathname===p||location.pathname.startsWith("/hive/"))) return <Navigate to="/hive" replace/>;
   const detailOnSave=u=>{
     setUserPatterns(prev=>prev.map(p=>p.id===u.id?u:p));setStarterPatterns(prev=>prev.map(p=>p.id===u.id?u:p));setSelected(u);
@@ -1898,6 +1901,7 @@ export default function Wovely() {
           {view==="browse"&&<BrowseSitesView onSavePattern={handleAddPattern}/>}
           {view==="stash"&&<div style={{paddingTop:24}}><YarnStash/></div>}
           {view==="calculator"&&<div style={{paddingTop:24}}><Calculators/></div>}
+          {view==="stitch-check"&&<div style={{paddingTop:24}}><StitchCheck/></div>}
           {view==="shopping"&&<div style={{paddingTop:24}}><ShoppingList/></div>}
           {view==="profile"&&<ProfileSettingsView isPro={isPro} onOpenProModal={()=>setShowProModal(true)} onGoHome={()=>navigate("/hive")} onEmailConfirmed={()=>setShowEmailBanner(false)}/>}
         </div>
@@ -1930,6 +1934,7 @@ export default function Wovely() {
         {view==="browse"&&<BrowseSitesView onSavePattern={handleAddPattern}/>}
         {view==="stash"&&<div style={{paddingTop:18}}><YarnStash/></div>}
         {view==="calculator"&&<div style={{paddingTop:18}}><Calculators/></div>}
+        {view==="stitch-check"&&<div style={{paddingTop:18}}><StitchCheck/></div>}
         {view==="shopping"&&<div style={{paddingTop:18}}><ShoppingList/></div>}
         {view==="profile"&&<ProfileSettingsView isPro={isPro} onOpenProModal={()=>setShowProModal(true)} onGoHome={()=>navigate("/hive")} onEmailConfirmed={()=>setShowEmailBanner(false)}/>}
       </div>
