@@ -2,12 +2,12 @@ import { useState, useRef, useEffect } from "react";
 import { T, useBreakpoint } from "./theme.jsx";
 import { PILL } from "./constants.js";
 
-const PatternCard = ({p,onClick,onPark,onUnpark,onDelete,onCoverChange,delay=0,pct,pdfThumbUrl,catFallbackPhoto,Photo,Bar,Stars}) => {
+const PatternCard = ({p,onClick,onPark,onUnpark,onDelete,onCoverChange,delay=0,pct,catFallbackPhoto,Photo,Bar,Stars}) => {
   const done=pct(p);
   const [menuOpen,setMenuOpen]=useState(false);
   const isParked=p.status==="parked";
-  const cardPhoto=p.cover_image_url||pdfThumbUrl(p.source_file_url)||(PILL.includes(p.photo)?catFallbackPhoto(p.cat):p.photo);
-  const isPlaceholder=!p.cover_image_url&&!pdfThumbUrl(p.source_file_url)&&PILL.includes(p.photo);
+  const cardPhoto=p.cover_image_url||(PILL.includes(p.photo)?catFallbackPhoto(p.cat):p.photo)||catFallbackPhoto(p.cat);
+  const isPlaceholder=!p.cover_image_url&&PILL.includes(p.photo);
   return (
     <div className="card fu" onClick={onClick} style={{background:T.surface,borderRadius:16,overflow:"hidden",border:`1px solid ${T.border}`,cursor:"pointer",animationDelay:delay+"s",position:"relative"}}>
       {!p.isStarter&&(onPark||onDelete)&&<div style={{position:"absolute",top:8,right:8,zIndex:5}}>
@@ -43,9 +43,9 @@ const PatternCard = ({p,onClick,onPark,onUnpark,onDelete,onCoverChange,delay=0,p
   );
 };
 
-const ShelfCard = ({p,onClick,pct,pdfThumbUrl,Photo,Bar}) => {
+const ShelfCard = ({p,onClick,pct,catFallbackPhoto,Photo,Bar}) => {
   const v=pct(p);
-  const cardPhoto=p.cover_image_url||pdfThumbUrl(p.source_file_url)||p.photo;
+  const cardPhoto=p.cover_image_url||p.photo||catFallbackPhoto(p.cat);
   return (
     <div onClick={onClick} style={{width:160,borderRadius:14,overflow:"hidden",border:`1px solid ${T.border}`,background:T.surface,cursor:"pointer",boxShadow:"0 2px 8px rgba(28,23,20,.06)",transition:"transform .16s,box-shadow .16s",flexShrink:0}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 8px 20px rgba(28,23,20,.12)";}} onMouseLeave={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="0 2px 8px rgba(28,23,20,.06)";}}>
       <div style={{height:100,position:"relative",background:T.linen,overflow:"hidden"}}><Photo src={cardPhoto} alt={p.title} style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top"}}/><div style={{position:"absolute",bottom:0,left:0,right:0}}><Bar val={v} color={T.terra} h={3} bg="rgba(0,0,0,.2)"/></div></div>
@@ -132,7 +132,7 @@ const EmptySlotCard = ({onClick,slotIndex=0}) => (
   </div>
 );
 
-const CollectionView = ({userPatterns,starterPatterns,cat,setCat,search,setSearch,openDetail,onAddPattern,isPro,tier,setView,onPark,onUnpark,onDelete,onCoverChange,pct,pdfThumbUrl,catFallbackPhoto,Photo,Bar,Stars,CATS,TIER_CONFIG}) => {
+const CollectionView = ({userPatterns,starterPatterns,cat,setCat,search,setSearch,openDetail,onAddPattern,isPro,tier,setView,onPark,onUnpark,onDelete,onCoverChange,pct,catFallbackPhoto,Photo,Bar,Stars,CATS,TIER_CONFIG}) => {
   const{isDesktop}=useBreakpoint();
   const allPatterns = [...userPatterns,...starterPatterns];
   const visible=allPatterns.filter(p=>p.status!=="deleted");
@@ -151,7 +151,7 @@ const CollectionView = ({userPatterns,starterPatterns,cat,setCat,search,setSearc
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 "+(isDesktop?"0":"18px"),marginBottom:12}}>
             <div style={{fontSize:10,color:T.ink3,textTransform:"uppercase",letterSpacing:".09em",fontWeight:600}}>Continue Working</div>
           </div>
-          <HScrollRow itemCount={inProgress.length}>{inProgress.map(p=><ShelfCard key={p.id} p={p} onClick={()=>openDetail(p)} pct={pct} pdfThumbUrl={pdfThumbUrl} Photo={Photo} Bar={Bar}/>)}</HScrollRow>
+          <HScrollRow itemCount={inProgress.length}>{inProgress.map(p=><ShelfCard key={p.id} p={p} onClick={()=>openDetail(p)} pct={pct} catFallbackPhoto={catFallbackPhoto} Photo={Photo} Bar={Bar}/>)}</HScrollRow>
         </div>
       )}
       <div style={{padding:isDesktop?"16px 0 10px":"16px 18px 10px"}}>
@@ -176,7 +176,7 @@ const CollectionView = ({userPatterns,starterPatterns,cat,setCat,search,setSearc
       {/* Unified grid */}
       {viewMode==="grid"?(
         <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:20,padding:isDesktop?"0 0 80px":"0 18px 120px"}}>
-          {filteredAll.map((p,i)=><PatternCard key={p.id} p={p} delay={i*.04} onClick={()=>openDetail(p)} onPark={onPark} onUnpark={onUnpark} onDelete={onDelete} onCoverChange={onCoverChange} pct={pct} pdfThumbUrl={pdfThumbUrl} catFallbackPhoto={catFallbackPhoto} Photo={Photo} Bar={Bar} Stars={Stars}/>)}
+          {filteredAll.map((p,i)=><PatternCard key={p.id} p={p} delay={i*.04} onClick={()=>openDetail(p)} onPark={onPark} onUnpark={onUnpark} onDelete={onDelete} onCoverChange={onCoverChange} pct={pct} catFallbackPhoto={catFallbackPhoto} Photo={Photo} Bar={Bar} Stars={Stars}/>)}
           {!isPro&&cat==="All"&&!search&&Array.from({length:emptySlots}).map((_,i)=><EmptySlotCard key={"slot_"+i} slotIndex={i} onClick={onAddPattern}/>)}
         </div>
       ):(
@@ -184,7 +184,7 @@ const CollectionView = ({userPatterns,starterPatterns,cat,setCat,search,setSearc
           {filteredAll.length===0&&<div style={{textAlign:"center",padding:"40px 20px",color:T.ink3,fontSize:13}}>No patterns yet. Add your first!</div>}
           {filteredAll.map((p,i)=>(
             <div key={p.id} className="fu" onClick={()=>openDetail(p)} style={{display:"flex",gap:12,background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:10,cursor:"pointer",animationDelay:i*.04+"s",boxShadow:T.shadow}}>
-              <div style={{width:56,height:56,borderRadius:10,overflow:"hidden",flexShrink:0,background:T.linen}}><Photo src={p.cover_image_url||pdfThumbUrl(p.source_file_url)||p.photo} alt={p.title} style={{width:"100%",height:"100%",objectFit:"cover"}}/></div>
+              <div style={{width:56,height:56,borderRadius:10,overflow:"hidden",flexShrink:0,background:T.linen}}><Photo src={p.cover_image_url||p.photo||catFallbackPhoto(p.cat)} alt={p.title} style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top"}}/></div>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontFamily:T.serif,fontSize:14,fontWeight:500,color:T.ink,lineHeight:1.3}}>{p.title}</div>
                 <div style={{fontSize:11,color:T.ink3,marginTop:2}}>{p.cat}{pct(p)>0?" · "+pct(p)+"%":""}{p.isStarter?" · Free Starter":""}</div>
