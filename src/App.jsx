@@ -1473,7 +1473,7 @@ export default function Wovely() {
   // Instant session restore: if a local session exists, assume authed immediately
   // to avoid login screen flicker. The async validate() will correct if expired.
   const _hasLocalSession = !!getSession()?.access_token && !!supabaseAuth.getUser();
-  const [authed,setAuthed]=useState(_hasLocalSession),[isPro,setIsPro]=useState(false);
+  const [authed,setAuthed]=useState(_hasLocalSession),[isPro,setIsPro]=useState(()=>_hasLocalSession&&localStorage.getItem("yh_is_pro")==="true");
   const [authChecked,setAuthChecked]=useState(_hasLocalSession);
   const [userPatterns,setUserPatterns]=useState([]);
   const [patternsFetched,setPatternsFetched]=useState(false);
@@ -1521,12 +1521,17 @@ export default function Wovely() {
           try {
             const uid = (() => { try { const p=JSON.parse(atob(ns.access_token.split(".")[1])); return p.sub; } catch { return null; } })();
             if (uid) {
-              const pr = await fetch(`${SUPABASE_URL}/rest/v1/user_profiles?id=eq.${uid}&select=has_completed_onboarding`, {
+              const pr = await fetch(`${SUPABASE_URL}/rest/v1/user_profiles?id=eq.${uid}&select=has_completed_onboarding,is_pro`, {
                 headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${ns.access_token}`},
               });
               if (pr.ok) {
                 const rows = await pr.json();
-                if (rows[0] && !rows[0].has_completed_onboarding) setShowOnboarding(true);
+                if (rows[0]) {
+                  if (!rows[0].has_completed_onboarding) setShowOnboarding(true);
+                  const proStatus = !!rows[0].is_pro;
+                  setIsPro(proStatus);
+                  localStorage.setItem("yh_is_pro", String(proStatus));
+                }
               }
             }
           } catch {}
@@ -1541,7 +1546,7 @@ export default function Wovely() {
     validate();
   },[]);
 
-  const handleSignOut = async () => { await supabaseAuth.signOut(); setAuthed(false); setIsPro(false); setUserPatterns([]); localStorage.removeItem("yh_last_url"); document.cookie="wovely_authed=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/"; navigate("/"); };
+  const handleSignOut = async () => { await supabaseAuth.signOut(); setAuthed(false); setIsPro(false); setUserPatterns([]); localStorage.removeItem("yh_last_url"); localStorage.removeItem("yh_is_pro"); document.cookie="wovely_authed=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/"; navigate("/"); };
 
   // Navigation helper — translates view keys to URL paths
   const navigateToView = useCallback((v, patternId) => {
