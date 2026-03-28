@@ -951,6 +951,7 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade}) => {
         )}
       </div>
       {/* Stitch Check banner */}
+      {console.log("[Wovely] Stitch Check banner render — isPro:",isPro,"validating:",validating,"report:",!!validationReport)}
       {isPro?(
         validating?<div style={{background:T.linen,borderRadius:12,padding:"12px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:10}}><div className="spinner" style={{width:16,height:16,border:`2px solid ${T.border}`,borderTopColor:T.terra,borderRadius:"50%",flexShrink:0}}/><span style={{fontSize:13,color:T.ink2}}>Running Stitch Check...</span></div>
         :validationReport?<div style={{background:badgeForScore(validationReport.score).bg,border:`1.5px solid ${badgeForScore(validationReport.score).color}`,borderRadius:12,padding:"12px 16px",marginBottom:16}}>
