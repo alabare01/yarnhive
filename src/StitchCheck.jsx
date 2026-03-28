@@ -169,7 +169,10 @@ const StitchCheck = () => {
           </div>
         )}
 
-        <button onClick={reset} style={{ marginTop: 20, width: "100%", background: T.linen, color: T.ink2, border: `1px solid ${T.border}`, borderRadius: 12, padding: "13px", fontSize: 14, fontWeight: 500, cursor: "pointer" }}>Check another pattern</button>
+        <div style={{ marginTop: 20, padding: "0 8px", textAlign: "center" }}>
+          <p style={{ fontSize: 12, color: T.sage, lineHeight: 1.7, fontStyle: "italic", margin: 0 }}>A lower score doesn't mean your pattern won't work — think of it like adding a handwritten recipe card to your recipe box. Mom's notes, doodles, and shorthand are part of the charm. Wovely can import any pattern regardless of its Stitch Check score. This report is just a heads-up before you pick up your hook.</p>
+        </div>
+        <button onClick={reset} style={{ marginTop: 16, width: "100%", background: T.linen, color: T.ink2, border: `1px solid ${T.border}`, borderRadius: 12, padding: "13px", fontSize: 14, fontWeight: 500, cursor: "pointer" }}>Check another pattern</button>
       </div>
     );
   }
