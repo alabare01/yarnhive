@@ -24,19 +24,15 @@ const Calculators = () => {
   const yardage=Math.round(totalSt*(parseFloat(ydsPerSt)||0.5));
 
   // ── SCALING ENGINE ──────────────────────────────────────────────
-  // Scale factor = pattern gauge / my gauge (per axis)
   const patStPerIn = parseFloat(patSt)/parseFloat(patSwatchIn)||0;
   const myStPerIn  = parseFloat(mySt)/parseFloat(mySwatchIn)||0;
   const patRowPerIn= parseFloat(patRows)/parseFloat(patSwatchIn)||0;
   const myRowPerIn = parseFloat(myRows)/parseFloat(mySwatchIn)||0;
-  // If my gauge is looser (fewer stitches per inch), pieces come out bigger → scale DOWN stitch counts
-  // Scale factor for stitches: how many of MY stitches = 1 pattern stitch → myStPerIn/patStPerIn
   const stScale = (patStPerIn>0&&myStPerIn>0) ? patStPerIn/myStPerIn : 1;
   const rowScale= (patRowPerIn>0&&myRowPerIn>0) ? patRowPerIn/myRowPerIn : 1;
-  const sizeChangeW = stScale>0 ? (1/stScale) : 1; // actual size change factor
+  const sizeChangeW = stScale>0 ? (1/stScale) : 1;
   const sizeChangeH = rowScale>0 ? (1/rowScale) : 1;
 
-  // Scale a single stitch count
   const scaleCount = (n,axis="st") => {
     const factor = axis==="row" ? stScale : stScale;
     const scaled = Math.round(n * factor);
@@ -44,21 +40,15 @@ const Calculators = () => {
     return { scaled, error, flagged: error > 0.05 };
   };
 
-  // Parse and scale a stitch count from the input
   const rawCount = parseInt(origCount)||0;
   const scaledResult = scaleCount(rawCount);
 
-  // Scale a repeat pattern like "(4 sc, inc) x 4 — 24 sts"
-  // Rule: scale the repeat COUNT, keep the sequence (stitch types don't change)
-  // Then recalculate total stitch count from the scaled repeat
   const scaleRepeat = (desc, totalSts) => {
-    // Try to extract repeat count from patterns like "x 4", "x4", "* 8 times"
     const repeatMatch = desc.match(/[xX×*]\s*(\d+)/);
     const seqMatch = desc.match(/\(([^)]+)\)/);
     if (!repeatMatch || !seqMatch) return null;
     const origRepeat = parseInt(repeatMatch[1]);
     const scaledRepeat = Math.round(origRepeat * stScale);
-    // Count stitches in the sequence to get new total
     const seqText = seqMatch[1];
     const seqStCount = (seqText.match(/\b(sc|hdc|dc|tr|inc|dec|sl st|ch)\b/gi)||[]).length || 1;
     const newTotal = scaledRepeat * seqStCount;
@@ -68,159 +58,167 @@ const Calculators = () => {
   const repeatResult = showRepeat ? scaleRepeat(origDesc, rawCount) : null;
   const {isDesktop:isDk}=useBreakpoint();
 
+  const CARD = {background:T.card,borderRadius:16,padding:24,boxShadow:T.shadowLg,marginBottom:16};
+  const LABEL = {fontSize:10,fontVariant:"small-caps",color:T.ink3,textTransform:"lowercase",letterSpacing:".14em",marginBottom:6,fontWeight:500};
+  const DIVIDER = {height:1,background:T.border,margin:"20px 0",opacity:.5};
+
   const Input = ({label,val,set,step="1"}) => (
     <div>
-      <div style={{fontSize:10,color:T.ink3,marginBottom:4,textTransform:"uppercase",letterSpacing:".05em"}}>{label}</div>
+      <div style={LABEL}>{label}</div>
       <input value={val} onChange={e=>set(e.target.value)} type="number" step={step}
-        style={{width:"100%",padding:"10px",background:"rgba(250,247,243,0.96)",border:`1px solid ${T.border}`,borderRadius:8,fontSize:15,fontWeight:600,color:T.ink,textAlign:"center",outline:"none"}}
-        onFocus={e=>e.target.style.borderColor=T.terra} onBlur={e=>e.target.style.borderColor=T.border}/>
+        style={{width:"100%",padding:"12px 0",background:"transparent",border:"none",borderBottom:`1.5px solid ${T.border}`,fontSize:17,fontWeight:600,color:T.ink,textAlign:"center",outline:"none",transition:"border-color .2s"}}
+        onFocus={e=>e.target.style.borderBottomColor=T.terra} onBlur={e=>e.target.style.borderBottomColor=T.border}/>
     </div>
   );
   const ResultCard = ({label,val,flag}) => (
-    <div style={{background:flag?"rgba(255,220,200,.5)":"rgba(255,255,255,.8)",borderRadius:9,padding:"10px 12px",border:flag?`1px solid ${T.terra}`:"none"}}>
-      <div style={{fontSize:10,color:T.ink3,marginBottom:2}}>{label}</div>
-      <div style={{fontSize:28,fontWeight:700,fontFamily:T.serif,color:flag?T.terra:T.ink}}>{val}</div>
-      {flag&&<div style={{fontSize:10,color:T.terra,marginTop:2}}>⚠ rounding error &gt;5%</div>}
+    <div style={{textAlign:"center",padding:"12px 8px"}}>
+      <div style={LABEL}>{label}</div>
+      <div style={{fontSize:32,fontWeight:700,fontFamily:T.serif,color:flag?T.terra:T.ink,lineHeight:1}}>{val}</div>
+      {flag&&<div style={{fontSize:10,color:T.terra,marginTop:4}}>rounding &gt;5%</div>}
     </div>
+  );
+
+  const Pill = ({children,active:a,onClick}) => (
+    <button onClick={onClick} style={{flex:1,padding:"10px 16px",border:"none",background:a?T.terra:"transparent",color:a?"#fff":T.ink3,borderRadius:99,cursor:"pointer",fontSize:12,fontWeight:a?600:500,transition:"all .15s",letterSpacing:".02em"}}>{children}</button>
   );
 
   return (
     <div style={{padding:isDk?"0 0 100px":"0 18px 100px"}}>
-      <div style={{fontFamily:T.serif,fontSize:18,color:T.ink,marginBottom:4}}>Crochet Calculators</div>
-      <div style={{fontSize:13,color:T.ink3,marginBottom:16}}>Essential tools for planning your projects.</div>
-      <div style={{display:"flex",gap:6,marginBottom:8}}>
+      <div style={{fontFamily:T.serif,fontSize:22,color:T.ink,marginBottom:4,fontWeight:700}}>Crochet Calculators</div>
+      <div style={{fontSize:13,color:T.ink3,marginBottom:20}}>Essential tools for planning your projects.</div>
+
+      {/* Tab pills */}
+      <div style={{display:"flex",gap:4,marginBottom:20,background:T.surface,borderRadius:99,padding:4}}>
         {[["gauge","Gauge"],["yardage","Yardage"],["resize","Scale"]].map(([key,label])=>(
-          <button key={key} onClick={()=>setActive(key)} style={{flex:1,padding:"10px",border:"1.5px solid "+(active===key?T.terra:T.border),background:active===key?T.terraLt:T.card,color:active===key?T.terra:T.ink3,borderRadius:10,cursor:"pointer",fontSize:12,fontWeight:active===key?600:400}}>{label}</button>
+          <Pill key={key} active={active===key} onClick={()=>setActive(key)}>{label}</Pill>
         ))}
       </div>
 
       {/* ── GAUGE ── */}
       {active==="gauge"&&<>
-        <div style={{fontSize:12,color:T.ink3,marginBottom:16,lineHeight:1.5}}>Use when your swatch doesn't match the pattern. Tells you how to adjust your stitch count.</div>
-        <div style={{background:T.linen,borderRadius:14,padding:"16px",marginBottom:12}}>
-          <div style={{fontFamily:T.serif,fontSize:15,color:T.ink,marginBottom:12}}>Your Swatch</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
-            <Input label="Stitches" val={stitches} set={setStitches}/>
-            <Input label="Rows" val={rows} set={setRows}/>
-            <Input label="Swatch (in)" val={swatchSize} set={setSwatchSize}/>
+        <div style={CARD}>
+          <div style={LABEL}>your swatch</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:16,marginTop:8}}>
+            <Input label="stitches" val={stitches} set={setStitches}/>
+            <Input label="rows" val={rows} set={setRows}/>
+            <Input label="swatch (in)" val={swatchSize} set={setSwatchSize}/>
           </div>
-        </div>
-        <div style={{background:T.linen,borderRadius:14,padding:"16px",marginBottom:12}}>
-          <div style={{fontFamily:T.serif,fontSize:15,color:T.ink,marginBottom:12}}>Target Dimensions</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-            <Input label="Width (in)" val={targetW} set={setTargetW}/>
-            <Input label="Height (in)" val={targetH} set={setTargetH}/>
+          <div style={DIVIDER}/>
+          <div style={LABEL}>target dimensions</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginTop:8}}>
+            <Input label="width (in)" val={targetW} set={setTargetW}/>
+            <Input label="height (in)" val={targetH} set={setTargetH}/>
           </div>
-        </div>
-        <div style={{background:`linear-gradient(135deg,${T.terraLt},${T.card})`,borderRadius:14,padding:"16px",border:`1px solid ${T.border}`}}>
-          <div style={{fontFamily:T.serif,fontSize:15,color:T.ink,marginBottom:12}}>Results</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-            <ResultCard label="Cast on (sts)" val={castOn}/>
-            <ResultCard label="Total rows" val={totalRowsCalc}/>
-            <ResultCard label="Sts/inch" val={stPerInch.toFixed(1)}/>
-            <ResultCard label="Rows/inch" val={roPerInch.toFixed(1)}/>
+          <div style={DIVIDER}/>
+          <div style={LABEL}>results</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:8}}>
+            <ResultCard label="cast on" val={castOn}/>
+            <ResultCard label="total rows" val={totalRowsCalc}/>
+            <ResultCard label="sts / inch" val={stPerInch.toFixed(1)}/>
+            <ResultCard label="rows / inch" val={roPerInch.toFixed(1)}/>
           </div>
         </div>
       </>}
 
       {/* ── YARDAGE ── */}
       {active==="yardage"&&<>
-        <div style={{fontSize:12,color:T.ink3,marginBottom:16,lineHeight:1.5}}>Estimate how much yarn you need before starting a project.</div>
-        <div style={{background:T.linen,borderRadius:14,padding:"16px",marginBottom:12}}>
-          <div style={{fontFamily:T.serif,fontSize:15,color:T.ink,marginBottom:12}}>Project Details</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-            <Input label="Width (in)" val={projW} set={setProjW}/>
-            <Input label="Height (in)" val={projH} set={setProjH}/>
-            <Input label="Sts per 4in" val={stPer4} set={setStPer4}/>
-            <Input label="Yds per stitch" val={ydsPerSt} set={setYdsPerSt} step="0.1"/>
+        <div style={CARD}>
+          <div style={LABEL}>project details</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginTop:8}}>
+            <Input label="width (in)" val={projW} set={setProjW}/>
+            <Input label="height (in)" val={projH} set={setProjH}/>
+            <Input label="sts per 4in" val={stPer4} set={setStPer4}/>
+            <Input label="yds per stitch" val={ydsPerSt} set={setYdsPerSt} step="0.1"/>
           </div>
-        </div>
-        <div style={{background:`linear-gradient(135deg,${T.terraLt},${T.card})`,borderRadius:14,padding:"20px",border:`1px solid ${T.border}`,textAlign:"center"}}>
-          <div style={{fontFamily:T.serif,fontSize:48,fontWeight:700,color:T.terra}}>{yardage.toLocaleString()}</div>
-          <div style={{fontSize:14,color:T.ink3,marginTop:4}}>yards needed</div>
-          <div style={{fontSize:13,color:T.ink2,marginTop:8}}>approx. {Math.ceil(yardage/200)} skeins at 200 yds each</div>
+          <div style={DIVIDER}/>
+          <div style={{textAlign:"center",padding:"16px 0 8px"}}>
+            <div style={{fontSize:52,fontWeight:700,fontFamily:T.serif,color:T.terra,lineHeight:1}}>{yardage.toLocaleString()}</div>
+            <div style={{fontSize:14,color:T.ink3,marginTop:6,fontWeight:500}}>yards needed</div>
+            <div style={{display:"inline-flex",marginTop:12,background:T.terraLt,borderRadius:99,padding:"6px 16px",fontSize:12,color:T.terra,fontWeight:600}}>~{Math.ceil(yardage/200)} skeins at 200 yds</div>
+          </div>
         </div>
       </>}
 
       {/* ── SCALE ── */}
       {active==="resize"&&<>
         <div style={{fontSize:12,color:T.ink3,marginBottom:16,lineHeight:1.6}}>
-          Enter the pattern's gauge and your gauge. We'll calculate exact scaled stitch counts — not just a multiplier.
+          Enter the pattern's gauge and your gauge. We'll calculate exact scaled stitch counts.
         </div>
 
         {/* Gauge inputs side by side */}
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
-          <div style={{background:T.linen,borderRadius:14,padding:"14px"}}>
-            <div style={{fontFamily:T.serif,fontSize:14,color:T.ink,marginBottom:10}}>Pattern Gauge</div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
-              <Input label="Sts" val={patSt} set={setPatSt}/>
-              <Input label="Rows" val={patRows} set={setPatRows}/>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
+          <div style={CARD}>
+            <div style={LABEL}>pattern gauge</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:8,marginBottom:8}}>
+              <Input label="sts" val={patSt} set={setPatSt}/>
+              <Input label="rows" val={patRows} set={setPatRows}/>
             </div>
-            <Input label="Swatch (in)" val={patSwatchIn} set={setPatSwatchIn}/>
+            <Input label="swatch (in)" val={patSwatchIn} set={setPatSwatchIn}/>
           </div>
-          <div style={{background:T.linen,borderRadius:14,padding:"14px"}}>
-            <div style={{fontFamily:T.serif,fontSize:14,color:T.ink,marginBottom:10}}>My Gauge</div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
-              <Input label="Sts" val={mySt} set={setMySt}/>
-              <Input label="Rows" val={myRows} set={setMyRows}/>
+          <div style={CARD}>
+            <div style={LABEL}>my gauge</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:8,marginBottom:8}}>
+              <Input label="sts" val={mySt} set={setMySt}/>
+              <Input label="rows" val={myRows} set={setMyRows}/>
             </div>
-            <Input label="Swatch (in)" val={mySwatchIn} set={setMySwatchIn}/>
+            <Input label="swatch (in)" val={mySwatchIn} set={setMySwatchIn}/>
           </div>
         </div>
 
         {/* Scale factor summary */}
-        <div style={{background:`linear-gradient(135deg,${T.terraLt},${T.card})`,borderRadius:14,padding:"16px",marginBottom:12,border:`1px solid ${T.border}`}}>
-          <div style={{fontFamily:T.serif,fontSize:14,color:T.ink,marginBottom:10}}>Your Scale Factors</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
-            <ResultCard label="Stitch mult." val={`×${stScale.toFixed(2)}`}/>
-            <ResultCard label="Width result" val={`${(sizeChangeW*100).toFixed(0)}%`} flag={Math.abs(sizeChangeW-1)>0.3}/>
-            <ResultCard label="Yardage mult." val={`${(sizeChangeW*sizeChangeH*100).toFixed(0)}%`}/>
+        <div style={CARD}>
+          <div style={LABEL}>your scale factors</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginTop:8}}>
+            <ResultCard label="stitch mult." val={`\u00D7${stScale.toFixed(2)}`}/>
+            <ResultCard label="width result" val={`${(sizeChangeW*100).toFixed(0)}%`} flag={Math.abs(sizeChangeW-1)>0.3}/>
+            <ResultCard label="yardage mult." val={`${(sizeChangeW*sizeChangeH*100).toFixed(0)}%`}/>
           </div>
-          {Math.abs(stScale-1)<0.03&&<div style={{marginTop:10,fontSize:12,color:T.sage,fontWeight:600,textAlign:"center"}}>✓ Gauges match — no scaling needed</div>}
-          {stScale!==1&&<div style={{marginTop:10,fontSize:12,color:T.ink2,lineHeight:1.6}}>
-            {stScale>1?"Your gauge is tighter — multiply stitch counts to get the same finished size.":"Your gauge is looser — reduce stitch counts to get the same finished size."}
+          {Math.abs(stScale-1)<0.03&&<div style={{marginTop:12,fontSize:12,color:T.sage,fontWeight:600,textAlign:"center"}}>Gauges match — no scaling needed</div>}
+          {stScale!==1&&<div style={{marginTop:12,fontSize:12,color:T.ink2,lineHeight:1.6,textAlign:"center"}}>
+            {stScale>1?"Your gauge is tighter — multiply stitch counts to match.":"Your gauge is looser — reduce stitch counts to match."}
           </div>}
         </div>
 
         {/* Single stitch count scaler */}
-        <div style={{background:T.linen,borderRadius:14,padding:"14px",marginBottom:10}}>
-          <div style={{fontFamily:T.serif,fontSize:14,color:T.ink,marginBottom:10}}>Scale a Stitch Count</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:8}}>
-            <Input label="Pattern calls for" val={origCount} set={setOrigCount}/>
+        <div style={CARD}>
+          <div style={LABEL}>scale a stitch count</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginTop:8,marginBottom:8}}>
+            <Input label="pattern calls for" val={origCount} set={setOrigCount}/>
             <div>
-              <div style={{fontSize:10,color:T.ink3,marginBottom:4,textTransform:"uppercase",letterSpacing:".05em"}}>You should work</div>
-              <div style={{padding:"10px",background:scaledResult.flagged?"rgba(255,220,200,.6)":"rgba(255,255,255,.9)",border:`1.5px solid ${scaledResult.flagged?T.terra:T.sage}`,borderRadius:8,textAlign:"center"}}>
-                <span style={{fontSize:22,fontWeight:700,fontFamily:T.serif,color:scaledResult.flagged?T.terra:T.sage}}>{scaledResult.scaled}</span>
-                <span style={{fontSize:11,color:T.ink3,marginLeft:4}}>sts</span>
+              <div style={LABEL}>you should work</div>
+              <div style={{textAlign:"center",padding:"8px 0"}}>
+                <span style={{fontSize:28,fontWeight:700,fontFamily:T.serif,color:scaledResult.flagged?T.terra:T.sage}}>{scaledResult.scaled}</span>
+                <span style={{display:"inline-flex",marginLeft:8,background:scaledResult.flagged?T.terraLt:T.sageLt,borderRadius:99,padding:"3px 10px",fontSize:11,fontWeight:600,color:scaledResult.flagged?T.terra:T.sage}}>sts</span>
               </div>
-              {scaledResult.flagged&&<div style={{fontSize:10,color:T.terra,marginTop:4}}>⚠ {(scaledResult.error*100).toFixed(1)}% rounding error</div>}
+              {scaledResult.flagged&&<div style={{fontSize:10,color:T.terra,textAlign:"center"}}>{(scaledResult.error*100).toFixed(1)}% rounding</div>}
             </div>
           </div>
 
           {/* Repeat pattern scaler toggle */}
-          <button onClick={()=>setShowRepeat(r=>!r)} style={{fontSize:11,color:T.terra,background:"none",border:"none",cursor:"pointer",padding:0,textDecoration:"underline"}}>
-            {showRepeat?"▾ Hide repeat scaler":"▸ Scale a repeat pattern like (sc, inc) x 4"}
+          <button onClick={()=>setShowRepeat(r=>!r)} style={{fontSize:11,color:T.terra,background:"none",border:"none",cursor:"pointer",padding:0,fontWeight:500}}>
+            {showRepeat?"\u25BE Hide repeat scaler":"\u25B8 Scale a repeat pattern"}
           </button>
           {showRepeat&&<>
-            <div style={{marginTop:10}}>
-              <div style={{fontSize:10,color:T.ink3,marginBottom:4,textTransform:"uppercase",letterSpacing:".05em"}}>Repeat instruction</div>
+            <div style={{marginTop:12}}>
+              <div style={LABEL}>repeat instruction</div>
               <input value={origDesc} onChange={e=>setOrigDesc(e.target.value)}
                 placeholder="e.g. (4 sc, inc) x 4"
-                style={{width:"100%",padding:"10px",background:"rgba(250,247,243,0.96)",border:`1px solid ${T.border}`,borderRadius:8,fontSize:13,color:T.ink,outline:"none"}}
-                onFocus={e=>e.target.style.borderColor=T.terra} onBlur={e=>e.target.style.borderColor=T.border}/>
+                style={{width:"100%",padding:"12px 0",background:"transparent",border:"none",borderBottom:`1.5px solid ${T.border}`,fontSize:13,color:T.ink,outline:"none",transition:"border-color .2s"}}
+                onFocus={e=>e.target.style.borderBottomColor=T.terra} onBlur={e=>e.target.style.borderBottomColor=T.border}/>
             </div>
-            {repeatResult&&<div style={{marginTop:10,background:"rgba(255,255,255,.8)",borderRadius:9,padding:"10px 12px"}}>
-              <div style={{fontSize:11,color:T.ink3,marginBottom:4}}>SCALED INSTRUCTION</div>
-              <div style={{fontSize:14,fontWeight:600,color:T.ink,fontFamily:T.serif}}>{repeatResult.newDesc}</div>
-              <div style={{fontSize:11,color:T.ink3,marginTop:4}}>{repeatResult.origRepeat} repeats → {repeatResult.scaledRepeat} repeats</div>
+            {repeatResult&&<div style={{marginTop:12,textAlign:"center",padding:"12px 0"}}>
+              <div style={LABEL}>scaled instruction</div>
+              <div style={{fontSize:15,fontWeight:600,color:T.ink,fontFamily:T.serif,marginTop:4}}>{repeatResult.newDesc}</div>
+              <div style={{fontSize:11,color:T.ink3,marginTop:6}}>{repeatResult.origRepeat} repeats \u2192 {repeatResult.scaledRepeat} repeats</div>
             </div>}
             {showRepeat&&!repeatResult&&origDesc.length>3&&<div style={{marginTop:8,fontSize:11,color:T.ink3}}>Couldn't parse that pattern. Try: (4 sc, inc) x 4</div>}
           </>}
         </div>
 
         {/* Sizing note */}
-        <div style={{background:T.sageLt,borderRadius:12,padding:"12px 14px",fontSize:12,color:T.sage,lineHeight:1.6}}>
-          <strong>Pro tip:</strong> For amigurumi, scaling via hook size + yarn weight change is often easier than adjusting every stitch count. A 5mm hook with bulky yarn instead of 3.5mm with DK roughly doubles your finished size with zero math.
+        <div style={{background:T.card,borderRadius:16,padding:24,boxShadow:T.shadow}}>
+          <div style={{display:"inline-flex",background:T.sageLt,borderRadius:99,padding:"4px 12px",fontSize:10,fontWeight:600,color:T.sage,marginBottom:10,letterSpacing:".06em"}}>PRO TIP</div>
+          <div style={{fontSize:12,color:T.ink2,lineHeight:1.7}}>For amigurumi, scaling via hook size + yarn weight change is often easier than adjusting every stitch count. A 5mm hook with bulky yarn instead of 3.5mm with DK roughly doubles your finished size with zero math.</div>
         </div>
       </>}
     </div>

@@ -60,7 +60,7 @@ const CSS = () => (
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #EAE0D5; border-radius: 99px; }
-    body { background: #F7F3EE; }
+    body { background: #FAF7F2; }
     input, textarea, button, select { font-family: "DM Sans", -apple-system, sans-serif; }
     @keyframes fadeUp    { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
     @keyframes slideUp   { from{opacity:0;transform:translateY(40px)} to{opacity:1;transform:translateY(0)} }
@@ -718,10 +718,11 @@ const ProfileSettingsView = ({isPro,onOpenProModal,onGoHome,onEmailConfirmed}) =
     setResending(false);
   };
 
-  const SECTION = {background:T.surface,borderRadius:16,border:`1px solid ${T.border}`,padding:isDesktop?"24px 28px":"20px 18px"};
-  const SECTION_TITLE = {fontFamily:T.serif,fontSize:18,fontWeight:700,color:T.ink,marginBottom:16};
-  const DIVIDER = <div style={{height:1,background:T.border,margin:"16px 0"}}/>;
-  const Msg = ({msg}) => msg ? <div style={{background:msg.type==="ok"?"rgba(92,122,94,.1)":T.terraLt,border:"1px solid "+(msg.type==="ok"?"rgba(92,122,94,.2)":"rgba(184,90,60,.2)"),borderRadius:10,padding:"10px 14px",fontSize:12,color:msg.type==="ok"?T.sage:T.terra,lineHeight:1.5,marginBottom:8}}>{msg.text}</div> : null;
+  const SECTION = {background:T.card,borderRadius:16,padding:isDesktop?"28px 32px":"24px 20px",boxShadow:T.shadowLg};
+  const SC_LABEL = {fontSize:10,fontVariant:"small-caps",color:T.ink3,textTransform:"lowercase",letterSpacing:".14em",fontWeight:500};
+  const SECTION_TITLE = {fontFamily:T.serif,fontSize:18,fontWeight:700,color:T.ink,marginBottom:20};
+  const DIVIDER = <div style={{height:16}}/>;
+  const Msg = ({msg}) => msg ? <div style={{background:msg.type==="ok"?"rgba(92,122,94,.1)":T.terraLt,borderRadius:12,padding:"10px 14px",fontSize:12,color:msg.type==="ok"?T.sage:T.terra,lineHeight:1.5,marginBottom:8}}>{msg.text}</div> : null;
 
   return (
     <div style={{padding:isDesktop?"24px 0 80px":"16px 18px 100px",maxWidth:560}}>
@@ -753,27 +754,28 @@ const ProfileSettingsView = ({isPro,onOpenProModal,onGoHome,onEmailConfirmed}) =
 
       <div style={SECTION}>
         <div style={SECTION_TITLE}>Your Profile</div>
-        <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:16}}>
-          <div style={{width:80,height:80,borderRadius:"50%",background:T.linen,display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,fontWeight:700,color:T.terra,flexShrink:0,border:`2px solid ${T.border}`}}>{(displayName||"Y").charAt(0).toUpperCase()}{(username||"H").charAt(0).toUpperCase()}</div>
-          <div><div style={{fontSize:14,fontWeight:600,color:T.ink,marginBottom:4}}>{displayName||"Your Name"}</div><div style={{fontSize:12,color:T.ink3}}>{username?"@"+username:"Set your username"}</div></div>
+        <div style={{textAlign:"center",marginBottom:24}}>
+          <div style={{width:100,height:100,borderRadius:"50%",background:T.linen,display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:34,fontWeight:700,color:T.terra,border:`3px solid ${T.terra}`,boxShadow:"0 0 0 6px rgba(184,90,60,.1)"}}>{(displayName||"Y").charAt(0).toUpperCase()}{(username||"H").charAt(0).toUpperCase()}</div>
+          <div style={{fontSize:16,fontWeight:600,color:T.ink,marginTop:12}}>{displayName||"Your Name"}</div>
+          <div style={{fontSize:13,color:T.ink3,marginTop:2}}>{username?"@"+username:"Set your username"}</div>
         </div>
         <Field label="Display name" placeholder="e.g. Sarah" value={displayName} onChange={e=>setDisplayName(e.target.value)}/>
         <div style={{marginBottom:14}}>
-          <div style={{fontSize:11,color:T.ink3,textTransform:"uppercase",letterSpacing:".08em",marginBottom:5}}>Username</div>
+          <div style={{fontSize:10,fontVariant:"small-caps",color:T.ink3,textTransform:"lowercase",letterSpacing:".14em",marginBottom:6,fontWeight:500}}>username</div>
           <div style={{position:"relative"}}>
-            <span style={{position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",color:T.ink3,fontSize:15,pointerEvents:"none"}}>@</span>
-            <input value={username} onChange={e=>setUsername(e.target.value)} placeholder="yourhandle" style={{width:"100%",padding:"13px 16px 13px 30px",background:T.linen,border:`1.5px solid ${T.border}`,borderRadius:12,color:T.ink,fontSize:15}} onFocus={e=>e.target.style.borderColor=T.terra} onBlur={e=>e.target.style.borderColor=T.border}/>
+            <span style={{position:"absolute",left:0,top:"50%",transform:"translateY(-50%)",color:T.ink3,fontSize:15,pointerEvents:"none"}}>@</span>
+            <input value={username} onChange={e=>setUsername(e.target.value)} placeholder="yourhandle" style={{width:"100%",padding:"13px 16px 13px 18px",background:"transparent",border:"none",borderBottom:`1.5px solid ${T.border}`,borderRadius:0,color:T.ink,fontSize:15,outline:"none",transition:"border-color .2s"}} onFocus={e=>e.target.style.borderBottomColor=T.terra} onBlur={e=>e.target.style.borderBottomColor=T.border}/>
           </div>
         </div>
         <Field label="Bio" placeholder="Tell us about your craft..." value={bio} onChange={e=>setBio(e.target.value)} rows={3}/>
-        <div style={{borderTop:`1px solid ${T.border}`,paddingTop:16,marginTop:8}}>
-          <div style={{fontSize:13,fontWeight:600,color:T.ink,marginBottom:12}}>Social Connections</div>
+        <div style={{borderTop:`1px solid ${T.border}`,paddingTop:20,marginTop:12}}>
+          <div style={{fontSize:10,fontVariant:"small-caps",color:T.ink3,textTransform:"lowercase",letterSpacing:".14em",fontWeight:500,marginBottom:14}}>social connections</div>
           <Field label="Instagram handle" placeholder="@yourhandle" value={socialInstagram} onChange={e=>setSocialInstagram(e.target.value)}/>
           <Field label="Pinterest handle" placeholder="@yourhandle" value={socialPinterest} onChange={e=>setSocialPinterest(e.target.value)}/>
           <Field label="Ravelry username" placeholder="yourhandle" value={socialRavelry} onChange={e=>setSocialRavelry(e.target.value)}/>
         </div>
         <Msg msg={profileMsg}/>
-        <button onClick={handleProfileSave} disabled={profileSaving} style={{background:T.terra,color:"#fff",border:"none",borderRadius:12,padding:"12px 24px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.3)",opacity:profileSaving?.6:1}}>{profileSaving?"Saving…":saveBtnText}</button>
+        <button onClick={handleProfileSave} disabled={profileSaving} style={{background:T.terra,color:"#fff",border:"none",borderRadius:99,padding:"12px 28px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.3)",opacity:profileSaving?.6:1}}>{profileSaving?"Saving…":saveBtnText}</button>
       </div>
 
       {DIVIDER}
@@ -781,8 +783,8 @@ const ProfileSettingsView = ({isPro,onOpenProModal,onGoHome,onEmailConfirmed}) =
       <div style={SECTION}>
         <div style={SECTION_TITLE}>Account</div>
         <div style={{marginBottom:14}}>
-          <div style={{fontSize:11,color:T.ink3,textTransform:"uppercase",letterSpacing:".08em",marginBottom:5}}>Email</div>
-          <div style={{padding:"13px 16px",background:T.linen,border:`1.5px solid ${T.border}`,borderRadius:12,color:T.ink2,fontSize:15}}>{user?.email||"—"}</div>
+          <div style={{fontSize:10,fontVariant:"small-caps",color:T.ink3,textTransform:"lowercase",letterSpacing:".14em",marginBottom:6,fontWeight:500}}>email</div>
+          <div style={{padding:"13px 0",borderBottom:`1.5px solid ${T.border}`,color:T.ink2,fontSize:15}}>{user?.email||"—"}</div>
         </div>
         <div style={{marginBottom:16}}>
           {emailConfirmed
@@ -794,12 +796,12 @@ const ProfileSettingsView = ({isPro,onOpenProModal,onGoHome,onEmailConfirmed}) =
               </div>
           }
         </div>
-        <div style={{borderTop:`1px solid ${T.border}`,paddingTop:16}}>
-          <div style={{fontSize:13,fontWeight:600,color:T.ink,marginBottom:12}}>Change Password</div>
+        <div style={{borderTop:`1px solid ${T.border}`,paddingTop:20}}>
+          <div style={{fontSize:10,fontVariant:"small-caps",color:T.ink3,textTransform:"lowercase",letterSpacing:".14em",fontWeight:500,marginBottom:14}}>change password</div>
           <Field label="Current password" placeholder="••••••••" value={curPass} onChange={e=>setCurPass(e.target.value)} type="password"/>
           <Field label="New password" placeholder="••••••••" value={newPass} onChange={e=>setNewPass(e.target.value)} type="password"/>
           <Msg msg={passMsg}/>
-          <button onClick={handleChangePassword} disabled={passSaving} style={{background:T.linen,border:`1px solid ${T.border}`,borderRadius:12,padding:"10px 20px",fontSize:13,fontWeight:600,color:T.ink,cursor:"pointer",opacity:passSaving?.6:1}}>{passSaving?"Saving…":"Update Password"}</button>
+          <button onClick={handleChangePassword} disabled={passSaving} style={{background:T.terra,color:"#fff",border:"none",borderRadius:99,padding:"10px 24px",fontSize:13,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.3)",opacity:passSaving?.6:1}}>{passSaving?"Saving…":"Update Password"}</button>
         </div>
       </div>
 
@@ -819,10 +821,10 @@ const ProfileSettingsView = ({isPro,onOpenProModal,onGoHome,onEmailConfirmed}) =
       {DIVIDER}
 
       <div style={SECTION}>
-        <div style={SECTION_TITLE}>App Preferences</div>
+        <div style={SECTION_TITLE}>Preferences</div>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-          <div><div style={{fontSize:14,color:T.ink3}}>Dark mode</div><div style={{fontSize:11,color:T.ink3,opacity:.6,marginTop:2}}>Coming soon</div></div>
-          <div style={{width:44,height:26,borderRadius:13,background:T.border,opacity:.5,position:"relative",cursor:"not-allowed"}}><div style={{width:22,height:22,borderRadius:11,background:"#fff",position:"absolute",top:2,left:2,boxShadow:"0 1px 3px rgba(0,0,0,.15)"}}/></div>
+          <div><div style={{fontSize:14,color:T.ink2}}>Dark mode</div><div style={{...SC_LABEL,marginTop:4}}>coming soon</div></div>
+          <div style={{width:44,height:26,borderRadius:13,background:T.linen,opacity:.5,position:"relative",cursor:"not-allowed"}}><div style={{width:22,height:22,borderRadius:11,background:"#fff",position:"absolute",top:2,left:2,boxShadow:"0 1px 3px rgba(0,0,0,.15)"}}/></div>
         </div>
       </div>
     </div>
@@ -921,33 +923,59 @@ const YarnStash = () => {
   const totalYards=stash.reduce((a,y)=>a+y.yardage*y.skeins,0);
   const addYarn=()=>{if(!brand||!name)return;setStash(p=>[...p,{id:Date.now(),brand,name,weight,color,colorCode:"#8A8278",yardage:parseInt(yardage)||0,skeins:parseInt(skeins)||1,used:0}]);setBrand("");setName("");setColor("");setYardage("");setSkeins("1");setAdding(false);};
   const{isDesktop:isD}=useBreakpoint();
+  const SC_LABEL = {fontSize:10,fontVariant:"small-caps",color:T.ink3,textTransform:"lowercase",letterSpacing:".14em",fontWeight:500};
+  const CARD = {background:T.card,borderRadius:16,padding:24,boxShadow:T.shadowLg};
+
+  if(stash.length===0&&!adding) return (
+    <div style={{padding:isD?"0 0 100px":"0 18px 100px"}}>
+      <div style={{...CARD,textAlign:"center",padding:"60px 32px"}}>
+        <div style={{fontSize:48,marginBottom:16}}>🧶</div>
+        <div style={{fontFamily:T.serif,fontSize:22,fontWeight:700,color:T.ink,marginBottom:8}}>Your stash is empty</div>
+        <div style={{fontSize:14,color:T.ink3,lineHeight:1.6,marginBottom:24,maxWidth:320,margin:"0 auto 24px"}}>Track every skein you own so you always know what you have before you buy.</div>
+        <button onClick={()=>setAdding(true)} style={{background:T.terra,color:"#fff",border:"none",borderRadius:99,padding:"14px 32px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.3)"}}>+ Add Your First Yarn</button>
+      </div>
+    </div>
+  );
+
   return (
     <div style={{padding:isD?"0 0 100px":"0 18px 100px"}}>
-      <div style={{display:"flex",gap:10,marginBottom:20}}>
-        {[{label:"Total Skeins",val:stash.reduce((a,y)=>a+y.skeins,0)},{label:"Total Yardage",val:totalYards.toLocaleString()+" yds"},{label:"Yarn Types",val:stash.length}].map(s=>(
-          <div key={s.label} style={{flex:1,background:T.surface,borderRadius:12,padding:"12px 10px",textAlign:"center",border:`1px solid ${T.border}`}}><div style={{fontFamily:T.serif,fontSize:20,fontWeight:700,color:T.terra}}>{s.val}</div><div style={{fontSize:10,color:T.ink3,marginTop:2}}>{s.label}</div></div>
+      {/* Stats pills */}
+      <div style={{display:"flex",gap:12,marginBottom:24}}>
+        {[{label:"skeins",val:stash.reduce((a,y)=>a+y.skeins,0)},{label:"yardage",val:totalYards.toLocaleString()},{label:"yarn types",val:stash.length}].map(s=>(
+          <div key={s.label} style={{flex:1,...CARD,padding:"16px 12px",textAlign:"center"}}>
+            <div style={{fontFamily:T.serif,fontSize:24,fontWeight:700,color:T.terra,lineHeight:1}}>{s.val}</div>
+            <div style={{...SC_LABEL,marginTop:6}}>{s.label}</div>
+          </div>
         ))}
       </div>
-      <Btn onClick={()=>setAdding(!adding)} variant={adding?"secondary":"primary"} style={{marginBottom:16}}>{adding?"Cancel":"+ Add Yarn to Stash"}</Btn>
+      <button onClick={()=>setAdding(!adding)} style={{width:"100%",background:adding?"transparent":T.terra,color:adding?T.ink3:"#fff",border:adding?`1.5px solid ${T.border}`:"none",borderRadius:99,padding:"14px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:adding?"none":"0 4px 16px rgba(184,90,60,.3)",marginBottom:20}}>{adding?"Cancel":"+ Add Yarn to Stash"}</button>
       {adding&&(
-        <div className="fu" style={{background:T.linen,borderRadius:14,padding:"16px",marginBottom:16,border:`1px solid ${T.border}`}}>
+        <div className="fu" style={{...CARD,marginBottom:20}}>
           <Field label="Brand" placeholder="e.g. Lion Brand" value={brand} onChange={e=>setBrand(e.target.value)}/>
           <Field label="Yarn Name" placeholder="e.g. Pound of Love" value={name} onChange={e=>setName(e.target.value)}/>
-          <div style={{display:"flex",gap:10,marginBottom:14}}>
-            <div style={{flex:1}}><div style={{fontSize:11,color:T.ink3,textTransform:"uppercase",letterSpacing:".08em",marginBottom:5}}>Weight</div><select value={weight} onChange={e=>setWeight(e.target.value)} style={{width:"100%",padding:"12px",background:"rgba(250,247,243,0.96)",border:`1.5px solid ${T.border}`,borderRadius:12,color:T.ink,fontSize:14}}>{["Lace","Fingering","Sport","DK","Worsted","Bulky","Super Bulky"].map(w=><option key={w}>{w}</option>)}</select></div>
+          <div style={{display:"flex",gap:16,marginBottom:14}}>
+            <div style={{flex:1}}><div style={SC_LABEL}>weight</div><select value={weight} onChange={e=>setWeight(e.target.value)} style={{width:"100%",padding:"12px 0",background:"transparent",border:"none",borderBottom:`1.5px solid ${T.border}`,color:T.ink,fontSize:14,outline:"none"}}>{["Lace","Fingering","Sport","DK","Worsted","Bulky","Super Bulky"].map(w=><option key={w}>{w}</option>)}</select></div>
             <div style={{flex:1}}><Field label="Color Name" placeholder="Antique White" value={color} onChange={e=>setColor(e.target.value)}/></div>
           </div>
-          <div style={{display:"flex",gap:10,marginBottom:14}}>
+          <div style={{display:"flex",gap:16,marginBottom:14}}>
             <div style={{flex:1}}><Field label="Yds per Skein" placeholder="315" value={yardage} onChange={e=>setYardage(e.target.value)}/></div>
             <div style={{flex:1}}><Field label="# of Skeins" placeholder="2" value={skeins} onChange={e=>setSkeins(e.target.value)}/></div>
           </div>
-          <Btn onClick={addYarn} disabled={!brand||!name}>Add to Stash</Btn>
+          <button onClick={addYarn} disabled={!brand||!name} style={{width:"100%",background:T.terra,color:"#fff",border:"none",borderRadius:99,padding:"14px",fontSize:15,fontWeight:600,cursor:(!brand||!name)?"not-allowed":"pointer",opacity:(!brand||!name)?.5:1,boxShadow:"0 4px 16px rgba(184,90,60,.3)"}}>Add to Stash</button>
         </div>
       )}
       {stash.map(y=>(
-        <div key={y.id} style={{background:T.surface,borderRadius:14,padding:"14px 16px",marginBottom:10,border:`1px solid ${T.border}`,display:"flex",gap:14,alignItems:"center"}}>
-          <div style={{width:44,height:44,borderRadius:10,background:y.colorCode,flexShrink:0,border:"2px solid rgba(0,0,0,.08)"}}/>
-          <div style={{flex:1,minWidth:0}}><div style={{fontSize:13,fontWeight:600,color:T.ink}}>{y.brand} — {y.name}</div><div style={{fontSize:11,color:T.ink3,marginTop:2}}>{y.weight} · {y.color} · {y.yardage} yds/skein</div><div style={{fontSize:12,color:T.terra,fontWeight:600,marginTop:3}}>{y.skeins} skein{y.skeins!==1?"s":""} · {(y.yardage*y.skeins).toLocaleString()} yds total</div></div>
+        <div key={y.id} style={{...CARD,padding:"16px 20px",marginBottom:12,display:"flex",gap:16,alignItems:"center"}}>
+          <div style={{width:48,height:48,borderRadius:"50%",background:y.colorCode,flexShrink:0,boxShadow:"inset 0 2px 6px rgba(0,0,0,.12), 0 2px 8px rgba(0,0,0,.06)"}}/>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:14,fontWeight:600,color:T.ink}}>{y.brand} — {y.name}</div>
+            <div style={{display:"flex",gap:6,marginTop:6,flexWrap:"wrap"}}>
+              <span style={{background:T.terraLt,color:T.terra,borderRadius:99,padding:"3px 10px",fontSize:10,fontWeight:600}}>{y.weight}</span>
+              {y.color&&<span style={{background:T.linen,color:T.ink3,borderRadius:99,padding:"3px 10px",fontSize:10,fontWeight:500}}>{y.color}</span>}
+              <span style={{background:T.linen,color:T.ink3,borderRadius:99,padding:"3px 10px",fontSize:10,fontWeight:500}}>{y.yardage} yds/skein</span>
+            </div>
+            <div style={{fontSize:12,color:T.terra,fontWeight:600,marginTop:6}}>{y.skeins} skein{y.skeins!==1?"s":""} · {(y.yardage*y.skeins).toLocaleString()} yds total</div>
+          </div>
           <button onClick={()=>setStash(p=>p.filter(s=>s.id!==y.id))} style={{background:"none",border:"none",color:T.ink3,cursor:"pointer",fontSize:18,padding:"4px"}}>×</button>
         </div>
       ))}
@@ -971,25 +999,57 @@ const ShoppingList = () => {
   const adjust=(id,d)=>setItems(p=>p.map(i=>i.id===id?{...i,qty:Math.max(1,i.qty+d)}:i));
   const addItem=()=>{if(!newItem.trim())return;setItems(p=>[...p,{id:Date.now(),name:newItem.trim(),qty:1,unit:"",checked:false}]);setNewItem("");};
   const unchecked=items.filter(i=>!i.checked),checked=items.filter(i=>i.checked);
+  const SC_LABEL = {fontSize:10,fontVariant:"small-caps",color:T.ink3,textTransform:"lowercase",letterSpacing:".14em",fontWeight:500};
+  const CARD = {background:T.card,borderRadius:16,padding:24,boxShadow:T.shadowLg};
+
+  if(items.length===0) return (
+    <div style={{padding:isDsl?"0 0 100px":"0 18px 100px"}}>
+      <div style={{fontFamily:T.serif,fontSize:22,color:T.ink,marginBottom:4,fontWeight:700}}>Shopping List</div>
+      <div style={{fontSize:13,color:T.ink3,marginBottom:24}}>Everything you need for your current projects.</div>
+      <div style={{...CARD,textAlign:"center",padding:"60px 32px"}}>
+        <div style={{fontSize:48,marginBottom:16}}>🛒</div>
+        <div style={{fontFamily:T.serif,fontSize:22,fontWeight:700,color:T.ink,marginBottom:8}}>Nothing on your list yet</div>
+        <div style={{fontSize:14,color:T.ink3,lineHeight:1.6,maxWidth:320,margin:"0 auto 24px"}}>Add yarn, hooks, and supplies you need for your current projects.</div>
+        <div style={{display:"flex",gap:8,maxWidth:380,margin:"0 auto"}}>
+          <input value={newItem} onChange={e=>setNewItem(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addItem()} placeholder="Add an item..." style={{flex:1,padding:"13px 16px",background:"transparent",border:"none",borderBottom:`1.5px solid ${T.border}`,color:T.ink,fontSize:14,outline:"none",transition:"border-color .2s"}} onFocus={e=>e.target.style.borderBottomColor=T.terra} onBlur={e=>e.target.style.borderBottomColor=T.border}/>
+          <button onClick={addItem} style={{background:T.terra,color:"#fff",border:"none",borderRadius:99,padding:"12px 24px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.3)"}}>Add</button>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div style={{padding:isDsl?"0 0 100px":"0 18px 100px"}}>
-      <div style={{fontFamily:T.serif,fontSize:18,color:T.ink,marginBottom:4}}>Shopping List</div>
-      <div style={{fontSize:13,color:T.ink3,marginBottom:20}}>Everything you need for your current projects.</div>
-      {[...unchecked,...checked].map(item=>(
-        <div key={item.id} style={{background:T.card,borderRadius:12,padding:"12px 14px",marginBottom:8,border:`1px solid ${T.border}`,display:"flex",alignItems:"center",gap:12,opacity:item.checked?.5:1,boxShadow:T.shadow}}>
-          <button onClick={()=>toggle(item.id)} style={{width:22,height:22,borderRadius:6,border:`2px solid ${item.checked?T.sage:T.border}`,background:item.checked?T.sage:"transparent",cursor:"pointer",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:"#fff"}}>{item.checked?"✓":""}</button>
-          <div style={{flex:1,minWidth:0}}><div style={{fontSize:14,fontWeight:500,color:T.ink,textDecoration:item.checked?"line-through":"none"}}>{item.name}</div></div>
-          <div style={{display:"flex",alignItems:"center",gap:4,flexShrink:0}}>
-            <button onClick={()=>adjust(item.id,-1)} style={{width:24,height:24,borderRadius:6,border:`1px solid ${T.border}`,background:T.linen,cursor:"pointer",fontSize:14,color:T.ink3}}>−</button>
-            <span style={{fontSize:13,fontWeight:600,color:T.ink,minWidth:20,textAlign:"center"}}>{item.qty}</span>
-            <button onClick={()=>adjust(item.id,1)} style={{width:24,height:24,borderRadius:6,border:`1px solid ${T.border}`,background:T.linen,cursor:"pointer",fontSize:14,color:T.ink3}}>+</button>
+      <div style={{fontFamily:T.serif,fontSize:22,color:T.ink,marginBottom:4,fontWeight:700}}>Shopping List</div>
+      <div style={{fontSize:13,color:T.ink3,marginBottom:24}}>Everything you need for your current projects.</div>
+
+      {unchecked.length>0&&<div style={{...SC_LABEL,marginBottom:12}}>to get</div>}
+      {unchecked.map(item=>(
+        <div key={item.id} style={{...CARD,padding:"14px 20px",marginBottom:10,display:"flex",alignItems:"center",gap:14}}>
+          <button onClick={()=>toggle(item.id)} style={{width:24,height:24,borderRadius:8,border:`2px solid ${T.border}`,background:"transparent",cursor:"pointer",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",transition:"all .15s"}}/>
+          <div style={{flex:1,minWidth:0}}><div style={{fontSize:14,fontWeight:500,color:T.ink}}>{item.name}</div></div>
+          <span style={{background:T.terraLt,color:T.terra,borderRadius:99,padding:"4px 12px",fontSize:11,fontWeight:700,flexShrink:0}}>{item.qty}</span>
+          <div style={{display:"flex",alignItems:"center",gap:3,flexShrink:0}}>
+            <button onClick={()=>adjust(item.id,-1)} style={{width:26,height:26,borderRadius:99,border:"none",background:T.linen,cursor:"pointer",fontSize:14,color:T.ink3}}>−</button>
+            <button onClick={()=>adjust(item.id,1)} style={{width:26,height:26,borderRadius:99,border:"none",background:T.linen,cursor:"pointer",fontSize:14,color:T.ink3}}>+</button>
           </div>
           <button onClick={()=>remove(item.id)} style={{background:"none",border:"none",color:T.ink3,cursor:"pointer",fontSize:16,padding:"2px",flexShrink:0}}>×</button>
         </div>
       ))}
-      <div style={{display:"flex",gap:8,marginTop:12}}>
-        <input value={newItem} onChange={e=>setNewItem(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addItem()} placeholder="Add an item…" style={{flex:1,padding:"12px 14px",background:T.linen,border:`1.5px solid ${T.border}`,borderRadius:12,color:T.ink,fontSize:14}} onFocus={e=>e.target.style.borderColor=T.terra} onBlur={e=>e.target.style.borderColor=T.border}/>
-        <button onClick={addItem} style={{background:T.terra,color:"#fff",border:"none",borderRadius:12,padding:"12px 18px",fontSize:14,fontWeight:600,cursor:"pointer"}}>Add</button>
+
+      {checked.length>0&&<div style={{...SC_LABEL,marginTop:20,marginBottom:12}}>done</div>}
+      {checked.map(item=>(
+        <div key={item.id} style={{...CARD,padding:"14px 20px",marginBottom:10,display:"flex",alignItems:"center",gap:14,opacity:.45}}>
+          <button onClick={()=>toggle(item.id)} style={{width:24,height:24,borderRadius:8,border:`2px solid ${T.sage}`,background:T.sage,cursor:"pointer",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:"#fff"}}>✓</button>
+          <div style={{flex:1,minWidth:0}}><div style={{fontSize:14,fontWeight:500,color:T.ink,textDecoration:"line-through"}}>{item.name}</div></div>
+          <span style={{background:T.linen,color:T.ink3,borderRadius:99,padding:"4px 12px",fontSize:11,fontWeight:700,flexShrink:0}}>{item.qty}</span>
+          <button onClick={()=>remove(item.id)} style={{background:"none",border:"none",color:T.ink3,cursor:"pointer",fontSize:16,padding:"2px",flexShrink:0}}>×</button>
+        </div>
+      ))}
+
+      <div style={{display:"flex",gap:10,marginTop:20}}>
+        <input value={newItem} onChange={e=>setNewItem(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addItem()} placeholder="Add an item..." style={{flex:1,padding:"13px 16px",background:"transparent",border:"none",borderBottom:`1.5px solid ${T.border}`,color:T.ink,fontSize:14,outline:"none",transition:"border-color .2s"}} onFocus={e=>e.target.style.borderBottomColor=T.terra} onBlur={e=>e.target.style.borderBottomColor=T.border}/>
+        <button onClick={addItem} style={{background:T.terra,color:"#fff",border:"none",borderRadius:99,padding:"12px 24px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.3)"}}>Add</button>
       </div>
     </div>
   );

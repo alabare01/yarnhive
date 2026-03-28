@@ -980,12 +980,17 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade}) => {
         {/* RIGHT 42% — Stitch Check */}
         <div style={{flex:"0 0 42%",minWidth:0}}>
           {validating?(
-            <div style={{background:T.surface,borderRadius:16,padding:20,boxShadow:"0 4px 20px rgba(139,90,60,.08)",border:`1px solid ${T.border}`,display:"flex",flexDirection:"column",alignItems:"center",gap:10}}>
-              <div style={{fontSize:28,animation:"pulse 1.5s ease infinite"}}>🧶</div>
-              <div style={{fontSize:12,fontWeight:600,color:T.ink}}>Analyzing pattern...</div>
-              <div style={{width:"100%",height:4,background:T.border,borderRadius:99,overflow:"hidden"}}>
-                <div className="progress-bar-fill" style={{height:"100%",width:"60%",borderRadius:99}}/>
+            <div style={{background:T.card,borderRadius:16,padding:"36px 20px",boxShadow:T.shadowLg,display:"flex",flexDirection:"column",alignItems:"center",gap:16,animation:"scCardPulse 2s ease-in-out infinite"}}>
+              <style>{`@keyframes scCardPulse{0%,100%{opacity:1}50%{opacity:.85}}@keyframes scRingSpin{0%{stroke-dashoffset:${Math.round(2*Math.PI*36)}}50%{stroke-dashoffset:0}100%{stroke-dashoffset:${Math.round(2*Math.PI*36)}}}`}</style>
+              <div style={{position:"relative",width:80,height:80}}>
+                <svg width="80" height="80" viewBox="0 0 80 80" style={{transform:"rotate(-90deg)"}}>
+                  <circle cx="40" cy="40" r="36" fill="none" stroke={T.linen} strokeWidth="4"/>
+                  <circle cx="40" cy="40" r="36" fill="none" stroke={T.terra} strokeWidth="4" strokeLinecap="round" strokeDasharray={Math.round(2*Math.PI*36)} style={{animation:"scRingSpin 2.5s ease-in-out infinite"}}/>
+                </svg>
+                <span style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24}}>🧶</span>
               </div>
+              <div style={{fontSize:15,fontWeight:600,color:T.ink}}>Analyzing your pattern</div>
+              <div style={{fontSize:12,color:T.sage,textAlign:"center",maxWidth:200,lineHeight:1.5}}>Checking stitch counts, round sequence and math errors before you start crocheting.</div>
             </div>
           ):validationReport?(isPro?(
             <div style={{background:T.surface,borderRadius:16,padding:20,boxShadow:"0 4px 20px rgba(139,90,60,.08)",border:`1px solid ${T.border}`}}>
