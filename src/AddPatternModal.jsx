@@ -831,7 +831,7 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade}) => {
       if(complexityStats&&complexityStats.pages>=5&&allRows.length<10) flags.push("Only "+allRows.length+" rows from a "+complexityStats.pages+"-page pattern");
       setValidationFlags(flags);
       // Pro users: run Stitch Check in background (non-blocking)
-      if(isPro&&extractedText){
+      if(extractedText){
         setValidating(true);
         (async()=>{
           try{
@@ -856,7 +856,7 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade}) => {
     const rows=buildRowsFromComponents(extracted.components);
     const mats=(extracted.materials||[]).map((m,i)=>({id:i+1,name:m.name||"",amount:m.amount||"",yardage:0,notes:m.notes||""}));
     const finalCover=coverUrl||fileInfo?.coverUrl||null;
-    onSave({id:Date.now(),title:editTitle||"Imported Pattern",source:editDesigner||"PDF Import",cat:"Uncategorized",hook:editHook||"",weight:editWeight||"",notes:extracted.pattern_notes||"",yardage:0,rating:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:50,height:60},materials:mats,rows,photo:finalCover||PILL[Math.floor(Math.random()*PILL.length)],cover_image_url:finalCover,source_file_url:fileInfo?.url||"",source_file_name:fileInfo?.name||"",source_file_type:fileInfo?.type||"",extracted_by_ai:true,components:extracted.components||[],assembly_notes:extracted.assembly_notes||"",difficulty:extracted.difficulty||"",abbreviations_map:extracted.abbreviations_map||{},suggested_resources:extracted.suggested_resources||[],validation_flags:validationFlags.length>0?validationFlags:null,validation_report:validationReport||null});
+    onSave({id:Date.now(),title:editTitle||"Imported Pattern",source:editDesigner||"PDF Import",cat:"Uncategorized",hook:editHook||"",weight:editWeight||"",notes:extracted.pattern_notes||"",yardage:0,rating:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:50,height:60},materials:mats,rows,photo:finalCover||PILL[Math.floor(Math.random()*PILL.length)],cover_image_url:finalCover,source_file_url:fileInfo?.url||"",source_file_name:fileInfo?.name||"",source_file_type:fileInfo?.type||"",extracted_by_ai:true,components:extracted.components||[],assembly_notes:extracted.assembly_notes||"",difficulty:extracted.difficulty||"",abbreviations_map:extracted.abbreviations_map||{},suggested_resources:extracted.suggested_resources||[],validation_flags:validationFlags.length>0?validationFlags:null,validation_report:isPro&&validationReport?validationReport:null});
   };
   const handleFallbackSave=()=>{onSave({id:Date.now(),title:extracted?.title||"Imported Pattern",source:"PDF Import",cat:"Uncategorized",hook:"",weight:"",notes:"",yardage:0,rating:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:50,height:60},materials:[],rows:[],photo:fileInfo?.coverUrl||PILL[Math.floor(Math.random()*PILL.length)],cover_image_url:fileInfo?.coverUrl||null,source_file_url:fileInfo?.url||"",source_file_name:fileInfo?.name||"",source_file_type:fileInfo?.type||""});};
   if(stage==="pick") return (
@@ -948,37 +948,66 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade}) => {
         </div>
         {/* Right: Stitch Check banner */}
         <div style={{flex:1,minHeight:120,display:"flex",flexDirection:"column"}}>
-          {isPro?(
-            validating?(
-              <div style={{flex:1,background:T.linen,borderRadius:12,padding:"16px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:10,border:`1px solid ${T.border}`}}>
-                <div style={{fontSize:28,animation:"pulse 1.5s ease infinite"}}>🧶</div>
-                <div style={{fontSize:13,fontWeight:600,color:T.ink,textAlign:"center"}}>Analyzing pattern structure...</div>
-                <div style={{fontSize:11,color:T.ink3,textAlign:"center",lineHeight:1.5}}>Checking stitch counts, round sequence, and cross-references</div>
-                <div style={{width:"80%",height:4,background:T.border,borderRadius:99,overflow:"hidden",marginTop:4}}>
-                  <div className="progress-bar-fill" style={{height:"100%",width:"60%",borderRadius:99}}/>
-                </div>
+          {validating?(
+            <div style={{flex:1,background:T.linen,borderRadius:12,padding:"16px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:10,border:`1px solid ${T.border}`}}>
+              <div style={{fontSize:28,animation:"pulse 1.5s ease infinite"}}>🧶</div>
+              <div style={{fontSize:13,fontWeight:600,color:T.ink,textAlign:"center"}}>Analyzing pattern...</div>
+              <div style={{fontSize:11,color:T.ink3,textAlign:"center",lineHeight:1.5}}>Checking stitch math and structure</div>
+              <div style={{width:"80%",height:4,background:T.border,borderRadius:99,overflow:"hidden",marginTop:4}}>
+                <div className="progress-bar-fill" style={{height:"100%",width:"60%",borderRadius:99}}/>
               </div>
-            ):validationReport?(
-              <div style={{flex:1,background:badgeForScore(validationReport.score).bg,border:`1.5px solid ${badgeForScore(validationReport.score).color}`,borderRadius:12,padding:"16px",display:"flex",flexDirection:"column",justifyContent:"center"}}>
-                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
-                  <span style={{fontSize:20}}>{badgeForScore(validationReport.score).emoji}</span>
-                  <div>
-                    <div style={{fontSize:13,fontWeight:700,color:badgeForScore(validationReport.score).color}}>{badgeForScore(validationReport.score).label}</div>
-                    <div style={{fontSize:22,fontWeight:700,fontFamily:T.serif,color:badgeForScore(validationReport.score).color,lineHeight:1}}>{validationReport.score}%</div>
-                  </div>
-                </div>
-                {validationReport.checks?.find(c=>c.status!=="pass")&&<div style={{fontSize:11,color:T.ink2,lineHeight:1.5,marginBottom:8}}>{validationReport.checks.find(c=>c.status!=="pass")?.detail}</div>}
-                <button onClick={()=>setShowFullReport(true)} style={{background:"none",border:"none",color:T.terra,cursor:"pointer",fontSize:12,fontWeight:600,padding:0,textDecoration:"underline",textAlign:"left"}}>View Full Report →</button>
-              </div>
-            ):(
-              <div style={{flex:1,background:T.linen,borderRadius:12,padding:"16px",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:T.ink3,border:`1px solid ${T.border}`}}>Stitch Check unavailable</div>
-            )
-          ):(
-            <div style={{flex:1,background:`linear-gradient(135deg,${T.terraLt},${T.card})`,borderRadius:12,padding:"16px",border:`1px solid ${T.border}`,display:"flex",flexDirection:"column",justifyContent:"center"}}>
-              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><span style={{fontSize:14}}>🔒</span><span style={{fontSize:13,fontWeight:600,color:T.ink}}>Stitch Check</span></div>
-              <div style={{fontSize:11,color:T.ink2,lineHeight:1.5,marginBottom:10}}>Analyze for math errors and inconsistencies before you start crocheting.</div>
-              <button onClick={onUpgrade} style={{width:"100%",background:T.terra,color:"#fff",border:"none",borderRadius:8,padding:"8px",fontSize:11,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 12px rgba(184,90,60,.3)"}}>Upgrade to Pro</button>
             </div>
+          ):validationReport?(isPro?(
+            /* ── PRO: full result ── */
+            <div style={{flex:1,background:badgeForScore(validationReport.score).bg,border:`1.5px solid ${badgeForScore(validationReport.score).color}`,borderRadius:12,padding:"16px",display:"flex",flexDirection:"column",justifyContent:"center"}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+                <span style={{fontSize:20}}>{badgeForScore(validationReport.score).emoji}</span>
+                <div>
+                  <div style={{fontSize:13,fontWeight:700,color:badgeForScore(validationReport.score).color}}>{badgeForScore(validationReport.score).label}</div>
+                  <div style={{fontSize:22,fontWeight:700,fontFamily:T.serif,color:badgeForScore(validationReport.score).color,lineHeight:1}}>{validationReport.score}%</div>
+                </div>
+              </div>
+              {validationReport.checks?.find(c=>c.status!=="pass")&&<div style={{fontSize:11,color:T.ink2,lineHeight:1.5,marginBottom:8}}>{validationReport.checks.find(c=>c.status!=="pass")?.detail}</div>}
+              <button onClick={()=>setShowFullReport(true)} style={{background:"none",border:"none",color:T.terra,cursor:"pointer",fontSize:12,fontWeight:600,padding:0,textDecoration:"underline",textAlign:"left"}}>View Full Report →</button>
+            </div>
+          ):(
+            /* ── FREE: teaser result ── */
+            <div style={{flex:1,background:badgeForScore(validationReport.score).bg,border:`1.5px solid ${badgeForScore(validationReport.score).color}`,borderRadius:12,overflow:"hidden",display:"flex",flexDirection:"column"}}>
+              <div style={{padding:"12px 14px",flex:1}}>
+                {/* Category label */}
+                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
+                  <span style={{fontSize:14}}>{badgeForScore(validationReport.score).emoji}</span>
+                  <span style={{fontSize:12,fontWeight:700,color:badgeForScore(validationReport.score).color}}>{badgeForScore(validationReport.score).label}</span>
+                </div>
+                {/* Blurred score bar */}
+                <div style={{position:"relative",marginBottom:8}}>
+                  <div style={{height:6,background:T.border,borderRadius:99,overflow:"hidden"}}>
+                    <div style={{width:validationReport.score+"%",height:"100%",background:badgeForScore(validationReport.score).color,borderRadius:99}}/>
+                  </div>
+                  <div style={{fontSize:16,fontWeight:700,fontFamily:T.serif,color:badgeForScore(validationReport.score).color,filter:"blur(4px)",userSelect:"none",marginTop:2}}>{validationReport.score}%</div>
+                </div>
+                {/* First check visible, rest locked */}
+                {validationReport.checks?.slice(0,1).map(c=>(
+                  <div key={c.id} style={{display:"flex",gap:6,alignItems:"flex-start",marginBottom:4}}>
+                    <span style={{fontSize:11,flexShrink:0}}>{CHECK_ICON[c.status]||"❓"}</span>
+                    <div style={{fontSize:10,color:T.ink2,lineHeight:1.4,overflow:"hidden",position:"relative",maxHeight:28}}>{c.label}: {c.detail?.substring(0,60)}<div style={{position:"absolute",right:0,top:0,bottom:0,width:40,background:`linear-gradient(to right,transparent,${badgeForScore(validationReport.score).bg})`}}/></div>
+                  </div>
+                ))}
+                {validationReport.checks?.slice(1,3).map((c,i)=>(
+                  <div key={c.id||i} style={{display:"flex",gap:6,alignItems:"center",marginBottom:2,opacity:.4}}>
+                    <span style={{fontSize:10}}>🔒</span>
+                    <div style={{fontSize:10,color:T.ink3,filter:"blur(2px)",userSelect:"none"}}>{c.label}</div>
+                  </div>
+                ))}
+              </div>
+              {/* Upgrade CTA */}
+              <div style={{padding:"8px 14px 12px",borderTop:`1px solid ${T.border}`,background:"rgba(255,255,255,.5)"}}>
+                <div style={{fontSize:10,color:T.ink2,marginBottom:4,lineHeight:1.4}}>🔒 See exactly what we found before you pick up your hook.</div>
+                <button onClick={onUpgrade} style={{width:"100%",background:T.terra,color:"#fff",border:"none",borderRadius:8,padding:"7px",fontSize:11,fontWeight:600,cursor:"pointer"}}>Upgrade to Pro</button>
+              </div>
+            </div>
+          )):(
+            <div style={{flex:1,background:T.linen,borderRadius:12,padding:"16px",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:T.ink3,border:`1px solid ${T.border}`}}>Stitch Check unavailable</div>
           )}
         </div>
       </div>
