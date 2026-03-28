@@ -46,10 +46,10 @@ const PatternHeader = ({
             </div>
           </div>
           {/* split panel */}
-          <div style={{display:"grid",gridTemplateColumns:isDesktop?"1fr 1fr":"1fr 1fr",height:isDesktop?340:240,position:"relative"}}>
+          <div style={{display:"grid",gridTemplateColumns:isDesktop?"1fr 1fr":"1fr 1fr",aspectRatio:isDesktop?"16/9":"4/3",maxHeight:isDesktop?400:300,position:"relative"}}>
             {/* left: photo — contain so full subject always visible */}
             <div style={{position:"relative",overflow:"hidden",background:"#0E0A08"}}>
-              <Photo src={detailPhoto} alt={p.title} style={{width:"100%",height:"100%",objectFit:"contain",objectPosition:"center center"}}/>
+              <Photo src={detailPhoto} alt={p.title} style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top"}}/>
               <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(14,10,8,.85) 0%,transparent 45%)"}}/>
               <div style={{position:"absolute",bottom:14,left:14,right:0}}>
                 <div style={{fontSize:9,color:"rgba(255,255,255,.5)",textTransform:"uppercase",letterSpacing:".1em",marginBottom:3}}>{p.cat} · {p.weight}</div>
@@ -81,8 +81,8 @@ const PatternHeader = ({
         </div>
       ) : (
         /* ── STANDARD PHOTO HERO ── */
-        <div style={{position:"relative",flexShrink:0,height:isDesktop?260:220,overflow:"hidden",background:T.linen,marginTop:milestone?56:0,transition:"margin .3s"}}>
-          <Photo src={detailPhoto} alt={p.title} style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 20%"}}/>
+        <div style={{position:"relative",flexShrink:0,aspectRatio:isDesktop?"16/9":"4/3",maxHeight:isDesktop?360:280,overflow:"hidden",background:T.linen,marginTop:milestone?56:0,transition:"margin .3s"}}>
+          <Photo src={detailPhoto} alt={p.title} style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top"}}/>
           <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(20,14,10,.92) 0%,rgba(20,14,10,.3) 50%,rgba(20,14,10,.05) 100%)"}}/>
           <div style={{position:"absolute",top:0,left:0,right:0,padding:"14px 18px",display:"flex",justifyContent:"space-between"}}>
             <button onClick={onBack} style={{background:"rgba(15,10,8,.45)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.15)",borderRadius:10,padding:"7px 16px",color:"#fff",cursor:"pointer",fontSize:13,fontWeight:500}}>← Back</button>

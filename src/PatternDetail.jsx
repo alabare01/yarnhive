@@ -83,6 +83,7 @@ const CoverImagePicker = ({pattern, onConfirm, onClose, pdfThumbUrl, CAT_IMG, AL
     const formData=new FormData();
     formData.append("file",file);
     formData.append("upload_preset","yarnhive_patterns");
+    formData.append("transformation","c_fill,g_auto,ar_16:9");
     try{
       const res=await fetch("https://api.cloudinary.com/v1_1/dmaupzhcx/image/upload",{method:"POST",body:formData});
       if(res.ok){const data=await res.json();setSelected(data.secure_url);setTab("photo");}
