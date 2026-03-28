@@ -913,9 +913,9 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade}) => {
     <div style={{paddingBottom:8}}>
       <div style={{background:T.sageLt,borderRadius:12,padding:"12px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:16}}>✓</span><span style={{fontSize:13,color:T.sage,fontWeight:600}}>We read your pattern — does this look right?</span></div>
       {/* Two-column: Cover image (left) + Stitch Check (right) */}
-      <div style={{display:"flex",gap:14,marginBottom:16,alignItems:"stretch"}}>
+      <div style={{display:"flex",gap:12,alignItems:"flex-start",marginBottom:16}}>
         {/* Left: cover image + buttons */}
-        <div style={{width:130,flexShrink:0}}>
+        <div style={{flexShrink:0,width:120}}>
           <div style={{fontSize:11,color:T.ink2,textTransform:"uppercase",letterSpacing:".08em",marginBottom:8}}>Cover</div>
           {coverUrl&&<div style={{marginBottom:8,borderRadius:10,overflow:"hidden",border:`2px solid ${T.terra}`,width:120,height:120}}><img src={coverUrl} alt="Cover" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/></div>}
           {!coverUrl&&fileInfo?.coverUrl&&!coverFailed&&<div style={{marginBottom:8,borderRadius:10,overflow:"hidden",border:`1px solid ${T.border}`,width:120,height:120}}><img src={fileInfo.coverUrl} alt="PDF cover" onError={()=>setCoverFailed(true)} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/></div>}
@@ -933,7 +933,10 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade}) => {
               try{const res=await fetch("https://api.cloudinary.com/v1_1/dmaupzhcx/image/upload",{method:"POST",body:fd});if(res.ok){const d=await res.json();setCoverUrl(d.secure_url);}}catch{}
               setCoverUploading(false);
             }} style={{display:"none"}}/>
-            <button onClick={()=>coverFileRef.current?.click()} disabled={coverUploading} style={{background:T.linen,border:`1px dashed ${T.terra}`,borderRadius:6,padding:"6px 8px",cursor:"pointer",width:"100%",fontSize:10,color:T.terra,fontWeight:500}}>{coverUploading?"Uploading...":"Choose Photo"}</button>
+            <div onClick={()=>coverFileRef.current?.click()} style={{width:120,height:120,borderRadius:10,background:T.linen,border:`1.5px dashed ${T.terra}`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",cursor:"pointer",gap:4,marginBottom:8}}>
+              <span style={{fontSize:20}}>{coverUploading?"⏳":"📷"}</span>
+              <span style={{fontSize:10,color:T.terra,fontWeight:500}}>{coverUploading?"Uploading...":"Tap to choose"}</span>
+            </div>
           </>}
           {coverTab==="library"&&<div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
             {ALL_CAT_ENTRIES.map(([cat,url])=>(
@@ -944,7 +947,7 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade}) => {
           </div>}
         </div>
         {/* Right: Stitch Check banner */}
-        <div style={{flex:1,display:"flex",flexDirection:"column"}}>
+        <div style={{flex:1,minHeight:120,display:"flex",flexDirection:"column"}}>
           {isPro?(
             validating?(
               <div style={{flex:1,background:T.linen,borderRadius:12,padding:"16px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:10,border:`1px solid ${T.border}`}}>
