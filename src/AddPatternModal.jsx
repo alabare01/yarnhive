@@ -756,6 +756,7 @@ const PDFUploadForm = ({onSave,Btn}) => {
       // Upload PDF cover image to Cloudinary using yarnhive_patterns preset
       let coverCloudinaryUrl=null;
       if(pdfCoverDataUrl){
+        console.log("[Wovely] PDF cover dataUrl length:", pdfCoverDataUrl.length, "starts:", pdfCoverDataUrl.substring(0,40));
         try{
           const coverFd=new FormData();
           coverFd.append("file", pdfCoverDataUrl);
@@ -763,8 +764,10 @@ const PDFUploadForm = ({onSave,Btn}) => {
           coverFd.append("folder","covers");
           const coverRes=await fetch("https://api.cloudinary.com/v1_1/dmaupzhcx/image/upload",{method:"POST",body:coverFd});
           if(coverRes.ok){const cd=await coverRes.json();coverCloudinaryUrl=cd.secure_url;console.log("[Wovely] PDF cover uploaded:",coverCloudinaryUrl);}
-          else{console.warn("[Wovely] Cover upload failed:",coverRes.status);}
+          else{const errBody=await coverRes.text().catch(()=>"");console.warn("[Wovely] Cover upload failed:",coverRes.status,errBody);}
         }catch(e){console.warn("[Wovely] Cover upload failed:",e);}
+      } else {
+        console.warn("[Wovely] renderPDFCoverImage returned null — canvas render likely failed");
       }
       setFileInfo({url:uploaded.url,name:uploaded.filename,type:uploaded.type,coverUrl:coverCloudinaryUrl});setProgress(33);
       // Stage 2: Extract — text mode for PDFs (fast), base64 for images

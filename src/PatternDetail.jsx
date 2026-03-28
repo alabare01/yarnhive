@@ -274,18 +274,8 @@ const Detail = ({p,onBack,onSave,pct,estYards,estSkeins,pdfThumbUrl,CSS,Bar,Phot
   const [attachUploading,setAttachUploading]=useState(false);
   const [showYarnTip,setShowYarnTip]=useState(()=>!localStorage.getItem("yh_yarn_summary_tip_seen"));
 
-  // Backfill cover_image_url from PDF source file
-  useEffect(()=>{
-    if(p.cover_image_url||!p.source_file_url||!p.source_file_url.endsWith(".pdf"))return;
-    const thumb=pdfThumbUrl(p.source_file_url);if(!thumb)return;
-    const pid=p._supabaseId||p.id;
-    if(typeof pid!=="string"||pid.startsWith("local_")||pid.startsWith("starter_"))return;
-    const user=supabaseAuth.getUser();const session=getSession();if(!user||!session)return;
-    fetch(`${SUPABASE_URL}/rest/v1/patterns?id=eq.${pid}&user_id=eq.${user.id}`,{
-      method:"PATCH",headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${session.access_token}`,"Content-Type":"application/json","Prefer":"return=minimal"},
-      body:JSON.stringify({cover_image_url:thumb}),
-    }).then(r=>{if(r.ok){console.log("[Wovely] Backfilled cover_image_url for",pid);onSave({...p,rows,cover_image_url:thumb,photo:thumb});}}).catch(()=>{});
-  },[]);
+  // PDF thumb URL used for display fallback only — not persisted to Supabase
+  // (Cloudinary on-the-fly PDF rendering is unreliable across plans)
   // Linear progress, row toggling, sub-counters, stitch pills — extracted to RowManager.jsx
   const attachRef=useRef(null);
   const handleAttachFile=async(e)=>{
