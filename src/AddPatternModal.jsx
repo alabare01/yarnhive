@@ -757,6 +757,8 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade}) => {
   const [validationReport,setValidationReport]=useState(null); // Stitch Check result
   const [validating,setValidating]=useState(false);
   const [showFullReport,setShowFullReport]=useState(false);
+  const [matExpanded,setMatExpanded]=useState(false);
+  const [compExpanded,setCompExpanded]=useState({});
   const coverFileRef=useRef(null);
   const handleFile=async(e)=>{
     const f=e.target.files?.[0];if(!f)return;
@@ -910,8 +912,6 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade}) => {
   );
   const totalRows=(extracted?.components||[]).reduce((s,c)=>(s+(c.rows||[]).length),0);
   const heroImg=coverUrl||fileInfo?.coverUrl||null;
-  const [matExpanded,setMatExpanded]=useState(false);
-  const [compExpanded,setCompExpanded]=useState({});
   const matList=(extracted?.materials||[]);
   const matSummary=matList.length>3?matList.slice(0,2).map(m=>m.name).join(", ")+" +"+( matList.length-2)+" more":matList.map(m=>m.name).join(", ");
   return (
