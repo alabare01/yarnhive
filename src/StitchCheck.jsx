@@ -21,7 +21,14 @@ Check for:
 5. Translation artifacts — does phrasing suggest a translated pattern that may have errors? (id: "translation")
 6. Component structure — are section headers clear and consistent? (id: "structure")
 
-Be specific in detail fields. Name exact round numbers where issues occur. If everything looks clean, say so clearly.`;
+SCORING RULES — do NOT penalize for any of the following:
+• PDF formatting artifacts (OCR typos in tip/intro sections, formatting inconsistencies, page headers/footers)
+• Print-Friendly page duplications — if the pattern appears duplicated at the end under a "Print-Friendly" or similar heading, ignore the duplicate section entirely. This is a common PDF feature, not a pattern error.
+• Non-US decimal conventions (comma instead of period for decimals)
+• Minor grammatical issues that do not affect the crochet instructions
+These may be noted as informational "pass" items at most, never scored as warnings or failures.
+
+Be specific in detail fields. Name exact round numbers where issues occur. If everything looks clean, say so clearly. Aim for scores 80-100 for patterns with no structural issues.`;
 
 // Load pdf.js dynamically (same approach as AddPatternModal)
 const extractTextFromPDF = async (file) => {
@@ -54,7 +61,8 @@ const extractTextFromPDF = async (file) => {
   });
 };
 
-const BADGE = { valid: { color: T.sage, bg: T.sageLt, emoji: "✅", label: "Valid Pattern" }, review: { color: T.gold, bg: "#FFF8EC", emoji: "⚠️", label: "Review Suggested" }, issues: { color: "#C0392B", bg: "#FFF0EE", emoji: "❌", label: "Issues Found" } };
+const BADGE = { valid: { color: T.sage, bg: T.sageLt, emoji: "✅", label: "Pattern Looks Good" }, review: { color: T.gold, bg: "#FFF8EC", emoji: "⚠️", label: "Review Suggested" }, issues: { color: "#C0392B", bg: "#FFF0EE", emoji: "❌", label: "Issues Found" } };
+const badgeForScore = (score) => score >= 80 ? BADGE.valid : score >= 60 ? BADGE.review : BADGE.issues;
 const CHECK_ICON = { pass: "✅", warn: "⚠️", fail: "❌" };
 
 const StitchCheck = () => {
@@ -124,7 +132,7 @@ const StitchCheck = () => {
 
   // Report card view
   if (report) {
-    const badge = BADGE[report.overall] || BADGE.review;
+    const badge = badgeForScore(report.score);
     return (
       <div style={{ padding: isDesktop ? "0 0 80px" : "0 18px 80px" }}>
         <div style={{ fontFamily: T.serif, fontSize: 18, color: T.ink, marginBottom: 4 }}>Stitch Check Report</div>
@@ -134,8 +142,7 @@ const StitchCheck = () => {
         <div style={{ background: badge.bg, border: `2px solid ${badge.color}`, borderRadius: 16, padding: "20px", marginBottom: 16, textAlign: "center" }}>
           <div style={{ fontSize: 36, marginBottom: 8 }}>{badge.emoji}</div>
           <div style={{ fontFamily: T.serif, fontSize: 22, fontWeight: 700, color: badge.color, marginBottom: 4 }}>{badge.label}</div>
-          <div style={{ fontFamily: T.serif, fontSize: 44, fontWeight: 700, color: badge.color, lineHeight: 1 }}>{report.score}</div>
-          <div style={{ fontSize: 12, color: T.ink3, marginTop: 4 }}>out of 100</div>
+          <div style={{ fontFamily: T.serif, fontSize: 44, fontWeight: 700, color: badge.color, lineHeight: 1 }}>{report.score}%</div>
           <div style={{ marginTop: 12, background: T.border, borderRadius: 99, height: 6, overflow: "hidden" }}>
             <div style={{ width: report.score + "%", height: "100%", background: badge.color, borderRadius: 99, transition: "width .4s ease" }} />
           </div>
