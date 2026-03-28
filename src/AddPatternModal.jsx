@@ -122,32 +122,65 @@ const extractPatternFromPDF = async (textOrBase64, filename, mimeType, isTextMod
   console.log("[Wovely] Gemini extraction starting, mode:", isTextMode ? "text" : "base64", "mime:", mimeType);
   if (!GEMINI_API_KEY) { console.error("[Wovely] No Gemini API key"); throw new Error("Gemini API key not configured"); }
 
-  const prompt = `You are a crochet pattern extraction specialist. Analyze this crochet pattern and extract all structured data. Return ONLY valid JSON with no markdown, no backticks, no explanation.
+  const prompt = `You are a crochet pattern extraction specialist. You will analyze this pattern using a strict 4-step process. Return ONLY valid JSON with no markdown, no backticks, no explanation.
 
-Return this exact structure:
-{"title":"string","designer":"string","source_url":null,"finished_size":"string","difficulty":"Beginner or Intermediate or Advanced","yarn_weight":"string","hook_size":"string","gauge":"string or null","materials":[{"name":"string","amount":"string","notes":"string"}],"abbreviations":[{"abbr":"string","meaning":"string"}],"abbreviations_map":{"mr":"magic ring","sc":"single crochet"},"suggested_resources":[{"label":"string","url":"string"}],"pattern_notes":"string","components":[{"name":"string","make_count":1,"independent":false,"rows":[{"id":"rnd-1","label":"RND 1","text":"full instruction text","stitch_count":null,"action_item":false,"repeat_brackets":[{"sequence":"string","count":2}]}]}],"assembly_notes":"string","image_description":"string"}
+═══ STEP 1 — STRUCTURE ANALYSIS ═══
+Before extracting anything, silently determine:
+• Is this pattern round-based (worked in the round) or row-based (worked flat)? Or mixed per component?
+• Does it contain an abbreviations table, legend, or definition section?
+• Are there cross-references like "Repeat R32", "work same as Round 5", or "work into ch3 on R9"?
+• Are there branching instructions by size, color variation, or optional sections?
+• How many distinct components exist (e.g. body, head, arms, border)?
+Use these answers to guide the remaining steps. Do not output this analysis — it is internal context only.
 
-For patterns worked in the round, use 'RND' as the label prefix (RND 1, RND 2, etc). For patterns worked in rows, use 'ROW'. Detect from context which applies per component.
+═══ STEP 2 — ABBREVIATIONS FIRST ═══
+Extract the COMPLETE abbreviations map from any table, legend, glossary, or definition section BEFORE touching pattern instructions.
+• Populate abbreviations_map as a flat key-value object: {"mr":"magic ring","sc":"single crochet","inc":"increase","dec":"invisible decrease","fpdc":"front post double crochet"}
+• Include EVERY abbreviation defined in the pattern, even uncommon ones
+• If the pattern defines no abbreviations, use standard crochet abbreviations found in the instructions: sc, dc, hdc, tr, sl st, ch, inc, dec, mr, fo, blo, flo, yo, pm, sm, sc2tog
+• This map is your reference for all subsequent extraction — use it to interpret shorthand in round/row instructions
 
-For any instruction covering multiple rounds like 'RND 10-23: sc x40 (24) (14 RNDs total)', expand into individual rows: RND 10, RND 11, RND 12... each with the same instruction text. Never leave a range as a single row. Every round the user needs to complete must be its own checkable row.
+═══ STEP 3 — ROUND/ROW EXTRACTION ═══
+Extract every round or row as its own entry. Apply these rules strictly:
 
-For mid-pattern instructions that are not stitch rows (examples: 'Place the eyes now', 'Begin stuffing', 'PM in front post', 'See page 7 for details') -- include these as rows with label 'NOTE' and set action_item: true. These are critical build steps not stitch instructions.
+LABEL PREFIX: Use 'RND' for rounds (worked in the round) or 'ROW' for rows (worked flat). Detect from context which applies per component.
 
-For components like 'FLIPPER (MAKE 2)', make_count should be 2. Always extract make_count as a number, default 1 if not specified.
+EXPAND RANGES: For any instruction covering multiple rounds like 'RND 10-23: sc in each st (40)' or 'Rows 5-12: repeat Row 4', expand into individual entries: RND 10, RND 11, RND 12... each with the same instruction text. Never leave a range as a single row. Every round the user needs to complete must be its own checkable row.
 
-Each component has an "independent" boolean field, default false. Set independent: true ONLY when the pattern explicitly says a component can be made separately or simultaneously — e.g. "make 2 separately", "can be worked at the same time", "set aside and make another", "work independently". If the pattern does not say this, leave independent: false so the app enforces linear build order.
+EXPAND CROSS-REFERENCES INLINE: If a round says "Repeat R32" or "Work same as Round 5", look up what Round 5 / R32 actually says and output the FULL instruction text for that round. Never output "Repeat R32" as a row — always resolve the reference to the actual stitch instructions.
 
-After all construction components, extract any assembly, finishing, or detail sections as a final component named 'ASSEMBLY & FINISHING'. Extract each distinct step as a row. Examples: 'Place safety eyes between RND 5 and 6', 'Attach flippers to body at RND 9-14'. Use label: 'STEP' and action_item: true for all assembly rows.
+PRESERVE BRACKET NOTATION: Keep bracket/parenthetical repeats exactly as written in the pattern. Examples: "(sc, inc) x 6", "[dc5, (ch1, skip 1) x 3] x 10", "*(2 sc, inc)* repeat 6 times". Do not simplify or expand these — the app tracks them as sub-counters.
 
-Extract pattern_notes as a single string containing all special technique notes, tension notes, and construction tips. Include: special stitch methods, decrease methods, tension guidance, and technique-specific instructions.
+EXTRACT repeat_brackets: For each row/round, extract bracket repeat patterns into repeat_brackets array. Example: "Round 16: (6 sc, inc) x 2 -- 16 sts" produces repeat_brackets: [{"sequence":"6 sc, inc","count":2}]. Match patterns like (sequence) x N, [sequence] x N, *sequence* repeat N times. If no bracket repeats, set repeat_brackets: [].
 
-Extract abbreviations_map as a flat key-value object mapping each abbreviation to its full meaning, e.g. {"mr":"magic ring","sc":"single crochet","inc":"increase","dec":"decrease"}. Source this from the abbreviations/legend section of the pattern. Default to empty object {} if none found.
+OPEN-ENDED REPEATS: For instructions like "repeat rounds X-Y until desired length" or "work even for as many rounds as you want", extract the repeating block ONCE as individual rounds, then add a note in pattern_notes explaining the open-ended nature. Do not generate infinite rounds.
 
-Extract suggested_resources as an array of {label, url} objects from any "Suggested Tutorials", "Resources", or hyperlink sections in the pattern. Default to empty array [] if none found.
+SIZE/COLOR BRANCHING: If the pattern offers multiple sizes or color variations, extract the primary/default version as the main rows. Note all variations (stitch count differences, alternate colors) in pattern_notes.
 
-For each row/round, extract repeat_brackets: an array of bracket repeat patterns found in that instruction. For example, "Round 16: (6 sc, inc) x 2 -- 16 sts" should produce repeat_brackets: [{"sequence":"6 sc, inc","count":2}]. Look for patterns like (sequence) x N, [sequence] x N, or *sequence* repeat N times. If a row has no bracket repeats, set repeat_brackets: [].
+ACTION ITEMS: For mid-pattern instructions that are not stitch rows (examples: 'Place the eyes now', 'Begin stuffing', 'Change to Color B', 'See page 7 for details') — include these as rows with label 'NOTE' and set action_item: true.
 
-Be thorough -- extract every component, every round, every material. Ensure the JSON is complete and valid. Do not truncate.`;
+NEVER SKIP ROUNDS: Even if consecutive rounds have identical instructions, each must be its own entry. A round that says "sc in each st around (40)" repeated 8 times means 8 separate row entries.
+
+═══ STEP 4 — CONFIDENCE ═══
+After extraction, assess quality:
+• If fewer than 3 rounds/rows were extracted OR title is missing, set "confidence": "low"
+• If all major sections were found and 10+ rounds extracted, set "confidence": "high"
+• Otherwise set "confidence": "medium"
+
+═══ OUTPUT FORMAT ═══
+Return this exact JSON structure:
+{"title":"string","designer":"string","source_url":null,"finished_size":"string","difficulty":"Beginner or Intermediate or Advanced","yarn_weight":"string","hook_size":"string","gauge":"string or null","confidence":"low or medium or high","materials":[{"name":"string","amount":"string","notes":"string"}],"abbreviations":[{"abbr":"string","meaning":"string"}],"abbreviations_map":{"mr":"magic ring","sc":"single crochet"},"suggested_resources":[{"label":"string","url":"string"}],"pattern_notes":"string","components":[{"name":"string","make_count":1,"independent":false,"rows":[{"id":"rnd-1","label":"RND 1","text":"full instruction text with all references resolved","stitch_count":null,"action_item":false,"repeat_brackets":[{"sequence":"string","count":2}]}]}],"assembly_notes":"string","image_description":"string"}
+
+COMPONENT RULES:
+• For components like 'FLIPPER (MAKE 2)', set make_count: 2. Default 1 if not specified.
+• Set independent: true ONLY when the pattern explicitly says a component can be made separately — e.g. "make 2 separately", "work independently". Default false.
+• After all construction components, extract assembly/finishing as a final component named 'ASSEMBLY & FINISHING' with label: 'STEP' and action_item: true for all rows.
+
+PATTERN NOTES: Extract as a single string containing all special technique notes, tension guidance, construction tips, size variations, and open-ended repeat instructions.
+
+SUGGESTED RESOURCES: Extract {label, url} objects from any "Tutorials", "Resources", or hyperlink sections. Default to [] if none found.
+
+Be thorough — extract every component, every round, every material. Ensure the JSON is complete and valid. Do not truncate.`;
 
   // Text mode: send extracted text directly (PDFs) — tiny payload, fast, reliable
   // Base64 mode: send raw file data (images like jpg/png)
