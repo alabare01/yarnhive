@@ -912,24 +912,20 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade}) => {
   return (
     <div style={{paddingBottom:8}}>
       <div style={{background:T.sageLt,borderRadius:12,padding:"12px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:16}}>✓</span><span style={{fontSize:13,color:T.sage,fontWeight:600}}>We read your pattern — does this look right?</span></div>
-      {/* Cover image picker */}
-      <div style={{marginBottom:16}}>
-        <div style={{fontSize:11,color:T.ink2,textTransform:"uppercase",letterSpacing:".08em",marginBottom:8}}>Pattern Cover Image</div>
-        {coverUrl&&<div style={{marginBottom:10,borderRadius:10,overflow:"hidden",border:`2px solid ${T.terra}`,width:120,height:120}}><img src={coverUrl} alt="Cover" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/></div>}
-        {!coverUrl&&fileInfo?.coverUrl&&!coverFailed&&<div style={{marginBottom:10,borderRadius:10,overflow:"hidden",border:`1px solid ${T.border}`,width:120,height:120}}><img src={fileInfo.coverUrl} alt="PDF cover" onError={()=>setCoverFailed(true)} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/></div>}
-        {!coverUrl&&coverFailed&&<div style={{marginBottom:10,width:120,height:120,borderRadius:10,background:T.linen,border:`1px solid ${T.border}`,display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:11,color:T.ink3,textAlign:"center",padding:8}}>No preview</span></div>}
-        <div style={{display:"flex",gap:6,marginBottom:10}}>
-          {["photo","library"].map(t=>(
-            <button key={t} onClick={()=>setCoverTab(t)} style={{background:coverTab===t?T.terra:"transparent",color:coverTab===t?"#fff":T.ink3,border:`1px solid ${coverTab===t?T.terra:T.border}`,borderRadius:8,padding:"5px 10px",fontSize:11,fontWeight:coverTab===t?600:400,cursor:"pointer"}}>{t==="photo"?"📷 My Photo":"🖼️ Our Library"}</button>
-          ))}
-        </div>
-        {coverTab==="pdf"&&(
-          fileInfo?.coverUrl&&!coverFailed
-            ?<div style={{fontSize:12,color:T.ink3}}>{coverUrl===fileInfo.coverUrl?"PDF cover selected":"Tap to use extracted cover"} <button onClick={()=>setCoverUrl(fileInfo.coverUrl)} style={{background:"none",border:"none",color:T.terra,cursor:"pointer",fontSize:12,fontWeight:600,textDecoration:"underline"}}>Use PDF cover</button></div>
-            :<div style={{fontSize:12,color:T.ink3}}>Could not extract — choose another option</div>
-        )}
-        {coverTab==="photo"&&(
-          <div>
+      {/* Two-column: Cover image (left) + Stitch Check (right) */}
+      <div style={{display:"flex",gap:14,marginBottom:16,alignItems:"stretch"}}>
+        {/* Left: cover image + buttons */}
+        <div style={{width:130,flexShrink:0}}>
+          <div style={{fontSize:11,color:T.ink2,textTransform:"uppercase",letterSpacing:".08em",marginBottom:8}}>Cover</div>
+          {coverUrl&&<div style={{marginBottom:8,borderRadius:10,overflow:"hidden",border:`2px solid ${T.terra}`,width:120,height:120}}><img src={coverUrl} alt="Cover" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/></div>}
+          {!coverUrl&&fileInfo?.coverUrl&&!coverFailed&&<div style={{marginBottom:8,borderRadius:10,overflow:"hidden",border:`1px solid ${T.border}`,width:120,height:120}}><img src={fileInfo.coverUrl} alt="PDF cover" onError={()=>setCoverFailed(true)} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/></div>}
+          {!coverUrl&&coverFailed&&<div style={{marginBottom:8,width:120,height:120,borderRadius:10,background:T.linen,border:`1px solid ${T.border}`,display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:11,color:T.ink3,textAlign:"center",padding:8}}>No preview</span></div>}
+          <div style={{display:"flex",gap:4,marginBottom:6,flexWrap:"wrap"}}>
+            {["photo","library"].map(t=>(
+              <button key={t} onClick={()=>setCoverTab(t)} style={{background:coverTab===t?T.terra:"transparent",color:coverTab===t?"#fff":T.ink3,border:`1px solid ${coverTab===t?T.terra:T.border}`,borderRadius:6,padding:"4px 8px",fontSize:10,fontWeight:coverTab===t?600:400,cursor:"pointer"}}>{t==="photo"?"📷 Photo":"🖼️ Library"}</button>
+            ))}
+          </div>
+          {coverTab==="photo"&&<>
             <input ref={coverFileRef} type="file" accept="image/*" capture="environment" onChange={async(e)=>{
               const f=e.target.files?.[0];if(!f)return;
               setCoverUploading(true);
@@ -937,40 +933,52 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade}) => {
               try{const res=await fetch("https://api.cloudinary.com/v1_1/dmaupzhcx/image/upload",{method:"POST",body:fd});if(res.ok){const d=await res.json();setCoverUrl(d.secure_url);}}catch{}
               setCoverUploading(false);
             }} style={{display:"none"}}/>
-            <button onClick={()=>coverFileRef.current?.click()} disabled={coverUploading} style={{background:T.linen,border:`1px dashed ${T.terra}`,borderRadius:8,padding:"10px 14px",cursor:"pointer",width:"100%",fontSize:12,color:T.terra,fontWeight:500}}>{coverUploading?"Uploading...":"Choose Photo or Take One"}</button>
-          </div>
-        )}
-        {coverTab==="library"&&(
-          <div style={{display:"flex",gap:8,overflowX:"auto",paddingBottom:4}}>
+            <button onClick={()=>coverFileRef.current?.click()} disabled={coverUploading} style={{background:T.linen,border:`1px dashed ${T.terra}`,borderRadius:6,padding:"6px 8px",cursor:"pointer",width:"100%",fontSize:10,color:T.terra,fontWeight:500}}>{coverUploading?"Uploading...":"Choose Photo"}</button>
+          </>}
+          {coverTab==="library"&&<div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
             {ALL_CAT_ENTRIES.map(([cat,url])=>(
-              <div key={cat} onClick={()=>setCoverUrl(url)} style={{width:64,height:64,borderRadius:8,overflow:"hidden",cursor:"pointer",border:coverUrl===url?`2px solid ${T.terra}`:`1px solid ${T.border}`,flexShrink:0,position:"relative"}}>
+              <div key={cat} onClick={()=>setCoverUrl(url)} style={{width:36,height:36,borderRadius:6,overflow:"hidden",cursor:"pointer",border:coverUrl===url?`2px solid ${T.terra}`:`1px solid ${T.border}`,flexShrink:0}}>
                 <img src={url} alt={cat} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
               </div>
             ))}
-          </div>
-        )}
+          </div>}
+        </div>
+        {/* Right: Stitch Check banner */}
+        <div style={{flex:1,display:"flex",flexDirection:"column"}}>
+          {isPro?(
+            validating?(
+              <div style={{flex:1,background:T.linen,borderRadius:12,padding:"16px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:10,border:`1px solid ${T.border}`}}>
+                <div style={{fontSize:28,animation:"pulse 1.5s ease infinite"}}>🧶</div>
+                <div style={{fontSize:13,fontWeight:600,color:T.ink,textAlign:"center"}}>Analyzing pattern structure...</div>
+                <div style={{fontSize:11,color:T.ink3,textAlign:"center",lineHeight:1.5}}>Checking stitch counts, round sequence, and cross-references</div>
+                <div style={{width:"80%",height:4,background:T.border,borderRadius:99,overflow:"hidden",marginTop:4}}>
+                  <div className="progress-bar-fill" style={{height:"100%",width:"60%",borderRadius:99}}/>
+                </div>
+              </div>
+            ):validationReport?(
+              <div style={{flex:1,background:badgeForScore(validationReport.score).bg,border:`1.5px solid ${badgeForScore(validationReport.score).color}`,borderRadius:12,padding:"16px",display:"flex",flexDirection:"column",justifyContent:"center"}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+                  <span style={{fontSize:20}}>{badgeForScore(validationReport.score).emoji}</span>
+                  <div>
+                    <div style={{fontSize:13,fontWeight:700,color:badgeForScore(validationReport.score).color}}>{badgeForScore(validationReport.score).label}</div>
+                    <div style={{fontSize:22,fontWeight:700,fontFamily:T.serif,color:badgeForScore(validationReport.score).color,lineHeight:1}}>{validationReport.score}%</div>
+                  </div>
+                </div>
+                {validationReport.checks?.find(c=>c.status!=="pass")&&<div style={{fontSize:11,color:T.ink2,lineHeight:1.5,marginBottom:8}}>{validationReport.checks.find(c=>c.status!=="pass")?.detail}</div>}
+                <button onClick={()=>setShowFullReport(true)} style={{background:"none",border:"none",color:T.terra,cursor:"pointer",fontSize:12,fontWeight:600,padding:0,textDecoration:"underline",textAlign:"left"}}>View Full Report →</button>
+              </div>
+            ):(
+              <div style={{flex:1,background:T.linen,borderRadius:12,padding:"16px",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:T.ink3,border:`1px solid ${T.border}`}}>Stitch Check unavailable</div>
+            )
+          ):(
+            <div style={{flex:1,background:`linear-gradient(135deg,${T.terraLt},${T.card})`,borderRadius:12,padding:"16px",border:`1px solid ${T.border}`,display:"flex",flexDirection:"column",justifyContent:"center"}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><span style={{fontSize:14}}>🔒</span><span style={{fontSize:13,fontWeight:600,color:T.ink}}>Stitch Check</span></div>
+              <div style={{fontSize:11,color:T.ink2,lineHeight:1.5,marginBottom:10}}>Analyze for math errors and inconsistencies before you start crocheting.</div>
+              <button onClick={onUpgrade} style={{width:"100%",background:T.terra,color:"#fff",border:"none",borderRadius:8,padding:"8px",fontSize:11,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 12px rgba(184,90,60,.3)"}}>Upgrade to Pro</button>
+            </div>
+          )}
+        </div>
       </div>
-      {/* Stitch Check banner */}
-      {console.log("[Wovely] Stitch Check banner render — isPro:",isPro,"validating:",validating,"report:",!!validationReport)}
-      {isPro?(
-        validating?<div style={{background:T.linen,borderRadius:12,padding:"12px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:10}}><div className="spinner" style={{width:16,height:16,border:`2px solid ${T.border}`,borderTopColor:T.terra,borderRadius:"50%",flexShrink:0}}/><span style={{fontSize:13,color:T.ink2}}>Running Stitch Check...</span></div>
-        :validationReport?<div style={{background:badgeForScore(validationReport.score).bg,border:`1.5px solid ${badgeForScore(validationReport.score).color}`,borderRadius:12,padding:"12px 16px",marginBottom:16}}>
-          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:validationReport.summary?6:0}}>
-            <span style={{fontSize:16}}>{badgeForScore(validationReport.score).emoji}</span>
-            <span style={{fontSize:13,fontWeight:600,color:badgeForScore(validationReport.score).color}}>{badgeForScore(validationReport.score).label}</span>
-            <span style={{fontSize:14,fontWeight:700,color:badgeForScore(validationReport.score).color,marginLeft:"auto"}}>{validationReport.score}%</span>
-          </div>
-          {validationReport.checks?.find(c=>c.status!=="pass")&&<div style={{fontSize:12,color:T.ink2,lineHeight:1.5,marginBottom:8}}>{validationReport.checks.find(c=>c.status!=="pass")?.detail}</div>}
-          <button onClick={()=>setShowFullReport(true)} style={{background:"none",border:"none",color:T.terra,cursor:"pointer",fontSize:12,fontWeight:600,padding:0,textDecoration:"underline"}}>View Full Report →</button>
-        </div>
-        :<div style={{background:T.linen,borderRadius:12,padding:"10px 16px",marginBottom:16,fontSize:12,color:T.ink3}}>Stitch Check unavailable</div>
-      ):(
-        <div style={{background:`linear-gradient(135deg,${T.terraLt},${T.card})`,borderRadius:12,padding:"14px 16px",marginBottom:16,border:`1px solid ${T.border}`}}>
-          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><span style={{fontSize:14}}>🔒</span><span style={{fontSize:13,fontWeight:600,color:T.ink}}>Stitch Check — Know before you stitch</span></div>
-          <div style={{fontSize:12,color:T.ink2,lineHeight:1.6,marginBottom:10}}>Wovely can analyze this pattern for math errors and inconsistencies before you start crocheting.</div>
-          <button onClick={onUpgrade} style={{width:"100%",background:T.terra,color:"#fff",border:"none",borderRadius:10,padding:"10px",fontSize:13,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.3)"}}>Upgrade to Pro — $9.99/mo</button>
-        </div>
-      )}
       {/* Full Stitch Check report overlay */}
       {showFullReport&&validationReport&&(
         <div style={{position:"fixed",inset:0,zIndex:700,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>

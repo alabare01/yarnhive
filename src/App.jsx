@@ -71,6 +71,7 @@ const CSS = () => (
     @keyframes fabPulse { 0%,100%{box-shadow:0 6px 24px rgba(184,90,60,.45)} 50%{box-shadow:0 6px 32px rgba(184,90,60,.7)} }
     @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
     @keyframes progressShimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+    @keyframes pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.15);opacity:.7} }
     @keyframes confidencePop { 0%{transform:scale(0.8);opacity:0} 60%{transform:scale(1.05)} 100%{transform:scale(1);opacity:1} }
     .fu { animation:fadeUp .4s ease both; }
     .su { animation:slideUp .35s cubic-bezier(.22,.68,0,1.05) both; }
