@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { T, useBreakpoint, Field } from "./theme.jsx";
 import { PILL } from "./constants.js";
+import { SUPABASE_URL, SUPABASE_ANON_KEY, supabaseAuth, getSession } from "./supabase.js";
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
 
@@ -16,20 +17,35 @@ const CAT_IMG = {
 const ALL_CAT_ENTRIES = Object.entries(CAT_IMG);
 
 const uploadPatternFile = async (file, onProgress) => {
-  const formData = new FormData();
   const isPdf=file.type==="application/pdf"||file.name?.toLowerCase().endsWith(".pdf");
-  formData.append("file", file);
-  formData.append("upload_preset", "yarnhive_patterns");
   if(onProgress) onProgress("uploading");
   try {
-    const endpoint=isPdf?"https://api.cloudinary.com/v1_1/dmaupzhcx/raw/upload":"https://api.cloudinary.com/v1_1/dmaupzhcx/auto/upload";
-    const res = await fetch(endpoint, {
-      method: "POST", body: formData,
-    });
-    if (!res.ok) throw new Error("Upload failed: " + res.status);
-    const data = await res.json();
-    if(onProgress) onProgress("done");
-    return { url: data.secure_url, filename: data.original_filename + "." + (data.format||"pdf"), type: file.type };
+    if(isPdf){
+      // PDFs → Supabase Storage (public bucket, no ACL issues)
+      const session=getSession();
+      const user=supabaseAuth.getUser();
+      if(!session?.access_token||!user) throw new Error("Not authenticated");
+      const filePath=`${user.id}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g,"_")}`;
+      const res=await fetch(`${SUPABASE_URL}/storage/v1/object/pattern-files/${filePath}`,{
+        method:"POST",
+        headers:{"Authorization":`Bearer ${session.access_token}`,"Content-Type":file.type},
+        body:file,
+      });
+      if(!res.ok) throw new Error("Supabase upload failed: "+res.status);
+      const publicUrl=`${SUPABASE_URL}/storage/v1/object/public/pattern-files/${filePath}`;
+      if(onProgress) onProgress("done");
+      return { url: publicUrl, filename: file.name, type: file.type };
+    } else {
+      // Images → Cloudinary (transformations, CDN)
+      const formData=new FormData();
+      formData.append("file",file);
+      formData.append("upload_preset","yarnhive_patterns");
+      const res=await fetch("https://api.cloudinary.com/v1_1/dmaupzhcx/auto/upload",{method:"POST",body:formData});
+      if(!res.ok) throw new Error("Upload failed: "+res.status);
+      const data=await res.json();
+      if(onProgress) onProgress("done");
+      return { url: data.secure_url, filename: data.original_filename+"."+(data.format||"jpg"), type: file.type };
+    }
   } catch (e) {
     if(onProgress) onProgress("error");
     console.error("[Wovely] File upload error:", e);
