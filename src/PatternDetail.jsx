@@ -270,7 +270,9 @@ const ShareCardModal = ({pattern,onClose,pct,Btn}) => {
 
 const Detail = ({p,onBack,onSave,pct,estYards,estSkeins,pdfThumbUrl,CSS,Bar,Photo,Stars,WireframeViewer,Btn}) => {
   const VALID_TABS=["materials","rows","notes"];
-  const [rows,setRows]=useState(()=>ensureRepeatBrackets(p.rows)),[tab,setTab]=useState(()=>{const saved=localStorage.getItem("yh_last_tab");return VALID_TABS.includes(saved)?saved:"materials";}),[editing,setEditing]=useState(false),[draft,setDraft]=useState({...p}),[showScale,setShowScale]=useState(false),[showShare,setShowShare]=useState(false),[milestone,setMilestone]=useState(null);
+  const _initRows=ensureRepeatBrackets(p.rows);
+  const _isFreshPattern=_initRows.filter(r=>!r.isHeader).every(r=>!r.done);
+  const [rows,setRows]=useState(_initRows),[tab,setTab]=useState(()=>{if(_isFreshPattern) return "materials";const saved=localStorage.getItem("yh_last_tab");return VALID_TABS.includes(saved)?saved:"materials";}),[editing,setEditing]=useState(false),[draft,setDraft]=useState({...p}),[showScale,setShowScale]=useState(false),[showShare,setShowShare]=useState(false),[milestone,setMilestone]=useState(null);
   const [attachUploading,setAttachUploading]=useState(false);
   const [showYarnTip,setShowYarnTip]=useState(()=>!localStorage.getItem("yh_yarn_summary_tip_seen"));
   const [showPdfViewer,setShowPdfViewer]=useState(false);
