@@ -9,7 +9,7 @@ const PatternCard = ({p,onClick,onPark,onUnpark,onDelete,onCoverChange,delay=0,p
   const cardPhoto=p.cover_image_url||(PILL.includes(p.photo)?catFallbackPhoto(p.cat):p.photo)||catFallbackPhoto(p.cat);
   const isPlaceholder=!p.cover_image_url&&PILL.includes(p.photo);
   return (
-    <div className="card fu" onClick={onClick} style={{background:T.surface,borderRadius:16,overflow:"hidden",border:`1px solid ${T.border}`,cursor:"pointer",animationDelay:delay+"s",position:"relative"}}>
+    <div className="card fu" onClick={onClick} style={{background:T.card,borderRadius:16,overflow:"hidden",border:`1px solid ${T.border}`,cursor:"pointer",animationDelay:delay+"s",position:"relative",boxShadow:"0 1px 4px rgba(0,0,0,0.06)"}}>
       {!p.isStarter&&(onPark||onDelete)&&<div style={{position:"absolute",top:8,right:8,zIndex:5}}>
         <button onClick={e=>{e.stopPropagation();setMenuOpen(!menuOpen);}} style={{background:"rgba(0,0,0,.45)",backdropFilter:"blur(4px)",border:"none",borderRadius:99,width:28,height:28,cursor:"pointer",color:"#fff",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1}}>⋮</button>
         {menuOpen&&<div onClick={e=>e.stopPropagation()} style={{position:"absolute",right:0,top:32,background:T.modal,border:`1px solid ${T.border}`,borderRadius:10,boxShadow:"0 8px 24px rgba(155,126,200,.12)",zIndex:10,minWidth:150,overflow:"hidden"}}>
@@ -47,7 +47,7 @@ const ShelfCard = ({p,onClick,pct,catFallbackPhoto,Photo,Bar}) => {
   const v=pct(p);
   const cardPhoto=p.cover_image_url||p.photo||catFallbackPhoto(p.cat);
   return (
-    <div onClick={onClick} style={{width:160,borderRadius:14,overflow:"hidden",border:`1px solid ${T.border}`,background:T.surface,cursor:"pointer",boxShadow:"0 2px 8px rgba(28,23,20,.06)",transition:"transform .16s,box-shadow .16s",flexShrink:0}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 8px 20px rgba(28,23,20,.12)";}} onMouseLeave={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="0 2px 8px rgba(28,23,20,.06)";}}>
+    <div onClick={onClick} style={{width:160,borderRadius:14,overflow:"hidden",border:`1px solid ${T.border}`,background:T.card,cursor:"pointer",boxShadow:"0 1px 4px rgba(0,0,0,0.06)",transition:"transform .16s,box-shadow .16s",flexShrink:0}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 8px 20px rgba(28,23,20,.12)";}} onMouseLeave={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="0 1px 4px rgba(0,0,0,0.06)";}}>
       <div style={{height:100,position:"relative",background:T.linen,overflow:"hidden"}}><Photo src={cardPhoto} alt={p.title} style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top"}}/><div style={{position:"absolute",bottom:0,left:0,right:0}}><Bar val={v} color={T.terra} h={3} bg="rgba(0,0,0,.2)"/></div></div>
       <div style={{padding:"9px 12px 11px"}}><div style={{fontFamily:T.serif,fontSize:13,color:T.ink,lineHeight:1.3,marginBottom:2}}>{p.title}</div><div style={{fontSize:11,color:T.terra,fontWeight:600}}>{v}% done</div></div>
     </div>
