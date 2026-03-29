@@ -133,7 +133,7 @@ const EmptySlotCard = ({onClick,slotIndex=0}) => (
 );
 
 const CollectionView = ({userPatterns,starterPatterns,cat,setCat,search,setSearch,openDetail,onAddPattern,isPro,tier,setView,onPark,onUnpark,onDelete,onCoverChange,pct,catFallbackPhoto,Photo,Bar,Stars,CATS,TIER_CONFIG}) => {
-  const{isDesktop}=useBreakpoint();
+  const{isDesktop,isMobile}=useBreakpoint();
   const allPatterns = [...userPatterns,...starterPatterns];
   const visible=allPatterns.filter(p=>p.status!=="deleted");
   const starterPats=visible.filter(p=>p.isStarter);
@@ -175,7 +175,7 @@ const CollectionView = ({userPatterns,starterPatterns,cat,setCat,search,setSearc
       </div>
       {/* Unified grid */}
       {viewMode==="grid"?(
-        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:20,padding:isDesktop?"0 0 80px":"0 18px 120px"}}>
+        <div style={{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(3,1fr)",gap:isMobile?14:20,padding:isDesktop?"0 0 80px":"0 18px 120px"}}>
           {filteredAll.map((p,i)=><PatternCard key={p.id} p={p} delay={i*.04} onClick={()=>openDetail(p)} onPark={onPark} onUnpark={onUnpark} onDelete={onDelete} onCoverChange={onCoverChange} pct={pct} catFallbackPhoto={catFallbackPhoto} Photo={Photo} Bar={Bar} Stars={Stars}/>)}
           {!isPro&&cat==="All"&&!search&&Array.from({length:emptySlots}).map((_,i)=><EmptySlotCard key={"slot_"+i} slotIndex={i} onClick={onAddPattern}/>)}
         </div>
