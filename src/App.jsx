@@ -68,7 +68,7 @@ const CSS = () => (
     @keyframes slideOutLeft { from{transform:translateX(0);opacity:1} to{transform:translateX(-100%);opacity:0} }
     @keyframes dimIn  { from{opacity:0} to{opacity:1} }
     @keyframes dimOut { from{opacity:1} to{opacity:0} }
-    @keyframes fabPulse { 0%,100%{box-shadow:0 6px 24px rgba(184,90,60,.45)} 50%{box-shadow:0 6px 32px rgba(184,90,60,.7)} }
+    @keyframes fabPulse { 0%,100%{box-shadow:0 6px 24px rgba(155,126,200,.45)} 50%{box-shadow:0 6px 32px rgba(155,126,200,.7)} }
     @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
     @keyframes progressShimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
     @keyframes pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.15);opacity:.7} }
@@ -81,13 +81,13 @@ const CSS = () => (
     .dim-out { animation:dimOut .2s  ease both; }
     .spinner { animation:spin .8s linear infinite; }
     .conf-pop { animation:confidencePop .5s cubic-bezier(.22,.68,0,1.05) both; }
-    .card { transition:transform .18s,box-shadow .18s; box-shadow:0 2px 10px rgba(139,90,60,.08); }
-    .card:hover { transform:translateY(-4px) !important; box-shadow:0 16px 36px rgba(139,90,60,.14) !important; }
+    .card { transition:transform .18s,box-shadow .18s; box-shadow:0 2px 10px rgba(155,126,200,.08); }
+    .card:hover { transform:translateY(-4px) !important; box-shadow:0 16px 36px rgba(155,126,200,.14) !important; }
     .tap { transition:opacity .15s; cursor:pointer; }
     .tap:hover { opacity:.85; }
     .method-card { transition:all .15s; }
-    .method-card:hover { background:#F5E2DA !important; border-color:#B85A3C !important; transform:translateY(-1px); }
-    .progress-bar-fill { background:linear-gradient(90deg,#B85A3C 0%,#C97A5E 50%,#B85A3C 100%); background-size:200% 100%; animation:progressShimmer 1.5s ease infinite; }
+    .method-card:hover { background:#EDE4F7 !important; border-color:#9B7EC8 !important; transform:translateY(-1px); }
+    .progress-bar-fill { background:linear-gradient(90deg,#9B7EC8 0%,#B9A3DC 50%,#9B7EC8 100%); background-size:200% 100%; animation:progressShimmer 1.5s ease infinite; }
     .wireframe-container canvas { touch-action: none; }
     .h-scroll { display:flex; gap:12px; overflow-x:auto; -webkit-overflow-scrolling:touch; scroll-snap-type:x mandatory; padding-bottom:8px; scrollbar-width:none; }
     .h-scroll::-webkit-scrollbar { display:none; }
@@ -204,7 +204,7 @@ const Btn = ({children,onClick,variant="primary",full=true,small=false,disabled=
     danger:{background:"#C0392B",color:"#fff",border:"none"},
     gold:{background:"linear-gradient(135deg,#C9A84C,#8B6914)",color:"#fff",border:"none"},
   };
-  return <button onClick={onClick} disabled={disabled} className="tap" style={{...styles[variant],borderRadius:12,padding:small?"8px 16px":"14px 20px",fontSize:small?13:15,fontWeight:600,cursor:disabled?"not-allowed":"pointer",width:full?"100%":"auto",opacity:disabled?.6:1,boxShadow:variant==="primary"?"0 4px 16px rgba(184,90,60,.3)":variant==="sage"?"0 4px 16px rgba(92,122,94,.3)":variant==="gold"?"0 4px 16px rgba(184,144,44,.35)":"none",...sx}}>{children}</button>;
+  return <button onClick={onClick} disabled={disabled} className="tap" style={{...styles[variant],borderRadius:12,padding:small?"8px 16px":"14px 20px",fontSize:small?13:15,fontWeight:600,cursor:disabled?"not-allowed":"pointer",width:full?"100%":"auto",opacity:disabled?.6:1,boxShadow:variant==="primary"?"0 4px 16px rgba(155,126,200,.3)":variant==="sage"?"0 4px 16px rgba(92,122,94,.3)":variant==="gold"?"0 4px 16px rgba(184,144,44,.35)":"none",...sx}}>{children}</button>;
 };
 // Field imported from ./theme.js
 
@@ -331,7 +331,7 @@ const WireframeViewer = ({components,labeled=false,height=220,fillContainer=fals
           if(labeled){
             const cv=document.createElement("canvas"); cv.width=320; cv.height=58;
             const ctx=cv.getContext("2d"); ctx.clearRect(0,0,320,58);
-            ctx.fillStyle="#B85A3C"; ctx.font="bold 22px Inter, sans-serif"; ctx.textAlign="center";
+            ctx.fillStyle="#9B7EC8"; ctx.font="bold 22px Inter, sans-serif"; ctx.textAlign="center";
             const rawLabel=comp.label||rawRole;
             const displayLabel=(rawLabel!=="unknown"&&rawLabel!=="detail")?rawLabel.toUpperCase():slot!=="detail"?slot.toUpperCase():primitive.toUpperCase();
             ctx.fillText(displayLabel,160,40);
@@ -404,12 +404,12 @@ const PaywallGate = ({onClose,onUpgrade,patternCount}) => (
     <div className="dim-in" style={{position:"absolute",inset:0,background:"rgba(28,23,20,.65)",backdropFilter:"blur(4px)"}}/>
     <div className="su" onClick={e=>e.stopPropagation()} style={{position:"relative",background:T.surface,borderRadius:"24px 24px 0 0",width:"100%",padding:"28px 24px 52px",zIndex:1}}>
       <div style={{width:36,height:3,background:T.border,borderRadius:99,margin:"0 auto 24px"}}/>
-      <div style={{width:64,height:64,borderRadius:20,background:`linear-gradient(135deg,${T.terra},#8B3A22)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,margin:"0 auto 16px",boxShadow:"0 8px 24px rgba(184,90,60,.35)"}}>🧶</div>
+      <div style={{width:64,height:64,borderRadius:20,background:`linear-gradient(135deg,#2D3A7C,${T.terra})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,margin:"0 auto 16px",boxShadow:"0 8px 24px rgba(155,126,200,.35)"}}>🧶</div>
       <div style={{textAlign:"center",marginBottom:24}}>
         <div style={{fontFamily:T.serif,fontSize:22,color:T.ink,marginBottom:8}}>Pattern library full</div>
         <div style={{fontSize:14,color:T.ink2,lineHeight:1.7,maxWidth:320,margin:"0 auto"}}>You've used all {TIER_CONFIG.free.patternCap} free patterns. Upgrade to Pro for unlimited storage and every import method.</div>
       </div>
-      <div style={{background:`linear-gradient(135deg,${T.terra},#7A2E14)`,borderRadius:18,padding:"20px",marginBottom:16}}>
+      <div style={{background:`linear-gradient(135deg,${T.terra},#6B52A3)`,borderRadius:18,padding:"20px",marginBottom:16}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14}}>
           <div>
             <div style={{fontSize:11,color:"rgba(255,255,255,.65)",textTransform:"uppercase",letterSpacing:".08em",marginBottom:4}}>Wovely Pro</div>
@@ -435,7 +435,7 @@ const PaywallGate = ({onClose,onUpgrade,patternCount}) => (
 const SidebarNav = ({view,onNavigate,count,isPro,onAddPattern,onSignOut,onUpgrade,userPatterns=[],allPatterns=[]}) => {
   const starterC=DEFAULT_STARTERS.length;const addedC=userPatterns.filter(p=>!p.isStarter).length;
   const wipCount=allPatterns.filter(p=>!p.isStarter&&(p.status==="in_progress"||p.started)).filter(p=>pct(p)<100).length;
-  const ITEMS=[{key:"collection",label:"Your Hive",sub:starterC+" starter"+(starterC!==1?"s":"")+" · "+addedC+" added",icon:"🧶"},{key:"wip",label:"Builds in Progress",sub:wipCount>0?wipCount+" active":"Currently making",icon:"🪡"},{key:"browse",label:"Browse Sites",sub:"Find free patterns",icon:"🌐"},{key:"stash",label:"Yarn Stash",sub:"Manage your yarn",icon:"🎀"},{key:"calculator",label:"Calculators",sub:"Gauge, yardage & more",icon:"🧮"},{key:"stitch-check",label:"Stitch Check",sub:isPro?"Validate any pattern":"Pro feature",icon:"🛡️",proOnly:true},{key:"shopping",label:"Shopping List",sub:"Auto-generated",icon:"🛒"}];
+  const ITEMS=[{key:"collection",label:"My Wovely",sub:starterC+" starter"+(starterC!==1?"s":"")+" · "+addedC+" added",icon:"🧶"},{key:"wip",label:"On the Hook",sub:wipCount>0?wipCount+" active":"Currently making",icon:"🪡"},{key:"browse",label:"Find Patterns",sub:"Find free patterns",icon:"🌐"},{key:"stash",label:"Stash & Notions",sub:"Manage your yarn",icon:"🎀"},{key:"calculator",label:"The Workbench",sub:"Gauge, yardage & more",icon:"🧮"},{key:"stitch-check",label:"Stitch Check",sub:isPro?"Validate any pattern":"Pro feature",icon:"🛡️",proOnly:true},{key:"shopping",label:"Supply Run",sub:"Auto-generated",icon:"🛒"}];
   return (
     <div style={{width:260,background:T.surface,borderRight:`1px solid ${T.border}`,height:"100vh",position:"sticky",top:0,display:"flex",flexDirection:"column",flexShrink:0}}>
       <div onClick={()=>onNavigate("collection")} style={{position:"relative",height:160,overflow:"hidden",flexShrink:0,cursor:"pointer",transition:"opacity .15s"}} onMouseEnter={e=>e.currentTarget.style.opacity=".85"} onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
@@ -443,7 +443,7 @@ const SidebarNav = ({view,onNavigate,count,isPro,onAddPattern,onSignOut,onUpgrad
         <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(20,14,10,.85) 0%,rgba(20,14,10,.2) 100%)"}}/>
         <div style={{position:"absolute",bottom:18,left:20}}><div style={{fontFamily:T.serif,fontSize:26,fontWeight:700,color:"#fff",lineHeight:1}}>Wovely</div><div style={{fontSize:11,color:"rgba(255,255,255,.6)",marginTop:4}}>Your crochet hive</div></div>
       </div>
-      <div style={{padding:"16px 16px 8px"}}><button onClick={onAddPattern} style={{width:"100%",background:`linear-gradient(135deg,${T.terra},#8B3A22)`,color:"#fff",border:"none",borderRadius:12,padding:"12px",fontSize:14,fontWeight:700,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.4)",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><span style={{fontSize:18}}>+</span> Add Pattern</button></div>
+      <div style={{padding:"16px 16px 8px"}}><button onClick={onAddPattern} style={{width:"100%",background:`linear-gradient(135deg,#2D3A7C,${T.terra})`,color:"#fff",border:"none",borderRadius:12,padding:"12px",fontSize:14,fontWeight:700,cursor:"pointer",boxShadow:"0 4px 16px rgba(155,126,200,.4)",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><span style={{fontSize:18}}>+</span> Add Pattern</button></div>
       <div style={{flex:1,overflowY:"auto",padding:"8px 0"}}>
         {ITEMS.map(item=>{const active=view===item.key;const locked=item.proOnly&&!isPro;return(
           <div key={item.key} className="nav-item" onClick={()=>{if(locked){onUpgrade();return;}onNavigate(item.key);}} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 20px",borderLeft:"3px solid "+(active?T.terra:"transparent"),background:active?T.terraLt:"transparent",cursor:"pointer",transition:"background .12s",opacity:locked?.55:1}}>
@@ -464,8 +464,8 @@ const SidebarNav = ({view,onNavigate,count,isPro,onAddPattern,onSignOut,onUpgrad
         );})()}
       </div>
       <div style={{padding:"0 16px 24px"}}>
-        {isPro?<div style={{background:`linear-gradient(135deg,${T.sage},#3D5E3F)`,borderRadius:12,padding:"12px 14px",display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:16}}>✨</span><div><div style={{fontSize:12,fontWeight:700,color:"#fff"}}>Wovely Pro</div><div style={{fontSize:11,color:"rgba(255,255,255,.7)"}}>All features active</div></div></div>
-        :<div style={{background:`linear-gradient(135deg,${T.terra},#8B3A22)`,borderRadius:12,padding:"14px"}}><div style={{fontSize:12,fontWeight:700,color:"#fff",marginBottom:3}}>✨ Upgrade to Pro</div><div style={{fontSize:11,color:"rgba(255,255,255,.75)",lineHeight:1.5,marginBottom:10}}>Unlimited patterns, all imports, Hive Vision, cloud sync.</div><div onClick={onUpgrade} style={{background:"rgba(255,255,255,.2)",borderRadius:8,padding:"8px",textAlign:"center",fontSize:12,fontWeight:700,color:"#fff",cursor:"pointer"}}>$9.99/mo</div></div>}
+        {isPro?<div style={{background:`linear-gradient(135deg,#2D3A7C,#1A2456)`,borderRadius:12,padding:"12px 14px",display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:16}}>✨</span><div><div style={{fontSize:12,fontWeight:700,color:"#fff"}}>Wovely Pro</div><div style={{fontSize:11,color:"rgba(255,255,255,.7)"}}>All features active</div></div></div>
+        :<div style={{background:`linear-gradient(135deg,#2D3A7C,${T.terra})`,borderRadius:12,padding:"14px"}}><div style={{fontSize:12,fontWeight:700,color:"#fff",marginBottom:3}}>✨ Upgrade to Pro</div><div style={{fontSize:11,color:"rgba(255,255,255,.75)",lineHeight:1.5,marginBottom:10}}>Unlimited patterns, all imports, Hive Vision, cloud sync.</div><div onClick={onUpgrade} style={{background:"rgba(255,255,255,.2)",borderRadius:8,padding:"8px",textAlign:"center",fontSize:12,fontWeight:700,color:"#fff",cursor:"pointer"}}>$9.99/mo</div></div>}
         {onSignOut&&<button onClick={onSignOut} style={{width:"100%",background:"none",border:"1px solid "+T.border,borderRadius:10,padding:"8px",fontSize:12,color:T.ink3,cursor:"pointer",marginTop:10,fontWeight:500}}>Sign out</button>}
       </div>
     </div>
@@ -477,7 +477,7 @@ const NavPanel = ({open,onClose,view,onNavigate,count,isPro,onSignOut,onUpgrade}
   const dismiss=()=>{setClosing(true);setTimeout(()=>{setClosing(false);onClose();},220);};
   const go=v=>{onNavigate(v);dismiss();};
   if(!open) return null;
-  const ITEMS=[{key:"collection",label:"Your Hive",sub:count+" patterns",icon:"🧶"},{key:"wip",label:"Builds in Progress",sub:"Currently making",icon:"🪡"},{key:"browse",label:"Browse Sites",sub:"Find free patterns",icon:"🌐"},{key:"stash",label:"Yarn Stash",sub:"Manage your yarn",icon:"🎀"},{key:"calculator",label:"Calculators",sub:"Gauge, yardage & more",icon:"🧮"},{key:"stitch-check",label:"Stitch Check",sub:isPro?"Validate any pattern":"Pro feature",icon:"🛡️",proOnly:true},{key:"shopping",label:"Shopping List",sub:"Auto-generated needs",icon:"🛒"}];
+  const ITEMS=[{key:"collection",label:"My Wovely",sub:count+" patterns",icon:"🧶"},{key:"wip",label:"On the Hook",sub:"Currently making",icon:"🪡"},{key:"browse",label:"Find Patterns",sub:"Find free patterns",icon:"🌐"},{key:"stash",label:"Stash & Notions",sub:"Manage your yarn",icon:"🎀"},{key:"calculator",label:"The Workbench",sub:"Gauge, yardage & more",icon:"🧮"},{key:"stitch-check",label:"Stitch Check",sub:isPro?"Validate any pattern":"Pro feature",icon:"🛡️",proOnly:true},{key:"shopping",label:"Supply Run",sub:"Auto-generated needs",icon:"🛒"}];
   return (
     <div style={{position:"fixed",inset:0,zIndex:100}}>
       <div className={closing?"dim-out":"dim-in"} onClick={dismiss} style={{position:"absolute",inset:0,background:"rgba(28,23,20,.52)",backdropFilter:"blur(3px)"}}/>
@@ -507,8 +507,8 @@ const NavPanel = ({open,onClose,view,onNavigate,count,isPro,onSignOut,onUpgrade}
           );})()}
         </div>
         <div style={{padding:"0 18px 36px"}}>
-          {isPro?<div style={{background:`linear-gradient(135deg,${T.sage},#3D5E3F)`,borderRadius:14,padding:"12px 14px",display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:18}}>✨</span><div><div style={{fontSize:12,fontWeight:700,color:"#fff"}}>Wovely Pro</div><div style={{fontSize:11,color:"rgba(255,255,255,.7)"}}>All features active</div></div></div>
-          :<div style={{background:`linear-gradient(135deg,${T.terra},#8B3A22)`,borderRadius:12,padding:"14px 16px"}}><div style={{fontSize:12,fontWeight:700,color:"#fff",marginBottom:3}}>✨ Upgrade to Pro</div><div style={{fontSize:11,color:"rgba(255,255,255,.75)",lineHeight:1.5,marginBottom:10}}>Unlimited patterns, all imports, Hive Vision.</div><div onClick={onUpgrade} style={{background:"rgba(255,255,255,.2)",borderRadius:8,padding:"8px",textAlign:"center",fontSize:12,fontWeight:700,color:"#fff",cursor:"pointer"}}>$9.99/mo</div></div>}
+          {isPro?<div style={{background:`linear-gradient(135deg,#2D3A7C,#1A2456)`,borderRadius:14,padding:"12px 14px",display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:18}}>✨</span><div><div style={{fontSize:12,fontWeight:700,color:"#fff"}}>Wovely Pro</div><div style={{fontSize:11,color:"rgba(255,255,255,.7)"}}>All features active</div></div></div>
+          :<div style={{background:`linear-gradient(135deg,#2D3A7C,${T.terra})`,borderRadius:12,padding:"14px 16px"}}><div style={{fontSize:12,fontWeight:700,color:"#fff",marginBottom:3}}>✨ Upgrade to Pro</div><div style={{fontSize:11,color:"rgba(255,255,255,.75)",lineHeight:1.5,marginBottom:10}}>Unlimited patterns, all imports, Hive Vision.</div><div onClick={onUpgrade} style={{background:"rgba(255,255,255,.2)",borderRadius:8,padding:"8px",textAlign:"center",fontSize:12,fontWeight:700,color:"#fff",cursor:"pointer"}}>$9.99/mo</div></div>}
           {onSignOut&&<button onClick={onSignOut} style={{width:"100%",background:"none",border:"1px solid "+T.border,borderRadius:10,padding:"8px",fontSize:12,color:T.ink3,cursor:"pointer",marginTop:10,fontWeight:500}}>Sign out</button>}
         </div>
       </div>
@@ -565,7 +565,7 @@ const ProInfoModal = ({onClose}) => {
         </div>
         <div style={{flex:1,overflowY:"auto",padding:"20px 20px 48px"}}>
           <div style={{display:"flex",alignItems:"flex-start",gap:14,marginBottom:22}}>
-            <div style={{width:56,height:56,borderRadius:16,flexShrink:0,background:`linear-gradient(145deg,${T.terra},#6B2410)`,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",boxShadow:"0 6px 20px rgba(184,90,60,0.25)"}}>
+            <div style={{width:56,height:56,borderRadius:16,flexShrink:0,background:`linear-gradient(145deg,${T.terra},#5A3F8F)`,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",boxShadow:"0 6px 20px rgba(155,126,200,0.25)"}}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>
             </div>
             <div style={{flex:1,minWidth:0,paddingTop:2}}>
@@ -581,7 +581,7 @@ const ProInfoModal = ({onClose}) => {
               </div>
             ))}
           </div>
-          <button style={{width:"100%",background:T.terra,color:"#fff",border:"none",borderRadius:14,padding:"15px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.3)",marginBottom:6}}>Get Pro — $9.99/mo</button>
+          <button style={{width:"100%",background:T.terra,color:"#fff",border:"none",borderRadius:14,padding:"15px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(155,126,200,.3)",marginBottom:6}}>Get Pro — $9.99/mo</button>
           <div style={{textAlign:"center",fontSize:12,color:T.ink3,marginBottom:12}}>$74.99/yr — save 37%</div>
           <div style={{textAlign:"center",fontSize:11,color:T.ink3,opacity:.6}}>Cancel anytime. No questions asked.</div>
         </div>
@@ -720,13 +720,13 @@ const ProfileSettingsView = ({isPro,onOpenProModal,onGoHome,onEmailConfirmed}) =
 
   const SECTION = {background:T.card,borderRadius:16,padding:isDesktop?"28px 32px":"24px 20px",boxShadow:T.shadowLg};
   const SC_LABEL = {fontSize:10,fontVariant:"small-caps",color:T.ink3,textTransform:"lowercase",letterSpacing:".14em",fontWeight:500};
-  const SECTION_TITLE = {fontFamily:T.serif,fontSize:18,fontWeight:700,color:T.ink,marginBottom:20};
+  const SECTION_TITLE = {fontFamily:T.serif,fontSize:18,fontWeight:700,color:"#2D3A7C",marginBottom:20};
   const DIVIDER = <div style={{height:16}}/>;
   const Msg = ({msg}) => msg ? <div style={{background:msg.type==="ok"?"rgba(92,122,94,.1)":T.terraLt,borderRadius:12,padding:"10px 14px",fontSize:12,color:msg.type==="ok"?T.sage:T.terra,lineHeight:1.5,marginBottom:8}}>{msg.text}</div> : null;
 
   return (
     <div style={{padding:isDesktop?"24px 0 80px":"16px 18px 100px",maxWidth:560}}>
-      <button onClick={onGoHome} style={{background:"none",border:"none",color:T.ink3,cursor:"pointer",fontSize:13,fontWeight:500,padding:0,marginBottom:16,display:"flex",alignItems:"center",gap:4}}>← Your Hive</button>
+      <button onClick={onGoHome} style={{background:"none",border:"none",color:T.ink3,cursor:"pointer",fontSize:13,fontWeight:500,padding:0,marginBottom:16,display:"flex",alignItems:"center",gap:4}}>← My Wovely</button>
 
       {!welcomeDismissed&&(
         <div style={{borderRadius:16,overflow:"hidden",marginBottom:20,position:"relative",height:220}}>
@@ -736,7 +736,7 @@ const ProfileSettingsView = ({isPro,onOpenProModal,onGoHome,onEmailConfirmed}) =
           <div style={{position:"relative",zIndex:1,height:"100%",display:"flex",flexDirection:"column",justifyContent:"center",paddingLeft:32}}>
             <div style={{fontFamily:T.serif,fontSize:32,fontWeight:700,color:"#fff",marginBottom:8,lineHeight:1.2}}>Welcome to your hive. 🐝</div>
             <div style={{fontSize:15,color:"rgba(255,255,255,0.88)",marginBottom:20}}>Your collection is ready. Time to make something.</div>
-            <div><button onClick={()=>{setWelcomeDismissed(true);localStorage.setItem("yh_welcome_dismissed","true");onGoHome();}} style={{background:"#B85A3C",color:"#fff",border:"none",borderRadius:10,padding:"12px 24px",fontSize:15,fontWeight:600,cursor:"pointer"}}>Go to Your Hive →</button></div>
+            <div><button onClick={()=>{setWelcomeDismissed(true);localStorage.setItem("yh_welcome_dismissed","true");onGoHome();}} style={{background:"#9B7EC8",color:"#fff",border:"none",borderRadius:10,padding:"12px 24px",fontSize:15,fontWeight:600,cursor:"pointer"}}>Go to My Wovely →</button></div>
           </div>
         </div>
       )}
@@ -755,7 +755,7 @@ const ProfileSettingsView = ({isPro,onOpenProModal,onGoHome,onEmailConfirmed}) =
       <div style={SECTION}>
         <div style={SECTION_TITLE}>Your Profile</div>
         <div style={{textAlign:"center",marginBottom:24}}>
-          <div style={{width:100,height:100,borderRadius:"50%",background:T.linen,display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:34,fontWeight:700,color:T.terra,border:`3px solid ${T.terra}`,boxShadow:"0 0 0 6px rgba(184,90,60,.1)"}}>{(displayName||"Y").charAt(0).toUpperCase()}{(username||"H").charAt(0).toUpperCase()}</div>
+          <div style={{width:100,height:100,borderRadius:"50%",background:T.linen,display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:34,fontWeight:700,color:T.terra,border:`3px solid ${T.terra}`,boxShadow:"0 0 0 6px rgba(155,126,200,.1)"}}>{(displayName||"Y").charAt(0).toUpperCase()}{(username||"H").charAt(0).toUpperCase()}</div>
           <div style={{fontSize:16,fontWeight:600,color:T.ink,marginTop:12}}>{displayName||"Your Name"}</div>
           <div style={{fontSize:13,color:T.ink3,marginTop:2}}>{username?"@"+username:"Set your username"}</div>
         </div>
@@ -775,7 +775,7 @@ const ProfileSettingsView = ({isPro,onOpenProModal,onGoHome,onEmailConfirmed}) =
           <Field label="Ravelry username" placeholder="yourhandle" value={socialRavelry} onChange={e=>setSocialRavelry(e.target.value)}/>
         </div>
         <Msg msg={profileMsg}/>
-        <button onClick={handleProfileSave} disabled={profileSaving} style={{background:T.terra,color:"#fff",border:"none",borderRadius:99,padding:"12px 28px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.3)",opacity:profileSaving?.6:1}}>{profileSaving?"Saving…":saveBtnText}</button>
+        <button onClick={handleProfileSave} disabled={profileSaving} style={{background:T.terra,color:"#fff",border:"none",borderRadius:99,padding:"12px 28px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(155,126,200,.3)",opacity:profileSaving?.6:1}}>{profileSaving?"Saving…":saveBtnText}</button>
       </div>
 
       {DIVIDER}
@@ -801,17 +801,17 @@ const ProfileSettingsView = ({isPro,onOpenProModal,onGoHome,onEmailConfirmed}) =
           <Field label="Current password" placeholder="••••••••" value={curPass} onChange={e=>setCurPass(e.target.value)} type="password"/>
           <Field label="New password" placeholder="••••••••" value={newPass} onChange={e=>setNewPass(e.target.value)} type="password"/>
           <Msg msg={passMsg}/>
-          <button onClick={handleChangePassword} disabled={passSaving} style={{background:T.terra,color:"#fff",border:"none",borderRadius:99,padding:"10px 24px",fontSize:13,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.3)",opacity:passSaving?.6:1}}>{passSaving?"Saving…":"Update Password"}</button>
+          <button onClick={handleChangePassword} disabled={passSaving} style={{background:T.terra,color:"#fff",border:"none",borderRadius:99,padding:"10px 24px",fontSize:13,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(155,126,200,.3)",opacity:passSaving?.6:1}}>{passSaving?"Saving…":"Update Password"}</button>
         </div>
       </div>
 
       {DIVIDER}
 
       {isPro
-        ? <div style={{...SECTION,background:`linear-gradient(135deg,${T.sage},#3D5E3F)`,border:"none"}}>
+        ? <div style={{...SECTION,background:`linear-gradient(135deg,#2D3A7C,#1A2456)`,border:"none"}}>
             <div style={{display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:18}}>✨</span><div><div style={{fontSize:14,fontWeight:700,color:"#fff"}}>Wovely Pro</div><div style={{fontSize:12,color:"rgba(255,255,255,.7)",marginTop:2}}>All features active</div></div></div>
           </div>
-        : <div style={{...SECTION,background:`linear-gradient(135deg,${T.terra},#8B3A22)`,border:"none"}}>
+        : <div style={{...SECTION,background:`linear-gradient(135deg,#2D3A7C,${T.terra})`,border:"none"}}>
             <div style={{fontSize:14,fontWeight:700,color:"#fff",marginBottom:4}}>✨ Upgrade to Pro</div>
             <div style={{fontSize:12,color:"rgba(255,255,255,.75)",lineHeight:1.5,marginBottom:12}}>Unlimited patterns, all imports, Hive Vision, cloud sync.</div>
             <div onClick={onOpenProModal} style={{background:"rgba(255,255,255,.2)",borderRadius:10,padding:"10px",textAlign:"center",fontSize:14,fontWeight:700,color:"#fff",cursor:"pointer"}}>$9.99/mo</div>
@@ -874,8 +874,8 @@ const BrowseSitesView = ({onSavePattern}) => {
       <div style={{flex:1,position:"relative",overflow:"hidden"}}><iframe ref={iframeRef} src={activeSite.url} onLoad={handleIframeLoad} style={{width:"100%",height:"100%",border:"none"}} title={activeSite.name} sandbox="allow-scripts allow-same-origin allow-forms allow-popups"/></div>
       <div style={{background:T.surface,borderTop:`2px solid ${T.terra}`,padding:"12px 16px",flexShrink:0}}>
         {activeSite.note&&<div style={{fontSize:11,color:T.terra,marginBottom:8,display:"flex",gap:6,alignItems:"flex-start"}}><span style={{flexShrink:0}}>ℹ️</span><span>{activeSite.note}</span></div>}
-        {importOk?<div style={{background:T.sageLt,borderRadius:12,padding:"12px 16px",display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:18}}>✅</span><div style={{fontSize:13,fontWeight:600,color:T.sage}}>Pattern saved to Your Hive!</div></div>
-        :<><button onClick={doImport} disabled={importing} style={{width:"100%",background:importing?T.ink3:`linear-gradient(135deg,${T.terra},#8B3A22)`,color:"#fff",border:"none",borderRadius:14,padding:"15px 20px",fontSize:15,fontWeight:700,cursor:importing?"not-allowed":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:10,boxShadow:importing?"none":"0 4px 20px rgba(184,90,60,.4)",transition:"all .15s",marginBottom:6}}>{importing?<><div className="spinner" style={{width:16,height:16,border:"2px solid rgba(255,255,255,.3)",borderTop:"2px solid #fff",borderRadius:"50%"}}/> Reading pattern…</>:<><span style={{fontSize:18}}>🧶</span> Save This Pattern</>}</button>
+        {importOk?<div style={{background:T.sageLt,borderRadius:12,padding:"12px 16px",display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:18}}>✅</span><div style={{fontSize:13,fontWeight:600,color:T.sage}}>Pattern saved to My Wovely!</div></div>
+        :<><button onClick={doImport} disabled={importing} style={{width:"100%",background:importing?T.ink3:`linear-gradient(135deg,#2D3A7C,${T.terra})`,color:"#fff",border:"none",borderRadius:14,padding:"15px 20px",fontSize:15,fontWeight:700,cursor:importing?"not-allowed":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:10,boxShadow:importing?"none":"0 4px 20px rgba(155,126,200,.4)",transition:"all .15s",marginBottom:6}}>{importing?<><div className="spinner" style={{width:16,height:16,border:"2px solid rgba(255,255,255,.3)",borderTop:"2px solid #fff",borderRadius:"50%"}}/> Reading pattern…</>:<><span style={{fontSize:18}}>🧶</span> Save This Pattern</>}</button>
         <div style={{fontSize:10,color:T.ink3,textAlign:"center",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",padding:"0 8px"}}>{currentUrl&&currentUrl!==activeSite.url?"Will import: "+currentUrl:"Navigate to a pattern page, then tap Save"}</div>
         {importErr&&<div style={{marginTop:8,background:"#FFF0EE",borderRadius:8,padding:"8px 12px",border:"1px solid #F5C6BB"}}><div style={{fontSize:12,color:"#C0392B"}}>{importErr}</div></div>}</>}
       </div>
@@ -888,12 +888,12 @@ const BrowseSitesView = ({onSavePattern}) => {
         {SITES.map(s=>(
           <div key={s.name} style={{background:T.surface,borderRadius:16,overflow:"hidden",border:`1px solid ${T.border}`,boxShadow:"0 2px 8px rgba(28,23,20,.05)"}}>
             <div style={{height:110,position:"relative",overflow:"hidden"}}><Photo src={s.photo} alt={s.name} style={{width:"100%",height:"100%"}}/><div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(20,14,10,.75) 0%,transparent 60%)"}}/>
-              <div style={{position:"absolute",bottom:10,left:12,right:12,display:"flex",justifyContent:"space-between",alignItems:"flex-end"}}><div style={{fontFamily:T.serif,fontSize:17,fontWeight:700,color:"#fff"}}>{s.name}</div><div style={{background:s.free?"rgba(92,122,94,.9)":"rgba(184,90,60,.9)",borderRadius:7,padding:"3px 8px",fontSize:10,fontWeight:700,color:"#fff"}}>{s.free?"FREE":"FREE + PAID"}</div></div>
+              <div style={{position:"absolute",bottom:10,left:12,right:12,display:"flex",justifyContent:"space-between",alignItems:"flex-end"}}><div style={{fontFamily:T.serif,fontSize:17,fontWeight:700,color:"#fff"}}>{s.name}</div><div style={{background:s.free?"rgba(92,122,94,.9)":"rgba(155,126,200,.9)",borderRadius:7,padding:"3px 8px",fontSize:10,fontWeight:700,color:"#fff"}}>{s.free?"FREE":"FREE + PAID"}</div></div>
             </div>
             <div style={{padding:"12px 14px"}}>
               <div style={{fontSize:12,color:T.ink2,lineHeight:1.6,marginBottom:8}}>{s.desc}</div>
               <div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:10}}>{s.tags.map(t=><div key={t} style={{background:T.linen,borderRadius:99,padding:"2px 9px",fontSize:10,color:T.ink2,border:`1px solid ${T.border}`}}>{t}</div>)}</div>
-              <button onClick={()=>setActiveSite(s)} style={{width:"100%",background:`linear-gradient(135deg,${T.terra},#8B3A22)`,color:"#fff",border:"none",borderRadius:10,padding:"10px",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><span>🌐</span> Browse {s.name}</button>
+              <button onClick={()=>setActiveSite(s)} style={{width:"100%",background:`linear-gradient(135deg,#2D3A7C,${T.terra})`,color:"#fff",border:"none",borderRadius:10,padding:"10px",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><span>🌐</span> Browse {s.name}</button>
             </div>
           </div>
         ))}
@@ -932,7 +932,7 @@ const YarnStash = () => {
         <div style={{fontSize:48,marginBottom:16}}>🧶</div>
         <div style={{fontFamily:T.serif,fontSize:22,fontWeight:700,color:T.ink,marginBottom:8}}>Your stash is empty</div>
         <div style={{fontSize:14,color:T.ink3,lineHeight:1.6,marginBottom:24,maxWidth:320,margin:"0 auto 24px"}}>Track every skein you own so you always know what you have before you buy.</div>
-        <button onClick={()=>setAdding(true)} style={{background:T.terra,color:"#fff",border:"none",borderRadius:99,padding:"14px 32px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.3)"}}>+ Add Your First Yarn</button>
+        <button onClick={()=>setAdding(true)} style={{background:T.terra,color:"#fff",border:"none",borderRadius:99,padding:"14px 32px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(155,126,200,.3)"}}>+ Add Your First Yarn</button>
       </div>
     </div>
   );
@@ -948,7 +948,7 @@ const YarnStash = () => {
           </div>
         ))}
       </div>
-      <button onClick={()=>setAdding(!adding)} style={{width:"100%",background:adding?"transparent":T.terra,color:adding?T.ink3:"#fff",border:adding?`1.5px solid ${T.border}`:"none",borderRadius:99,padding:"14px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:adding?"none":"0 4px 16px rgba(184,90,60,.3)",marginBottom:20}}>{adding?"Cancel":"+ Add Yarn to Stash"}</button>
+      <button onClick={()=>setAdding(!adding)} style={{width:"100%",background:adding?"transparent":T.terra,color:adding?T.ink3:"#fff",border:adding?`1.5px solid ${T.border}`:"none",borderRadius:99,padding:"14px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:adding?"none":"0 4px 16px rgba(155,126,200,.3)",marginBottom:20}}>{adding?"Cancel":"+ Add Yarn to Stash"}</button>
       {adding&&(
         <div className="fu" style={{...CARD,marginBottom:20}}>
           <Field label="Brand" placeholder="e.g. Lion Brand" value={brand} onChange={e=>setBrand(e.target.value)}/>
@@ -961,7 +961,7 @@ const YarnStash = () => {
             <div style={{flex:1}}><Field label="Yds per Skein" placeholder="315" value={yardage} onChange={e=>setYardage(e.target.value)}/></div>
             <div style={{flex:1}}><Field label="# of Skeins" placeholder="2" value={skeins} onChange={e=>setSkeins(e.target.value)}/></div>
           </div>
-          <button onClick={addYarn} disabled={!brand||!name} style={{width:"100%",background:T.terra,color:"#fff",border:"none",borderRadius:99,padding:"14px",fontSize:15,fontWeight:600,cursor:(!brand||!name)?"not-allowed":"pointer",opacity:(!brand||!name)?.5:1,boxShadow:"0 4px 16px rgba(184,90,60,.3)"}}>Add to Stash</button>
+          <button onClick={addYarn} disabled={!brand||!name} style={{width:"100%",background:T.terra,color:"#fff",border:"none",borderRadius:99,padding:"14px",fontSize:15,fontWeight:600,cursor:(!brand||!name)?"not-allowed":"pointer",opacity:(!brand||!name)?.5:1,boxShadow:"0 4px 16px rgba(155,126,200,.3)"}}>Add to Stash</button>
         </div>
       )}
       {stash.map(y=>(
@@ -1004,7 +1004,7 @@ const ShoppingList = () => {
 
   if(items.length===0) return (
     <div style={{padding:isDsl?"0 0 100px":"0 18px 100px"}}>
-      <div style={{fontFamily:T.serif,fontSize:22,color:T.ink,marginBottom:4,fontWeight:700}}>Shopping List</div>
+      <div style={{fontFamily:T.serif,fontSize:22,color:T.ink,marginBottom:4,fontWeight:700}}>Supply Run</div>
       <div style={{fontSize:13,color:T.ink3,marginBottom:24}}>Everything you need for your current projects.</div>
       <div style={{...CARD,textAlign:"center",padding:"60px 32px"}}>
         <div style={{fontSize:48,marginBottom:16}}>🛒</div>
@@ -1012,7 +1012,7 @@ const ShoppingList = () => {
         <div style={{fontSize:14,color:T.ink3,lineHeight:1.6,maxWidth:320,margin:"0 auto 24px"}}>Add yarn, hooks, and supplies you need for your current projects.</div>
         <div style={{display:"flex",gap:8,maxWidth:380,margin:"0 auto"}}>
           <input value={newItem} onChange={e=>setNewItem(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addItem()} placeholder="Add an item..." style={{flex:1,padding:"13px 16px",background:"transparent",border:"none",borderBottom:`1.5px solid ${T.border}`,color:T.ink,fontSize:14,outline:"none",transition:"border-color .2s"}} onFocus={e=>e.target.style.borderBottomColor=T.terra} onBlur={e=>e.target.style.borderBottomColor=T.border}/>
-          <button onClick={addItem} style={{background:T.terra,color:"#fff",border:"none",borderRadius:99,padding:"12px 24px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.3)"}}>Add</button>
+          <button onClick={addItem} style={{background:T.terra,color:"#fff",border:"none",borderRadius:99,padding:"12px 24px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(155,126,200,.3)"}}>Add</button>
         </div>
       </div>
     </div>
@@ -1020,7 +1020,7 @@ const ShoppingList = () => {
 
   return (
     <div style={{padding:isDsl?"0 0 100px":"0 18px 100px"}}>
-      <div style={{fontFamily:T.serif,fontSize:22,color:T.ink,marginBottom:4,fontWeight:700}}>Shopping List</div>
+      <div style={{fontFamily:T.serif,fontSize:22,color:T.ink,marginBottom:4,fontWeight:700}}>Supply Run</div>
       <div style={{fontSize:13,color:T.ink3,marginBottom:24}}>Everything you need for your current projects.</div>
 
       {unchecked.length>0&&<div style={{...SC_LABEL,marginBottom:12}}>to get</div>}
@@ -1049,7 +1049,7 @@ const ShoppingList = () => {
 
       <div style={{display:"flex",gap:10,marginTop:20}}>
         <input value={newItem} onChange={e=>setNewItem(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addItem()} placeholder="Add an item..." style={{flex:1,padding:"13px 16px",background:"transparent",border:"none",borderBottom:`1.5px solid ${T.border}`,color:T.ink,fontSize:14,outline:"none",transition:"border-color .2s"}} onFocus={e=>e.target.style.borderBottomColor=T.terra} onBlur={e=>e.target.style.borderBottomColor=T.border}/>
-        <button onClick={addItem} style={{background:T.terra,color:"#fff",border:"none",borderRadius:99,padding:"12px 24px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.3)"}}>Add</button>
+        <button onClick={addItem} style={{background:T.terra,color:"#fff",border:"none",borderRadius:99,padding:"12px 24px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(155,126,200,.3)"}}>Add</button>
       </div>
     </div>
   );
@@ -1059,7 +1059,7 @@ const ShoppingList = () => {
 const STARTER_PHOTO_MAP = {Blankets:PHOTOS.blanket,Amigurumi:PHOTOS.granny,Wearables:PHOTOS.cardigan,Accessories:PHOTOS.tote,Home:PHOTOS.pillow};
 
 const WelcomeToast = ({visible}) => (
-  <div style={{position:"fixed",top:16,right:16,zIndex:900,background:T.terra,color:"#fff",borderRadius:14,padding:"12px 24px",fontSize:14,fontWeight:600,boxShadow:"0 8px 32px rgba(184,90,60,.4)",display:"flex",alignItems:"center",gap:8,opacity:visible?1:0,transform:visible?"translateX(0)":"translateX(20px)",transition:"opacity .4s ease, transform .4s ease",pointerEvents:"none"}}>
+  <div style={{position:"fixed",top:16,right:16,zIndex:900,background:T.terra,color:"#fff",borderRadius:14,padding:"12px 24px",fontSize:14,fontWeight:600,boxShadow:"0 8px 32px rgba(155,126,200,.4)",display:"flex",alignItems:"center",gap:8,opacity:visible?1:0,transform:visible?"translateX(0)":"translateX(20px)",transition:"opacity .4s ease, transform .4s ease",pointerEvents:"none"}}>
     <span style={{fontSize:18}}>🐝</span> Welcome back! Your hive is ready.
   </div>
 );
@@ -1125,7 +1125,7 @@ const OnboardingScreen = ({onComplete,onBackToAuth}) => {
   return (
     <div style={{position:"fixed",inset:0,zIndex:700,display:"flex",alignItems:"center",justifyContent:"center",padding:24,fontFamily:T.sans}}>
       <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",backdropFilter:"blur(12px)"}}/>
-      <div style={{position:"relative",zIndex:1,width:"100%",maxWidth:480,maxHeight:"80vh",display:"flex",flexDirection:"column",background:"rgba(250,247,243,0.96)",borderRadius:28,boxShadow:"0 20px 60px rgba(139,90,60,.15), 0 0 0 1px rgba(255,255,255,0.45) inset",border:"1px solid rgba(255,255,255,0.38)"}}>
+      <div style={{position:"relative",zIndex:1,width:"100%",maxWidth:480,maxHeight:"80vh",display:"flex",flexDirection:"column",background:"rgba(250,247,243,0.96)",borderRadius:28,boxShadow:"0 20px 60px rgba(155,126,200,.15), 0 0 0 1px rgba(255,255,255,0.45) inset",border:"1px solid rgba(255,255,255,0.38)"}}>
         <div style={{overflowY:"auto",padding:isDesktop?"44px 48px 40px":"28px 24px 32px"}}>
           <button onClick={onBackToAuth} style={{background:"none",border:"none",color:T.terra,cursor:"pointer",fontSize:13,fontWeight:600,padding:0,marginBottom:20,display:"flex",alignItems:"center",gap:6}}>← Back</button>
           <div style={{textAlign:"center",marginBottom:28}}>
@@ -1162,8 +1162,8 @@ const OnboardingScreen = ({onComplete,onBackToAuth}) => {
               <div style={{width:22,height:22,borderRadius:11,background:"#fff",position:"absolute",top:2,left:smsOptIn?20:2,boxShadow:"0 1px 3px rgba(0,0,0,.15)",transition:"left .2s ease"}}/>
             </button>
           </div>
-          {error&&<div style={{background:T.terraLt,border:"1px solid rgba(184,90,60,.2)",borderRadius:10,padding:"10px 14px",fontSize:12,color:T.terra,lineHeight:1.5,marginBottom:8}}>{error}</div>}
-          <button onClick={handleSave} disabled={saving} style={{width:"100%",background:T.terra,color:"#fff",border:"none",borderRadius:14,padding:"15px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.3)",marginTop:4,opacity:saving?.6:1}}>{saving?"Setting up…":"Set up my profile"}</button>
+          {error&&<div style={{background:T.terraLt,border:"1px solid rgba(155,126,200,.2)",borderRadius:10,padding:"10px 14px",fontSize:12,color:T.terra,lineHeight:1.5,marginBottom:8}}>{error}</div>}
+          <button onClick={handleSave} disabled={saving} style={{width:"100%",background:T.terra,color:"#fff",border:"none",borderRadius:14,padding:"15px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(155,126,200,.3)",marginTop:4,opacity:saving?.6:1}}>{saving?"Setting up…":"Set up my profile"}</button>
         </div>
       </div>
     </div>
@@ -1253,7 +1253,7 @@ const MasterDocView = () => {
               <div style={{position:"absolute",left:isDesktop?10:6,top:6,width:entry.major?22:16,height:entry.major?22:16,borderRadius:99,background:entry.major?T.terra:T.surface,border:`3px solid ${entry.major?T.terra:T.border}`,zIndex:1,display:"flex",alignItems:"center",justifyContent:"center"}}>
                 {entry.major && <div style={{width:8,height:8,borderRadius:99,background:"#fff"}}/>}
               </div>
-              <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:18,overflow:"hidden",boxShadow:entry.major?"0 4px 24px rgba(184,90,60,.1)":T.shadow}}>
+              <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:18,overflow:"hidden",boxShadow:entry.major?"0 4px 24px rgba(155,126,200,.1)":T.shadow}}>
                 <div style={{padding:isDesktop?"22px 28px 18px":"18px 20px 14px",borderBottom:`1px solid ${T.border}`,background:entry.major?"linear-gradient(135deg, #FAF0EC 0%, "+T.card+" 100%)":T.card}}>
                   <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
                     <span style={{fontFamily:"'DM Sans', monospace",fontSize:isDesktop?22:18,fontWeight:700,color:T.ink,letterSpacing:"-0.02em"}}>{entry.version}</span>
@@ -1295,7 +1295,7 @@ const MasterDocView = () => {
       <style>{`
         .md-doc h1,.md-doc h2,.md-doc h3{font-family:"Playfair Display",Georgia,serif;color:#1C1714;margin:1.5em 0 .5em;}
         .md-doc h1{font-size:32px;border-bottom:2px solid #E2D8CC;padding-bottom:12px;}
-        .md-doc h2{font-size:24px;color:#B85A3C;}
+        .md-doc h2{font-size:24px;color:#9B7EC8;}
         .md-doc h3{font-size:18px;}
         .md-doc p{line-height:1.8;color:#5C4F44;margin:.8em 0;}
         .md-doc ul,.md-doc ol{padding-left:24px;color:#5C4F44;line-height:1.8;}
@@ -1305,8 +1305,8 @@ const MasterDocView = () => {
         .md-doc code{background:#F0EBE3;padding:2px 6px;border-radius:4px;font-size:13px;font-family:monospace;}
         .md-doc pre{background:#F0EBE3;padding:16px;border-radius:10px;overflow-x:auto;margin:1em 0;}
         .md-doc pre code{background:none;padding:0;}
-        .md-doc a{color:#B85A3C;text-decoration:underline;}
-        .md-doc blockquote{border-left:4px solid #B85A3C;margin:1em 0;padding:8px 16px;background:#F5E2DA;border-radius:0 8px 8px 0;}
+        .md-doc a{color:#9B7EC8;text-decoration:underline;}
+        .md-doc blockquote{border-left:4px solid #9B7EC8;margin:1em 0;padding:8px 16px;background:#EDE4F7;border-radius:0 8px 8px 0;}
       `}</style>
       <CSS/>
       <div style={{maxWidth:900,margin:"0 auto",padding:"40px 24px"}}>
@@ -1320,7 +1320,7 @@ const MasterDocView = () => {
         <TabBar/>
         {activeTab==="master-doc" && doc && (
           <>
-            {doc.change_summary&&<div style={{background:"#F5E2DA",borderRadius:10,padding:"12px 16px",marginBottom:24,fontSize:13,color:"#B85A3C",lineHeight:1.6}}>Latest changes: {doc.change_summary}</div>}
+            {doc.change_summary&&<div style={{background:"#EDE4F7",borderRadius:10,padding:"12px 16px",marginBottom:24,fontSize:13,color:"#9B7EC8",lineHeight:1.6}}>Latest changes: {doc.change_summary}</div>}
             <div className="md-doc" dangerouslySetInnerHTML={{__html:renderMarkdown(doc.content)}}/>
           </>
         )}
@@ -1331,15 +1331,15 @@ const MasterDocView = () => {
 
   return (
     <div style={{minHeight:"100vh",background:"#FAF7F3",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:'"DM Sans",-apple-system,sans-serif'}}>
-      <div style={{width:"100%",maxWidth:380,padding:"40px 32px",background:"#FAF7F3",borderRadius:20,border:"1px solid #E2D8CC",boxShadow:"0 8px 32px rgba(139,90,60,.08)"}}>
+      <div style={{width:"100%",maxWidth:380,padding:"40px 32px",background:"#FAF7F3",borderRadius:20,border:"1px solid #E2D8CC",boxShadow:"0 8px 32px rgba(155,126,200,.08)"}}>
         <div style={{textAlign:"center",marginBottom:28}}>
           <div style={{fontSize:40,marginBottom:12}}>🐝</div>
           <div style={{fontFamily:'"Playfair Display",Georgia,serif',fontSize:22,fontWeight:700,color:"#1C1714"}}>Wovely Admin</div>
           <div style={{fontSize:13,color:"#9E8E82",marginTop:6}}>Enter password to view</div>
         </div>
         <input value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==="Enter"&&fetchDoc(pw)} type="password" placeholder="Password" style={{width:"100%",padding:"13px 16px",background:"#EDE8E0",border:"1.5px solid #E2D8CC",borderRadius:12,color:"#1C1714",fontSize:15,marginBottom:12,outline:"none"}}/>
-        {error&&<div style={{fontSize:12,color:"#B85A3C",marginBottom:10}}>{error}</div>}
-        <button onClick={()=>fetchDoc(pw)} disabled={loading||!pw} style={{width:"100%",background:"#B85A3C",color:"#fff",border:"none",borderRadius:12,padding:"14px",fontSize:15,fontWeight:600,cursor:"pointer",opacity:loading?.6:1}}>{loading?"Loading…":"Unlock"}</button>
+        {error&&<div style={{fontSize:12,color:"#9B7EC8",marginBottom:10}}>{error}</div>}
+        <button onClick={()=>fetchDoc(pw)} disabled={loading||!pw} style={{width:"100%",background:"#9B7EC8",color:"#fff",border:"none",borderRadius:12,padding:"14px",fontSize:15,fontWeight:600,cursor:"pointer",opacity:loading?.6:1}}>{loading?"Loading…":"Unlock"}</button>
       </div>
     </div>
   );
@@ -1483,7 +1483,7 @@ const ChangelogPage = () => {
               </div>
 
               {/* Version card */}
-              <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:18,overflow:"hidden",boxShadow:entry.major?"0 4px 24px rgba(184,90,60,.1)":T.shadow}}>
+              <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:18,overflow:"hidden",boxShadow:entry.major?"0 4px 24px rgba(155,126,200,.1)":T.shadow}}>
                 {/* Version header */}
                 <div style={{padding:isDesktop?"22px 28px 18px":"18px 20px 14px",borderBottom:`1px solid ${T.border}`,background:entry.major?"linear-gradient(135deg, #FAF0EC 0%, "+T.card+" 100%)":T.card}}>
                   <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
@@ -1520,7 +1520,7 @@ const ChangelogPage = () => {
           <div style={{width:40,height:1,background:T.border,margin:"0 auto 20px"}}/>
           <p style={{fontSize:13,color:T.ink3,lineHeight:1.6}}>That's everything so far. More stitches coming soon.</p>
           <div style={{marginTop:16}}>
-            <button onClick={()=>navigate("/")} style={{background:T.terra,color:"#fff",border:"none",borderRadius:12,padding:"12px 28px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.3)"}}>Open Wovely</button>
+            <button onClick={()=>navigate("/")} style={{background:T.terra,color:"#fff",border:"none",borderRadius:12,padding:"12px 28px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(155,126,200,.3)"}}>Open Wovely</button>
           </div>
         </div>
       </div>
@@ -1935,7 +1935,7 @@ export default function Wovely() {
     }
   };
   const inProgress=allPatterns.filter(p=>{const v=pct(p);return !p.isStarter&&p.status!=="deleted"&&p.status!=="parked"&&((p.status==="in_progress"&&v<100)||(p.started&&v<100)||(v>0&&v<100));});
-  const TITLE_MAP={collection:"Your Hive",wip:"Builds in Progress",browse:"Browse Sites",stash:"Yarn Stash",calculator:"Calculators",shopping:"Shopping List",profile:"Profile & Settings"};
+  const TITLE_MAP={collection:"My Wovely",wip:"On the Hook",browse:"Find Patterns",stash:"Stash & Notions",calculator:"The Workbench",shopping:"Supply Run",profile:"Profile & Settings"};
 
   if(isDesktop) return (
     <div style={{display:"flex",minHeight:"100vh",width:"100%",background:T.bg,fontFamily:T.sans,position:"relative"}}>
@@ -1956,8 +1956,8 @@ export default function Wovely() {
         <div style={{background:T.surface,borderBottom:`1px solid ${T.border}`,padding:"0 40px",height:64,display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:20,flexShrink:0}}>
           <div style={{fontFamily:T.serif,fontSize:24,fontWeight:700,color:T.ink}}>{TITLE_MAP[view]||"Wovely"}</div>
           <div style={{display:"flex",alignItems:"center",gap:12}}>
-            {isPro&&<div style={{background:T.sage,borderRadius:99,padding:"4px 12px",fontSize:11,fontWeight:700,color:"#fff"}}>✨ Pro</div>}
-            <button onClick={openAddModal} style={{background:T.terra,color:"#fff",border:"none",borderRadius:10,padding:"10px 20px",fontSize:14,fontWeight:700,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.3)",display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:18}}>+</span> Add Pattern</button>
+            {isPro&&<div style={{background:"#2D3A7C",borderRadius:99,padding:"4px 12px",fontSize:11,fontWeight:700,color:"#fff"}}>✨ Pro</div>}
+            <button onClick={openAddModal} style={{background:T.terra,color:"#fff",border:"none",borderRadius:10,padding:"10px 20px",fontSize:14,fontWeight:700,cursor:"pointer",boxShadow:"0 4px 16px rgba(155,126,200,.3)",display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:18}}>+</span> Add Pattern</button>
           </div>
         </div>
         <div style={{flex:1,padding:"0 40px"}}>
@@ -1992,7 +1992,7 @@ export default function Wovely() {
       <div style={{background:T.surface,borderBottom:`1px solid ${T.border}`,padding:"0 18px",height:56,display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:20,flexShrink:0}}>
         <button onClick={()=>setNavOpen(true)} style={{background:"none",border:"none",cursor:"pointer",padding:"8px 8px 8px 0",display:"flex",flexDirection:"column",gap:5}}><div style={{width:22,height:1.5,background:T.ink,borderRadius:99}}/><div style={{width:15,height:1.5,background:T.ink,borderRadius:99}}/><div style={{width:22,height:1.5,background:T.ink,borderRadius:99}}/></button>
         <div style={{fontFamily:T.serif,fontSize:20,fontWeight:700,color:T.ink}}>{TITLE_MAP[view]||"Wovely"}</div>
-        <button onClick={openAddModal} style={{background:T.terra,border:"none",borderRadius:9,width:34,height:34,cursor:"pointer",color:"#fff",fontSize:20,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 10px rgba(184,90,60,.4)"}}>+</button>
+        <button onClick={openAddModal} style={{background:T.terra,border:"none",borderRadius:9,width:34,height:34,cursor:"pointer",color:"#fff",fontSize:20,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 10px rgba(155,126,200,.4)"}}>+</button>
       </div>
       <div style={{flex:1,overflowY:"auto",paddingBottom:100}}>
         {view==="collection"&&<CollectionView userPatterns={userPatterns} starterPatterns={starterPatterns} cat={cat} setCat={setCat} search={search} setSearch={setSearch} openDetail={openDetail} onAddPattern={openAddModal} isPro={isPro} tier={tier} onNavigate={navigateToView} onPark={handleParkPattern} onUnpark={handleUnparkPattern} onDelete={handleDeletePattern} onCoverChange={handleCoverChange} pct={pct} catFallbackPhoto={catFallbackPhoto} Photo={Photo} Bar={Bar} Stars={Stars} CATS={CATS} TIER_CONFIG={TIER_CONFIG}/>}
@@ -2005,7 +2005,7 @@ export default function Wovely() {
         {view==="profile"&&<ProfileSettingsView isPro={isPro} onOpenProModal={()=>setShowProModal(true)} onGoHome={()=>navigate("/hive")} onEmailConfirmed={()=>setShowEmailBanner(false)}/>}
       </div>
       <div style={{position:"fixed",bottom:28,left:"50%",transform:"translateX(-50%)",zIndex:30,pointerEvents:"none"}}>
-        <button onClick={openAddModal} style={{background:`linear-gradient(135deg,${T.terra},#8B3A22)`,color:"#fff",border:"none",borderRadius:99,padding:"13px 26px",fontSize:14,fontWeight:700,cursor:"pointer",pointerEvents:"auto",boxShadow:"0 8px 28px rgba(184,90,60,.55)",display:"flex",alignItems:"center",gap:8,animation:"fabPulse 3s ease infinite"}}><span style={{fontSize:17}}>+</span> Add Pattern</button>
+        <button onClick={openAddModal} style={{background:`linear-gradient(135deg,#2D3A7C,${T.terra})`,color:"#fff",border:"none",borderRadius:99,padding:"13px 26px",fontSize:14,fontWeight:700,cursor:"pointer",pointerEvents:"auto",boxShadow:"0 8px 28px rgba(155,126,200,.55)",display:"flex",alignItems:"center",gap:8,animation:"fabPulse 3s ease infinite"}}><span style={{fontSize:17}}>+</span> Add Pattern</button>
       </div>
     </div>
   );

@@ -2,11 +2,11 @@ import React, { useState, useEffect } from "react";
 
 export const T = {
   bg:"#FAF7F2", surface:"#F0EBE3", linen:"#EDE8E0", ink:"#1C1714", ink2:"#5C4F44", ink3:"#9E8E82",
-  border:"#E2D8CC", terra:"#B85A3C", terraLt:"#F5E2DA", sage:"#5C7A5E", sageLt:"#D8EAD8", gold:"#B8902C",
-  modal:"#FAF7F2", card:"#FFFFFF",
+  border:"#E2D8CC", terra:"#9B7EC8", terraLt:"#EDE4F7", sage:"#5C7A5E", sageLt:"#D8EAD8", gold:"#B8902C",
+  navy:"#2D3A7C", modal:"#FAF7F2", card:"#FFFFFF",
   serif:'"Playfair Display", Georgia, serif', sans:'"DM Sans", -apple-system, sans-serif',
-  shadow:"0 2px 12px rgba(139,90,60,.07)",
-  shadowLg:"0 8px 30px rgba(139,90,60,.10)",
+  shadow:"0 2px 12px rgba(155,126,200,.07)",
+  shadowLg:"0 8px 30px rgba(155,126,200,.10)",
 };
 
 export const useBreakpoint = () => {

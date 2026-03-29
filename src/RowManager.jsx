@@ -190,7 +190,7 @@ const RowManager = ({
           <div style={{fontSize:40,marginBottom:14}}>🧶</div>
           <div style={{fontFamily:T.serif,fontSize:18,fontWeight:600,color:T.ink2,marginBottom:8}}>No rows added yet</div>
           <div style={{fontSize:13,color:T.ink3,lineHeight:1.6,marginBottom:20}}>Add rows to start building this pattern step by step.</div>
-          <button onClick={()=>{if(!editing)setEditing(true);}} style={{background:T.terra,color:"#fff",border:"none",borderRadius:12,padding:"12px 24px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.3)"}}>Add Rows</button>
+          <button onClick={()=>{if(!editing)setEditing(true);}} style={{background:T.terra,color:"#fff",border:"none",borderRadius:12,padding:"12px 24px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(155,126,200,.3)"}}>Add Rows</button>
         </div>
       ):(()=>{
         const seenAbbr=new Set();
@@ -215,8 +215,8 @@ const RowManager = ({
             {(open||!sec.header)&&<div style={{border:sec.header?`1px solid ${T.border}`:"none",borderTop:"none",borderRadius:sec.header?"0 0 10px 10px":0,overflow:"hidden"}}>
               {sec.rows.map((r,i)=>{const globalIdx=r._gi;const isCurrent=globalIdx===currentRowIdx;const rowLocked=!r.done&&!isRowCheckable(globalIdx,sec,si);const newAbbr=r.done?[]:findNewAbbr(r.text,seenAbbr);return(
         <div key={r.id} style={{borderBottom:`1px solid ${T.border}`,background:r.isAction&&!rowLocked?"rgba(184,144,44,.06)":"transparent"}}>
-          <div onClick={()=>{if(!rowLocked)toggle(r.id);}} style={{display:"flex",gap:13,alignItems:"flex-start",cursor:rowLocked?"default":"pointer",background:isCurrent&&!rowLocked?"rgba(184,90,60,.04)":"transparent",padding:"14px 8px",margin:"0 -8px",opacity:rowLocked?.45:1,transition:"opacity .15s"}}>
-            <div style={{width:26,height:26,borderRadius:7,flexShrink:0,marginTop:1,background:r.done?T.terra:rowLocked?"#E8E4DF":T.surface,border:"1.5px solid "+(r.done?T.terra:isCurrent&&!rowLocked?T.terra:rowLocked?"#D5D0CA":T.border),display:"flex",alignItems:"center",justifyContent:"center",transition:"all .2s",boxShadow:r.done?"0 2px 8px rgba(184,90,60,.3)":isCurrent&&!rowLocked?"0 0 0 3px rgba(184,90,60,.15)":"none"}}>
+          <div onClick={()=>{if(!rowLocked)toggle(r.id);}} style={{display:"flex",gap:13,alignItems:"flex-start",cursor:rowLocked?"default":"pointer",background:isCurrent&&!rowLocked?"rgba(155,126,200,.04)":"transparent",padding:"14px 8px",margin:"0 -8px",opacity:rowLocked?.45:1,transition:"opacity .15s"}}>
+            <div style={{width:26,height:26,borderRadius:7,flexShrink:0,marginTop:1,background:r.done?T.terra:rowLocked?"#E8E4DF":T.surface,border:"1.5px solid "+(r.done?T.terra:isCurrent&&!rowLocked?T.terra:rowLocked?"#D5D0CA":T.border),display:"flex",alignItems:"center",justifyContent:"center",transition:"all .2s",boxShadow:r.done?"0 2px 8px rgba(155,126,200,.3)":isCurrent&&!rowLocked?"0 0 0 3px rgba(155,126,200,.15)":"none"}}>
               {r.done&&<span style={{color:"#fff",fontSize:13,fontWeight:700}}>✓</span>}{!r.done&&isCurrent&&!rowLocked&&<div style={{width:8,height:8,borderRadius:99,background:T.terra}}/>}
             </div>
             <div style={{flex:1,minWidth:0}}>
@@ -239,7 +239,7 @@ const RowManager = ({
           </div>
           {!r.done&&!rowLocked&&(r.repeat_brackets||[]).some(b=>b.count>1)&&<div style={{padding:"0 8px 10px 47px"}}><SubCounter row={r} globalIdx={globalIdx} onDotTap={handleDotTap}/></div>}
           {r.note&&noteEdit!==r.id&&!rowLocked&&<div onClick={e=>{e.stopPropagation();setNoteEdit(r.id);}} style={{padding:"0 8px 10px 47px",fontSize:12,color:T.ink3,fontStyle:"italic",cursor:"pointer"}}>📝 {r.note}</div>}
-          {newAbbr.length>0&&!rowLocked&&<div style={{padding:"0 8px 10px 47px",display:"flex",flexWrap:"wrap",gap:4}} onClick={e=>e.stopPropagation()}>{newAbbr.map(a=><button key={a.raw} onClick={e=>{e.stopPropagation();window.open(a.url,"_blank","noopener,noreferrer");}} style={{background:"transparent",color:T.terra,border:"1px solid rgba(184,90,60,0.4)",borderRadius:4,padding:"2px 6px",fontSize:10,fontWeight:500,cursor:"pointer"}}>{a.raw}</button>)}</div>}
+          {newAbbr.length>0&&!rowLocked&&<div style={{padding:"0 8px 10px 47px",display:"flex",flexWrap:"wrap",gap:4}} onClick={e=>e.stopPropagation()}>{newAbbr.map(a=><button key={a.raw} onClick={e=>{e.stopPropagation();window.open(a.url,"_blank","noopener,noreferrer");}} style={{background:"transparent",color:T.terra,border:"1px solid rgba(155,126,200,0.4)",borderRadius:4,padding:"2px 6px",fontSize:10,fontWeight:500,cursor:"pointer"}}>{a.raw}</button>)}</div>}
           {noteEdit===r.id&&!rowLocked&&<div style={{padding:"0 8px 12px 47px",display:"flex",alignItems:"center",gap:8}}><input value={r.note} onChange={e=>updateNote(r.id,e.target.value)} placeholder="Add a note for this row…" style={{flex:1,padding:"9px 12px",background:T.linen,border:`1.5px solid ${T.terra}`,borderRadius:9,fontSize:13,color:T.ink,outline:"none"}}/>{noteSaved&&<span style={{fontSize:11,color:T.sage,fontWeight:600,flexShrink:0}}>Note saved</span>}</div>}
         </div>
       );})}
@@ -249,10 +249,10 @@ const RowManager = ({
       })()}
       <div style={{display:"flex",gap:8,marginTop:16}}>
         <input value={newRow} onChange={e=>setNewRow(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addRow()} placeholder="Add a row or step…" style={{flex:1,border:`1.5px solid ${T.border}`,borderRadius:11,padding:"10px 14px",fontSize:13,color:T.ink,background:T.linen,outline:"none"}} onFocus={e=>e.target.style.borderColor=T.terra} onBlur={e=>e.target.style.borderColor=T.border}/>
-        <button onClick={addRow} style={{background:T.terra,color:"#fff",border:"none",borderRadius:11,padding:"10px 18px",fontSize:22,cursor:"pointer",lineHeight:1,boxShadow:"0 4px 12px rgba(184,90,60,.35)"}}>+</button>
+        <button onClick={addRow} style={{background:T.terra,color:"#fff",border:"none",borderRadius:11,padding:"10px 18px",fontSize:22,cursor:"pointer",lineHeight:1,boxShadow:"0 4px 12px rgba(155,126,200,.35)"}}>+</button>
       </div>
       {/* Floating source pattern pill */}
-      {p.source_file_url&&onViewSource&&<button onClick={onViewSource} style={{position:"fixed",bottom:24,left:"50%",transform:"translateX(-50%)",zIndex:200,background:T.terra,color:"#fff",border:"none",borderRadius:999,padding:"12px 24px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.4)",whiteSpace:"nowrap"}}>📄 View Source Pattern →</button>}
+      {p.source_file_url&&onViewSource&&<button onClick={onViewSource} style={{position:"fixed",bottom:24,left:"50%",transform:"translateX(-50%)",zIndex:200,background:T.terra,color:"#fff",border:"none",borderRadius:999,padding:"12px 24px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(155,126,200,.4)",whiteSpace:"nowrap"}}>📄 View Source Pattern →</button>}
     </>
   );
 };

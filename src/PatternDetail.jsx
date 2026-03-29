@@ -170,7 +170,7 @@ const CoverImagePicker = ({pattern, onConfirm, onClose, pdfThumbUrl, CAT_IMG, AL
         </div>
         {/* Confirm button */}
         <div style={{padding:"12px 20px 20px",flexShrink:0,borderTop:`1px solid ${T.border}`}}>
-          <button onClick={()=>{if(selected)onConfirm(selected);}} disabled={!selected} style={{width:"100%",background:selected?T.terra:"#ccc",color:"#fff",border:"none",borderRadius:12,padding:"14px",fontSize:15,fontWeight:600,cursor:selected?"pointer":"not-allowed",opacity:selected?1:.6,boxShadow:selected?"0 4px 16px rgba(184,90,60,.3)":"none"}}>Use this image</button>
+          <button onClick={()=>{if(selected)onConfirm(selected);}} disabled={!selected} style={{width:"100%",background:selected?T.terra:"#ccc",color:"#fff",border:"none",borderRadius:12,padding:"14px",fontSize:15,fontWeight:600,cursor:selected?"pointer":"not-allowed",opacity:selected?1:.6,boxShadow:selected?"0 4px 16px rgba(155,126,200,.3)":"none"}}>Use this image</button>
         </div>
       </div>
     </div>
@@ -180,7 +180,7 @@ const CoverImagePicker = ({pattern, onConfirm, onClose, pdfThumbUrl, CAT_IMG, AL
 const DeleteConfirmModal = ({pattern,isPro,onCancel,onDelete,onPark,onGoPro}) => (
   <div style={{position:"fixed",inset:0,zIndex:600,display:"flex",alignItems:"center",justifyContent:"center",padding:24,fontFamily:T.sans}}>
     <div onClick={onCancel} style={{position:"absolute",inset:0,background:"rgba(0,0,0,.4)"}}/>
-    <div className="fu" style={{position:"relative",zIndex:1,width:"100%",maxWidth:380,background:T.modal,borderRadius:20,padding:"32px 28px",boxShadow:"0 16px 48px rgba(139,90,60,.18)"}}>
+    <div className="fu" style={{position:"relative",zIndex:1,width:"100%",maxWidth:380,background:T.modal,borderRadius:20,padding:"32px 28px",boxShadow:"0 16px 48px rgba(155,126,200,.18)"}}>
       <div style={{fontFamily:T.serif,fontSize:18,fontWeight:700,color:T.ink,marginBottom:8}}>Delete this pattern?</div>
       <div style={{fontSize:13,color:T.ink3,lineHeight:1.6,marginBottom:20}}>{isPro?"This pattern will be permanently removed.":"This pattern will be removed from your library. It will still count toward your pattern limit."}</div>
       {!isPro&&<>
@@ -384,10 +384,10 @@ const Detail = ({p,onBack,onSave,pct,estYards,estSkeins,pdfThumbUrl,CSS,Bar,Phot
 const ReadyToBuildPrompt = ({pattern,onStartBuilding,onViewDetails,onDismiss}) => (
   <div style={{position:"fixed",inset:0,zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",padding:24,fontFamily:T.sans}}>
     <div onClick={onDismiss} style={{position:"absolute",inset:0,background:"rgba(0,0,0,.35)"}}/>
-    <div className="fu" style={{position:"relative",zIndex:1,width:"100%",maxWidth:360,background:T.modal,borderRadius:20,padding:"32px 28px",textAlign:"center",boxShadow:"0 16px 48px rgba(139,90,60,.18)"}}>
+    <div className="fu" style={{position:"relative",zIndex:1,width:"100%",maxWidth:360,background:T.modal,borderRadius:20,padding:"32px 28px",textAlign:"center",boxShadow:"0 16px 48px rgba(155,126,200,.18)"}}>
       <div style={{fontFamily:T.serif,fontSize:18,fontWeight:700,color:T.ink,marginBottom:6}}>Ready to start building?</div>
       <div style={{fontSize:13,color:T.ink3,marginBottom:20,lineHeight:1.5}}>{pattern?.title}</div>
-      <button onClick={onStartBuilding} style={{width:"100%",background:T.terra,color:"#fff",border:"none",borderRadius:12,padding:"13px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.3)",marginBottom:8}}>Start Building</button>
+      <button onClick={onStartBuilding} style={{width:"100%",background:T.terra,color:"#fff",border:"none",borderRadius:12,padding:"13px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(155,126,200,.3)",marginBottom:8}}>Start Building</button>
       <button onClick={onViewDetails} style={{width:"100%",background:T.linen,color:T.ink2,border:`1px solid ${T.border}`,borderRadius:12,padding:"12px",fontSize:13,fontWeight:500,cursor:"pointer"}}>View Details</button>
     </div>
   </div>
@@ -398,11 +398,11 @@ const PatternCreatedOverlay = ({pattern,onStartBuilding,onGoToHive}) => {
   return (
     <div style={{position:"fixed",inset:0,zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",padding:24,fontFamily:T.sans}}>
       <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,.4)",backdropFilter:"blur(8px)"}}/>
-      <div className="fu" style={{position:"relative",zIndex:1,width:"100%",maxWidth:420,background:T.modal,borderRadius:24,padding:"48px 40px",textAlign:"center",boxShadow:"0 20px 60px rgba(139,90,60,.2)"}}>
+      <div className="fu" style={{position:"relative",zIndex:1,width:"100%",maxWidth:420,background:T.modal,borderRadius:24,padding:"48px 40px",textAlign:"center",boxShadow:"0 20px 60px rgba(155,126,200,.2)"}}>
         <div style={{width:64,height:64,borderRadius:"50%",background:T.sageLt,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 20px",fontSize:28}}>✓</div>
         <div style={{fontFamily:T.serif,fontSize:24,fontWeight:700,color:T.ink,marginBottom:8}}>Your pattern is ready to build</div>
         <div style={{fontFamily:T.serif,fontSize:18,color:T.terra,marginBottom:28}}>{pattern?.title||"Untitled Pattern"}</div>
-        <button onClick={onStartBuilding} style={{width:"100%",background:T.terra,color:"#fff",border:"none",borderRadius:14,padding:"15px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.3)",marginBottom:10}}>Start Building</button>
+        <button onClick={onStartBuilding} style={{width:"100%",background:T.terra,color:"#fff",border:"none",borderRadius:14,padding:"15px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(155,126,200,.3)",marginBottom:10}}>Start Building</button>
         <button onClick={onGoToHive} style={{width:"100%",background:T.linen,color:T.ink2,border:`1px solid ${T.border}`,borderRadius:14,padding:"14px",fontSize:14,fontWeight:500,cursor:"pointer"}}>Go to Your Hive</button>
       </div>
     </div>

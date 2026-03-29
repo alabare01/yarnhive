@@ -580,7 +580,7 @@ const HiveVisionForm = ({onSave,Btn,Bar,WireframeViewer}) => {
                   const conf=c.confidence>=75, label=c.label||c.role||c.primitive_type||"part";
                   const notes=c.construction?.notes||[c.construction?.technique?.replace(/_/g," "),c.construction?.increase_to?"~"+c.construction.increase_to+" sts":null,c.construction?.even_rounds?c.construction.even_rounds+" rnds":null,c.color?c.color+" yarn":null].filter(Boolean).join(" · ");
                   return (
-                    <div key={i} style={{display:"flex",gap:8,alignItems:"flex-start",padding:"8px 10px",background:conf?T.sageLt:T.terraLt,borderRadius:8,border:`1px solid ${conf?"rgba(92,122,94,.2)":"rgba(184,90,60,.2)"}`}}>
+                    <div key={i} style={{display:"flex",gap:8,alignItems:"flex-start",padding:"8px 10px",background:conf?T.sageLt:T.terraLt,borderRadius:8,border:`1px solid ${conf?"rgba(92,122,94,.2)":"rgba(155,126,200,.2)"}`}}>
                       <div style={{width:22,height:22,borderRadius:99,background:conf?T.sage:T.terra,color:"#fff",fontSize:11,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{i+1}</div>
                       <div style={{flex:1,minWidth:0}}>
                         <div style={{fontSize:11,fontWeight:700,color:conf?T.sage:T.terra,textTransform:"uppercase",marginBottom:2}}>{label} <span style={{fontWeight:400,opacity:.6}}>({c.primitive_type})</span></div>
@@ -711,7 +711,7 @@ const URLImportForm = ({onSave,Btn,Photo}) => {
           <span style={{color:T.ink3}}>🔗</span>
           <input value={url} onChange={e=>setUrl(e.target.value)} onKeyDown={e=>e.key==="Enter"&&doImport()} placeholder="https://www.allfreecrochet.com/…" style={{border:"none",background:"transparent",flex:1,fontSize:14,color:T.ink,outline:"none"}}/>
         </div>
-        <button onClick={doImport} disabled={!url.trim()||loading} style={{background:T.terra,color:"#fff",border:"none",borderRadius:12,padding:"0 18px",fontWeight:600,fontSize:14,cursor:"pointer",boxShadow:"0 4px 14px rgba(184,90,60,.3)",opacity:!url.trim()||loading?0.6:1}}>{loading?"…":"Go"}</button>
+        <button onClick={doImport} disabled={!url.trim()||loading} style={{background:T.terra,color:"#fff",border:"none",borderRadius:12,padding:"0 18px",fontWeight:600,fontSize:14,cursor:"pointer",boxShadow:"0 4px 14px rgba(155,126,200,.3)",opacity:!url.trim()||loading?0.6:1}}>{loading?"…":"Go"}</button>
       </div>
       {loading&&<div style={{padding:"24px 0 32px"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}><div style={{fontSize:13,color:T.ink2,fontWeight:500}}>{phase}</div><div style={{fontSize:13,color:T.terra,fontWeight:700}}>{progress}%</div></div><div style={{background:T.border,borderRadius:99,height:6,overflow:"hidden",marginBottom:10}}><div className="progress-bar-fill" style={{width:progress+"%",height:6,borderRadius:99,transition:"width .3s ease"}}/></div></div>}
       {error&&<div style={{background:"#FFF0EE",borderRadius:12,padding:"14px 16px",marginBottom:14,border:"1px solid #F5C6BB"}}><div style={{fontSize:13,color:"#C0392B",fontWeight:600,marginBottom:4}}>Couldn't read this URL</div><div style={{fontSize:12,color:T.ink2,lineHeight:1.6}}>{error}</div></div>}
@@ -993,7 +993,7 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade}) => {
               <div style={{fontSize:12,color:T.sage,textAlign:"center",maxWidth:200,lineHeight:1.5}}>Checking stitch counts, round sequence and math errors before you start crocheting.</div>
             </div>
           ):validationReport?(isPro?(
-            <div style={{background:T.surface,borderRadius:16,padding:20,boxShadow:"0 4px 20px rgba(139,90,60,.08)",border:`1px solid ${T.border}`}}>
+            <div style={{background:T.surface,borderRadius:16,padding:20,boxShadow:"0 4px 20px rgba(155,126,200,.08)",border:`1px solid ${T.border}`}}>
               <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:12}}>
                 <div>
                   <div style={{fontSize:12,fontWeight:700,color:badgeForScore(validationReport.score).color,marginBottom:2}}>{badgeForScore(validationReport.score).label}</div>
@@ -1012,7 +1012,7 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade}) => {
               <button onClick={()=>setShowFullReport(true)} style={{background:"none",border:"none",color:T.terra,cursor:"pointer",fontSize:11,fontWeight:600,padding:0,marginTop:8,textDecoration:"underline"}}>Full Report →</button>
             </div>
           ):(
-            <div style={{background:T.surface,borderRadius:16,padding:20,boxShadow:"0 4px 20px rgba(139,90,60,.08)",border:`1px solid ${T.border}`}}>
+            <div style={{background:T.surface,borderRadius:16,padding:20,boxShadow:"0 4px 20px rgba(155,126,200,.08)",border:`1px solid ${T.border}`}}>
               <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:12}}>
                 <div>
                   <div style={{fontSize:12,fontWeight:700,color:badgeForScore(validationReport.score).color,marginBottom:2}}>{badgeForScore(validationReport.score).label}</div>
@@ -1035,7 +1035,7 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade}) => {
               </div>
             </div>
           )):(
-            <div style={{background:T.surface,borderRadius:16,padding:20,boxShadow:"0 4px 20px rgba(139,90,60,.08)",border:`1px solid ${T.border}`,display:"flex",alignItems:"center",justifyContent:"center",minHeight:120,fontSize:11,color:T.ink3}}>Stitch Check unavailable</div>
+            <div style={{background:T.surface,borderRadius:16,padding:20,boxShadow:"0 4px 20px rgba(155,126,200,.08)",border:`1px solid ${T.border}`,display:"flex",alignItems:"center",justifyContent:"center",minHeight:120,fontSize:11,color:T.ink3}}>Stitch Check unavailable</div>
           )}
         </div>
       </div>
@@ -1058,14 +1058,14 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade}) => {
               </div>
             ))}
             {validationReport.summary&&<div style={{background:T.linen,borderRadius:12,padding:"12px 14px",marginTop:10,border:`1px solid ${T.border}`}}><div style={{fontSize:11,fontWeight:700,color:T.terra,marginBottom:4}}>Bev says:</div><div style={{fontSize:12,color:T.ink2,lineHeight:1.6}}>{validationReport.summary}</div></div>}
-            <button onClick={()=>setShowFullReport(false)} style={{marginTop:14,width:"100%",background:T.terra,color:"#fff",border:"none",borderRadius:99,padding:"13px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.3)"}}>Import Anyway →</button>
+            <button onClick={()=>setShowFullReport(false)} style={{marginTop:14,width:"100%",background:T.terra,color:"#fff",border:"none",borderRadius:99,padding:"13px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(155,126,200,.3)"}}>Import Anyway →</button>
           </div>
         </div>
       )}
       {/* Section spacing */}
       <div style={{height:20}}/>
       {/* Accept/Save — full width terracotta */}
-      <button onClick={handleSave} style={{width:"100%",background:`linear-gradient(135deg,${T.terra},#8B3A22)`,color:"#fff",border:"none",borderRadius:99,padding:"15px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 8px 28px rgba(184,90,60,.5)",marginBottom:8}}>Looks good — save pattern</button>
+      <button onClick={handleSave} style={{width:"100%",background:`linear-gradient(135deg,${T.terra},#7B5FB5)`,color:"#fff",border:"none",borderRadius:99,padding:"15px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 8px 28px rgba(155,126,200,.5)",marginBottom:8}}>Looks good — save pattern</button>
       <button onClick={()=>{setStage("pick");setProgress(0);setExtracted(null);}} style={{width:"100%",background:"transparent",color:T.ink3,border:"none",borderRadius:99,padding:"10px",fontSize:13,cursor:"pointer"}}>Try a different file</button>
     </div>
   );
@@ -1122,14 +1122,14 @@ const AddPatternModal = ({onClose,onSave,isPro,patternCount,Btn,Photo,Bar,Wirefr
     <>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
         {METHODS.filter(m=>m.key!=="snap").map(m=>(
-          <div key={m.key} onClick={()=>setMethod(m.key)} style={{background:T.card,border:`1.5px solid ${T.border}`,borderRadius:16,padding:20,cursor:"pointer",transition:"all .15s",boxShadow:T.shadow}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 8px 24px rgba(139,90,60,.12)";}} onMouseLeave={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow=T.shadow;}}>
+          <div key={m.key} onClick={()=>setMethod(m.key)} style={{background:T.card,border:`1.5px solid ${T.border}`,borderRadius:16,padding:20,cursor:"pointer",transition:"all .15s",boxShadow:T.shadow}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 8px 24px rgba(155,126,200,.12)";}} onMouseLeave={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow=T.shadow;}}>
             <div style={{fontSize:32,marginBottom:10}}>{m.icon}</div>
             <div style={{fontSize:15,fontWeight:600,color:T.ink,marginBottom:4}}>{m.label==="Manual Entry"?"Write it yourself":m.label==="Smart Import"?"Paste a link":m.label==="PDF / Document"?"Upload a file":"Explore free patterns"}</div>
             <div style={{fontSize:12,color:T.ink3,lineHeight:1.5}}>{m.sub}</div>
           </div>
         ))}
       </div>
-      <div onClick={()=>setMethod("snap")} style={{background:"linear-gradient(135deg,#B85A3C 0%,#8B3A2C 100%)",borderRadius:16,padding:20,cursor:"pointer",position:"relative",overflow:"hidden",transition:"transform .15s"}} onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"} onMouseLeave={e=>e.currentTarget.style.transform="none"}>
+      <div onClick={()=>setMethod("snap")} style={{background:"linear-gradient(135deg,#9B7EC8 0%,#8B3A2C 100%)",borderRadius:16,padding:20,cursor:"pointer",position:"relative",overflow:"hidden",transition:"transform .15s"}} onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"} onMouseLeave={e=>e.currentTarget.style.transform="none"}>
         <div style={{position:"absolute",top:10,right:12,background:"rgba(255,255,255,.2)",borderRadius:99,padding:"3px 10px",fontSize:10,fontWeight:700,color:"#fff"}}>3 free scans/mo</div>
         <div style={{fontSize:32,marginBottom:8}}>🐝</div>
         <div style={{fontSize:17,fontWeight:700,color:"#fff",marginBottom:4}}>Hive Vision — Point. Click. Stitch.</div>

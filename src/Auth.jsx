@@ -80,8 +80,8 @@ const FormCard = ({cardStyle,isSignup,email,setEmail,pass,setPass,confirmPass,se
         {mismatch&&<div style={{fontSize:12,color:T.terra,marginTop:-8,marginBottom:10}}>Passwords don't match</div>}
       </>}
       {!isSignup&&<div style={{textAlign:"right",marginBottom:16}}><span style={{fontSize:12,color:T.terra,cursor:"pointer",fontWeight:500}}>Forgot password?</span></div>}
-      {authError&&<div style={{background:T.terraLt,border:"1px solid rgba(184,90,60,.2)",borderRadius:10,padding:"10px 14px",fontSize:12,color:T.terra,lineHeight:1.5,marginBottom:8}}>{authError}</div>}
-      <button onClick={handleAuth} disabled={loading||(isSignup&&signupDisabled)} style={{width:"100%",background:`linear-gradient(135deg,${T.terra},#7A2E14)`,color:"#fff",border:"none",borderRadius:14,padding:"15px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 8px 24px rgba(184,90,60,.45)",marginTop:8,opacity:(loading||(isSignup&&signupDisabled))?.5:1}}>{loading?"Please wait…":isSignup?"Create my Wovely":"Sign in"}</button>
+      {authError&&<div style={{background:T.terraLt,border:"1px solid rgba(155,126,200,.2)",borderRadius:10,padding:"10px 14px",fontSize:12,color:T.terra,lineHeight:1.5,marginBottom:8}}>{authError}</div>}
+      <button onClick={handleAuth} disabled={loading||(isSignup&&signupDisabled)} style={{width:"100%",background:`linear-gradient(135deg,${T.terra},#6B52A3)`,color:"#fff",border:"none",borderRadius:14,padding:"15px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 8px 24px rgba(155,126,200,.45)",marginTop:8,opacity:(loading||(isSignup&&signupDisabled))?.5:1}}>{loading?"Please wait…":isSignup?"Create my Wovely":"Sign in"}</button>
     </div>
   </div>
   );
@@ -107,7 +107,7 @@ export const WaitlistPopup = () => {
   return(
     <div style={{position:"fixed",inset:0,zIndex:800,display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
       <div onClick={()=>setShow(false)} style={{position:"absolute",inset:0,background:"rgba(0,0,0,.5)"}}/>
-      <div className="fu" style={{position:"relative",zIndex:1,background:T.modal,borderRadius:20,padding:40,maxWidth:420,width:"100%",boxShadow:"0 20px 60px rgba(139,90,60,.2)"}}>
+      <div className="fu" style={{position:"relative",zIndex:1,background:T.modal,borderRadius:20,padding:40,maxWidth:420,width:"100%",boxShadow:"0 20px 60px rgba(155,126,200,.2)"}}>
         <button onClick={()=>setShow(false)} style={{position:"absolute",top:14,right:16,background:"none",border:"none",color:T.ink3,fontSize:20,cursor:"pointer"}}>×</button>
         {submitted?<div style={{textAlign:"center",padding:"20px 0"}}><div style={{fontSize:40,marginBottom:12}}>🐝</div><div style={{fontFamily:T.serif,fontSize:20,fontWeight:700,color:T.ink}}>You're on the list!</div><div style={{fontSize:14,color:T.ink3,marginTop:8}}>We'll be in touch.</div></div>:(
           <>
@@ -117,7 +117,7 @@ export const WaitlistPopup = () => {
             </div>
             <div style={{marginBottom:12}}><input value={wlEmail} onChange={e=>setWlEmail(e.target.value)} placeholder="your@email.com" type="email" style={{width:"100%",padding:"13px 16px",background:T.linen,border:`1.5px solid ${T.border}`,borderRadius:12,color:T.ink,fontSize:15}} onFocus={e=>e.target.style.borderColor=T.terra} onBlur={e=>e.target.style.borderColor=T.border}/></div>
             <div style={{marginBottom:16}}><input value={wlPhone} onChange={e=>setWlPhone(e.target.value)} placeholder="(555) 123-4567" type="tel" style={{width:"100%",padding:"13px 16px",background:T.linen,border:`1.5px solid ${T.border}`,borderRadius:12,color:T.ink,fontSize:15}} onFocus={e=>e.target.style.borderColor=T.terra} onBlur={e=>e.target.style.borderColor=T.border}/></div>
-            <button onClick={handleSubmit} disabled={saving} style={{width:"100%",background:T.terra,color:"#fff",border:"none",borderRadius:14,padding:"15px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(184,90,60,.3)",opacity:saving?.6:1}}>{saving?"Joining…":"Claim my free month →"}</button>
+            <button onClick={handleSubmit} disabled={saving} style={{width:"100%",background:T.terra,color:"#fff",border:"none",borderRadius:14,padding:"15px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(155,126,200,.3)",opacity:saving?.6:1}}>{saving?"Joining…":"Claim my free month →"}</button>
           </>
         )}
       </div>
@@ -230,11 +230,11 @@ const Auth = ({onEnter,onEnterAsNew}) => {
     },
     pro: {
       icon: ICON.sparkle,
-      iconBg: `linear-gradient(145deg,${T.terra},#6B2410)`,
+      iconBg: `linear-gradient(145deg,${T.terra},#5A3F8F)`,
       iconColor: "#fff",
       title:"Wovely Pro",
       subtitle:"Unlimited everything. Built for makers who are serious about their craft.",
-      gradient: `linear-gradient(145deg,${T.terra},#6B2410)`,
+      gradient: `linear-gradient(145deg,${T.terra},#5A3F8F)`,
       features:[
         {label:"Unlimited patterns",sub:"No cap. Save every pattern you'll ever make"},
         {label:"Unlimited Hive Vision",sub:"Scan as many finished objects as you want"},
@@ -334,7 +334,7 @@ const Auth = ({onEnter,onEnterAsNew}) => {
     <div style={CARD_STYLE}>
 
       <div style={{textAlign:"center",marginBottom:24}}>
-        <div style={{display:"inline-flex",alignItems:"center",gap:9,background:"rgba(184,90,60,.09)",borderRadius:14,padding:"7px 16px",border:"1px solid rgba(184,90,60,.18)"}}>
+        <div style={{display:"inline-flex",alignItems:"center",gap:9,background:"rgba(155,126,200,.09)",borderRadius:14,padding:"7px 16px",border:"1px solid rgba(155,126,200,.18)"}}>
           <span style={{fontSize:18}}>🐝</span>
           <div style={{fontFamily:T.serif,fontSize:20,fontWeight:700,color:T.ink,letterSpacing:"-.02em",lineHeight:1}}>Wovely</div>
         </div>
@@ -348,7 +348,7 @@ const Auth = ({onEnter,onEnterAsNew}) => {
         <p style={{fontSize:13,color:T.ink3,lineHeight:1.65,fontWeight:300,margin:0}}>Save every pattern. Track every row.<br/>Scan anything with Hive Vision.</p>
       </div>
       <div style={{display:"flex",flexDirection:"column",gap:9,marginBottom:14}}>
-        <button onClick={()=>setScreen("signup")} style={{width:"100%",background:`linear-gradient(135deg,${T.terra} 0%,#7A2E14 100%)`,color:"#fff",border:"none",borderRadius:14,padding:"15px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 8px 28px rgba(184,90,60,.5), 0 1px 0 rgba(255,255,255,.2) inset",letterSpacing:".01em",transition:"transform .15s,box-shadow .15s"}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 14px 36px rgba(184,90,60,.6), 0 1px 0 rgba(255,255,255,.2) inset";}} onMouseLeave={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="0 8px 28px rgba(184,90,60,.5), 0 1px 0 rgba(255,255,255,.2) inset";}}>Create free account</button>
+        <button onClick={()=>setScreen("signup")} style={{width:"100%",background:`linear-gradient(135deg,${T.terra} 0%,#6B52A3 100%)`,color:"#fff",border:"none",borderRadius:14,padding:"15px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 8px 28px rgba(155,126,200,.5), 0 1px 0 rgba(255,255,255,.2) inset",letterSpacing:".01em",transition:"transform .15s,box-shadow .15s"}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 14px 36px rgba(155,126,200,.6), 0 1px 0 rgba(255,255,255,.2) inset";}} onMouseLeave={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="0 8px 28px rgba(155,126,200,.5), 0 1px 0 rgba(255,255,255,.2) inset";}}>Create free account</button>
         <button onClick={()=>setScreen("signin")} style={{width:"100%",background:"rgba(255,255,255,0.55)",color:T.ink,border:"1px solid rgba(255,255,255,0.7)",borderRadius:14,padding:"14px",fontSize:14,fontWeight:500,cursor:"pointer",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)",boxShadow:"0 2px 8px rgba(0,0,0,0.08), 0 1px 0 rgba(255,255,255,.6) inset",transition:"all .15s"}} onMouseEnter={e=>{e.currentTarget.style.background="rgba(255,255,255,0.82)";}} onMouseLeave={e=>{e.currentTarget.style.background="rgba(255,255,255,0.55)";}}>Sign in</button>
         <button onClick={onEnter} style={{background:"none",border:"none",color:"rgba(92,79,68,0.6)",fontSize:12,cursor:"pointer",padding:"2px 0"}}>Continue without account →</button>
       </div>
@@ -359,7 +359,7 @@ const Auth = ({onEnter,onEnterAsNew}) => {
           <div style={{fontSize:10,color:T.ink3,marginTop:4,lineHeight:1.4}}>5 patterns<br/>All core features</div>
           <div style={{fontSize:9,color:T.terra,marginTop:6,fontWeight:600,letterSpacing:".05em"}}>SEE WHAT'S INCLUDED →</div>
         </div>
-        <div onClick={()=>setActiveModal('pro')} style={{background:`linear-gradient(145deg,${T.terra},#6B2410)`,borderRadius:14,padding:"12px 14px",textAlign:"center",boxShadow:"0 6px 20px rgba(184,90,60,.5)",position:"relative",overflow:"hidden",cursor:"pointer",transition:"transform .15s"}} onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"} onMouseLeave={e=>e.currentTarget.style.transform="none"}>
+        <div onClick={()=>setActiveModal('pro')} style={{background:`linear-gradient(145deg,${T.terra},#5A3F8F)`,borderRadius:14,padding:"12px 14px",textAlign:"center",boxShadow:"0 6px 20px rgba(155,126,200,.5)",position:"relative",overflow:"hidden",cursor:"pointer",transition:"transform .15s"}} onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"} onMouseLeave={e=>e.currentTarget.style.transform="none"}>
           <div style={{position:"absolute",top:0,left:0,right:0,bottom:0,background:"linear-gradient(135deg,rgba(255,255,255,0) 30%,rgba(255,255,255,0.07) 50%,rgba(255,255,255,0) 70%)",pointerEvents:"none"}}/>
           <div style={{position:"absolute",top:10,right:-20,background:"rgba(255,255,255,0.18)",padding:"3px 28px",transform:"rotate(35deg)",fontSize:7,fontWeight:700,color:"rgba(255,255,255,0.9)",letterSpacing:".06em",whiteSpace:"nowrap"}}>HIVE VISION</div>
           <div style={{fontFamily:T.serif,fontSize:20,color:"#fff",fontWeight:700,lineHeight:1,position:"relative"}}>Pro</div>
@@ -432,11 +432,11 @@ const Auth = ({onEnter,onEnterAsNew}) => {
               <div style={{display:"flex",alignItems:"flex-start",gap:14,marginBottom:22}}>
                 <div style={{
                   width:56,height:56,borderRadius:16,flexShrink:0,
-                  background:modal.iconBg||"rgba(184,90,60,0.12)",
+                  background:modal.iconBg||"rgba(155,126,200,0.12)",
                   display:"flex",alignItems:"center",justifyContent:"center",
-                  color:modal.iconColor||"#B85A3C",
+                  color:modal.iconColor||"#9B7EC8",
                   border: modal.iconBg==="#fff" ? "1px solid rgba(28,23,20,0.1)" : "none",
-                  boxShadow: (modal.iconBg==="#000") ? "0 6px 20px rgba(0,0,0,0.4)" : "0 6px 20px rgba(184,90,60,0.25)",
+                  boxShadow: (modal.iconBg==="#000") ? "0 6px 20px rgba(0,0,0,0.4)" : "0 6px 20px rgba(155,126,200,0.25)",
                   overflow:"hidden",
                 }}>
                   {typeof modal.icon === 'string'
@@ -446,7 +446,7 @@ const Auth = ({onEnter,onEnterAsNew}) => {
                 </div>
                 <div style={{flex:1,minWidth:0,paddingTop:2}}>
                   {modal.badge&&(
-                    <div style={{display:"inline-flex",alignItems:"center",background:"rgba(184,90,60,0.1)",borderRadius:6,padding:"3px 8px",fontSize:9,fontWeight:700,color:"#B85A3C",textTransform:"uppercase",letterSpacing:".1em",marginBottom:6}}>
+                    <div style={{display:"inline-flex",alignItems:"center",background:"rgba(155,126,200,0.1)",borderRadius:6,padding:"3px 8px",fontSize:9,fontWeight:700,color:"#9B7EC8",textTransform:"uppercase",letterSpacing:".1em",marginBottom:6}}>
                       {modal.badge}
                     </div>
                   )}
@@ -482,13 +482,13 @@ const Auth = ({onEnter,onEnterAsNew}) => {
                         placeholder="your@email.com"
                         type="email"
                         style={{flex:1,padding:"13px 14px",background:"rgba(244,237,227,0.8)",border:"1.5px solid rgba(28,23,20,0.12)",borderRadius:12,fontSize:14,color:"#1C1714",outline:"none",fontFamily:"inherit"}}
-                        onFocus={e=>e.target.style.borderColor="#B85A3C"}
+                        onFocus={e=>e.target.style.borderColor="#9B7EC8"}
                         onBlur={e=>e.target.style.borderColor="rgba(28,23,20,0.12)"}
                       />
                       <button
                         onClick={handleNotifySubmit}
                         disabled={notifyLoading||!notifyEmail.includes('@')}
-                        style={{background:"linear-gradient(135deg,#B85A3C,#7A2E14)",color:"#fff",border:"none",borderRadius:12,padding:"0 18px",fontSize:14,fontWeight:600,cursor:notifyEmail.includes('@')?"pointer":"not-allowed",opacity:notifyEmail.includes('@')?1:0.45,transition:"opacity .15s",whiteSpace:"nowrap",height:48}}
+                        style={{background:"linear-gradient(135deg,#9B7EC8,#6B52A3)",color:"#fff",border:"none",borderRadius:12,padding:"0 18px",fontSize:14,fontWeight:600,cursor:notifyEmail.includes('@')?"pointer":"not-allowed",opacity:notifyEmail.includes('@')?1:0.45,transition:"opacity .15s",whiteSpace:"nowrap",height:48}}
                       >
                         {notifyLoading ? '...' : 'Notify me'}
                       </button>
@@ -498,7 +498,7 @@ const Auth = ({onEnter,onEnterAsNew}) => {
                 )
               ) : (
                 <>
-                  <button onClick={handleModalCTA} style={{width:"100%",background:"linear-gradient(135deg,#B85A3C,#7A2E14)",color:"#fff",border:"none",borderRadius:14,padding:"15px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 8px 24px rgba(184,90,60,0.35)",marginBottom:modal.ctaAlt?8:0}}>{modal.cta}</button>
+                  <button onClick={handleModalCTA} style={{width:"100%",background:"linear-gradient(135deg,#9B7EC8,#6B52A3)",color:"#fff",border:"none",borderRadius:14,padding:"15px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 8px 24px rgba(155,126,200,0.35)",marginBottom:modal.ctaAlt?8:0}}>{modal.cta}</button>
                   {modal.ctaAlt&&<button onClick={()=>{closeModal();setScreen('signup');}} style={{width:"100%",background:"rgba(244,237,227,0.8)",border:"1.5px solid rgba(28,23,20,0.1)",borderRadius:14,padding:"13px",fontSize:13,fontWeight:500,color:"rgba(28,23,20,0.7)",cursor:"pointer"}}>{modal.ctaAlt}</button>}
                   {modal.footnote&&<div style={{textAlign:"center",marginTop:10,fontSize:11,color:"rgba(28,23,20,0.4)"}}>{modal.footnote}</div>}
                 </>

@@ -12,7 +12,7 @@ const PatternCard = ({p,onClick,onPark,onUnpark,onDelete,onCoverChange,delay=0,p
     <div className="card fu" onClick={onClick} style={{background:T.surface,borderRadius:16,overflow:"hidden",border:`1px solid ${T.border}`,cursor:"pointer",animationDelay:delay+"s",position:"relative"}}>
       {!p.isStarter&&(onPark||onDelete)&&<div style={{position:"absolute",top:8,right:8,zIndex:5}}>
         <button onClick={e=>{e.stopPropagation();setMenuOpen(!menuOpen);}} style={{background:"rgba(0,0,0,.45)",backdropFilter:"blur(4px)",border:"none",borderRadius:99,width:28,height:28,cursor:"pointer",color:"#fff",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1}}>⋮</button>
-        {menuOpen&&<div onClick={e=>e.stopPropagation()} style={{position:"absolute",right:0,top:32,background:T.modal,border:`1px solid ${T.border}`,borderRadius:10,boxShadow:"0 8px 24px rgba(139,90,60,.12)",zIndex:10,minWidth:150,overflow:"hidden"}}>
+        {menuOpen&&<div onClick={e=>e.stopPropagation()} style={{position:"absolute",right:0,top:32,background:T.modal,border:`1px solid ${T.border}`,borderRadius:10,boxShadow:"0 8px 24px rgba(155,126,200,.12)",zIndex:10,minWidth:150,overflow:"hidden"}}>
           {!p.isStarter&&onCoverChange&&<div onClick={()=>{setMenuOpen(false);onCoverChange(p);}} style={{padding:"10px 14px",fontSize:13,color:T.ink,cursor:"pointer",borderBottom:`1px solid ${T.border}`}} onMouseEnter={e=>e.currentTarget.style.background=T.linen} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>Change cover image</div>}
           {isParked
             ?<div onClick={()=>{setMenuOpen(false);onUnpark&&onUnpark(p);}} style={{padding:"10px 14px",fontSize:13,color:T.ink,cursor:"pointer",borderBottom:`1px solid ${T.border}`}} onMouseEnter={e=>e.currentTarget.style.background=T.linen} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>Unpark</div>
@@ -30,7 +30,7 @@ const PatternCard = ({p,onClick,onPark,onUnpark,onDelete,onCoverChange,delay=0,p
         :done>0&&done<100?<><div style={{position:"absolute",top:10,right:10,background:"rgba(28,23,20,.65)",backdropFilter:"blur(4px)",color:"#fff",fontSize:10,fontWeight:600,padding:"3px 8px",borderRadius:99}}>{done}%</div><div style={{position:"absolute",bottom:0,left:0,right:0}}><Bar val={done} color="rgba(255,255,255,.8)" h={3} bg="transparent"/></div></>
         :null}
         {!isParked&&!p.isStarter&&done===0&&!p.started&&p.rows&&p.rows.length>0&&<div style={{position:"absolute",top:10,right:10,background:"rgba(92,122,94,.85)",backdropFilter:"blur(4px)",color:"#fff",fontSize:9,fontWeight:600,padding:"3px 8px",borderRadius:99}}>Ready to build</div>}
-        {!p.isStarter&&p.snapConfidence&&<div style={{position:"absolute",top:10,left:10,background:"rgba(184,90,60,.85)",backdropFilter:"blur(4px)",color:"#fff",fontSize:9,fontWeight:700,padding:"3px 8px",borderRadius:99}}>🐝 {p.snapConfidence}%</div>}
+        {!p.isStarter&&p.snapConfidence&&<div style={{position:"absolute",top:10,left:10,background:"rgba(155,126,200,.85)",backdropFilter:"blur(4px)",color:"#fff",fontSize:9,fontWeight:700,padding:"3px 8px",borderRadius:99}}>🐝 {p.snapConfidence}%</div>}
         {isPlaceholder&&!p.isStarter&&onCoverChange&&<button onClick={e=>{e.stopPropagation();onCoverChange(p);}} style={{position:"absolute",bottom:10,left:"50%",transform:"translateX(-50%)",background:"rgba(255,255,255,.15)",backdropFilter:"blur(4px)",border:`1.5px solid ${T.terra}`,borderRadius:10,padding:"6px 14px",fontSize:11,fontWeight:600,color:"#fff",cursor:"pointer",whiteSpace:"nowrap"}}>Set cover image</button>}
       </div>
       <div style={{padding:"12px 14px 16px"}}>
@@ -107,8 +107,8 @@ const HiveCarousel = () => {
             </div>
           ))}
         </div>
-        {!isMobile&&<><button onClick={()=>setIdx(i=>(i-1+total)%total)} style={{position:"absolute",left:6,top:"50%",transform:"translateY(-50%)",background:"rgba(255,255,255,.9)",border:"none",borderRadius:"50%",width:32,height:32,cursor:"pointer",fontSize:16,color:T.ink,boxShadow:"0 2px 8px rgba(139,90,60,.15)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:2}}>‹</button>
-        <button onClick={()=>setIdx(i=>(i+1)%total)} style={{position:"absolute",right:6,top:"50%",transform:"translateY(-50%)",background:"rgba(255,255,255,.9)",border:"none",borderRadius:"50%",width:32,height:32,cursor:"pointer",fontSize:16,color:T.ink,boxShadow:"0 2px 8px rgba(139,90,60,.15)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:2}}>›</button></>}
+        {!isMobile&&<><button onClick={()=>setIdx(i=>(i-1+total)%total)} style={{position:"absolute",left:6,top:"50%",transform:"translateY(-50%)",background:"rgba(255,255,255,.9)",border:"none",borderRadius:"50%",width:32,height:32,cursor:"pointer",fontSize:16,color:T.ink,boxShadow:"0 2px 8px rgba(155,126,200,.15)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:2}}>‹</button>
+        <button onClick={()=>setIdx(i=>(i+1)%total)} style={{position:"absolute",right:6,top:"50%",transform:"translateY(-50%)",background:"rgba(255,255,255,.9)",border:"none",borderRadius:"50%",width:32,height:32,cursor:"pointer",fontSize:16,color:T.ink,boxShadow:"0 2px 8px rgba(155,126,200,.15)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:2}}>›</button></>}
       </div>
       <div style={{display:"flex",justifyContent:"center",gap:6,marginTop:10}}>
         {CAROUSEL_CARDS.map((_,i)=><div key={i} onClick={()=>setIdx(i)} style={{width:idx===i?16:6,height:6,borderRadius:99,background:idx===i?T.terra:T.border,cursor:"pointer",transition:"all .2s"}}/>)}
@@ -126,7 +126,7 @@ const SLOT_SVGS = [
 ];
 
 const EmptySlotCard = ({onClick,slotIndex=0}) => (
-  <div onClick={onClick} style={{background:"linear-gradient(135deg,#F0EBE3 0%,#E8DFD3 100%)",borderRadius:16,border:"2px dashed #C4B5A0",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:220,transition:"border-color .2s, background .2s"}} onMouseEnter={e=>{e.currentTarget.style.borderColor="#B85A3C";e.currentTarget.style.background="linear-gradient(135deg,#F5F0EA 0%,#EDE5D8 100%)";}} onMouseLeave={e=>{e.currentTarget.style.borderColor="#C4B5A0";e.currentTarget.style.background="linear-gradient(135deg,#F0EBE3 0%,#E8DFD3 100%)";}}>
+  <div onClick={onClick} style={{background:"linear-gradient(135deg,#F0EBE3 0%,#E8DFD3 100%)",borderRadius:16,border:"2px dashed #C4B5A0",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:220,transition:"border-color .2s, background .2s"}} onMouseEnter={e=>{e.currentTarget.style.borderColor="#9B7EC8";e.currentTarget.style.background="linear-gradient(135deg,#F5F0EA 0%,#EDE5D8 100%)";}} onMouseLeave={e=>{e.currentTarget.style.borderColor="#C4B5A0";e.currentTarget.style.background="linear-gradient(135deg,#F0EBE3 0%,#E8DFD3 100%)";}}>
     <div style={{width:48,height:48,marginBottom:10}} dangerouslySetInnerHTML={{__html:SLOT_SVGS[slotIndex%SLOT_SVGS.length]}}/>
     <div style={{fontSize:13,color:"#A89070"}}>Add a pattern</div>
   </div>
@@ -161,7 +161,7 @@ const CollectionView = ({userPatterns,starterPatterns,cat,setCat,search,setSearc
         </div>
       </div>
       <div style={{display:"flex",gap:7,overflowX:"auto",padding:isDesktop?"0 0 16px":"0 18px 16px",WebkitOverflowScrolling:"touch"}}>
-        {CATS.map(c=><button key={c} onClick={()=>setCat(c)} style={{background:cat===c?T.terra:T.card,color:cat===c?"#fff":T.ink2,border:"1.5px solid "+(cat===c?T.terra:T.border),borderRadius:99,padding:"6px 14px",fontSize:12,fontWeight:500,cursor:"pointer",whiteSpace:"nowrap",transition:"all .15s",flexShrink:0,boxShadow:cat===c?"0 2px 10px rgba(184,90,60,.28)":"none"}}>{c}</button>)}
+        {CATS.map(c=><button key={c} onClick={()=>setCat(c)} style={{background:cat===c?T.terra:T.card,color:cat===c?"#fff":T.ink2,border:"1.5px solid "+(cat===c?T.terra:T.border),borderRadius:99,padding:"6px 14px",fontSize:12,fontWeight:500,cursor:"pointer",whiteSpace:"nowrap",transition:"all .15s",flexShrink:0,boxShadow:cat===c?"0 2px 10px rgba(155,126,200,.28)":"none"}}>{c}</button>)}
       </div>
       {/* Counter + view toggle */}
       <div style={{padding:pad,display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>

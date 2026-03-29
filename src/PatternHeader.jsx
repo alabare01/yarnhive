@@ -25,7 +25,7 @@ const PatternHeader = ({
   return (
     <>
       {milestone&&(
-        <div className="su" style={{position:"fixed",top:0,left:0,right:0,zIndex:400,background:milestone===100?"linear-gradient(135deg,"+T.sage+",#2D4A2F)":"linear-gradient(135deg,"+T.terra+",#8B3A22)",padding:"14px 20px",display:"flex",alignItems:"center",gap:12}}>
+        <div className="su" style={{position:"fixed",top:0,left:0,right:0,zIndex:400,background:milestone===100?"linear-gradient(135deg,"+T.sage+",#2D4A2F)":"linear-gradient(135deg,"+T.terra+",#7B5FB5)",padding:"14px 20px",display:"flex",alignItems:"center",gap:12}}>
           <div style={{fontSize:28}}>{milestone===100?"🎉":"🪡"}</div>
           <div style={{flex:1}}><div style={{fontSize:14,fontWeight:700,color:"#fff"}}>{milestone===100?"Pattern complete!":milestone+"% done — keep going!"}</div><div style={{fontSize:12,color:"rgba(255,255,255,.75)",marginTop:2}}>Share your progress with your followers</div></div>
           <button onClick={()=>{onShare();setMilestone(null);}} style={{background:"rgba(255,255,255,.2)",border:"none",borderRadius:10,padding:"8px 14px",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",flexShrink:0}}>Share 📤</button>
@@ -59,7 +59,7 @@ const PatternHeader = ({
                   :<div style={{fontFamily:T.serif,fontSize:isDesktop?20:15,fontWeight:700,color:"#fff",lineHeight:1.2,paddingRight:8}}>{p.title}</div>}
               </div>
               {/* Hive Vision badge */}
-              <div style={{position:"absolute",top:10,left:10,background:"rgba(184,90,60,.9)",borderRadius:8,padding:"3px 9px",fontSize:9,fontWeight:700,color:"#fff",display:"flex",alignItems:"center",gap:4}}>
+              <div style={{position:"absolute",top:10,left:10,background:"rgba(155,126,200,.9)",borderRadius:8,padding:"3px 9px",fontSize:9,fontWeight:700,color:"#fff",display:"flex",alignItems:"center",gap:4}}>
                 🐝 Hive Vision · {p.snapConfidence}%
               </div>
             </div>
