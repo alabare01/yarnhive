@@ -494,7 +494,7 @@ const HiveVisionForm = ({onSave,Btn,Bar,WireframeViewer}) => {
         </div>
       )}
       <div style={{background:`linear-gradient(135deg,${T.terraLt},#FFF8F5)`,borderRadius:12,padding:"12px 14px",marginBottom:14,border:`1px solid ${T.border}`}}>
-        <div style={{fontSize:12,color:T.terra,fontWeight:600,marginBottom:3}}>🐝 Snap & Stitch — 3 free scans/month</div>
+        <div style={{fontSize:12,color:T.terra,fontWeight:600,marginBottom:3}}>✨ Snap & Stitch — 3 free scans/month</div>
         <div style={{fontSize:12,color:T.ink2,lineHeight:1.6}}>Photograph any finished crochet object. We identify the components and build a starter pattern to recreate it.</div>
       </div>
       {!file&&(
@@ -869,9 +869,9 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade}) => {
   );
   // Complexity-aware loading messages
   const complexityMsg = complexity==="complex"
-    ? {emoji:"🐝🐝🐝", headline:"Big pattern. Our bees are going all in.", sub:`${complexityStats?.pages||"Many"} pages of pure craft. Every round, every stitch, every note. Grab your hook — this might take a minute.`, barSpeed:80}
+    ? {emoji:"🧶🧶🧶", headline:"Big pattern. Bev is going all in.", sub:`${complexityStats?.pages||"Many"} pages of pure craft. Every round, every stitch, every note. Grab your hook — this might take a minute.`, barSpeed:80}
     : complexity==="detailed"
-    ? {emoji:"🐝🐝", headline:"This one's detailed.", sub:`Reading carefully through ${complexityStats?.pages||"all"} pages. Hang tight — about 30–60 seconds.`, barSpeed:200}
+    ? {emoji:"🧶🧶", headline:"This one's detailed.", sub:`Reading carefully through ${complexityStats?.pages||"all"} pages. Hang tight — about 30–60 seconds.`, barSpeed:200}
     : {emoji:"🔎", headline:stageText, sub:null, barSpeed:300};
   const loadingInfo = (stage==="extracting"&&complexity) ? complexityMsg : {emoji:stage==="building"?"✓":"🔎", headline:stageText, sub:null, barSpeed:300};
   if(stage==="uploading"||stage==="extracting"||stage==="building") return (
@@ -886,13 +886,13 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade}) => {
       {!loadingInfo.sub&&stage==="extracting"&&<div style={{fontSize:12,color:T.ink3,marginBottom:16}}>Reading your pattern...</div>}
       <div style={{height:8,background:T.linen,borderRadius:99,overflow:"hidden",margin:"0 auto",maxWidth:300}}><div className={stage==="extracting"?"progress-bar-fill":""} style={{height:"100%",width:progress+"%",background:stage==="building"?T.sage:T.terra,borderRadius:99,transition:`width ${stage==="extracting"&&complexity==="complex"?"1.2s":"0.4s"} ease`}}/></div>
       {stage==="extracting"&&complexity==="complex"&&(
-        <div style={{marginTop:16,fontSize:11,color:T.ink3,letterSpacing:".05em"}}>WORKING HARD 🍯</div>
+        <div style={{marginTop:16,fontSize:11,color:T.ink3,letterSpacing:".05em"}}>WORKING HARD ✨</div>
       )}
     </div>
   );
   if(stage==="error") return (
     <div style={{padding:"24px 0"}}>
-      <div style={{fontSize:36,textAlign:"center",marginBottom:12}}>🐝</div>
+      <div style={{fontSize:36,textAlign:"center",marginBottom:12}}>🧶</div>
       <div style={{fontFamily:T.serif,fontSize:17,color:T.ink,textAlign:"center",marginBottom:6}}>This one stumped us</div>
       <div style={{fontSize:13,color:T.ink2,textAlign:"center",lineHeight:1.7,marginBottom:20}}>
         {fileInfo ? "We saved your file. Tap below to start building — your PDF will be right there as you go." : "We had trouble reading this pattern. Try another file or enter your rows manually."}
@@ -1116,7 +1116,7 @@ const AddPatternModal = ({onClose,onSave,isPro,patternCount,Btn,Photo,Bar,Wirefr
     {key:"url",icon:"🔗",label:"Smart Import",sub:"Paste any pattern link"},
     {key:"pdf",icon:"📄",label:"PDF / Document",sub:"Upload & extract"},
     {key:"browser",icon:"🌐",label:"Browse Sites",sub:"AllFreeCrochet, Drops & more"},
-    {key:"snap",icon:"🐝",label:"Snap & Stitch",sub:"Photograph any finished object — 3 free scans/mo"},
+    {key:"snap",icon:"✨",label:"Snap & Stitch",sub:"Photograph any finished object — 3 free scans/mo"},
   ];
   const MethodList=()=>(
     <>
@@ -1131,7 +1131,7 @@ const AddPatternModal = ({onClose,onSave,isPro,patternCount,Btn,Photo,Bar,Wirefr
       </div>
       <div onClick={()=>setMethod("snap")} style={{background:"linear-gradient(135deg,#9B7EC8 0%,#8B3A2C 100%)",borderRadius:16,padding:20,cursor:"pointer",position:"relative",overflow:"hidden",transition:"transform .15s"}} onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"} onMouseLeave={e=>e.currentTarget.style.transform="none"}>
         <div style={{position:"absolute",top:10,right:12,background:"rgba(255,255,255,.2)",borderRadius:99,padding:"3px 10px",fontSize:10,fontWeight:700,color:"#fff"}}>3 free scans/mo</div>
-        <div style={{fontSize:32,marginBottom:8}}>🐝</div>
+        <div style={{fontSize:32,marginBottom:8}}>✨</div>
         <div style={{fontSize:17,fontWeight:700,color:"#fff",marginBottom:4}}>Snap & Stitch — Point. Click. Stitch.</div>
         <div style={{fontSize:13,color:"rgba(255,255,255,.85)",lineHeight:1.5}}>Photograph any finished object. Get the complete pattern instantly.</div>
       </div>
@@ -1143,7 +1143,7 @@ const AddPatternModal = ({onClose,onSave,isPro,patternCount,Btn,Photo,Bar,Wirefr
       <div className={closing?"":"fu"} style={{position:"relative",background:T.surface,borderRadius:20,width:"100%",maxWidth:580,maxHeight:"85vh",display:"flex",flexDirection:"column",zIndex:1,boxShadow:"0 24px 64px rgba(28,23,20,.3)"}}>
         <div style={{flexShrink:0,padding:"24px 28px 0"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-            {method?<button onClick={()=>setMethod(null)} style={{background:"none",border:"none",color:T.terra,cursor:"pointer",fontSize:14,fontWeight:600,padding:0}}>← Back</button>:<div style={{fontFamily:T.serif,fontSize:22,color:T.ink}}>What are you adding to your hive?</div>}
+            {method?<button onClick={()=>setMethod(null)} style={{background:"none",border:"none",color:T.terra,cursor:"pointer",fontSize:14,fontWeight:600,padding:0}}>← Back</button>:<div style={{fontFamily:T.serif,fontSize:22,color:T.ink}}>What are you adding to your Wovely?</div>}
             <button onClick={dismiss} style={{background:T.linen,border:"none",borderRadius:99,width:32,height:32,cursor:"pointer",fontSize:18,color:T.ink3,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
           </div>
           {method&&<div style={{fontSize:12,color:T.ink3,marginBottom:14,fontWeight:500}}>{METHODS.find(m=>m.key===method)?.icon} {METHODS.find(m=>m.key===method)?.label}</div>}

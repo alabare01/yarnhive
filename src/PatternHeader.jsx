@@ -60,7 +60,7 @@ const PatternHeader = ({
               </div>
               {/* Snap & Stitch badge */}
               <div style={{position:"absolute",top:10,left:10,background:"rgba(155,126,200,.9)",borderRadius:8,padding:"3px 9px",fontSize:9,fontWeight:700,color:"#fff",display:"flex",alignItems:"center",gap:4}}>
-                🐝 Snap & Stitch · {p.snapConfidence}%
+                ✨ Snap & Stitch · {p.snapConfidence}%
               </div>
             </div>
             {/* right: interactive wireframe */}

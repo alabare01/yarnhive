@@ -40,7 +40,7 @@ const BeeAnimator = ({visible, isDesktop}) => {
       // Leave trail dots
       if(canvasRef.current&&t>0.03){
         const dot=document.createElement("div");
-        dot.style.cssText=`position:absolute;left:${pos.x+size/2}px;top:${pos.y+size/2}px;width:3px;height:3px;border-radius:50%;background:#B8902C;opacity:0.6;pointer-events:none;transition:opacity 1.5s ease;`;
+        dot.style.cssText=`position:absolute;left:${pos.x+size/2}px;top:${pos.y+size/2}px;width:3px;height:3px;border-radius:50%;background:#9B7EC8;opacity:0.6;pointer-events:none;transition:opacity 1.5s ease;`;
         canvasRef.current.appendChild(dot);
         trail.push(dot);
         requestAnimationFrame(()=>{dot.style.opacity="0";});
@@ -55,7 +55,7 @@ const BeeAnimator = ({visible, isDesktop}) => {
   return (
     <div style={{width:W,height:H,marginBottom:-(H-26),position:"relative",zIndex:2,pointerEvents:"none",flexShrink:0,opacity:visible?1:0,transition:"opacity .3s ease"}}>
       <div ref={canvasRef} style={{position:"absolute",inset:0}}/>
-      <div ref={beeRef} style={{position:"absolute",top:0,left:0,fontSize:size,lineHeight:1,userSelect:"none",opacity:0,willChange:"transform"}}>🐝</div>
+      <div ref={beeRef} style={{position:"absolute",top:0,left:0,fontSize:size,lineHeight:1,userSelect:"none",opacity:0,willChange:"transform"}}>🧶</div>
     </div>
   );
 };
@@ -109,15 +109,15 @@ export const WaitlistPopup = () => {
       <div onClick={()=>setShow(false)} style={{position:"absolute",inset:0,background:"rgba(0,0,0,.5)"}}/>
       <div className="fu" style={{position:"relative",zIndex:1,background:T.modal,borderRadius:20,padding:40,maxWidth:420,width:"100%",boxShadow:"0 20px 60px rgba(155,126,200,.2)"}}>
         <button onClick={()=>setShow(false)} style={{position:"absolute",top:14,right:16,background:"none",border:"none",color:T.ink3,fontSize:20,cursor:"pointer"}}>×</button>
-        {submitted?<div style={{textAlign:"center",padding:"20px 0"}}><div style={{fontSize:40,marginBottom:12}}>🐝</div><div style={{fontFamily:T.serif,fontSize:20,fontWeight:700,color:T.ink}}>You're on the list!</div><div style={{fontSize:14,color:T.ink3,marginTop:8}}>We'll be in touch.</div></div>:(
+        {submitted?<div style={{textAlign:"center",padding:"20px 0"}}><div style={{fontSize:40,marginBottom:12}}>🧶</div><div style={{fontFamily:T.serif,fontSize:20,fontWeight:700,color:T.ink}}>You're on the list!</div><div style={{fontSize:14,color:T.ink3,marginTop:8}}>We'll be in touch.</div></div>:(
           <>
             <div style={{textAlign:"center",marginBottom:24}}>
-              <div style={{fontFamily:T.serif,fontSize:26,fontWeight:700,color:T.ink,lineHeight:1.2}}>Join the hive early. 🐝</div>
+              <div style={{fontFamily:T.serif,fontSize:26,fontWeight:700,color:T.ink,lineHeight:1.2}}>Your next favorite pattern is waiting.</div>
               <div style={{fontSize:14,color:T.ink3,marginTop:8,lineHeight:1.6}}>Get your first month of Pro free when we launch. No credit card needed.</div>
             </div>
-            <div style={{marginBottom:12}}><input value={wlEmail} onChange={e=>setWlEmail(e.target.value)} placeholder="your@email.com" type="email" style={{width:"100%",padding:"13px 16px",background:T.linen,border:`1.5px solid ${T.border}`,borderRadius:12,color:T.ink,fontSize:15}} onFocus={e=>e.target.style.borderColor=T.terra} onBlur={e=>e.target.style.borderColor=T.border}/></div>
-            <div style={{marginBottom:16}}><input value={wlPhone} onChange={e=>setWlPhone(e.target.value)} placeholder="(555) 123-4567" type="tel" style={{width:"100%",padding:"13px 16px",background:T.linen,border:`1.5px solid ${T.border}`,borderRadius:12,color:T.ink,fontSize:15}} onFocus={e=>e.target.style.borderColor=T.terra} onBlur={e=>e.target.style.borderColor=T.border}/></div>
-            <button onClick={handleSubmit} disabled={saving} style={{width:"100%",background:T.terra,color:"#fff",border:"none",borderRadius:14,padding:"15px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(155,126,200,.3)",opacity:saving?.6:1}}>{saving?"Joining…":"Claim my free month →"}</button>
+            <div style={{marginBottom:12}}><input value={wlEmail} onChange={e=>setWlEmail(e.target.value)} placeholder="your@email.com" type="email" style={{width:"100%",padding:"13px 16px",background:"transparent",border:"none",borderBottom:"2px solid transparent",borderRadius:0,color:T.ink,fontSize:15,outline:"none",transition:"border-color .2s"}} onFocus={e=>e.target.style.borderBottomColor=T.terra} onBlur={e=>e.target.style.borderBottomColor="transparent"}/></div>
+            <div style={{marginBottom:16}}><input value={wlPhone} onChange={e=>setWlPhone(e.target.value)} placeholder="(555) 123-4567" type="tel" style={{width:"100%",padding:"13px 16px",background:"transparent",border:"none",borderBottom:"2px solid transparent",borderRadius:0,color:T.ink,fontSize:15,outline:"none",transition:"border-color .2s"}} onFocus={e=>e.target.style.borderBottomColor=T.terra} onBlur={e=>e.target.style.borderBottomColor="transparent"}/></div>
+            <button onClick={handleSubmit} disabled={saving} style={{width:"100%",background:T.terra,color:"#fff",border:"none",borderRadius:9999,padding:"15px",fontSize:14,fontWeight:600,cursor:"pointer",opacity:saving?.6:1}}>{saving?"Joining…":"Claim my free month →"}</button>
           </>
         )}
       </div>
@@ -238,7 +238,7 @@ const Auth = ({onEnter,onEnterAsNew}) => {
       features:[
         {label:"Unlimited patterns",sub:"No cap. Save every pattern you'll ever make"},
         {label:"Unlimited Snap & Stitch",sub:"Scan as many finished objects as you want"},
-        {label:"Cloud sync",sub:"Access your hive on every device, always in sync"},
+        {label:"Cloud sync",sub:"Access your Wovely on every device, always in sync"},
         {label:"Ask Bev",sub:"Get AI-powered help for any row you're stuck on"},
         {label:"Advanced analytics",sub:"Track your making history and stash usage"},
         {label:"Early access",sub:"First to get every new feature we ship"},
@@ -277,7 +277,7 @@ const Auth = ({onEnter,onEnterAsNew}) => {
         {label:"Native camera scanner",sub:"Snap & Stitch built right into the Android experience"},
         {label:"Row reminders",sub:"Smart notifications keep you on track"},
         {label:"Offline mode",sub:"Your patterns are always available, signal or not"},
-        {label:"Cross-device sync",sub:"Web, iOS, Android — one hive everywhere"},
+        {label:"Cross-device sync",sub:"Web, iOS, Android — one Wovely everywhere"},
       ],
       cta:"Notify me when it's live",
       ctaAction: "notify",
@@ -447,7 +447,7 @@ const Auth = ({onEnter,onEnterAsNew}) => {
                       {modal.badge}
                     </div>
                   )}
-                  <div style={{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:700,color:"#1C1714",lineHeight:1.15,marginBottom:4}}>{modal.title}</div>
+                  <div style={{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:700,color:"#1A1A2E",lineHeight:1.15,marginBottom:4}}>{modal.title}</div>
                   <div style={{fontSize:13,color:"rgba(28,23,20,0.5)",lineHeight:1.55,fontWeight:300}}>{modal.subtitle}</div>
                 </div>
               </div>
@@ -455,7 +455,7 @@ const Auth = ({onEnter,onEnterAsNew}) => {
               <div style={{background:"rgba(244,237,227,0.6)",borderRadius:14,overflow:"hidden",border:"1px solid rgba(28,23,20,0.07)",marginBottom:20}}>
                 {modal.features.map((f,i)=>(
                   <div key={i} style={{padding:"12px 16px",borderBottom: i<modal.features.length-1 ? "1px solid rgba(28,23,20,0.07)" : "none"}}>
-                    <div style={{fontSize:14,fontWeight:600,color:"#1C1714",lineHeight:1.2,marginBottom:2}}>{f.label}</div>
+                    <div style={{fontSize:14,fontWeight:600,color:"#1A1A2E",lineHeight:1.2,marginBottom:2}}>{f.label}</div>
                     <div style={{fontSize:12,color:"rgba(28,23,20,0.48)",lineHeight:1.5}}>{f.sub}</div>
                   </div>
                 ))}
@@ -470,7 +470,7 @@ const Auth = ({onEnter,onEnterAsNew}) => {
                   </div>
                 ) : (
                   <div>
-                    <div style={{fontSize:13,fontWeight:600,color:"#1C1714",marginBottom:10}}>Get notified when we launch</div>
+                    <div style={{fontSize:13,fontWeight:600,color:"#1A1A2E",marginBottom:10}}>Get notified when we launch</div>
                     <div style={{display:"flex",gap:8,marginBottom:8}}>
                       <input
                         value={notifyEmail}
@@ -478,14 +478,14 @@ const Auth = ({onEnter,onEnterAsNew}) => {
                         onKeyDown={e=>e.key==='Enter'&&handleNotifySubmit()}
                         placeholder="your@email.com"
                         type="email"
-                        style={{flex:1,padding:"13px 14px",background:"rgba(244,237,227,0.8)",border:"1.5px solid rgba(28,23,20,0.12)",borderRadius:12,fontSize:14,color:"#1C1714",outline:"none",fontFamily:"inherit"}}
-                        onFocus={e=>e.target.style.borderColor="#9B7EC8"}
-                        onBlur={e=>e.target.style.borderColor="rgba(28,23,20,0.12)"}
+                        style={{flex:1,padding:"13px 14px",background:"transparent",border:"none",borderBottom:"2px solid transparent",borderRadius:0,fontSize:14,color:"#1A1A2E",outline:"none",fontFamily:"inherit",transition:"border-color .2s"}}
+                        onFocus={e=>e.target.style.borderBottomColor="#9B7EC8"}
+                        onBlur={e=>e.target.style.borderBottomColor="transparent"}
                       />
                       <button
                         onClick={handleNotifySubmit}
                         disabled={notifyLoading||!notifyEmail.includes('@')}
-                        style={{background:"linear-gradient(135deg,#9B7EC8,#6B52A3)",color:"#fff",border:"none",borderRadius:12,padding:"0 18px",fontSize:14,fontWeight:600,cursor:notifyEmail.includes('@')?"pointer":"not-allowed",opacity:notifyEmail.includes('@')?1:0.45,transition:"opacity .15s",whiteSpace:"nowrap",height:48}}
+                        style={{background:"#9B7EC8",color:"#fff",border:"none",borderRadius:9999,padding:"0 18px",fontSize:14,fontWeight:600,cursor:notifyEmail.includes('@')?"pointer":"not-allowed",opacity:notifyEmail.includes('@')?1:0.45,transition:"opacity .15s",whiteSpace:"nowrap",height:48}}
                       >
                         {notifyLoading ? '...' : 'Notify me'}
                       </button>

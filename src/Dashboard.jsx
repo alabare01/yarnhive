@@ -30,7 +30,7 @@ const PatternCard = ({p,onClick,onPark,onUnpark,onDelete,onCoverChange,delay=0,p
         :done>0&&done<100?<><div style={{position:"absolute",top:10,right:10,background:"rgba(28,23,20,.65)",backdropFilter:"blur(4px)",color:"#fff",fontSize:10,fontWeight:600,padding:"3px 8px",borderRadius:99}}>{done}%</div><div style={{position:"absolute",bottom:0,left:0,right:0}}><Bar val={done} color="rgba(255,255,255,.8)" h={3} bg="transparent"/></div></>
         :null}
         {!isParked&&!p.isStarter&&done===0&&!p.started&&p.rows&&p.rows.length>0&&<div style={{position:"absolute",top:10,right:10,background:"rgba(92,122,94,.85)",backdropFilter:"blur(4px)",color:"#fff",fontSize:9,fontWeight:600,padding:"3px 8px",borderRadius:99}}>Ready to build</div>}
-        {!p.isStarter&&p.snapConfidence&&<div style={{position:"absolute",top:10,left:10,background:"rgba(155,126,200,.85)",backdropFilter:"blur(4px)",color:"#fff",fontSize:9,fontWeight:700,padding:"3px 8px",borderRadius:99}}>🐝 {p.snapConfidence}%</div>}
+        {!p.isStarter&&p.snapConfidence&&<div style={{position:"absolute",top:10,left:10,background:"rgba(155,126,200,.85)",backdropFilter:"blur(4px)",color:"#fff",fontSize:9,fontWeight:700,padding:"3px 8px",borderRadius:99}}>✨ {p.snapConfidence}%</div>}
         {isPlaceholder&&!p.isStarter&&onCoverChange&&<button onClick={e=>{e.stopPropagation();onCoverChange(p);}} style={{position:"absolute",bottom:10,left:"50%",transform:"translateX(-50%)",background:"rgba(255,255,255,.15)",backdropFilter:"blur(4px)",border:`1.5px solid ${T.terra}`,borderRadius:10,padding:"6px 14px",fontSize:11,fontWeight:600,color:"#fff",cursor:"pointer",whiteSpace:"nowrap"}}>Set cover image</button>}
       </div>
       <div style={{padding:"12px 14px 16px"}}>
@@ -66,7 +66,7 @@ const HScrollRow = ({children,itemCount}) => {
 };
 
 const CAROUSEL_CARDS = [
-  {id:"welcome",type:"image",src:"https://res.cloudinary.com/dmaupzhcx/image/upload/c_fill,w_400,h_200,g_center/v1774405608/x0f1g5ugglvlce5kq2kj.png",title:"Welcome to The Hive",sub:"Your crafting journey starts here"},
+  {id:"welcome",type:"image",src:"https://res.cloudinary.com/dmaupzhcx/image/upload/c_fill,w_400,h_200,g_center/v1774405608/x0f1g5ugglvlce5kq2kj.png",title:"Welcome to Wovely",sub:"Your crafting journey starts here"},
   {id:"community",type:"image",src:"https://res.cloudinary.com/dmaupzhcx/image/upload/c_fill,w_400,h_200,g_center/v1774405611/dpdkta0ii5q5zo2m7myq.png",title:"847 makers active",sub:"this week"},
   {id:"tip",type:"image",src:"https://res.cloudinary.com/dmaupzhcx/image/upload/c_fill,w_400,h_200,g_center/v1774405613/fjneuxzjdexijyerdit4.png",title:"Pro tip",sub:"Block finished pieces for a pro look"},
   {id:"seasonal",type:"image",src:"https://res.cloudinary.com/dmaupzhcx/image/upload/c_fill,w_400,h_200,g_center/v1774405616/emjhufj6ujhuwyhodr4z.png",title:"Spring patterns",sub:"Browse trending now"},
@@ -91,7 +91,7 @@ const HiveCarousel = () => {
 
   return (
     <div style={{padding:"16px 0 8px",position:"relative"}}>
-      {toast&&<div style={{position:"fixed",top:16,left:"50%",transform:"translateX(-50%)",zIndex:900,background:T.ink,color:"#fff",borderRadius:12,padding:"10px 20px",fontSize:13,fontWeight:600,boxShadow:"0 8px 24px rgba(0,0,0,.3)"}}>Coming soon — stay tuned! 🐝</div>}
+      {toast&&<div style={{position:"fixed",top:16,left:"50%",transform:"translateX(-50%)",zIndex:900,background:T.ink,color:"#fff",borderRadius:12,padding:"10px 20px",fontSize:13,fontWeight:600,boxShadow:"0 8px 24px rgba(0,0,0,.3)"}}>Coming soon — stay tuned! 🧶</div>}
       <div style={{position:"relative",overflow:"hidden",margin:"0 18px"}}>
         <div onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} style={{display:"flex",gap:12,transform:`translateX(-${idx*(cardW+12)}px)`,transition:"transform .35s ease"}}>
           {CAROUSEL_CARDS.map(c=>(
@@ -157,7 +157,7 @@ const CollectionView = ({userPatterns,starterPatterns,cat,setCat,search,setSearc
       <div style={{padding:isDesktop?"16px 0 10px":"16px 18px 10px"}}>
         <div style={{display:"flex",alignItems:"center",background:T.surface,border:`1.5px solid ${T.border}`,borderRadius:8,padding:"10px 14px",gap:9}}>
           <span style={{color:T.ink3,fontSize:15}}>🔍</span>
-          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search your hive…" style={{border:"none",background:"transparent",flex:1,fontSize:14,color:T.ink,outline:"none"}} onFocus={e=>e.currentTarget.parentNode.style.borderColor=T.terra} onBlur={e=>e.currentTarget.parentNode.style.borderColor=T.border}/>
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search your patterns…" style={{border:"none",background:"transparent",flex:1,fontSize:14,color:T.ink,outline:"none"}} onFocus={e=>e.currentTarget.parentNode.style.borderColor=T.terra} onBlur={e=>e.currentTarget.parentNode.style.borderColor=T.border}/>
         </div>
       </div>
       <div style={{display:"flex",gap:7,overflowX:"auto",padding:isDesktop?"0 0 16px":"0 18px 16px",WebkitOverflowScrolling:"touch"}}>

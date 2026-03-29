@@ -534,7 +534,7 @@ const EmailConfirmBanner = ({onDismiss,onResend}) => {
 const PRO_FEATURES = [
   {label:"Unlimited patterns",sub:"No cap. Save every pattern you'll ever make"},
   {label:"Unlimited Snap & Stitch",sub:"Scan as many finished objects as you want"},
-  {label:"Cloud sync",sub:"Access your hive on every device, always in sync"},
+  {label:"Cloud sync",sub:"Access your Wovely on every device, always in sync"},
   {label:"Ask Bev",sub:"Get AI-powered help for any row you're stuck on"},
   {label:"Advanced analytics",sub:"Track your making history and stash usage"},
   {label:"Early access",sub:"First to get every new feature we ship"},
@@ -730,7 +730,7 @@ const ProfileSettingsView = ({isPro,onOpenProModal,onGoHome,onEmailConfirmed}) =
           <div style={{position:"absolute",inset:0,background:"linear-gradient(to right, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.15) 60%, rgba(0,0,0,0.05) 100%)"}}/>
           <button onClick={()=>{setWelcomeDismissed(true);localStorage.setItem("yh_welcome_dismissed","true");}} style={{position:"absolute",top:12,right:16,background:"transparent",border:"none",color:"#fff",fontSize:20,cursor:"pointer",lineHeight:1,zIndex:2}}>×</button>
           <div style={{position:"relative",zIndex:1,height:"100%",display:"flex",flexDirection:"column",justifyContent:"center",paddingLeft:32}}>
-            <div style={{fontFamily:T.serif,fontSize:32,fontWeight:700,color:"#fff",marginBottom:8,lineHeight:1.2}}>Welcome to your hive. 🐝</div>
+            <div style={{fontFamily:T.serif,fontSize:32,fontWeight:700,color:"#fff",marginBottom:8,lineHeight:1.2}}>Welcome to Wovely. 🧶</div>
             <div style={{fontSize:15,color:"rgba(255,255,255,0.88)",marginBottom:20}}>Your collection is ready. Time to make something.</div>
             <div><button onClick={()=>{setWelcomeDismissed(true);localStorage.setItem("yh_welcome_dismissed","true");onGoHome();}} style={{background:"#9B7EC8",color:"#fff",border:"none",borderRadius:10,padding:"12px 24px",fontSize:15,fontWeight:600,cursor:"pointer"}}>Go to My Wovely →</button></div>
           </div>
@@ -1056,13 +1056,13 @@ const STARTER_PHOTO_MAP = {Blankets:PHOTOS.blanket,Amigurumi:PHOTOS.granny,Weara
 
 const WelcomeToast = ({visible}) => (
   <div style={{position:"fixed",top:16,right:16,zIndex:900,background:T.terra,color:"#fff",borderRadius:14,padding:"12px 24px",fontSize:14,fontWeight:600,boxShadow:"0 8px 32px rgba(155,126,200,.4)",display:"flex",alignItems:"center",gap:8,opacity:visible?1:0,transform:visible?"translateX(0)":"translateX(20px)",transition:"opacity .4s ease, transform .4s ease",pointerEvents:"none"}}>
-    <span style={{fontSize:18}}>🐝</span> Welcome back! Your Wovely is ready.
+    <span style={{fontSize:18}}>🧶</span> Welcome back! Your Wovely is ready.
   </div>
 );
 
 const WelcomeBanner = ({visible}) => (
   <div style={{background:T.terra,padding:"10px 16px",display:"flex",alignItems:"center",gap:8,opacity:visible?1:0,maxHeight:visible?50:0,overflow:"hidden",transition:"opacity .4s ease, max-height .4s ease"}}>
-    <span style={{fontSize:13,color:"#fff",fontWeight:500,lineHeight:1.4}}>Welcome to Wovely! 🐝 Your starter patterns are ready — start exploring.</span>
+    <span style={{fontSize:13,color:"#fff",fontWeight:500,lineHeight:1.4}}>Welcome to Wovely! 🧶 Your starter patterns are ready — start exploring.</span>
   </div>
 );
 
@@ -1126,16 +1126,16 @@ const OnboardingScreen = ({onComplete,onBackToAuth}) => {
           <button onClick={onBackToAuth} style={{background:"none",border:"none",color:T.terra,cursor:"pointer",fontSize:13,fontWeight:600,padding:0,marginBottom:20,display:"flex",alignItems:"center",gap:6}}>← Back</button>
           <div style={{textAlign:"center",marginBottom:28}}>
             <div style={{fontSize:11,color:T.ink3,fontWeight:500,letterSpacing:".06em",marginBottom:10}}>Step 2 of 2</div>
-            <div style={{fontSize:48,marginBottom:12}}>🐝</div>
+            <div style={{fontSize:48,marginBottom:12}}>🧶</div>
             <div style={{fontFamily:T.serif,fontSize:isDesktop?32:26,fontWeight:700,color:T.ink,lineHeight:1.1,letterSpacing:"-.02em"}}>Set up your profile</div>
-            <p style={{fontSize:14,color:T.ink3,marginTop:8,lineHeight:1.6}}>Let the hive know who you are.</p>
+            <p style={{fontSize:14,color:T.ink3,marginTop:8,lineHeight:1.6}}>Let other makers know who you are.</p>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 12px"}}>
             <Field label="First name *" placeholder="e.g. Sarah" value={firstName} onChange={e=>setFirstName(e.target.value)}/>
             <Field label="Last name *" placeholder="e.g. Miller" value={lastName} onChange={e=>setLastName(e.target.value)}/>
           </div>
           <div style={{marginBottom:14}}>
-            {LABEL_WITH_TIP("Display name *","How other makers see you in The Hive. Can be your name, nickname, anything you like.")}
+            {LABEL_WITH_TIP("Display name *","How other makers see you in Wovely. Can be your name, nickname, anything you like.")}
             <input value={displayName} onChange={e=>setDisplayName(e.target.value)} placeholder="e.g. Sarah" style={{width:"100%",padding:"13px 16px",background:T.linen,border:`1.5px solid ${T.border}`,borderRadius:12,color:T.ink,fontSize:15}} onFocus={e=>e.target.style.borderColor=T.terra} onBlur={e=>e.target.style.borderColor=T.border}/>
           </div>
           <div style={{marginBottom:14}}>
@@ -1253,7 +1253,7 @@ const MasterDocView = () => {
                 <div style={{padding:isDesktop?"22px 28px 18px":"18px 20px 14px",borderBottom:`1px solid ${T.border}`,background:entry.major?"linear-gradient(135deg, #FAF0EC 0%, "+T.card+" 100%)":T.card}}>
                   <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
                     <span style={{fontFamily:"'Inter', monospace",fontSize:isDesktop?22:18,fontWeight:700,color:T.ink,letterSpacing:"-0.02em"}}>{entry.version}</span>
-                    {entry.major && <span style={{fontSize:16}} title="Major release">🐝</span>}
+                    {entry.major && <span style={{fontSize:16}} title="Major release">🧶</span>}
                     <span style={{fontSize:12,color:T.ink3,fontWeight:500,marginLeft:"auto"}}>{entry.date}</span>
                   </div>
                 </div>
@@ -1329,7 +1329,7 @@ const MasterDocView = () => {
     <div style={{minHeight:"100vh",background:"#FFFFFF",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:'"Inter",-apple-system,sans-serif'}}>
       <div style={{width:"100%",maxWidth:380,padding:"40px 32px",background:"#FFFFFF",borderRadius:20,border:"1px solid #EDE4F7",boxShadow:"0 8px 32px rgba(155,126,200,.08)"}}>
         <div style={{textAlign:"center",marginBottom:28}}>
-          <div style={{fontSize:40,marginBottom:12}}>🐝</div>
+          <div style={{fontSize:40,marginBottom:12}}>🧶</div>
           <div style={{fontFamily:'"Playfair Display",Georgia,serif',fontSize:22,fontWeight:700,color:"#1A1A2E"}}>Wovely Admin</div>
           <div style={{fontSize:13,color:"#6B6B8A",marginTop:6}}>Enter password to view</div>
         </div>
@@ -1390,7 +1390,7 @@ const CHANGELOG_ENTRIES = [
         "Snap & Stitch (Snap to Pattern) with Gemini Vision",
         "Social sharing with milestone banners and share cards",
         "Welcome screen with illustrated world background",
-        "Bee animation (pure CSS — mobile Safari safe)",
+        "Yarn animation (pure CSS — mobile Safari safe)",
         "Free/Pro/App Store modals",
         "Waitlist email capture live in Supabase",
       ],
@@ -1436,7 +1436,7 @@ const ChangelogPage = () => {
       {/* Header bar */}
       <div style={{background:T.surface,borderBottom:`1px solid ${T.border}`,padding:"0 24px",height:60,display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:20}}>
         <div style={{display:"flex",alignItems:"center",gap:12,cursor:"pointer"}} onClick={()=>navigate("/")}>
-          <span style={{fontSize:22}}>🐝</span>
+          <span style={{fontSize:22}}>🧶</span>
           <span style={{fontFamily:T.serif,fontSize:20,fontWeight:700,color:T.ink}}>Wovely</span>
         </div>
         <div style={{fontSize:12,color:T.ink3,fontWeight:500,letterSpacing:".04em",textTransform:"uppercase"}}>Changelog</div>
@@ -1484,7 +1484,7 @@ const ChangelogPage = () => {
                 <div style={{padding:isDesktop?"22px 28px 18px":"18px 20px 14px",borderBottom:`1px solid ${T.border}`,background:entry.major?"linear-gradient(135deg, #FAF0EC 0%, "+T.card+" 100%)":T.card}}>
                   <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
                     <span style={{fontFamily:"'Inter', monospace",fontSize:isDesktop?22:18,fontWeight:700,color:T.ink,letterSpacing:"-0.02em"}}>{entry.version}</span>
-                    {entry.major && <span style={{fontSize:16}} title="Major release">🐝</span>}
+                    {entry.major && <span style={{fontSize:16}} title="Major release">🧶</span>}
                     <span style={{fontSize:12,color:T.ink3,fontWeight:500,marginLeft:"auto"}}>{entry.date}</span>
                   </div>
                 </div>
