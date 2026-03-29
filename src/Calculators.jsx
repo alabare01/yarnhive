@@ -58,16 +58,16 @@ const Calculators = () => {
   const repeatResult = showRepeat ? scaleRepeat(origDesc, rawCount) : null;
   const {isDesktop:isDk}=useBreakpoint();
 
-  const CARD = {background:T.card,borderRadius:16,padding:24,boxShadow:T.shadowLg,marginBottom:16};
-  const LABEL = {fontSize:10,fontVariant:"small-caps",color:T.ink3,textTransform:"lowercase",letterSpacing:".14em",marginBottom:6,fontWeight:500};
-  const DIVIDER = {height:1,background:T.border,margin:"20px 0",opacity:.5};
+  const CARD = {background:"#FFFFFF",borderRadius:16,padding:24,border:`1px solid ${T.border}`,boxShadow:T.shadow,marginBottom:16};
+  const LABEL = {fontSize:11,fontWeight:600,color:T.ink2,textTransform:"uppercase",letterSpacing:".05em",marginBottom:6};
+  const DIVIDER = {height:1,background:T.border,margin:"20px 0"};
 
   const Input = ({label,val,set,step="1"}) => (
     <div>
       <div style={LABEL}>{label}</div>
       <input value={val} onChange={e=>set(e.target.value)} type="number" step={step}
-        style={{width:"100%",padding:"12px 0",background:"transparent",border:"none",borderBottom:`1.5px solid ${T.border}`,fontSize:17,fontWeight:600,color:T.ink,textAlign:"center",outline:"none",transition:"border-color .2s"}}
-        onFocus={e=>e.target.style.borderBottomColor=T.terra} onBlur={e=>e.target.style.borderBottomColor=T.border}/>
+        style={{width:"100%",padding:"12px 0",background:"transparent",border:"none",borderBottom:"2px solid transparent",fontSize:17,fontWeight:600,color:T.ink,textAlign:"center",outline:"none",transition:"border-color .2s"}}
+        onFocus={e=>e.target.style.borderBottomColor=T.terra} onBlur={e=>e.target.style.borderBottomColor="transparent"}/>
     </div>
   );
   const ResultCard = ({label,val,flag}) => (
@@ -79,7 +79,7 @@ const Calculators = () => {
   );
 
   const Pill = ({children,active:a,onClick}) => (
-    <button onClick={onClick} style={{flex:1,padding:"10px 16px",border:"none",background:a?T.terra:"transparent",color:a?"#fff":T.ink3,borderRadius:99,cursor:"pointer",fontSize:12,fontWeight:a?600:500,transition:"all .15s",letterSpacing:".02em"}}>{children}</button>
+    <button onClick={onClick} style={{flex:1,padding:"10px 16px",border:"none",background:a?T.terra:"transparent",color:a?"#fff":T.ink2,borderRadius:9999,cursor:"pointer",fontSize:12,fontWeight:600,transition:"all .15s",letterSpacing:".02em"}}>{children}</button>
   );
 
   return (
@@ -88,7 +88,7 @@ const Calculators = () => {
       <div style={{fontSize:13,color:T.ink3,marginBottom:20}}>Essential tools for planning your projects.</div>
 
       {/* Tab pills */}
-      <div style={{display:"flex",gap:4,marginBottom:20,background:T.surface,borderRadius:99,padding:4}}>
+      <div style={{display:"flex",gap:4,marginBottom:20,background:T.surface,borderRadius:9999,padding:4}}>
         {[["gauge","Gauge"],["yardage","Yardage"],["resize","Scale"]].map(([key,label])=>(
           <Pill key={key} active={active===key} onClick={()=>setActive(key)}>{label}</Pill>
         ))}
@@ -134,7 +134,7 @@ const Calculators = () => {
           <div style={{textAlign:"center",padding:"16px 0 8px"}}>
             <div style={{fontSize:52,fontWeight:700,fontFamily:T.serif,color:T.terra,lineHeight:1}}>{yardage.toLocaleString()}</div>
             <div style={{fontSize:14,color:T.ink3,marginTop:6,fontWeight:500}}>yards needed</div>
-            <div style={{display:"inline-flex",marginTop:12,background:T.terraLt,borderRadius:99,padding:"6px 16px",fontSize:12,color:T.terra,fontWeight:600}}>~{Math.ceil(yardage/200)} skeins at 200 yds</div>
+            <div style={{display:"inline-flex",marginTop:12,background:T.terraLt,borderRadius:9999,padding:"4px 10px",fontSize:11,color:T.terra,fontWeight:600,textTransform:"uppercase",letterSpacing:".05em"}}>~{Math.ceil(yardage/200)} skeins at 200 yds</div>
           </div>
         </div>
       </>}
@@ -216,8 +216,8 @@ const Calculators = () => {
         </div>
 
         {/* Sizing note */}
-        <div style={{background:T.card,borderRadius:16,padding:24,boxShadow:T.shadow}}>
-          <div style={{display:"inline-flex",background:T.sageLt,borderRadius:99,padding:"4px 12px",fontSize:10,fontWeight:600,color:T.sage,marginBottom:10,letterSpacing:".06em"}}>PRO TIP</div>
+        <div style={{background:"#FFFFFF",borderRadius:16,padding:24,border:`1px solid ${T.border}`,boxShadow:T.shadow}}>
+          <div style={{display:"inline-flex",background:T.terraLt,borderRadius:9999,padding:"4px 10px",fontSize:11,fontWeight:600,color:T.terra,marginBottom:10,letterSpacing:".05em",textTransform:"uppercase"}}>PRO TIP</div>
           <div style={{fontSize:12,color:T.ink2,lineHeight:1.7}}>For amigurumi, scaling via hook size + yarn weight change is often easier than adjusting every stitch count. A 5mm hook with bulky yarn instead of 3.5mm with DK roughly doubles your finished size with zero math.</div>
         </div>
       </>}

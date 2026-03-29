@@ -60,8 +60,8 @@ const CSS = () => (
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #EAE0D5; border-radius: 99px; }
-    body { background: #FFFFFF; }
-    input, textarea, button, select { font-family: "DM Sans", -apple-system, sans-serif; }
+    body { background: #FFFFFF; font-family: "Inter", -apple-system, sans-serif; }
+    input, textarea, button, select { font-family: "Inter", -apple-system, sans-serif; }
     @keyframes fadeUp    { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
     @keyframes slideUp   { from{opacity:0;transform:translateY(40px)} to{opacity:1;transform:translateY(0)} }
     @keyframes slideInLeft  { from{transform:translateX(-100%);opacity:0} to{transform:translateX(0);opacity:1} }
@@ -82,7 +82,7 @@ const CSS = () => (
     .spinner { animation:spin .8s linear infinite; }
     .conf-pop { animation:confidencePop .5s cubic-bezier(.22,.68,0,1.05) both; }
     .card { transition:transform .18s,box-shadow .18s; box-shadow:0 1px 4px rgba(0,0,0,0.06); }
-    .card:hover { transform:translateY(-4px) !important; box-shadow:0 16px 36px rgba(155,126,200,.14) !important; }
+    .card:hover { transform:translateY(-1px) !important; box-shadow:0 4px 16px rgba(155,126,200,0.12) !important; }
     .tap { transition:opacity .15s; cursor:pointer; }
     .tap:hover { opacity:.85; }
     .method-card { transition:all .15s; }
@@ -102,7 +102,7 @@ const CSS = () => (
     }
     input:focus, textarea:focus, select:focus { outline:none; }
     input[type="password"]::placeholder { opacity:.4; }
-    @media(hover:hover) { .nav-item:hover { background:#F4EDE3 !important; } .site-row:hover { background:#F4EDE3 !important; } }
+    @media(hover:hover) { .nav-item:hover { background:rgba(255,255,255,0.1) !important; } .site-row:hover { background:#F8F6FF !important; } }
   `}</style>
 );
 
@@ -201,7 +201,7 @@ const Btn = ({children,onClick,variant="primary",full=true,small=false,disabled=
     secondary:{background:T.linen,color:T.ink,border:`1px solid ${T.border}`},
     ghost:{background:"none",color:T.ink3,border:"none"},
     sage:{background:T.sage,color:"#fff",border:"none"},
-    danger:{background:"#C0392B",color:"#fff",border:"none"},
+    danger:{background:"#C05A5A",color:"#fff",border:"none"},
     gold:{background:"linear-gradient(135deg,#C9A84C,#8B6914)",color:"#fff",border:"none"},
   };
   return <button onClick={onClick} disabled={disabled} className="tap" style={{...styles[variant],borderRadius:12,padding:small?"8px 16px":"14px 20px",fontSize:small?13:15,fontWeight:600,cursor:disabled?"not-allowed":"pointer",width:full?"100%":"auto",opacity:disabled?.6:1,boxShadow:variant==="primary"?"0 4px 16px rgba(155,126,200,.3)":variant==="sage"?"0 4px 16px rgba(92,122,94,.3)":variant==="gold"?"0 4px 16px rgba(184,144,44,.35)":"none",...sx}}>{children}</button>;
@@ -437,34 +437,34 @@ const SidebarNav = ({view,onNavigate,count,isPro,onAddPattern,onSignOut,onUpgrad
   const wipCount=allPatterns.filter(p=>!p.isStarter&&(p.status==="in_progress"||p.started)).filter(p=>pct(p)<100).length;
   const ITEMS=[{key:"collection",label:"My Wovely",sub:starterC+" starter"+(starterC!==1?"s":"")+" · "+addedC+" added",icon:"🧶"},{key:"wip",label:"On the Hook",sub:wipCount>0?wipCount+" active":"Currently making",icon:"🪡"},{key:"browse",label:"Find Patterns",sub:"Find free patterns",icon:"🌐"},{key:"stash",label:"Stash & Notions",sub:"Manage your yarn",icon:"🎀"},{key:"calculator",label:"The Workbench",sub:"Gauge, yardage & more",icon:"🧮"},{key:"stitch-check",label:"Stitch Check",sub:isPro?"Validate any pattern":"Pro feature",icon:"🛡️",proOnly:true},{key:"shopping",label:"Supply Run",sub:"Auto-generated",icon:"🛒"}];
   return (
-    <div style={{width:260,background:T.surface,borderRight:`1px solid ${T.border}`,height:"100vh",position:"sticky",top:0,display:"flex",flexDirection:"column",flexShrink:0}}>
-      <div onClick={()=>onNavigate("collection")} style={{position:"relative",height:160,overflow:"hidden",flexShrink:0,cursor:"pointer",transition:"opacity .15s",background:"#9B7EC8"}} onMouseEnter={e=>e.currentTarget.style.opacity=".85"} onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
-        <div style={{position:"absolute",bottom:18,left:20}}><div style={{fontFamily:T.serif,fontSize:26,fontWeight:700,color:"#fff",lineHeight:1}}>Wovely</div><div style={{fontSize:11,color:"rgba(255,255,255,.6)",marginTop:4}}>Your crochet space</div></div>
+    <div style={{width:260,background:"#9B7EC8",height:"100vh",position:"sticky",top:0,display:"flex",flexDirection:"column",flexShrink:0}}>
+      <div onClick={()=>onNavigate("collection")} style={{padding:"32px 20px 24px",cursor:"pointer",transition:"opacity .15s"}} onMouseEnter={e=>e.currentTarget.style.opacity=".85"} onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
+        <div style={{fontFamily:T.serif,fontSize:26,fontWeight:700,color:"#fff",lineHeight:1}}>Wovely</div><div style={{fontSize:11,color:"rgba(255,255,255,.6)",marginTop:4}}>Your crochet space</div>
       </div>
-      <div style={{padding:"16px 16px 8px"}}><button onClick={onAddPattern} style={{width:"100%",background:`linear-gradient(135deg,#2D3A7C,${T.terra})`,color:"#fff",border:"none",borderRadius:12,padding:"12px",fontSize:14,fontWeight:700,cursor:"pointer",boxShadow:"0 4px 16px rgba(155,126,200,.4)",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><span style={{fontSize:18}}>+</span> Add Pattern</button></div>
+      <div style={{padding:"0 16px 8px"}}><button onClick={onAddPattern} style={{width:"100%",background:"rgba(255,255,255,.2)",color:"#fff",border:"none",borderRadius:9999,padding:"12px",fontSize:14,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"background .15s"}} onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,.3)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,.2)"}><span style={{fontSize:18}}>+</span> Add Pattern</button></div>
       <div style={{flex:1,overflowY:"auto",padding:"8px 0"}}>
         {ITEMS.map(item=>{const active=view===item.key;const locked=item.proOnly&&!isPro;return(
-          <div key={item.key} className="nav-item" onClick={()=>{if(locked){onUpgrade();return;}onNavigate(item.key);}} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 20px",borderLeft:"3px solid "+(active?T.terra:"transparent"),background:active?T.terraLt:"transparent",cursor:"pointer",transition:"background .12s",opacity:locked?.55:1}}>
+          <div key={item.key} className="nav-item" onClick={()=>{if(locked){onUpgrade();return;}onNavigate(item.key);}} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 20px",background:active?"rgba(255,255,255,0.2)":"transparent",cursor:"pointer",transition:"background .12s",opacity:locked?.55:1}}>
             <span style={{fontSize:18,width:24,textAlign:"center"}}>{item.icon}</span>
-            <div style={{flex:1}}><div style={{fontSize:14,fontWeight:active?600:400,color:active?T.terra:T.ink}}>{item.label}</div><div style={{fontSize:11,color:T.ink3,marginTop:1}}>{item.sub}</div></div>
-            {locked&&<span style={{fontSize:12,color:T.ink3}}>🔒</span>}
-            {active&&!locked&&<div style={{width:6,height:6,borderRadius:99,background:T.terra}}/>}
+            <div style={{flex:1}}><div style={{fontSize:14,fontWeight:active?600:400,color:active?"#fff":"rgba(255,255,255,0.75)"}}>{item.label}</div><div style={{fontSize:11,color:"rgba(255,255,255,0.5)",marginTop:1}}>{item.sub}</div></div>
+            {locked&&<span style={{fontSize:12,color:"rgba(255,255,255,0.5)"}}>🔒</span>}
+            {active&&!locked&&<div style={{width:6,height:6,borderRadius:99,background:"#fff"}}/>}
           </div>
         );})}
       </div>
       <div style={{padding:"0 0 8px"}}>
         {(()=>{const active=view==="profile";return(
-          <div className="nav-item" onClick={()=>onNavigate("profile")} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 20px",borderLeft:"3px solid "+(active?T.terra:"transparent"),background:active?T.terraLt:"transparent",cursor:"pointer",transition:"background .12s"}}>
+          <div className="nav-item" onClick={()=>onNavigate("profile")} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 20px",background:active?"rgba(255,255,255,0.2)":"transparent",cursor:"pointer",transition:"background .12s"}}>
             <span style={{fontSize:18,width:24,textAlign:"center"}}>👤</span>
-            <div style={{flex:1}}><div style={{fontSize:14,fontWeight:active?600:400,color:active?T.terra:T.ink}}>Profile & Settings</div><div style={{fontSize:11,color:T.ink3,marginTop:1}}>Your account</div></div>
-            {active&&<div style={{width:6,height:6,borderRadius:99,background:T.terra}}/>}
+            <div style={{flex:1}}><div style={{fontSize:14,fontWeight:active?600:400,color:active?"#fff":"rgba(255,255,255,0.75)"}}>Profile & Settings</div><div style={{fontSize:11,color:"rgba(255,255,255,0.5)",marginTop:1}}>Your account</div></div>
+            {active&&<div style={{width:6,height:6,borderRadius:99,background:"#fff"}}/>}
           </div>
         );})()}
       </div>
       <div style={{padding:"0 16px 24px"}}>
-        {isPro?<div style={{background:`linear-gradient(135deg,#2D3A7C,#1A2456)`,borderRadius:12,padding:"12px 14px",display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:16}}>✨</span><div><div style={{fontSize:12,fontWeight:700,color:"#fff"}}>Wovely Pro</div><div style={{fontSize:11,color:"rgba(255,255,255,.7)"}}>All features active</div></div></div>
-        :<div style={{background:`linear-gradient(135deg,#2D3A7C,${T.terra})`,borderRadius:12,padding:"14px"}}><div style={{fontSize:12,fontWeight:700,color:"#fff",marginBottom:3}}>✨ Upgrade to Pro</div><div style={{fontSize:11,color:"rgba(255,255,255,.75)",lineHeight:1.5,marginBottom:10}}>Unlimited patterns, all imports, Snap & Stitch, cloud sync.</div><div onClick={onUpgrade} style={{background:"rgba(255,255,255,.2)",borderRadius:8,padding:"8px",textAlign:"center",fontSize:12,fontWeight:700,color:"#fff",cursor:"pointer"}}>$9.99/mo</div></div>}
-        {onSignOut&&<button onClick={onSignOut} style={{width:"100%",background:"none",border:"1px solid "+T.border,borderRadius:10,padding:"8px",fontSize:12,color:T.ink3,cursor:"pointer",marginTop:10,fontWeight:500}}>Sign out</button>}
+        {isPro?<div style={{background:"rgba(255,255,255,.15)",borderRadius:12,padding:"12px 14px",display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:16}}>✨</span><div><div style={{fontSize:12,fontWeight:700,color:"#fff"}}>Wovely Pro</div><div style={{fontSize:11,color:"rgba(255,255,255,.7)"}}>All features active</div></div></div>
+        :<div style={{background:"rgba(255,255,255,.15)",borderRadius:12,padding:"14px"}}><div style={{fontSize:12,fontWeight:700,color:"#fff",marginBottom:3}}>✨ Upgrade to Pro</div><div style={{fontSize:11,color:"rgba(255,255,255,.75)",lineHeight:1.5,marginBottom:10}}>Unlimited patterns, all imports, Snap & Stitch, cloud sync.</div><div onClick={onUpgrade} style={{background:"rgba(255,255,255,.2)",borderRadius:9999,padding:"8px",textAlign:"center",fontSize:12,fontWeight:700,color:"#fff",cursor:"pointer"}}>$9.99/mo</div></div>}
+        {onSignOut&&<button onClick={onSignOut} style={{width:"100%",background:"rgba(255,255,255,.15)",border:"none",borderRadius:9999,padding:"8px",fontSize:12,color:"#fff",cursor:"pointer",marginTop:10,fontWeight:500}}>Sign out</button>}
       </div>
     </div>
   );
@@ -479,33 +479,33 @@ const NavPanel = ({open,onClose,view,onNavigate,count,isPro,onSignOut,onUpgrade}
   return (
     <div style={{position:"fixed",inset:0,zIndex:100}}>
       <div className={closing?"dim-out":"dim-in"} onClick={dismiss} style={{position:"absolute",inset:0,background:"rgba(28,23,20,.52)",backdropFilter:"blur(3px)"}}/>
-      <div className={closing?"nav-close":"nav-open"} style={{position:"absolute",top:0,left:0,bottom:0,width:"80%",maxWidth:320,background:T.surface,display:"flex",flexDirection:"column",boxShadow:"6px 0 40px rgba(28,23,20,.2)"}}>
-        <div onClick={()=>go("collection")} style={{position:"relative",height:130,overflow:"hidden",flexShrink:0,cursor:"pointer",transition:"opacity .15s",background:"#9B7EC8"}} onMouseEnter={e=>e.currentTarget.style.opacity=".85"} onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
-          <div style={{position:"absolute",bottom:16,left:18}}><div style={{fontFamily:T.serif,fontSize:22,fontWeight:700,color:"#fff",lineHeight:1}}>Wovely</div><div style={{fontSize:11,color:"rgba(255,255,255,.65)",marginTop:3}}>Your crochet space</div></div>
+      <div className={closing?"nav-close":"nav-open"} style={{position:"absolute",top:0,left:0,bottom:0,width:"80%",maxWidth:320,background:"#9B7EC8",display:"flex",flexDirection:"column",boxShadow:"6px 0 40px rgba(28,23,20,.2)"}}>
+        <div onClick={()=>go("collection")} style={{padding:"28px 18px 20px",cursor:"pointer",transition:"opacity .15s"}} onMouseEnter={e=>e.currentTarget.style.opacity=".85"} onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
+          <div style={{fontFamily:T.serif,fontSize:22,fontWeight:700,color:"#fff",lineHeight:1}}>Wovely</div><div style={{fontSize:11,color:"rgba(255,255,255,.65)",marginTop:3}}>Your crochet space</div>
         </div>
         <div style={{flex:1,overflowY:"auto",paddingTop:6}}>
           {ITEMS.map(item=>{const active=view===item.key;const locked=item.proOnly&&!isPro;return(
-            <div key={item.key} className="nav-item" onClick={()=>{if(locked){onUpgrade();dismiss();return;}go(item.key);}} style={{display:"flex",alignItems:"center",gap:13,padding:"13px 20px",borderLeft:"3px solid "+(active?T.terra:"transparent"),background:active?T.terraLt:"transparent",cursor:"pointer",transition:"background .12s",opacity:locked?.55:1}}>
+            <div key={item.key} className="nav-item" onClick={()=>{if(locked){onUpgrade();dismiss();return;}go(item.key);}} style={{display:"flex",alignItems:"center",gap:13,padding:"13px 20px",background:active?"rgba(255,255,255,0.2)":"transparent",cursor:"pointer",transition:"background .12s",opacity:locked?.55:1}}>
               <span style={{fontSize:20,width:26,textAlign:"center"}}>{item.icon}</span>
-              <div style={{flex:1}}><div style={{fontSize:14,fontWeight:active?600:400,color:active?T.terra:T.ink}}>{item.label}</div><div style={{fontSize:11,color:T.ink3,marginTop:1}}>{item.sub}</div></div>
-              {locked&&<span style={{fontSize:12,color:T.ink3}}>🔒</span>}
-              {active&&!locked&&<div style={{width:6,height:6,borderRadius:99,background:T.terra}}/>}
+              <div style={{flex:1}}><div style={{fontSize:14,fontWeight:active?600:400,color:active?"#fff":"rgba(255,255,255,0.75)"}}>{item.label}</div><div style={{fontSize:11,color:"rgba(255,255,255,0.5)",marginTop:1}}>{item.sub}</div></div>
+              {locked&&<span style={{fontSize:12,color:"rgba(255,255,255,0.5)"}}>🔒</span>}
+              {active&&!locked&&<div style={{width:6,height:6,borderRadius:99,background:"#fff"}}/>}
             </div>
           );})}
         </div>
         <div style={{padding:"0 0 8px"}}>
           {(()=>{const active=view==="profile";return(
-            <div className="nav-item" onClick={()=>go("profile")} style={{display:"flex",alignItems:"center",gap:13,padding:"13px 20px",borderLeft:"3px solid "+(active?T.terra:"transparent"),background:active?T.terraLt:"transparent",cursor:"pointer",transition:"background .12s"}}>
+            <div className="nav-item" onClick={()=>go("profile")} style={{display:"flex",alignItems:"center",gap:13,padding:"13px 20px",background:active?"rgba(255,255,255,0.2)":"transparent",cursor:"pointer",transition:"background .12s"}}>
               <span style={{fontSize:20,width:26,textAlign:"center"}}>👤</span>
-              <div style={{flex:1}}><div style={{fontSize:14,fontWeight:active?600:400,color:active?T.terra:T.ink}}>Profile & Settings</div><div style={{fontSize:11,color:T.ink3,marginTop:1}}>Your account</div></div>
-              {active&&<div style={{width:6,height:6,borderRadius:99,background:T.terra}}/>}
+              <div style={{flex:1}}><div style={{fontSize:14,fontWeight:active?600:400,color:active?"#fff":"rgba(255,255,255,0.75)"}}>Profile & Settings</div><div style={{fontSize:11,color:"rgba(255,255,255,0.5)",marginTop:1}}>Your account</div></div>
+              {active&&<div style={{width:6,height:6,borderRadius:99,background:"#fff"}}/>}
             </div>
           );})()}
         </div>
         <div style={{padding:"0 18px 36px"}}>
-          {isPro?<div style={{background:`linear-gradient(135deg,#2D3A7C,#1A2456)`,borderRadius:14,padding:"12px 14px",display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:18}}>✨</span><div><div style={{fontSize:12,fontWeight:700,color:"#fff"}}>Wovely Pro</div><div style={{fontSize:11,color:"rgba(255,255,255,.7)"}}>All features active</div></div></div>
-          :<div style={{background:`linear-gradient(135deg,#2D3A7C,${T.terra})`,borderRadius:12,padding:"14px 16px"}}><div style={{fontSize:12,fontWeight:700,color:"#fff",marginBottom:3}}>✨ Upgrade to Pro</div><div style={{fontSize:11,color:"rgba(255,255,255,.75)",lineHeight:1.5,marginBottom:10}}>Unlimited patterns, all imports, Snap & Stitch.</div><div onClick={onUpgrade} style={{background:"rgba(255,255,255,.2)",borderRadius:8,padding:"8px",textAlign:"center",fontSize:12,fontWeight:700,color:"#fff",cursor:"pointer"}}>$9.99/mo</div></div>}
-          {onSignOut&&<button onClick={onSignOut} style={{width:"100%",background:"none",border:"1px solid "+T.border,borderRadius:10,padding:"8px",fontSize:12,color:T.ink3,cursor:"pointer",marginTop:10,fontWeight:500}}>Sign out</button>}
+          {isPro?<div style={{background:"rgba(255,255,255,.15)",borderRadius:12,padding:"12px 14px",display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:18}}>✨</span><div><div style={{fontSize:12,fontWeight:700,color:"#fff"}}>Wovely Pro</div><div style={{fontSize:11,color:"rgba(255,255,255,.7)"}}>All features active</div></div></div>
+          :<div style={{background:"rgba(255,255,255,.15)",borderRadius:12,padding:"14px 16px"}}><div style={{fontSize:12,fontWeight:700,color:"#fff",marginBottom:3}}>✨ Upgrade to Pro</div><div style={{fontSize:11,color:"rgba(255,255,255,.75)",lineHeight:1.5,marginBottom:10}}>Unlimited patterns, all imports, Snap & Stitch.</div><div onClick={onUpgrade} style={{background:"rgba(255,255,255,.2)",borderRadius:9999,padding:"8px",textAlign:"center",fontSize:12,fontWeight:700,color:"#fff",cursor:"pointer"}}>$9.99/mo</div></div>}
+          {onSignOut&&<button onClick={onSignOut} style={{width:"100%",background:"rgba(255,255,255,.15)",border:"none",borderRadius:9999,padding:"8px",fontSize:12,color:"#fff",cursor:"pointer",marginTop:10,fontWeight:500}}>Sign out</button>}
         </div>
       </div>
     </div>
@@ -859,7 +859,7 @@ const BrowseSitesView = ({onSavePattern}) => {
   };
   if(activeSite) return (
     <div style={{position:"fixed",inset:0,zIndex:300,display:"flex",flexDirection:"column",background:T.bg}}>
-      <div style={{background:"#1C1714",padding:"10px 14px",display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
+      <div style={{background:"#1A1A2E",padding:"10px 14px",display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
         <button onClick={closeSite} style={{background:"rgba(255,255,255,.12)",border:"1px solid rgba(255,255,255,.2)",borderRadius:8,padding:"8px 14px",fontSize:13,fontWeight:600,color:"#fff",cursor:"pointer",flexShrink:0}}>← Back</button>
         <div style={{flex:1,background:"rgba(255,255,255,.08)",border:"1px solid rgba(255,255,255,.15)",borderRadius:10,padding:"7px 12px",display:"flex",alignItems:"center",gap:7,minWidth:0}}><span style={{fontSize:10,color:"rgba(255,255,255,.4)",flexShrink:0}}>🌐</span><div style={{fontSize:11,color:"rgba(255,255,255,.75)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1,fontFamily:"monospace"}}>{currentUrl||activeSite.url}</div></div>
         <button onClick={()=>window.open(currentUrl||activeSite.url,"_blank","noopener,noreferrer")} style={{background:"rgba(255,255,255,.08)",border:"1px solid rgba(255,255,255,.2)",borderRadius:8,padding:"8px 10px",fontSize:15,cursor:"pointer",flexShrink:0,color:"rgba(255,255,255,.7)"}}>↗</button>
@@ -1252,7 +1252,7 @@ const MasterDocView = () => {
               <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:18,overflow:"hidden",boxShadow:entry.major?"0 4px 24px rgba(155,126,200,.1)":T.shadow}}>
                 <div style={{padding:isDesktop?"22px 28px 18px":"18px 20px 14px",borderBottom:`1px solid ${T.border}`,background:entry.major?"linear-gradient(135deg, #FAF0EC 0%, "+T.card+" 100%)":T.card}}>
                   <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
-                    <span style={{fontFamily:"'DM Sans', monospace",fontSize:isDesktop?22:18,fontWeight:700,color:T.ink,letterSpacing:"-0.02em"}}>{entry.version}</span>
+                    <span style={{fontFamily:"'Inter', monospace",fontSize:isDesktop?22:18,fontWeight:700,color:T.ink,letterSpacing:"-0.02em"}}>{entry.version}</span>
                     {entry.major && <span style={{fontSize:16}} title="Major release">🐝</span>}
                     <span style={{fontSize:12,color:T.ink3,fontWeight:500,marginLeft:"auto"}}>{entry.date}</span>
                   </div>
@@ -1287,19 +1287,19 @@ const MasterDocView = () => {
   };
 
   if(authed) return (
-    <div style={{minHeight:"100vh",background:"#FAF7F3",fontFamily:'"DM Sans",-apple-system,sans-serif'}}>
+    <div style={{minHeight:"100vh",background:"#FFFFFF",fontFamily:'"Inter",-apple-system,sans-serif'}}>
       <style>{`
-        .md-doc h1,.md-doc h2,.md-doc h3{font-family:"Playfair Display",Georgia,serif;color:#1C1714;margin:1.5em 0 .5em;}
-        .md-doc h1{font-size:32px;border-bottom:2px solid #E2D8CC;padding-bottom:12px;}
+        .md-doc h1,.md-doc h2,.md-doc h3{font-family:"Playfair Display",Georgia,serif;color:#1A1A2E;margin:1.5em 0 .5em;}
+        .md-doc h1{font-size:32px;border-bottom:2px solid #EDE4F7;padding-bottom:12px;}
         .md-doc h2{font-size:24px;color:#9B7EC8;}
         .md-doc h3{font-size:18px;}
-        .md-doc p{line-height:1.8;color:#5C4F44;margin:.8em 0;}
-        .md-doc ul,.md-doc ol{padding-left:24px;color:#5C4F44;line-height:1.8;}
+        .md-doc p{line-height:1.8;color:#6B6B8A;margin:.8em 0;}
+        .md-doc ul,.md-doc ol{padding-left:24px;color:#6B6B8A;line-height:1.8;}
         .md-doc table{width:100%;border-collapse:collapse;margin:1em 0;}
-        .md-doc th,.md-doc td{border:1px solid #E2D8CC;padding:10px 14px;text-align:left;font-size:14px;}
-        .md-doc th{background:#F0EBE3;font-weight:600;color:#1C1714;}
-        .md-doc code{background:#F0EBE3;padding:2px 6px;border-radius:4px;font-size:13px;font-family:monospace;}
-        .md-doc pre{background:#F0EBE3;padding:16px;border-radius:10px;overflow-x:auto;margin:1em 0;}
+        .md-doc th,.md-doc td{border:1px solid #EDE4F7;padding:10px 14px;text-align:left;font-size:14px;}
+        .md-doc th{background:#F8F6FF;font-weight:600;color:#1A1A2E;}
+        .md-doc code{background:#F8F6FF;padding:2px 6px;border-radius:4px;font-size:13px;font-family:monospace;}
+        .md-doc pre{background:#F8F6FF;padding:16px;border-radius:10px;overflow-x:auto;margin:1em 0;}
         .md-doc pre code{background:none;padding:0;}
         .md-doc a{color:#9B7EC8;text-decoration:underline;}
         .md-doc blockquote{border-left:4px solid #9B7EC8;margin:1em 0;padding:8px 16px;background:#EDE4F7;border-radius:0 8px 8px 0;}
@@ -1308,10 +1308,10 @@ const MasterDocView = () => {
       <div style={{maxWidth:900,margin:"0 auto",padding:"40px 24px"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24}}>
           <div>
-            <div style={{fontFamily:'"Playfair Display",Georgia,serif',fontSize:28,fontWeight:700,color:"#1C1714"}}>Wovely Admin</div>
-            <div style={{fontSize:13,color:"#9E8E82",marginTop:4}}>{doc?`Version ${doc.version} · Updated ${new Date(doc.updated_at).toLocaleDateString()}`:""}</div>
+            <div style={{fontFamily:'"Playfair Display",Georgia,serif',fontSize:28,fontWeight:700,color:"#1A1A2E"}}>Wovely Admin</div>
+            <div style={{fontSize:13,color:"#6B6B8A",marginTop:4}}>{doc?`Version ${doc.version} · Updated ${new Date(doc.updated_at).toLocaleDateString()}`:""}</div>
           </div>
-          <button onClick={()=>{sessionStorage.removeItem("yh_master_pw");setDoc(null);setAuthed(false);setPw("");}} style={{background:"#F0EBE3",border:"1px solid #E2D8CC",borderRadius:8,padding:"8px 16px",fontSize:13,color:"#5C4F44",cursor:"pointer"}}>Lock</button>
+          <button onClick={()=>{sessionStorage.removeItem("yh_master_pw");setDoc(null);setAuthed(false);setPw("");}} style={{background:"#F8F6FF",border:"1px solid #EDE4F7",borderRadius:8,padding:"8px 16px",fontSize:13,color:"#5C4F44",cursor:"pointer"}}>Lock</button>
         </div>
         <TabBar/>
         {activeTab==="master-doc" && doc && (
@@ -1326,14 +1326,14 @@ const MasterDocView = () => {
   );
 
   return (
-    <div style={{minHeight:"100vh",background:"#FAF7F3",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:'"DM Sans",-apple-system,sans-serif'}}>
-      <div style={{width:"100%",maxWidth:380,padding:"40px 32px",background:"#FAF7F3",borderRadius:20,border:"1px solid #E2D8CC",boxShadow:"0 8px 32px rgba(155,126,200,.08)"}}>
+    <div style={{minHeight:"100vh",background:"#FFFFFF",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:'"Inter",-apple-system,sans-serif'}}>
+      <div style={{width:"100%",maxWidth:380,padding:"40px 32px",background:"#FFFFFF",borderRadius:20,border:"1px solid #EDE4F7",boxShadow:"0 8px 32px rgba(155,126,200,.08)"}}>
         <div style={{textAlign:"center",marginBottom:28}}>
           <div style={{fontSize:40,marginBottom:12}}>🐝</div>
-          <div style={{fontFamily:'"Playfair Display",Georgia,serif',fontSize:22,fontWeight:700,color:"#1C1714"}}>Wovely Admin</div>
-          <div style={{fontSize:13,color:"#9E8E82",marginTop:6}}>Enter password to view</div>
+          <div style={{fontFamily:'"Playfair Display",Georgia,serif',fontSize:22,fontWeight:700,color:"#1A1A2E"}}>Wovely Admin</div>
+          <div style={{fontSize:13,color:"#6B6B8A",marginTop:6}}>Enter password to view</div>
         </div>
-        <input value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==="Enter"&&fetchDoc(pw)} type="password" placeholder="Password" style={{width:"100%",padding:"13px 16px",background:"#EDE8E0",border:"1.5px solid #E2D8CC",borderRadius:12,color:"#1C1714",fontSize:15,marginBottom:12,outline:"none"}}/>
+        <input value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==="Enter"&&fetchDoc(pw)} type="password" placeholder="Password" style={{width:"100%",padding:"13px 16px",background:"#F8F6FF",border:"1.5px solid #EDE4F7",borderRadius:12,color:"#1A1A2E",fontSize:15,marginBottom:12,outline:"none"}}/>
         {error&&<div style={{fontSize:12,color:"#9B7EC8",marginBottom:10}}>{error}</div>}
         <button onClick={()=>fetchDoc(pw)} disabled={loading||!pw} style={{width:"100%",background:"#9B7EC8",color:"#fff",border:"none",borderRadius:12,padding:"14px",fontSize:15,fontWeight:600,cursor:"pointer",opacity:loading?.6:1}}>{loading?"Loading…":"Unlock"}</button>
       </div>
@@ -1483,7 +1483,7 @@ const ChangelogPage = () => {
                 {/* Version header */}
                 <div style={{padding:isDesktop?"22px 28px 18px":"18px 20px 14px",borderBottom:`1px solid ${T.border}`,background:entry.major?"linear-gradient(135deg, #FAF0EC 0%, "+T.card+" 100%)":T.card}}>
                   <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
-                    <span style={{fontFamily:"'DM Sans', monospace",fontSize:isDesktop?22:18,fontWeight:700,color:T.ink,letterSpacing:"-0.02em"}}>{entry.version}</span>
+                    <span style={{fontFamily:"'Inter', monospace",fontSize:isDesktop?22:18,fontWeight:700,color:T.ink,letterSpacing:"-0.02em"}}>{entry.version}</span>
                     {entry.major && <span style={{fontSize:16}} title="Major release">🐝</span>}
                     <span style={{fontSize:12,color:T.ink3,fontWeight:500,marginLeft:"auto"}}>{entry.date}</span>
                   </div>
@@ -1949,14 +1949,14 @@ export default function Wovely() {
       <div style={{flex:1,minWidth:0,overflowY:"auto",display:"flex",flexDirection:"column",background:"#FFFFFF"}}>
         <WelcomeBanner visible={showWelcomeBanner}/>
         {showEmailBanner&&!showWelcomeBanner&&<EmailConfirmBanner onDismiss={handleDismissEmailBanner} onResend={handleResendEmail}/>}
-        <div style={{background:"#FFFFFF",borderBottom:"1px solid #EDE4F7",padding:"0 40px",height:64,display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:20,flexShrink:0}}>
-          <div style={{fontFamily:T.serif,fontSize:24,fontWeight:700,color:T.ink}}>{TITLE_MAP[view]||"Wovely"}</div>
+        <div style={{background:"#FFFFFF",borderBottom:"1px solid #EDE4F7",padding:"0 32px",height:64,display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:20,flexShrink:0}}>
+          <div style={{fontFamily:T.serif,fontSize:28,fontWeight:700,color:T.ink}}>{TITLE_MAP[view]||"Wovely"}</div>
           <div style={{display:"flex",alignItems:"center",gap:12}}>
-            {isPro&&<div style={{background:"#2D3A7C",borderRadius:99,padding:"4px 12px",fontSize:11,fontWeight:700,color:"#fff"}}>✨ Pro</div>}
-            <button onClick={openAddModal} style={{background:T.terra,color:"#fff",border:"none",borderRadius:10,padding:"10px 20px",fontSize:14,fontWeight:700,cursor:"pointer",boxShadow:"0 4px 16px rgba(155,126,200,.3)",display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:18}}>+</span> Add Pattern</button>
+            {isPro&&<div style={{background:T.terraLt,borderRadius:9999,padding:"4px 10px",fontSize:11,fontWeight:600,color:T.terra}}>✨ Pro</div>}
+            <button onClick={openAddModal} style={{background:T.terra,color:"#fff",border:"none",borderRadius:9999,padding:"10px 24px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(155,126,200,.3)",display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:18}}>+</span> Add Pattern</button>
           </div>
         </div>
-        <div style={{flex:1,padding:"0 40px"}}>
+        <div style={{flex:1,padding:"0 32px"}}>
           {view==="collection"&&<CollectionView userPatterns={userPatterns} starterPatterns={starterPatterns} cat={cat} setCat={setCat} search={search} setSearch={setSearch} openDetail={openDetail} onAddPattern={openAddModal} isPro={isPro} tier={tier} onNavigate={navigateToView} onPark={handleParkPattern} onUnpark={handleUnparkPattern} onDelete={handleDeletePattern} onCoverChange={handleCoverChange} pct={pct} catFallbackPhoto={catFallbackPhoto} Photo={Photo} Bar={Bar} Stars={Stars} CATS={CATS} TIER_CONFIG={TIER_CONFIG}/>}
           {view==="wip"&&<div style={{padding:"24px 0 80px"}}><button onClick={()=>navigateToView("collection")} style={{background:"none",border:"none",color:T.terra,cursor:"pointer",fontSize:13,fontWeight:600,padding:0,marginBottom:20,display:"flex",alignItems:"center",gap:6}}>← Back</button>{inProgress.length===0?<div style={{textAlign:"center",padding:"80px 20px"}}><div style={{fontSize:48,marginBottom:14}}>🪡</div><div style={{fontFamily:T.serif,fontSize:20,color:T.ink2,marginBottom:8}}>Nothing in progress</div><div style={{fontSize:14,color:T.ink3}}>Open a pattern and start checking off rows.</div></div>:<div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:20}}>{inProgress.map((p,i)=><PatternCard key={p.id} p={p} delay={i*.06} onClick={()=>openDetail(p)} pct={pct} catFallbackPhoto={catFallbackPhoto} Photo={Photo} Bar={Bar} Stars={Stars}/>)}</div>}</div>}
           {view==="detail"&&selected&&<div style={{margin:"0 -40px"}}><Detail p={selected} onBack={detailOnBack} onSave={detailOnSave} pct={pct} estYards={estYards} estSkeins={estSkeins} pdfThumbUrl={pdfThumbUrl} CSS={CSS} Bar={Bar} Photo={Photo} Stars={Stars} WireframeViewer={WireframeViewer} Btn={Btn}/></div>}
@@ -1988,7 +1988,7 @@ export default function Wovely() {
       <div style={{background:"#FFFFFF",borderBottom:"1px solid #EDE4F7",padding:"0 18px",height:56,display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:20,flexShrink:0}}>
         <button onClick={()=>setNavOpen(true)} style={{background:"none",border:"none",cursor:"pointer",padding:"8px 8px 8px 0",display:"flex",flexDirection:"column",gap:5}}><div style={{width:22,height:1.5,background:T.ink,borderRadius:99}}/><div style={{width:15,height:1.5,background:T.ink,borderRadius:99}}/><div style={{width:22,height:1.5,background:T.ink,borderRadius:99}}/></button>
         <div style={{fontFamily:T.serif,fontSize:20,fontWeight:700,color:T.ink}}>{TITLE_MAP[view]||"Wovely"}</div>
-        <button onClick={openAddModal} style={{background:T.terra,border:"none",borderRadius:9,width:34,height:34,cursor:"pointer",color:"#fff",fontSize:20,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 10px rgba(155,126,200,.4)"}}>+</button>
+        <button onClick={openAddModal} style={{background:T.terra,border:"none",borderRadius:9999,width:34,height:34,cursor:"pointer",color:"#fff",fontSize:20,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 10px rgba(155,126,200,.4)"}}>+</button>
       </div>
       <div style={{flex:1,overflowY:"auto",paddingBottom:100}}>
         {view==="collection"&&<CollectionView userPatterns={userPatterns} starterPatterns={starterPatterns} cat={cat} setCat={setCat} search={search} setSearch={setSearch} openDetail={openDetail} onAddPattern={openAddModal} isPro={isPro} tier={tier} onNavigate={navigateToView} onPark={handleParkPattern} onUnpark={handleUnparkPattern} onDelete={handleDeletePattern} onCoverChange={handleCoverChange} pct={pct} catFallbackPhoto={catFallbackPhoto} Photo={Photo} Bar={Bar} Stars={Stars} CATS={CATS} TIER_CONFIG={TIER_CONFIG}/>}
@@ -2001,7 +2001,7 @@ export default function Wovely() {
         {view==="profile"&&<ProfileSettingsView isPro={isPro} onOpenProModal={()=>setShowProModal(true)} onGoHome={()=>navigate("/hive")} onEmailConfirmed={()=>setShowEmailBanner(false)}/>}
       </div>
       <div style={{position:"fixed",bottom:28,left:"50%",transform:"translateX(-50%)",zIndex:30,pointerEvents:"none"}}>
-        <button onClick={openAddModal} style={{background:`linear-gradient(135deg,#2D3A7C,${T.terra})`,color:"#fff",border:"none",borderRadius:99,padding:"13px 26px",fontSize:14,fontWeight:700,cursor:"pointer",pointerEvents:"auto",boxShadow:"0 8px 28px rgba(155,126,200,.55)",display:"flex",alignItems:"center",gap:8,animation:"fabPulse 3s ease infinite"}}><span style={{fontSize:17}}>+</span> Add Pattern</button>
+        <button onClick={openAddModal} style={{background:T.terra,color:"#fff",border:"none",borderRadius:9999,padding:"13px 26px",fontSize:14,fontWeight:600,cursor:"pointer",pointerEvents:"auto",boxShadow:"0 8px 28px rgba(155,126,200,.55)",display:"flex",alignItems:"center",gap:8,animation:"fabPulse 3s ease infinite"}}><span style={{fontSize:17}}>+</span> Add Pattern</button>
       </div>
     </div>
   );

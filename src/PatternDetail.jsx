@@ -187,7 +187,7 @@ const DeleteConfirmModal = ({pattern,isPro,onCancel,onDelete,onPark,onGoPro}) =>
         <button onClick={onPark} style={{width:"100%",background:T.sageLt,color:T.sage,border:`1px solid ${T.sage}`,borderRadius:12,padding:"12px",fontSize:13,fontWeight:600,cursor:"pointer",marginBottom:6}}>Park it instead</button>
         <div style={{fontSize:11,color:T.ink3,marginBottom:12,lineHeight:1.5,textAlign:"center"}}>Parking saves your progress and frees up your active view.<br/><span onClick={onGoPro} style={{color:T.terra,cursor:"pointer",fontWeight:600}}>Go Pro for unlimited patterns →</span></div>
       </>}
-      <button onClick={onDelete} style={{width:"100%",background:"#C0392B",color:"#fff",border:"none",borderRadius:12,padding:"12px",fontSize:13,fontWeight:600,cursor:"pointer",marginBottom:6}}>Delete</button>
+      <button onClick={onDelete} style={{width:"100%",background:"#C05A5A",color:"#fff",border:"none",borderRadius:12,padding:"12px",fontSize:13,fontWeight:600,cursor:"pointer",marginBottom:6}}>Delete</button>
       <button onClick={onCancel} style={{width:"100%",background:T.linen,color:T.ink2,border:`1px solid ${T.border}`,borderRadius:12,padding:"11px",fontSize:13,fontWeight:500,cursor:"pointer"}}>Cancel</button>
     </div>
   </div>

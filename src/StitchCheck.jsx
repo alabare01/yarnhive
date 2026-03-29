@@ -61,12 +61,12 @@ const extractTextFromPDF = async (file) => {
   });
 };
 
-const BADGE = { valid: { color: T.sage, bg: T.sageLt, emoji: "\u2705", label: "Pattern Looks Good" }, review: { color: T.gold, bg: "#FFF8EC", emoji: "\u26A0\uFE0F", label: "Review Suggested" }, issues: { color: "#C0392B", bg: "#FFF0EE", emoji: "\u274C", label: "Issues Found" } };
+const BADGE = { valid: { color: "#5C9E7A", bg: T.sageLt, emoji: "\u2705", label: "Pattern Looks Good" }, review: { color: "#C9853A", bg: "#FFF8EC", emoji: "\u26A0\uFE0F", label: "Review Suggested" }, issues: { color: "#C05A5A", bg: "#FFF0EE", emoji: "\u274C", label: "Issues Found" } };
 const badgeForScore = (score) => score >= 80 ? BADGE.valid : score >= 60 ? BADGE.review : BADGE.issues;
 const CHECK_ICON = { pass: "\u2705", warn: "\u26A0\uFE0F", fail: "\u274C" };
 
-const CARD = {background:T.card,borderRadius:16,padding:24,boxShadow:T.shadowLg};
-const LABEL = {fontSize:10,fontVariant:"small-caps",color:T.ink3,textTransform:"lowercase",letterSpacing:".14em",marginBottom:6,fontWeight:500};
+const CARD = {background:"#FFFFFF",borderRadius:16,padding:24,border:`1px solid ${T.border}`,boxShadow:T.shadow};
+const LABEL = {fontSize:11,fontWeight:600,color:T.ink2,textTransform:"uppercase",letterSpacing:".05em",marginBottom:6};
 
 const StitchCheck = () => {
   const [mode, setMode] = useState(null); // null | "pdf" | "text"
@@ -146,8 +146,8 @@ const StitchCheck = () => {
           <div style={{ fontSize: 40, marginBottom: 10 }}>{badge.emoji}</div>
           <div style={{ fontFamily: T.serif, fontSize: 22, fontWeight: 700, color: badge.color, marginBottom: 4 }}>{badge.label}</div>
           <div style={{ fontFamily: T.serif, fontSize: 48, fontWeight: 700, color: badge.color, lineHeight: 1 }}>{report.score}%</div>
-          <div style={{ marginTop: 16, background: T.linen, borderRadius: 99, height: 6, overflow: "hidden" }}>
-            <div style={{ width: report.score + "%", height: "100%", background: badge.color, borderRadius: 99, transition: "width .4s ease" }} />
+          <div style={{ marginTop: 16, background: T.terraLt, borderRadius: 9999, height: 6, overflow: "hidden" }}>
+            <div style={{ width: report.score + "%", height: "100%", background: badge.color, borderRadius: 9999, transition: "width .4s ease" }} />
           </div>
         </div>
 
@@ -176,7 +176,7 @@ const StitchCheck = () => {
         <div style={{ padding: "0 8px", textAlign: "center", marginBottom: 20 }}>
           <p style={{ fontSize: 12, color: T.sage, lineHeight: 1.7, fontStyle: "italic", margin: 0 }}>A lower score doesn't mean your pattern won't work \u2014 think of it like adding a handwritten recipe card to your recipe box. Mom's notes, doodles, and shorthand are part of the charm. Wovely can import any pattern regardless of its Stitch Check score.</p>
         </div>
-        <button onClick={reset} style={{ width: "100%", background: T.card, color: T.ink2, border: "none", borderRadius: 99, padding: "14px", fontSize: 14, fontWeight: 600, cursor: "pointer", boxShadow: T.shadow }}>Check another pattern</button>
+        <button onClick={reset} style={{ width: "100%", background: "#FFFFFF", color: T.ink2, border: `1.5px solid ${T.terra}`, borderRadius: 9999, padding: "14px", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Check another pattern</button>
       </div>
     );
   }
@@ -187,8 +187,8 @@ const StitchCheck = () => {
       <div style={{ fontSize: 13, color: T.ink3, marginBottom: 24, lineHeight: 1.6 }}>Before you pick up your hook \u2014 let Wovely check the math.</div>
 
       {error && (
-        <div style={{ ...CARD, background: "#FFF0EE", marginBottom: 20 }}>
-          <div style={{ fontSize: 13, color: "#C0392B", fontWeight: 600, marginBottom: 4 }}>Something went wrong</div>
+        <div style={{ ...CARD, background: "#FFF0EE", borderColor: "rgba(192,90,90,.2)", marginBottom: 20 }}>
+          <div style={{ fontSize: 13, color: "#C05A5A", fontWeight: 600, marginBottom: 4 }}>Something went wrong</div>
           <div style={{ fontSize: 12, color: T.ink2, lineHeight: 1.6 }}>{error}</div>
         </div>
       )}
@@ -197,8 +197,8 @@ const StitchCheck = () => {
         <div style={{ ...CARD, textAlign: "center", padding: "48px 24px" }}>
           <div style={{ fontSize: 40, marginBottom: 16 }}>{"\uD83D\uDEE1\uFE0F"}</div>
           <div style={{ fontFamily: T.serif, fontSize: 18, color: T.ink, marginBottom: 12 }}>{phase}</div>
-          <div style={{ height: 6, background: T.linen, borderRadius: 99, overflow: "hidden", margin: "0 auto", maxWidth: 300 }}>
-            <div className="progress-bar-fill" style={{ height: "100%", width: progress + "%", borderRadius: 99, transition: "width .3s ease" }} />
+          <div style={{ height: 6, background: T.terraLt, borderRadius: 9999, overflow: "hidden", margin: "0 auto", maxWidth: 300 }}>
+            <div className="progress-bar-fill" style={{ height: "100%", width: progress + "%", borderRadius: 9999, transition: "width .3s ease" }} />
           </div>
         </div>
       )}
@@ -222,10 +222,10 @@ const StitchCheck = () => {
       {!loading && mode === "text" && (
         <div style={CARD}>
           <div style={LABEL}>paste your pattern</div>
-          <textarea value={text} onChange={e => setText(e.target.value)} placeholder="Paste your pattern text here \u2014 rounds, rows, instructions, everything\u2026" rows={12} style={{ width: "100%", padding: "16px 0", background: "transparent", border: "none", borderBottom: `1.5px solid ${T.border}`, color: T.ink, fontSize: 14, resize: "vertical", lineHeight: 1.7, outline: "none", fontFamily: T.sans, transition: "border-color .2s" }} onFocus={e => e.target.style.borderBottomColor = T.terra} onBlur={e => e.target.style.borderBottomColor = T.border} />
+          <textarea value={text} onChange={e => setText(e.target.value)} placeholder="Paste your pattern text here \u2014 rounds, rows, instructions, everything\u2026" rows={12} style={{ width: "100%", padding: "16px 0", background: "transparent", border: "none", borderBottom: "2px solid transparent", color: T.ink, fontSize: 14, resize: "vertical", lineHeight: 1.7, outline: "none", fontFamily: T.sans, transition: "border-color .2s" }} onFocus={e => e.target.style.borderBottomColor = T.terra} onBlur={e => e.target.style.borderBottomColor = "transparent"} />
           <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
-            <button onClick={handleTextSubmit} disabled={!text.trim()} style={{ flex: 1, background: T.terra, color: "#fff", border: "none", borderRadius: 99, padding: "14px", fontSize: 15, fontWeight: 600, cursor: text.trim() ? "pointer" : "not-allowed", opacity: text.trim() ? 1 : .5, boxShadow: "0 4px 16px rgba(155,126,200,.3)" }}>Run Stitch Check</button>
-            <button onClick={reset} style={{ background: T.card, color: T.ink2, border: "none", borderRadius: 99, padding: "14px 24px", fontSize: 14, fontWeight: 500, cursor: "pointer", boxShadow: T.shadow }}>Back</button>
+            <button onClick={handleTextSubmit} disabled={!text.trim()} style={{ flex: 1, background: T.terra, color: "#fff", border: "none", borderRadius: 9999, padding: "12px 24px", fontSize: 14, fontWeight: 600, cursor: text.trim() ? "pointer" : "not-allowed", opacity: text.trim() ? 1 : .5 }}>Run Stitch Check</button>
+            <button onClick={reset} style={{ background: "#FFFFFF", color: T.terra, border: `1.5px solid ${T.terra}`, borderRadius: 9999, padding: "12px 24px", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Back</button>
           </div>
         </div>
       )}

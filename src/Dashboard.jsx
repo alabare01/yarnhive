@@ -9,7 +9,7 @@ const PatternCard = ({p,onClick,onPark,onUnpark,onDelete,onCoverChange,delay=0,p
   const cardPhoto=p.cover_image_url||(PILL.includes(p.photo)?catFallbackPhoto(p.cat):p.photo)||catFallbackPhoto(p.cat);
   const isPlaceholder=!p.cover_image_url&&PILL.includes(p.photo);
   return (
-    <div className="card fu" onClick={onClick} style={{background:T.card,borderRadius:16,overflow:"hidden",border:`1px solid ${T.border}`,cursor:"pointer",animationDelay:delay+"s",position:"relative",boxShadow:"0 1px 4px rgba(0,0,0,0.06)"}}>
+    <div className="card fu" onClick={onClick} style={{background:"#FFFFFF",borderRadius:16,overflow:"hidden",border:`1px solid ${T.border}`,cursor:"pointer",animationDelay:delay+"s",position:"relative",boxShadow:T.shadow}}>
       {!p.isStarter&&(onPark||onDelete)&&<div style={{position:"absolute",top:8,right:8,zIndex:5}}>
         <button onClick={e=>{e.stopPropagation();setMenuOpen(!menuOpen);}} style={{background:"rgba(0,0,0,.45)",backdropFilter:"blur(4px)",border:"none",borderRadius:99,width:28,height:28,cursor:"pointer",color:"#fff",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1}}>⋮</button>
         {menuOpen&&<div onClick={e=>e.stopPropagation()} style={{position:"absolute",right:0,top:32,background:T.modal,border:`1px solid ${T.border}`,borderRadius:10,boxShadow:"0 8px 24px rgba(155,126,200,.12)",zIndex:10,minWidth:150,overflow:"hidden"}}>
@@ -18,7 +18,7 @@ const PatternCard = ({p,onClick,onPark,onUnpark,onDelete,onCoverChange,delay=0,p
             ?<div onClick={()=>{setMenuOpen(false);onUnpark&&onUnpark(p);}} style={{padding:"10px 14px",fontSize:13,color:T.ink,cursor:"pointer",borderBottom:`1px solid ${T.border}`}} onMouseEnter={e=>e.currentTarget.style.background=T.linen} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>Unpark</div>
             :<div onClick={()=>{setMenuOpen(false);onPark&&onPark(p);}} style={{padding:"10px 14px",fontSize:13,color:T.ink,cursor:"pointer",borderBottom:`1px solid ${T.border}`}} onMouseEnter={e=>e.currentTarget.style.background=T.linen} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>Park for later</div>
           }
-          <div onClick={()=>{setMenuOpen(false);onDelete&&onDelete(p);}} style={{padding:"10px 14px",fontSize:13,color:"#C0392B",cursor:"pointer"}} onMouseEnter={e=>e.currentTarget.style.background=T.linen} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>Delete pattern</div>
+          <div onClick={()=>{setMenuOpen(false);onDelete&&onDelete(p);}} style={{padding:"10px 14px",fontSize:13,color:"#C05A5A",cursor:"pointer"}} onMouseEnter={e=>e.currentTarget.style.background=T.linen} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>Delete pattern</div>
         </div>}
       </div>}
       <div style={{position:"relative",aspectRatio:"1",overflow:"hidden",background:T.linen}}>
@@ -47,7 +47,7 @@ const ShelfCard = ({p,onClick,pct,catFallbackPhoto,Photo,Bar}) => {
   const v=pct(p);
   const cardPhoto=p.cover_image_url||p.photo||catFallbackPhoto(p.cat);
   return (
-    <div onClick={onClick} style={{width:160,borderRadius:14,overflow:"hidden",border:`1px solid ${T.border}`,background:T.card,cursor:"pointer",boxShadow:"0 1px 4px rgba(0,0,0,0.06)",transition:"transform .16s,box-shadow .16s",flexShrink:0}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 8px 20px rgba(28,23,20,.12)";}} onMouseLeave={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="0 1px 4px rgba(0,0,0,0.06)";}}>
+    <div onClick={onClick} style={{width:160,borderRadius:16,overflow:"hidden",border:`1px solid ${T.border}`,background:"#FFFFFF",cursor:"pointer",boxShadow:T.shadow,transition:"transform .16s,box-shadow .16s",flexShrink:0}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-1px)";e.currentTarget.style.boxShadow=T.shadowLg;}} onMouseLeave={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow=T.shadow;}}>
       <div style={{height:100,position:"relative",background:T.linen,overflow:"hidden"}}><Photo src={cardPhoto} alt={p.title} style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top"}}/><div style={{position:"absolute",bottom:0,left:0,right:0}}><Bar val={v} color={T.terra} h={3} bg="rgba(0,0,0,.2)"/></div></div>
       <div style={{padding:"9px 12px 11px"}}><div style={{fontFamily:T.serif,fontSize:13,color:T.ink,lineHeight:1.3,marginBottom:2}}>{p.title}</div><div style={{fontSize:11,color:T.terra,fontWeight:600}}>{v}% done</div></div>
     </div>
@@ -60,7 +60,7 @@ const HScrollRow = ({children,itemCount}) => {
   return (
     <div style={{position:"relative",overflow:"hidden"}}>
       <div ref={ref} className="h-scroll" style={{paddingLeft:18,paddingRight:18}}>{children}</div>
-      {showHint&&<div className="mobile-swipe-hint" style={{position:"absolute",right:0,top:0,bottom:8,width:80,background:"linear-gradient(to left,rgba(244,237,227,.98) 0%,transparent 100%)",pointerEvents:"none",display:"flex",alignItems:"center",justifyContent:"flex-end",paddingRight:12}}><div style={{background:"rgba(28,23,20,.1)",borderRadius:99,padding:"4px 10px",fontSize:11,color:T.ink2,display:"flex",alignItems:"center",gap:3}}><span style={{fontSize:12}}>←</span> swipe</div></div>}
+      {showHint&&<div className="mobile-swipe-hint" style={{position:"absolute",right:0,top:0,bottom:8,width:80,background:"linear-gradient(to left,rgba(255,255,255,.98) 0%,transparent 100%)",pointerEvents:"none",display:"flex",alignItems:"center",justifyContent:"flex-end",paddingRight:12}}><div style={{background:T.terraLt,borderRadius:9999,padding:"4px 10px",fontSize:11,color:T.terra,display:"flex",alignItems:"center",gap:3}}><span style={{fontSize:12}}>←</span> swipe</div></div>}
     </div>
   );
 };
@@ -126,9 +126,9 @@ const SLOT_SVGS = [
 ];
 
 const EmptySlotCard = ({onClick,slotIndex=0}) => (
-  <div onClick={onClick} style={{background:"linear-gradient(135deg,#F0EBE3 0%,#E8DFD3 100%)",borderRadius:16,border:"2px dashed #C4B5A0",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:220,transition:"border-color .2s, background .2s"}} onMouseEnter={e=>{e.currentTarget.style.borderColor="#9B7EC8";e.currentTarget.style.background="linear-gradient(135deg,#F5F0EA 0%,#EDE5D8 100%)";}} onMouseLeave={e=>{e.currentTarget.style.borderColor="#C4B5A0";e.currentTarget.style.background="linear-gradient(135deg,#F0EBE3 0%,#E8DFD3 100%)";}}>
+  <div onClick={onClick} style={{background:T.surface,borderRadius:16,border:`2px dashed ${T.border}`,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:220,transition:"border-color .2s, background .2s"}} onMouseEnter={e=>{e.currentTarget.style.borderColor=T.terra;e.currentTarget.style.background=T.terraLt;}} onMouseLeave={e=>{e.currentTarget.style.borderColor=T.border;e.currentTarget.style.background=T.surface;}}>
     <div style={{width:48,height:48,marginBottom:10}} dangerouslySetInnerHTML={{__html:SLOT_SVGS[slotIndex%SLOT_SVGS.length]}}/>
-    <div style={{fontSize:13,color:"#A89070"}}>Add a pattern</div>
+    <div style={{fontSize:13,color:T.ink2}}>Add a pattern</div>
   </div>
 );
 
@@ -147,7 +147,7 @@ const CollectionView = ({userPatterns,starterPatterns,cat,setCat,search,setSearc
     <>
       <HiveCarousel/>
       {inProgress.length>0&&(
-        <div style={{background:T.linen,borderBottom:`1px solid ${T.border}`,padding:"16px 0 18px",marginBottom:8}}>
+        <div style={{background:T.surface,borderBottom:`1px solid ${T.border}`,padding:"16px 0 18px",marginBottom:8}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 "+(isDesktop?"0":"18px"),marginBottom:12}}>
             <div style={{fontSize:10,color:T.ink3,textTransform:"uppercase",letterSpacing:".09em",fontWeight:600}}>Continue Working</div>
           </div>
@@ -155,13 +155,13 @@ const CollectionView = ({userPatterns,starterPatterns,cat,setCat,search,setSearc
         </div>
       )}
       <div style={{padding:isDesktop?"16px 0 10px":"16px 18px 10px"}}>
-        <div style={{display:"flex",alignItems:"center",background:T.linen,border:`1.5px solid ${T.border}`,borderRadius:12,padding:"10px 14px",gap:9}}>
+        <div style={{display:"flex",alignItems:"center",background:T.surface,border:`1.5px solid ${T.border}`,borderRadius:8,padding:"10px 14px",gap:9}}>
           <span style={{color:T.ink3,fontSize:15}}>🔍</span>
           <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search your hive…" style={{border:"none",background:"transparent",flex:1,fontSize:14,color:T.ink,outline:"none"}} onFocus={e=>e.currentTarget.parentNode.style.borderColor=T.terra} onBlur={e=>e.currentTarget.parentNode.style.borderColor=T.border}/>
         </div>
       </div>
       <div style={{display:"flex",gap:7,overflowX:"auto",padding:isDesktop?"0 0 16px":"0 18px 16px",WebkitOverflowScrolling:"touch"}}>
-        {CATS.map(c=><button key={c} onClick={()=>setCat(c)} style={{background:cat===c?T.terra:T.card,color:cat===c?"#fff":T.ink2,border:"1.5px solid "+(cat===c?T.terra:T.border),borderRadius:99,padding:"6px 14px",fontSize:12,fontWeight:500,cursor:"pointer",whiteSpace:"nowrap",transition:"all .15s",flexShrink:0,boxShadow:cat===c?"0 2px 10px rgba(155,126,200,.28)":"none"}}>{c}</button>)}
+        {CATS.map(c=><button key={c} onClick={()=>setCat(c)} style={{background:cat===c?T.terra:T.terraLt,color:cat===c?"#fff":T.terra,border:"none",borderRadius:9999,padding:"4px 10px",fontSize:11,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap",transition:"all .15s",flexShrink:0,textTransform:"uppercase",letterSpacing:".05em"}}>{c}</button>)}
       </div>
       {/* Counter + view toggle */}
       <div style={{padding:pad,display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
@@ -183,7 +183,7 @@ const CollectionView = ({userPatterns,starterPatterns,cat,setCat,search,setSearc
         <div style={{padding:isDesktop?"0 0 80px":"0 18px 120px",display:"flex",flexDirection:"column",gap:8}}>
           {filteredAll.length===0&&<div style={{textAlign:"center",padding:"40px 20px",color:T.ink3,fontSize:13}}>No patterns yet. Add your first!</div>}
           {filteredAll.map((p,i)=>(
-            <div key={p.id} className="fu" onClick={()=>openDetail(p)} style={{display:"flex",gap:12,background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:10,cursor:"pointer",animationDelay:i*.04+"s",boxShadow:T.shadow}}>
+            <div key={p.id} className="fu" onClick={()=>openDetail(p)} style={{display:"flex",gap:12,background:"#FFFFFF",border:`1px solid ${T.border}`,borderRadius:16,padding:10,cursor:"pointer",animationDelay:i*.04+"s",boxShadow:T.shadow}}>
               <div style={{width:56,height:56,borderRadius:10,overflow:"hidden",flexShrink:0,background:T.linen}}><Photo src={p.cover_image_url||p.photo||catFallbackPhoto(p.cat)} alt={p.title} style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top"}}/></div>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontFamily:T.serif,fontSize:14,fontWeight:500,color:T.ink,lineHeight:1.3}}>{p.title}</div>

@@ -533,7 +533,7 @@ const HiveVisionForm = ({onSave,Btn,Bar,WireframeViewer}) => {
       )}
       {error&&(
         <div style={{background:"#FFF0EE",borderRadius:12,padding:"14px 16px",marginBottom:14,border:"1px solid #F5C6BB"}}>
-          <div style={{fontSize:13,color:"#C0392B",fontWeight:600,marginBottom:4}}>Couldn't read this photo</div>
+          <div style={{fontSize:13,color:"#C05A5A",fontWeight:600,marginBottom:4}}>Couldn't read this photo</div>
           <div style={{fontSize:12,color:T.ink2,lineHeight:1.6}}>{error}</div>
           <div style={{marginTop:10}}><Btn variant="secondary" onClick={reset} small full={false}>Try again</Btn></div>
         </div>
@@ -562,7 +562,7 @@ const HiveVisionForm = ({onSave,Btn,Bar,WireframeViewer}) => {
                   <div style={{background:"rgba(0,0,0,.4)",borderRadius:6,padding:"2px 7px",fontSize:9,color:"rgba(255,255,255,.8)"}}>⤢ expand</div>
                 </div>
               </div>
-              <div style={{borderRadius:12,overflow:"hidden",border:`1px solid ${T.border}`,height:240,background:"#FAF7F3",position:"relative",cursor:"zoom-in"}} onClick={()=>setLightbox("wireframe")}>
+              <div style={{borderRadius:12,overflow:"hidden",border:`1px solid ${T.border}`,height:240,background:"#F8F6FF",position:"relative",cursor:"zoom-in"}} onClick={()=>setLightbox("wireframe")}>
                 <WireframeViewer components={analysis.components} labeled={wireframeMode==="labeled"} height={240}/>
                 <div style={{position:"absolute",bottom:8,right:10,background:"rgba(0,0,0,.35)",borderRadius:6,padding:"2px 7px",fontSize:9,color:"rgba(255,255,255,.8)",pointerEvents:"none"}}>⤢ expand</div>
               </div>
@@ -714,7 +714,7 @@ const URLImportForm = ({onSave,Btn,Photo}) => {
         <button onClick={doImport} disabled={!url.trim()||loading} style={{background:T.terra,color:"#fff",border:"none",borderRadius:12,padding:"0 18px",fontWeight:600,fontSize:14,cursor:"pointer",boxShadow:"0 4px 14px rgba(155,126,200,.3)",opacity:!url.trim()||loading?0.6:1}}>{loading?"…":"Go"}</button>
       </div>
       {loading&&<div style={{padding:"24px 0 32px"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}><div style={{fontSize:13,color:T.ink2,fontWeight:500}}>{phase}</div><div style={{fontSize:13,color:T.terra,fontWeight:700}}>{progress}%</div></div><div style={{background:T.border,borderRadius:99,height:6,overflow:"hidden",marginBottom:10}}><div className="progress-bar-fill" style={{width:progress+"%",height:6,borderRadius:99,transition:"width .3s ease"}}/></div></div>}
-      {error&&<div style={{background:"#FFF0EE",borderRadius:12,padding:"14px 16px",marginBottom:14,border:"1px solid #F5C6BB"}}><div style={{fontSize:13,color:"#C0392B",fontWeight:600,marginBottom:4}}>Couldn't read this URL</div><div style={{fontSize:12,color:T.ink2,lineHeight:1.6}}>{error}</div></div>}
+      {error&&<div style={{background:"#FFF0EE",borderRadius:12,padding:"14px 16px",marginBottom:14,border:"1px solid #F5C6BB"}}><div style={{fontSize:13,color:"#C05A5A",fontWeight:600,marginBottom:4}}>Couldn't read this URL</div><div style={{fontSize:12,color:T.ink2,lineHeight:1.6}}>{error}</div></div>}
       {preview&&!loading&&(
         <div className="fu" style={{background:T.linen,borderRadius:16,overflow:"hidden",border:`1px solid ${T.border}`}}>
           <div style={{height:100,position:"relative"}}><Photo src={preview.photo} alt="pattern" style={{width:"100%",height:"100%"}}/></div>
@@ -915,7 +915,7 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade}) => {
   const matList=(extracted?.materials||[]);
   const matSummary=matList.length>3?matList.slice(0,2).map(m=>m.name).join(", ")+" +"+( matList.length-2)+" more":matList.map(m=>m.name).join(", ");
   return (
-    <div style={{paddingBottom:8,background:"#FAF7F2",margin:"-0px -22px -40px",padding:"0 22px 40px"}}>
+    <div style={{paddingBottom:8,background:"#FFFFFF",margin:"-0px -22px -40px",padding:"0 22px 40px"}}>
       <input ref={coverFileRef} type="file" accept="image/*" onChange={async(e)=>{
         const f=e.target.files?.[0];if(!f)return;setCoverUploading(true);
         const fd=new FormData();fd.append("file",f);fd.append("upload_preset","yarnhive_patterns");fd.append("transformation","c_fill,g_auto,ar_16:9");
@@ -923,7 +923,7 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade}) => {
         setCoverUploading(false);
       }} style={{display:"none"}}/>
       {/* ── HERO ZONE ── */}
-      <div style={{position:"relative",height:200,margin:"0 -22px",overflow:"hidden",background:"#1C1714"}}>
+      <div style={{position:"relative",height:200,margin:"0 -22px",overflow:"hidden",background:"#1A1A2E"}}>
         {heroImg&&<><img src={heroImg} alt="" style={{position:"absolute",width:"100%",height:"100%",objectFit:"cover",filter:"blur(20px) saturate(1.2) brightness(0.6)",transform:"scale(1.1)",pointerEvents:"none"}}/>
         <img src={heroImg} alt={editTitle} style={{position:"absolute",left:"50%",transform:"translateX(-50%)",height:"100%",width:"auto",objectFit:"contain",zIndex:1}}/></>}
         {!heroImg&&<div style={{position:"absolute",inset:0,background:`linear-gradient(135deg,${T.terra},#6B2A10)`}}/>}
@@ -1043,7 +1043,7 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade}) => {
       {showFullReport&&validationReport&&(
         <div style={{position:"fixed",inset:0,zIndex:700,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
           <div onClick={()=>setShowFullReport(false)} style={{position:"absolute",inset:0,background:"rgba(0,0,0,.6)",backdropFilter:"blur(4px)"}}/>
-          <div style={{position:"relative",zIndex:1,background:"#FAF7F2",borderRadius:20,width:"100%",maxWidth:480,maxHeight:"85vh",overflow:"auto",padding:"24px 22px 32px"}}>
+          <div style={{position:"relative",zIndex:1,background:"#FFFFFF",borderRadius:20,width:"100%",maxWidth:480,maxHeight:"85vh",overflow:"auto",padding:"24px 22px 32px"}}>
             <button onClick={()=>setShowFullReport(false)} style={{position:"absolute",top:14,right:16,background:T.linen,border:"none",borderRadius:99,width:30,height:30,cursor:"pointer",fontSize:16,color:T.ink3,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
             <div style={{fontFamily:T.serif,fontSize:18,color:T.ink,marginBottom:16}}>Stitch Check Report</div>
             <div style={{background:badgeForScore(validationReport.score).bg,border:`2px solid ${badgeForScore(validationReport.score).color}`,borderRadius:14,padding:"16px",marginBottom:14,textAlign:"center"}}>
