@@ -841,8 +841,27 @@ const BrowseSitesView = ({onSavePattern}) => {
     {name:"Ravelry",desc:"World's largest pattern database.",url:"https://www.ravelry.com/patterns/library#craft=crochet",tags:["All categories","Free + Paid"],free:false,photo:PILL[0],note:"Log in on your device, then browse and save any pattern."},
     {name:"LoveCrafts",desc:"Quality free and paid patterns.",url:"https://www.lovecrafts.com/en-us/l/crochet/crochet-patterns?price=free",tags:["Garments","Modern"],free:false,photo:PILL[2]},
   ];
-  const handleIframeLoad=()=>{try{const u=iframeRef.current?.contentWindow?.location?.href;if(u&&u!=="about:blank"){setCurrentUrl(u);setImportErr(null);setImportOk(false);}}catch(e){}};
+  const proxyUrl=(u)=>"/api/proxy?url="+encodeURIComponent(u);
+  const handleIframeLoad=()=>{try{const raw=iframeRef.current?.contentWindow?.location?.href;if(raw&&raw!=="about:blank"){const m=raw.match(/[?&]url=([^&]+)/);const real=m?decodeURIComponent(m[1]):raw;setCurrentUrl(real);setImportErr(null);setImportOk(false);}}catch(e){}};
   const closeSite=()=>{setActiveSite(null);setCurrentUrl("");setImportErr(null);setImportOk(false);};
+  const doImportUrl=async(url)=>{
+    if(!url) return;
+    setImporting(true);setImportErr(null);setImportOk(false);
+    try{
+      const res=await fetch("/api/fetch-pattern",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url})});
+      const data=await res.json(); if(!res.ok||data.error) throw new Error(data.error||"Could not read that page");
+      const rows=(data.rows||[]).map((r,i)=>({id:Date.now()+i,text:r.text,done:false,note:""}));
+      onSavePattern&&onSavePattern({id:Date.now(),photo:data.thumbnail_url||PILL[Math.floor(Math.random()*PILL.length)],rating:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:50,height:60},...data,rows});
+      setImportOk(true); setTimeout(closeSite,1800);
+    }catch(e){setImportErr("Couldn't read this page. Try navigating directly to the pattern and tapping Save again.");}
+    finally{setImporting(false);}
+  };
+  useEffect(()=>{
+    if(!activeSite)return;
+    const onMsg=(e)=>{if(e.data?.type==="IMPORT_URL"&&e.data.url){const raw=e.data.url;const m=raw.match(/[?&]url=([^&]+)/);const real=m?decodeURIComponent(m[1]):raw;setCurrentUrl(real);doImportUrl(real);}};
+    window.addEventListener("message",onMsg);
+    return ()=>window.removeEventListener("message",onMsg);
+  },[activeSite]);
   const doImport=async()=>{
     const urlToImport=currentUrl||activeSite?.url; if(!urlToImport) return;
     setImporting(true);setImportErr(null);setImportOk(false);
@@ -863,9 +882,9 @@ const BrowseSitesView = ({onSavePattern}) => {
         <button onClick={()=>window.open(currentUrl||activeSite.url,"_blank","noopener,noreferrer")} style={{background:"rgba(255,255,255,.08)",border:"1px solid rgba(255,255,255,.2)",borderRadius:8,padding:"8px 10px",fontSize:15,cursor:"pointer",flexShrink:0,color:"rgba(255,255,255,.7)"}}>↗</button>
       </div>
       <div style={{background:"rgba(28,23,20,.06)",borderBottom:`1px solid ${T.border}`,padding:"5px 14px",display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
-        <div style={{width:6,height:6,borderRadius:99,background:T.terra,flexShrink:0}}/><div style={{fontSize:10,color:T.ink3,fontWeight:500}}>Browsing {activeSite.name} inside Wovely</div><div style={{flex:1}}/><div style={{fontSize:10,color:T.ink3,opacity:.6}}>Tap "Save This Pattern" when ready</div>
+        <div style={{width:6,height:6,borderRadius:99,background:T.terra,flexShrink:0}}/><div style={{fontSize:10,color:T.ink3,fontWeight:500}}>Browsing {activeSite.name} inside Wovely</div><div style={{flex:1}}/><div style={{fontSize:10,color:T.ink3,opacity:.6}}>Tap "Import This Pattern" when ready</div>
       </div>
-      <div style={{flex:1,position:"relative",overflow:"hidden"}}><iframe ref={iframeRef} src={activeSite.url} onLoad={handleIframeLoad} style={{width:"100%",height:"100%",border:"none"}} title={activeSite.name} sandbox="allow-scripts allow-same-origin allow-forms allow-popups"/></div>
+      <div style={{flex:1,position:"relative",overflow:"hidden"}}><iframe ref={iframeRef} src={proxyUrl(activeSite.url)} onLoad={handleIframeLoad} style={{width:"100%",height:"100%",border:"none"}} title={activeSite.name} sandbox="allow-scripts allow-same-origin allow-forms allow-popups"/></div>
       <div style={{background:T.surface,borderTop:`2px solid ${T.terra}`,padding:"12px 16px",flexShrink:0}}>
         {activeSite.note&&<div style={{fontSize:11,color:T.terra,marginBottom:8,display:"flex",gap:6,alignItems:"flex-start"}}><span style={{flexShrink:0}}>ℹ️</span><span>{activeSite.note}</span></div>}
         {importOk?<div style={{background:T.sageLt,borderRadius:12,padding:"12px 16px",display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:18}}>✅</span><div style={{fontSize:13,fontWeight:600,color:T.sage}}>Pattern saved to My Wovely!</div></div>
