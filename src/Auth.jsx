@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { T, useBreakpoint, Field } from "./theme.jsx";
-import { supabaseAuth, SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase.js";
+import { supabaseAuth, getSession, SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase.js";
 import { PHOTOS, APP_VERSION } from "./constants.js";
 
 const BeeAnimator = ({visible, isDesktop}) => {
@@ -90,7 +90,9 @@ const FormCard = ({cardStyle,isSignup,email,setEmail,pass,setPass,confirmPass,se
 export const WaitlistPopup = () => {
   const [show,setShow]=useState(false),[wlEmail,setWlEmail]=useState(""),[wlPhone,setWlPhone]=useState(""),[submitted,setSubmitted]=useState(false),[saving,setSaving]=useState(false);
   useEffect(()=>{
+    if(getSession()) return;
     if(document.cookie.includes("wovely_authed=1")) return;
+    if(localStorage.getItem("yh_popup_dismissed")==="1") return;
     const last=parseInt(localStorage.getItem("yh_popup_last_shown")||"0",10);
     if(Date.now()-last<86400000) return;
     const t=setTimeout(()=>{setShow(true);localStorage.setItem("yh_popup_last_shown",String(Date.now()));},3000);
@@ -103,12 +105,13 @@ export const WaitlistPopup = () => {
     setSaving(false);setSubmitted(true);
     setTimeout(()=>setShow(false),2000);
   };
+  const dismiss=()=>{setShow(false);localStorage.setItem("yh_popup_dismissed","1");};
   if(!show)return null;
   return(
     <div style={{position:"fixed",inset:0,zIndex:800,display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
-      <div onClick={()=>setShow(false)} style={{position:"absolute",inset:0,background:"rgba(0,0,0,.5)"}}/>
+      <div onClick={dismiss} style={{position:"absolute",inset:0,background:"rgba(0,0,0,.5)"}}/>
       <div className="fu" style={{position:"relative",zIndex:1,background:T.modal,borderRadius:20,padding:40,maxWidth:420,width:"100%",boxShadow:"0 20px 60px rgba(155,126,200,.2)"}}>
-        <button onClick={()=>setShow(false)} style={{position:"absolute",top:14,right:16,background:"none",border:"none",color:T.ink3,fontSize:20,cursor:"pointer"}}>×</button>
+        <button onClick={dismiss} style={{position:"absolute",top:14,right:16,background:"none",border:"none",color:T.ink3,fontSize:20,cursor:"pointer"}}>×</button>
         {submitted?<div style={{textAlign:"center",padding:"20px 0"}}><div style={{fontSize:40,marginBottom:12}}>🧶</div><div style={{fontFamily:T.serif,fontSize:20,fontWeight:700,color:T.ink}}>You're on the list!</div><div style={{fontSize:14,color:T.ink3,marginTop:8}}>We'll be in touch.</div></div>:(
           <>
             <div style={{textAlign:"center",marginBottom:24}}>
