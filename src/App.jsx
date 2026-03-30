@@ -609,17 +609,6 @@ const ProfileSettingsView = ({isPro,onOpenProModal,onGoHome,onEmailConfirmed}) =
         if (res.ok) {
           const u = await res.json();
           if (u.email_confirmed_at) {
-            // Confirmed — refresh token once to get updated JWT claims
-            if (s.refresh_token) {
-              try {
-                const tr = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
-                  method:"POST",
-                  headers:{"apikey":SUPABASE_ANON_KEY,"Content-Type":"application/json"},
-                  body:JSON.stringify({refresh_token:s.refresh_token}),
-                });
-                if (tr.ok) saveSession(await tr.json());
-              } catch {}
-            }
             setEmailConfirmed(true);
             if (onEmailConfirmed) onEmailConfirmed();
             return true;
@@ -1556,6 +1545,9 @@ export default function Wovely() {
   const userStarterCount=userPatterns.filter(p=>p.isStarter).length;
   const tier=useTier(isPro,userPatterns.length,userStarterCount);
 
+  // Guard to prevent concurrent profile fetches from racing
+  const isFetchingProfile = useRef(false);
+
   // Validate session against Supabase on mount
   useEffect(()=>{
     const clearAuth = () => {
@@ -1577,30 +1569,34 @@ export default function Wovely() {
           const ns = await res.json();
           saveSession(ns);
           setAuthed(true);document.cookie="wovely_authed=1;path=/;max-age=31536000";
-          // Fetch profile to get real is_pro + onboarding status — always runs on mount
-          try {
-            const uid = (() => { try { const p=JSON.parse(atob(ns.access_token.split(".")[1])); return p.sub; } catch { return null; } })();
-            if (uid) {
-              const pr = await fetch(`${SUPABASE_URL}/rest/v1/user_profiles?id=eq.${uid}&select=has_completed_onboarding,is_pro`, {
-                headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${ns.access_token}`},
-              });
-              if (pr.ok) {
-                const rows = await pr.json();
-                console.log("[Wovely] Profile fetch result:", JSON.stringify(rows), "uid:", uid);
-                if (rows[0]) {
-                  if (!rows[0].has_completed_onboarding) setShowOnboarding(true);
-                  const proStatus = rows[0].is_pro === true;
-                  console.log("[Wovely] is_pro from DB:", rows[0].is_pro, "→ proStatus:", proStatus);
-                  setIsPro(proStatus);
-                  localStorage.setItem("yh_is_pro", proStatus ? "true" : "false");
+          // Fetch profile to get real is_pro + onboarding status — guarded against concurrent calls
+          if (!isFetchingProfile.current) {
+            isFetchingProfile.current = true;
+            try {
+              const uid = (() => { try { const p=JSON.parse(atob(ns.access_token.split(".")[1])); return p.sub; } catch { return null; } })();
+              if (uid) {
+                const pr = await fetch(`${SUPABASE_URL}/rest/v1/user_profiles?id=eq.${uid}&select=has_completed_onboarding,is_pro`, {
+                  headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${ns.access_token}`},
+                });
+                if (pr.ok) {
+                  const rows = await pr.json();
+                  console.log("[Wovely] Profile fetch result:", JSON.stringify(rows), "uid:", uid);
+                  if (rows[0]) {
+                    if (!rows[0].has_completed_onboarding) setShowOnboarding(true);
+                    const proStatus = rows[0].is_pro === true;
+                    console.log("[Wovely] is_pro from DB:", rows[0].is_pro, "→ proStatus:", proStatus);
+                    setIsPro(proStatus);
+                    localStorage.setItem("yh_is_pro", proStatus ? "true" : "false");
+                  } else {
+                    console.warn("[Wovely] Profile fetch returned empty array — no user_profiles row for uid:", uid);
+                  }
                 } else {
-                  console.warn("[Wovely] Profile fetch returned empty array — no user_profiles row for uid:", uid);
+                  console.warn("[Wovely] Profile fetch failed:", pr.status, "— using cached is_pro");
                 }
-              } else {
-                console.warn("[Wovely] Profile fetch failed:", pr.status, "— using cached is_pro");
               }
-            }
-          } catch (e) { console.warn("[Wovely] Profile fetch error:", e.message, "— using cached is_pro"); }
+            } catch (e) { console.warn("[Wovely] Profile fetch error:", e.message, "— using cached is_pro"); }
+            finally { isFetchingProfile.current = false; }
+          }
         } else {
           clearAuth();
         }
@@ -1735,17 +1731,6 @@ export default function Wovely() {
         if (res.ok) {
           const u = await res.json();
           if (u.email_confirmed_at) {
-            // Confirmed — refresh token once to update JWT
-            if (s.refresh_token) {
-              try {
-                const tr = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
-                  method:"POST",
-                  headers:{"apikey":SUPABASE_ANON_KEY,"Content-Type":"application/json"},
-                  body:JSON.stringify({refresh_token:s.refresh_token}),
-                });
-                if (tr.ok) saveSession(await tr.json());
-              } catch {}
-            }
             setShowEmailBanner(false);
             clearInterval(poll);
           }
