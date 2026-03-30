@@ -1,7 +1,8 @@
 {
   "functions": {
     "api/extract-pattern.js": { "maxDuration": 300, "memory": 1024 },
-    "api/fetch-pattern.js": { "maxDuration": 60 }
+    "api/fetch-pattern.js": { "maxDuration": 60 },
+    "api/stripe-webhook.js": { "maxDuration": 30 }
   },
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }

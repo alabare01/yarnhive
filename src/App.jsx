@@ -425,7 +425,7 @@ const PaywallGate = ({onClose,onUpgrade,patternCount}) => (
           </div>
         ))}
       </div>
-      <Btn onClick={onUpgrade} style={{marginBottom:10}}>Upgrade to Pro — $9.99/mo</Btn>
+      <Btn onClick={onUpgrade} style={{marginBottom:10}}>Upgrade to Pro — $8.99/mo</Btn>
       <Btn onClick={onClose} variant="ghost">Maybe later</Btn>
     </div>
   </div>
@@ -538,8 +538,24 @@ const PRO_FEATURES = [
   {label:"Early access",sub:"First to get every new feature we ship"},
 ];
 
-const ProInfoModal = ({onClose}) => {
+const ProInfoModal = ({onClose,onUpgrade}) => {
   const{isDesktop}=useBreakpoint();
+  const [upgrading,setUpgrading]=useState(false);
+  const handleCheckout=async()=>{
+    setUpgrading(true);
+    try{
+      const user=supabaseAuth.getUser();const s=getSession();
+      if(!user||!s) throw new Error("Not authenticated");
+      const uid=(()=>{try{const p=JSON.parse(atob(s.access_token.split(".")[1]));return p.sub;}catch{return null;}})();
+      const res=await fetch("/api/stripe-checkout",{
+        method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({userId:uid||user.id,email:user.email}),
+      });
+      const data=await res.json();
+      if(!res.ok) throw new Error(data.error||"Checkout failed");
+      window.location.href=data.url;
+    }catch(err){console.error("[Wovely] Checkout error:",err);setUpgrading(false);}
+  };
   return (
     <div style={{position:"fixed",inset:0,zIndex:600,display:"flex",alignItems:isDesktop?"center":"flex-end",justifyContent:"center"}} onClick={onClose}>
       <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.72)",backdropFilter:"blur(10px)"}}/>
@@ -558,6 +574,13 @@ const ProInfoModal = ({onClose}) => {
           <button onClick={onClose} style={{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",width:30,height:30,borderRadius:"50%",background:"rgba(28,23,20,0.07)",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,color:"rgba(28,23,20,0.45)",lineHeight:1}}>×</button>
         </div>
         <div style={{flex:1,overflowY:"auto",padding:"20px 20px 48px"}}>
+          {upgrading?(
+            <div style={{textAlign:"center",padding:"40px 0"}}>
+              <div style={{width:40,height:40,borderRadius:"50%",border:"3px solid transparent",borderTopColor:T.terra,animation:"spinLoader 1s linear infinite",margin:"0 auto 16px"}}/>
+              <div style={{fontFamily:T.serif,fontSize:18,color:T.ink,marginBottom:6}}>Redirecting to checkout...</div>
+              <div style={{fontSize:13,color:T.ink3}}>You'll be taken to Stripe's secure payment page.</div>
+            </div>
+          ):<>
           <div style={{display:"flex",alignItems:"flex-start",gap:14,marginBottom:22}}>
             <div style={{width:56,height:56,borderRadius:16,flexShrink:0,background:`linear-gradient(145deg,${T.terra},#5A3F8F)`,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",boxShadow:"0 6px 20px rgba(155,126,200,0.25)"}}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>
@@ -575,9 +598,9 @@ const ProInfoModal = ({onClose}) => {
               </div>
             ))}
           </div>
-          <button style={{width:"100%",background:T.terra,color:"#fff",border:"none",borderRadius:14,padding:"15px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(155,126,200,.3)",marginBottom:6}}>Get Pro — $9.99/mo</button>
-          <div style={{textAlign:"center",fontSize:12,color:T.ink3,marginBottom:12}}>$74.99/yr — save 37%</div>
+          <button onClick={handleCheckout} style={{width:"100%",background:T.terra,color:"#fff",border:"none",borderRadius:14,padding:"15px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(155,126,200,.3)",marginBottom:6}}>Get Pro — $8.99/mo</button>
           <div style={{textAlign:"center",fontSize:11,color:T.ink3,opacity:.6}}>Cancel anytime. No questions asked.</div>
+          </>}
         </div>
       </div>
     </div>
@@ -1539,6 +1562,7 @@ export default function Wovely() {
   const [createdPattern,setCreatedPattern]=useState(null);
   const [readyPromptPattern,setReadyPromptPattern]=useState(null);
   const [deleteTarget,setDeleteTarget]=useState(null);
+  const [upgradeToast,setUpgradeToast]=useState(null);
   const [coverPickerTarget,setCoverPickerTarget]=useState(null);
   const{isTablet,isDesktop}=useBreakpoint();
   const allPatterns = [...userPatterns,...starterPatterns];
@@ -1606,6 +1630,33 @@ export default function Wovely() {
       setAuthChecked(true);
     };
     validate();
+  },[]);
+
+  // Handle Stripe upgrade redirect — check URL params on mount
+  useEffect(()=>{
+    const params=new URLSearchParams(window.location.search);
+    const upgradeStatus=params.get("upgrade");
+    if(!upgradeStatus) return;
+    window.history.replaceState({},"",window.location.pathname);
+    if(upgradeStatus==="success"){
+      setUpgradeToast("success");
+      // Re-fetch profile to pick up is_pro=true from webhook
+      const s=getSession();
+      if(s?.access_token){
+        const uid=(()=>{try{const p=JSON.parse(atob(s.access_token.split(".")[1]));return p.sub;}catch{return null;}})();
+        if(uid){
+          fetch(`${SUPABASE_URL}/rest/v1/user_profiles?id=eq.${uid}&select=is_pro`,{
+            headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${s.access_token}`},
+          }).then(r=>r.ok?r.json():null).then(rows=>{
+            if(rows?.[0]){const pro=rows[0].is_pro===true;setIsPro(pro);localStorage.setItem("yh_is_pro",pro?"true":"false");}
+          }).catch(()=>{});
+        }
+      }
+      setTimeout(()=>setUpgradeToast(null),5000);
+    } else if(upgradeStatus==="cancelled"){
+      setUpgradeToast("cancelled");
+      setTimeout(()=>setUpgradeToast(null),4000);
+    }
   },[]);
 
   const handleSignOut = async () => { await supabaseAuth.signOut(); setAuthed(false); setIsPro(false); setUserPatterns([]); localStorage.removeItem("yh_last_url"); localStorage.removeItem("yh_is_pro"); document.cookie="wovely_authed=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/"; navigate("/"); };
@@ -1958,6 +2009,7 @@ export default function Wovely() {
       {deleteTarget&&<DeleteConfirmModal pattern={deleteTarget} isPro={isPro} onCancel={()=>setDeleteTarget(null)} onDelete={confirmDelete} onPark={parkInsteadOfDelete} onGoPro={()=>{setDeleteTarget(null);setShowProModal(true);}}/>}
       {coverPickerTarget&&<CoverImagePicker pattern={coverPickerTarget} onConfirm={handleCoverConfirm} onClose={()=>setCoverPickerTarget(null)} pdfThumbUrl={pdfThumbUrl} CAT_IMG={CAT_IMG} ALL_CAT_ENTRIES={ALL_CAT_ENTRIES}/>}
       <WelcomeToast visible={showWelcomeToast}/>
+      {upgradeToast&&<div style={{position:"fixed",top:16,left:"50%",transform:"translateX(-50%)",zIndex:999,background:upgradeToast==="success"?"#5B9B6B":"#6B6B8A",color:"#fff",borderRadius:14,padding:"12px 24px",fontSize:14,fontWeight:600,boxShadow:"0 8px 32px rgba(0,0,0,.2)",animation:"modalPop .3s ease both",textAlign:"center"}}>{upgradeToast==="success"?"Welcome to Wovely Pro!":"No worries — you can upgrade anytime"}</div>}
       <SidebarNav view={view} onNavigate={navigateToView} count={userPatterns.length} isPro={isPro} onAddPattern={openAddModal} onSignOut={handleSignOut} onUpgrade={()=>setShowProModal(true)} userPatterns={userPatterns} allPatterns={allPatterns}/>
       <div style={{flex:1,minWidth:0,overflowY:"auto",display:"flex",flexDirection:"column",background:"#FFFFFF"}}>
         <WelcomeBanner visible={showWelcomeBanner}/>
@@ -1989,6 +2041,7 @@ export default function Wovely() {
       <CSS/>
       {showOnboarding&&<OnboardingScreen onComplete={()=>{setShowOnboarding(false);setJustCompletedOnboarding(true);localStorage.removeItem("yh_welcome_dismissed");navigate("/profile");}} onBackToAuth={async()=>{setShowOnboarding(false);await supabaseAuth.signOut();setAuthed(false);setIsPro(false);setUserPatterns([]);}}/>}
       <WelcomeToast visible={showWelcomeToast}/>
+      {upgradeToast&&<div style={{position:"fixed",top:16,left:"50%",transform:"translateX(-50%)",zIndex:999,background:upgradeToast==="success"?"#5B9B6B":"#6B6B8A",color:"#fff",borderRadius:14,padding:"12px 24px",fontSize:14,fontWeight:600,boxShadow:"0 8px 32px rgba(0,0,0,.2)",animation:"modalPop .3s ease both",textAlign:"center"}}>{upgradeToast==="success"?"Welcome to Wovely Pro!":"No worries — you can upgrade anytime"}</div>}
       <NavPanel open={navOpen} onClose={()=>setNavOpen(false)} view={view} onNavigate={navigateToView} count={userPatterns.length} isPro={isPro} onSignOut={handleSignOut} onUpgrade={()=>setShowProModal(true)}/>
       {showPaywall&&<PaywallGate patternCount={userPatterns.length} onClose={()=>setShowPaywall(false)} onUpgrade={()=>setShowPaywall(false)}/>}
       {showProModal&&<ProInfoModal onClose={()=>setShowProModal(false)}/>}
