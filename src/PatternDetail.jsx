@@ -270,17 +270,18 @@ const ShareCardModal = ({pattern,onClose,pct,Btn}) => {
 
 const Detail = ({p,onBack,onSave,pct,estYards,estSkeins,pdfThumbUrl,CSS,Bar,Photo,Stars,WireframeViewer,Btn}) => {
   const VALID_TABS=["materials","rows","notes"];
-  // Auto-hide header on scroll down, show on scroll up
+  // Auto-hide header on scroll down, show on scroll up (with iOS momentum debounce)
   const scrollRef=useRef(null);
   const lastScrollY=useRef(0);
+  const upAccum=useRef(0);
   const [headerHidden,setHeaderHidden]=useState(false);
   useEffect(()=>{
     const el=scrollRef.current;if(!el) return;
     const onScroll=()=>{
       const y=el.scrollTop;
-      if(y<=0){setHeaderHidden(false);}
-      else if(y>lastScrollY.current&&y>10){setHeaderHidden(true);}
-      else if(y<lastScrollY.current){setHeaderHidden(false);}
+      if(y<=0){upAccum.current=0;setHeaderHidden(false);}
+      else if(y>lastScrollY.current){upAccum.current=0;if(y>10) setHeaderHidden(true);}
+      else if(y<lastScrollY.current){upAccum.current+=lastScrollY.current-y;if(upAccum.current>=15) setHeaderHidden(false);}
       lastScrollY.current=y;
     };
     el.addEventListener("scroll",onScroll,{passive:true});
