@@ -1523,7 +1523,7 @@ export default function Wovely() {
   // to avoid login screen flicker. The async validate() will correct if expired.
   const _hasLocalSession = !!getSession()?.access_token && !!supabaseAuth.getUser();
   const [authed,setAuthed]=useState(_hasLocalSession),[isPro,setIsPro]=useState(()=>_hasLocalSession&&localStorage.getItem("yh_is_pro")==="true");
-  const [authChecked,setAuthChecked]=useState(_hasLocalSession);
+  const [authChecked,setAuthChecked]=useState(false);
   const [userPatterns,setUserPatterns]=useState([]);
   const [patternsFetched,setPatternsFetched]=useState(false);
   const [starterPatterns,setStarterPatterns]=useState(()=>makeStarterPatterns());
@@ -1568,8 +1568,7 @@ export default function Wovely() {
         if (res.ok) {
           const ns = await res.json();
           saveSession(ns);
-          setAuthed(true);document.cookie="wovely_authed=1;path=/;max-age=31536000";
-          // Fetch profile to get real is_pro + onboarding status — guarded against concurrent calls
+          // Fetch profile BEFORE setting authed to prevent is_pro flash
           if (!isFetchingProfile.current) {
             isFetchingProfile.current = true;
             try {
@@ -1597,6 +1596,7 @@ export default function Wovely() {
             } catch (e) { console.warn("[Wovely] Profile fetch error:", e.message, "— using cached is_pro"); }
             finally { isFetchingProfile.current = false; }
           }
+          setAuthed(true);document.cookie="wovely_authed=1;path=/;max-age=31536000";
         } else {
           clearAuth();
         }
@@ -1773,7 +1773,27 @@ export default function Wovely() {
     },4000);
   };
 
-  const handleSignIn = () => {
+  const handleSignIn = async () => {
+    // Fetch profile BEFORE rendering authenticated UI to prevent is_pro flash
+    const s = getSession();
+    if (s?.access_token) {
+      try {
+        const uid = (() => { try { const p=JSON.parse(atob(s.access_token.split(".")[1])); return p.sub; } catch { return null; } })();
+        if (uid) {
+          const pr = await fetch(`${SUPABASE_URL}/rest/v1/user_profiles?id=eq.${uid}&select=is_pro,has_completed_onboarding`, {
+            headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${s.access_token}`},
+          });
+          if (pr.ok) {
+            const rows = await pr.json();
+            if (rows[0]) {
+              const proStatus = rows[0].is_pro === true;
+              setIsPro(proStatus);
+              localStorage.setItem("yh_is_pro", proStatus ? "true" : "false");
+            }
+          }
+        }
+      } catch (e) { console.warn("[Wovely] Sign-in profile prefetch failed:", e.message); }
+    }
     setAuthed(true);document.cookie="wovely_authed=1;path=/;max-age=31536000";
     const lastUrl=localStorage.getItem("yh_last_url");
     navigate(lastUrl&&lastUrl.startsWith("/hive/")?lastUrl:"/hive");
