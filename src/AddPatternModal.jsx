@@ -796,13 +796,23 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade}) => {
       }
       setFileInfo({url:uploaded.url,name:uploaded.filename,type:uploaded.type,coverUrl:coverCloudinaryUrl});setProgress(33);
       // Stage 2: Extract — text mode for PDFs (fast), base64 for images
-      setStage("extracting");setStageText("Reading your pattern...");
+      const EXTRACT_MSGS=["Reading your pattern...","Identifying components...","Extracting rows and rounds...","Almost there..."];
+      let extractMsgIdx=0;
+      setStage("extracting");setStageText(EXTRACT_MSGS[0]);
       const intv2=setInterval(()=>setProgress(p=>Math.min(p+1,62)),300);
+      const intv3=setInterval(()=>{extractMsgIdx=(extractMsgIdx+1)%EXTRACT_MSGS.length;setStageText(EXTRACT_MSGS[extractMsgIdx]);},8000);
       let result;let extractedText=null;
       try{
         if(isPDF){
           console.log("[Wovely] Using pdf.js text extraction for PDF...");
-          const pdfText=await extractTextFromPDF(f);extractedText=pdfText;
+          let pdfText=await extractTextFromPDF(f);extractedText=pdfText;
+          // Smart truncation: cap at 40k chars at a natural line break
+          const TEXT_LIMIT=40000;
+          if(pdfText.length>TEXT_LIMIT){
+            const lastNewline=pdfText.lastIndexOf("\n",TEXT_LIMIT);
+            pdfText=pdfText.slice(0,lastNewline>0?lastNewline:TEXT_LIMIT)+"\n[Note: Pattern truncated at 40,000 chars for processing. Full file saved and viewable while building.]";
+            console.log("[Wovely] PDF text truncated from",extractedText.length,"to",pdfText.length,"chars");
+          }
           // Detect complexity from page count + text density
           const pageMatches=(pdfText.match(/--- PAGE \d+ ---/g)||[]).length;
           const textLen=pdfText.replace(/--- PAGE \d+ ---/g,"").replace(/\s+/g," ").trim().length;
@@ -819,8 +829,8 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade}) => {
           result=await extractPatternFromPDF(base64Data,f.name,fileMime,false);
         }
       }
-      catch(ex){clearInterval(intv2);console.error("[Wovely] Extraction failed:",ex);setStage("error");setErrorMsg("We couldn't read this pattern automatically.");setExtracted({title:f.name.replace(/\.(pdf|jpg|png|jpeg)$/i,"").replace(/[-_]/g," "),components:[],materials:[],pattern_notes:"",hook_size:"",yarn_weight:"",designer:"",difficulty:"",assembly_notes:""});return;}
-      clearInterval(intv2);setProgress(66);
+      catch(ex){clearInterval(intv2);clearInterval(intv3);console.error("[Wovely] Extraction failed:",ex);setStage("error");setErrorMsg("We couldn't read this pattern automatically.");setExtracted({title:f.name.replace(/\.(pdf|jpg|png|jpeg)$/i,"").replace(/[-_]/g," "),components:[],materials:[],pattern_notes:"",hook_size:"",yarn_weight:"",designer:"",difficulty:"",assembly_notes:""});return;}
+      clearInterval(intv2);clearInterval(intv3);setProgress(66);
       setStage("building");setStageText("Building your workspace...");
       await new Promise(r=>setTimeout(r,600));setProgress(100);
       setExtracted(result);setEditTitle(result.title||"");setEditDesigner(result.designer||"");setEditHook(result.hook_size||"");setEditWeight(result.yarn_weight||"");
