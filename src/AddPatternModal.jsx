@@ -868,6 +868,7 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade}) => {
   const loadingInfo = (stage==="extracting"&&complexity) ? complexityMsg : {emoji:stage==="building"?"✓":"🔎", headline:stageText, sub:null, barSpeed:300};
   if(stage==="uploading"||stage==="extracting"||stage==="building") return (
     <div style={{padding:"40px 0 32px",textAlign:"center"}}>
+      <style>{`@keyframes pulseLavender{0%,100%{width:20%}50%{width:80%}}`}</style>
       <div style={{fontSize:stage==="extracting"&&complexity==="complex"?44:36,marginBottom:14,transition:"font-size .3s"}}>{loadingInfo.emoji}</div>
       <div style={{fontFamily:T.serif,fontSize:18,color:T.ink,marginBottom:8,lineHeight:1.4}}>{loadingInfo.headline}</div>
       {loadingInfo.sub&&(
@@ -875,10 +876,16 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade}) => {
           {loadingInfo.sub}
         </div>
       )}
-      {!loadingInfo.sub&&stage==="extracting"&&<div style={{fontSize:12,color:T.ink3,marginBottom:16}}>Reading your pattern...</div>}
-      <div style={{height:8,background:T.linen,borderRadius:99,overflow:"hidden",margin:"0 auto",maxWidth:300}}><div className={stage==="extracting"?"progress-bar-fill":""} style={{height:"100%",width:progress+"%",background:stage==="building"?T.sage:T.terra,borderRadius:99,transition:`width ${stage==="extracting"&&complexity==="complex"?"1.2s":"0.4s"} ease`}}/></div>
-      {stage==="extracting"&&complexity==="complex"&&(
-        <div style={{marginTop:16,fontSize:11,color:T.ink3,letterSpacing:".05em"}}>WORKING HARD ✨</div>
+      <div style={{height:8,background:T.linen,borderRadius:99,overflow:"hidden",margin:"0 auto",maxWidth:300}}>
+        {stage==="extracting"
+          ?<div style={{height:"100%",background:"#9B7EC8",borderRadius:99,animation:"pulseLavender 3s ease-in-out infinite"}}/>
+          :<div style={{height:"100%",width:progress+"%",background:stage==="building"?T.sage:T.terra,borderRadius:99,transition:"width 0.4s ease"}}/>}
+      </div>
+      {stage==="extracting"&&(
+        <div style={{marginTop:16}}>
+          <div style={{fontSize:11,color:T.ink3,letterSpacing:".05em",marginBottom:6}}>WORKING HARD ✨</div>
+          <div style={{fontSize:14,fontFamily:"Inter,sans-serif",color:"#6B6B8A"}}>{stageText}</div>
+        </div>
       )}
     </div>
   );
@@ -957,9 +964,9 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade}) => {
             <div style={{fontSize:9,color:T.ink3,textTransform:"uppercase",letterSpacing:".1em",marginBottom:8}}>Components ({extracted.components.length})</div>
             {extracted.components.map((c,i)=>{const open=!!compExpanded[i];return(
               <div key={i} style={{marginBottom:6}}>
-                <button onClick={()=>setCompExpanded(p=>({...p,[i]:!open}))} style={{width:"100%",background:T.surface,border:`1px solid ${T.border}`,borderRadius:open?"10px 10px 0 0":10,padding:"10px 14px",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",textAlign:"left"}}>
-                  <span style={{fontSize:13,fontWeight:600,color:T.ink}}>{c.name}{c.make_count>1?" × "+c.make_count:""}</span>
-                  <span style={{fontSize:11,color:T.ink3}}>{(c.rows||[]).length} rows {open?"▼":"▶"}</span>
+                <button onClick={()=>setCompExpanded(p=>({...p,[i]:!open}))} style={{width:"100%",background:T.surface,border:`1px solid ${T.border}`,borderRadius:open?"10px 10px 0 0":10,padding:"10px 14px",cursor:"pointer",display:"flex",alignItems:"center",gap:8,textAlign:"left"}}>
+                  <span style={{fontSize:13,fontWeight:600,color:T.ink,flex:1,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.name}{c.make_count>1?" × "+c.make_count:""}</span>
+                  <span style={{fontSize:11,color:T.ink3,flexShrink:0,minWidth:80,textAlign:"right",whiteSpace:"nowrap"}}>{(c.rows||[]).length} rows {open?"▼":"▶"}</span>
                 </button>
                 {open&&<div style={{border:`1px solid ${T.border}`,borderTop:"none",borderRadius:"0 0 10px 10px",padding:"8px 14px",background:T.linen}}>
                   {(c.rows||[]).slice(0,5).map((r,j)=><div key={j} style={{fontSize:11,color:T.ink2,lineHeight:1.5,padding:"2px 0"}}>{r.label}: {r.text?.substring(0,60)}{r.text?.length>60?"…":""}</div>)}
