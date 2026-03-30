@@ -923,7 +923,7 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade}) => {
         setCoverUploading(false);
       }} style={{display:"none"}}/>
       {/* ── HERO ZONE ── */}
-      <div style={{position:"relative",height:200,margin:"0 -22px",overflow:"hidden",background:"#1A1A2E"}}>
+      <div style={{position:"relative",height:200,margin:"0 -22px",overflow:"hidden",background:"#2D2D4E"}}>
         {heroImg&&<><img src={heroImg} alt="" style={{position:"absolute",width:"100%",height:"100%",objectFit:"cover",filter:"blur(20px) saturate(1.2) brightness(0.6)",transform:"scale(1.1)",pointerEvents:"none"}}/>
         <img src={heroImg} alt={editTitle} style={{position:"absolute",left:"50%",transform:"translateX(-50%)",height:"100%",width:"auto",objectFit:"contain",zIndex:1}}/></>}
         {!heroImg&&<div style={{position:"absolute",inset:0,background:`linear-gradient(135deg,${T.terra},#6B2A10)`}}/>}

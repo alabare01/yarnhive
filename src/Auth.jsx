@@ -450,7 +450,7 @@ const Auth = ({onEnter,onEnterAsNew}) => {
                       {modal.badge}
                     </div>
                   )}
-                  <div style={{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:700,color:"#1A1A2E",lineHeight:1.15,marginBottom:4}}>{modal.title}</div>
+                  <div style={{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:700,color:"#2D2D4E",lineHeight:1.15,marginBottom:4}}>{modal.title}</div>
                   <div style={{fontSize:13,color:"rgba(28,23,20,0.5)",lineHeight:1.55,fontWeight:300}}>{modal.subtitle}</div>
                 </div>
               </div>
@@ -458,7 +458,7 @@ const Auth = ({onEnter,onEnterAsNew}) => {
               <div style={{background:"rgba(244,237,227,0.6)",borderRadius:14,overflow:"hidden",border:"1px solid rgba(28,23,20,0.07)",marginBottom:20}}>
                 {modal.features.map((f,i)=>(
                   <div key={i} style={{padding:"12px 16px",borderBottom: i<modal.features.length-1 ? "1px solid rgba(28,23,20,0.07)" : "none"}}>
-                    <div style={{fontSize:14,fontWeight:600,color:"#1A1A2E",lineHeight:1.2,marginBottom:2}}>{f.label}</div>
+                    <div style={{fontSize:14,fontWeight:600,color:"#2D2D4E",lineHeight:1.2,marginBottom:2}}>{f.label}</div>
                     <div style={{fontSize:12,color:"rgba(28,23,20,0.48)",lineHeight:1.5}}>{f.sub}</div>
                   </div>
                 ))}
@@ -473,7 +473,7 @@ const Auth = ({onEnter,onEnterAsNew}) => {
                   </div>
                 ) : (
                   <div>
-                    <div style={{fontSize:13,fontWeight:600,color:"#1A1A2E",marginBottom:10}}>Get notified when we launch</div>
+                    <div style={{fontSize:13,fontWeight:600,color:"#2D2D4E",marginBottom:10}}>Get notified when we launch</div>
                     <div style={{display:"flex",gap:8,marginBottom:8}}>
                       <input
                         value={notifyEmail}
@@ -481,7 +481,7 @@ const Auth = ({onEnter,onEnterAsNew}) => {
                         onKeyDown={e=>e.key==='Enter'&&handleNotifySubmit()}
                         placeholder="your@email.com"
                         type="email"
-                        style={{flex:1,padding:"13px 14px",background:"transparent",border:"none",borderBottom:"2px solid transparent",borderRadius:0,fontSize:14,color:"#1A1A2E",outline:"none",fontFamily:"inherit",transition:"border-color .2s"}}
+                        style={{flex:1,padding:"13px 14px",background:"transparent",border:"none",borderBottom:"2px solid transparent",borderRadius:0,fontSize:14,color:"#2D2D4E",outline:"none",fontFamily:"inherit",transition:"border-color .2s"}}
                         onFocus={e=>e.target.style.borderBottomColor="#9B7EC8"}
                         onBlur={e=>e.target.style.borderBottomColor="transparent"}
                       />

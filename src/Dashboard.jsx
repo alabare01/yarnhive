@@ -34,8 +34,8 @@ const PatternCard = ({p,onClick,onPark,onUnpark,onDelete,onCoverChange,delay=0,p
         {isPlaceholder&&!p.isStarter&&onCoverChange&&<button onClick={e=>{e.stopPropagation();onCoverChange(p);}} style={{position:"absolute",bottom:10,left:"50%",transform:"translateX(-50%)",background:"rgba(255,255,255,.15)",backdropFilter:"blur(4px)",border:`1.5px solid ${T.terra}`,borderRadius:10,padding:"6px 14px",fontSize:11,fontWeight:600,color:"#fff",cursor:"pointer",whiteSpace:"nowrap"}}>Set cover image</button>}
       </div>
       <div style={{padding:"12px 14px 16px"}}>
-        <div style={{fontSize:12,color:T.ink2,textTransform:"uppercase",letterSpacing:".08em",marginBottom:3}}>{p.cat}</div>
-        <div style={{fontFamily:T.serif,fontSize:15,fontWeight:600,color:"#1A1A2E",lineHeight:1.3,marginBottom:7}}>{p.title}</div>
+        {p.cat&&p.cat.toLowerCase()!=="uncategorized"&&<div style={{fontSize:12,color:T.ink2,textTransform:"uppercase",letterSpacing:".08em",marginBottom:3}}>{p.cat}</div>}
+        <div style={{fontFamily:T.serif,fontSize:15,fontWeight:600,color:"#2D2D4E",lineHeight:1.3,marginBottom:7,overflow:"hidden",textOverflow:"ellipsis",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",whiteSpace:"normal"}}>{p.title}</div>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}><Stars val={p.rating} ro/><span style={{fontSize:12,color:"#6B6B8A"}}>{p.source}</span></div>
         {p.isStarter&&<div style={{fontSize:12,color:"#6B6B8A",opacity:.6,marginTop:6,fontStyle:"italic"}}>A gift from Wovely — yours to keep</div>}
       </div>
@@ -186,8 +186,8 @@ const CollectionView = ({userPatterns,starterPatterns,cat,setCat,search,setSearc
             <div key={p.id} className="fu" onClick={()=>openDetail(p)} style={{display:"flex",gap:12,background:"#FFFFFF",border:`1px solid ${T.border}`,borderRadius:16,padding:10,cursor:"pointer",animationDelay:i*.04+"s",boxShadow:T.shadow}}>
               <div style={{width:56,height:56,borderRadius:10,overflow:"hidden",flexShrink:0,background:T.linen}}><Photo src={p.cover_image_url||p.photo||catFallbackPhoto(p.cat)} alt={p.title} style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top"}}/></div>
               <div style={{flex:1,minWidth:0}}>
-                <div style={{fontFamily:T.serif,fontSize:15,fontWeight:600,color:"#1A1A2E",lineHeight:1.3}}>{p.title}</div>
-                <div style={{fontSize:12,color:"#6B6B8A",marginTop:2}}>{p.cat}{pct(p)>0?" · "+pct(p)+"%":""}{p.isStarter?" · Free Starter":""}</div>
+                <div style={{fontFamily:T.serif,fontSize:15,fontWeight:600,color:"#2D2D4E",lineHeight:1.3}}>{p.title}</div>
+                <div style={{fontSize:12,color:"#6B6B8A",marginTop:2}}>{p.cat&&p.cat.toLowerCase()!=="uncategorized"?p.cat:""}{pct(p)>0?" · "+pct(p)+"%":""}{p.isStarter?" · Free Starter":""}</div>
               </div>
             </div>
           ))}
