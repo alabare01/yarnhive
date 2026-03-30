@@ -211,15 +211,14 @@ Be thorough — extract every component, every round, every material. Ensure the
     generationConfig: { temperature: 0.1, maxOutputTokens: 65536 }
   };
 
-  console.log("[Wovely] Sending Gemini request, parts:", body.contents[0].parts.length, "model: gemini-2.5-flash");
-  const geminiCall = async (model) => {
+  const geminiCall = async (model, requestBody) => {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 90000);
+    const timeout = setTimeout(() => controller.abort(), 45000);
     try {
       const r = await fetch(`https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${GEMINI_API_KEY}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify(requestBody),
         signal: controller.signal,
       });
       clearTimeout(timeout);
@@ -229,67 +228,48 @@ Be thorough — extract every component, every round, every material. Ensure the
       throw e;
     }
   };
-  let res;
+
+  const parseGeminiResponse = async (r) => {
+    const rawText = await r.text();
+    console.log("[Wovely] Gemini raw response body:", rawText.substring(0, 500));
+    if (!r.ok) throw new Error("Gemini API error: " + r.status);
+    const data = JSON.parse(rawText);
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    const cleaned = text.replace(/```json/g, "").replace(/```/g, "").trim();
+    return JSON.parse(cleaned);
+  };
+
+  // Attempt 1: full structured prompt
+  console.log("[Wovely] Sending Gemini request, parts:", body.contents[0].parts.length, "model: gemini-2.5-flash");
   try {
-    res = await geminiCall("gemini-2.5-flash");
-  } catch (e) {
-    console.error("[Wovely] Gemini first attempt failed:", e.name === "AbortError" ? "timeout (90s)" : e.message);
-    console.log("[Wovely] Retrying Gemini extraction...");
-    await new Promise(r => setTimeout(r, 2000));
-    try {
-      res = await geminiCall("gemini-2.5-flash");
-    } catch (e2) {
-      console.error("[Wovely] Gemini retry also failed:", e2.message);
-      console.log("[Wovely] Falling back to gemini-2.0-flash-lite...");
-      res = await geminiCall("gemini-2.0-flash-lite");
-    }
-  }
-
-  console.log("[Wovely] Gemini raw response status:", res.status);
-  const rawText = await res.text();
-  console.log("[Wovely] Gemini raw response body:", rawText.substring(0, 500));
-
-  if (!res.ok) {
-    console.error("[Wovely] Gemini API error:", res.status, rawText);
-    // If 2.5 flash failed, try 1.5 flash
-    if (res.status === 404 || res.status === 400) {
-      console.log("[Wovely] Retrying with gemini-2.0-flash-lite...");
-      const res2 = await geminiCall("gemini-2.0-flash-lite");
-      console.log("[Wovely] Fallback response status:", res2.status);
-      if (!res2.ok) {
-        const err2 = await res2.text();
-        console.error("[Wovely] Fallback also failed:", err2.substring(0, 300));
-        throw new Error("Gemini extraction failed: " + res2.status);
-      }
-      const data2 = await res2.json();
-      const text2 = data2.candidates?.[0]?.content?.parts?.[0]?.text || "";
-      const cleaned2 = text2.replace(/```json/g, "").replace(/```/g, "").trim();
-      console.log("[Wovely] Fallback extracted text:", cleaned2.substring(0, 200));
-      return JSON.parse(cleaned2);
-    }
-    throw new Error("Gemini extraction failed: " + res.status);
-  }
-
-  let data;
-  try { data = JSON.parse(rawText); } catch (e) {
-    console.error("[Wovely] Response is not valid JSON wrapper:", e);
-    throw new Error("Invalid Gemini response format");
-  }
-
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-  console.log("[Wovely] Gemini extracted text length:", text.length);
-  console.log("[Wovely] Gemini extracted text preview:", text.substring(0, 300));
-
-  // Strip markdown fences thoroughly
-  const cleaned = text.replace(/```json/g, "").replace(/```/g, "").trim();
-  try {
-    const parsed = JSON.parse(cleaned);
+    const res = await geminiCall("gemini-2.5-flash", body);
+    const parsed = await parseGeminiResponse(res);
     console.log("[Wovely] Extraction successful:", parsed.title, "—", (parsed.components||[]).length, "components");
     return parsed;
   } catch (e) {
-    console.error("[Wovely] JSON parse failed. Cleaned text:", cleaned.substring(0, 300));
-    console.error("[Wovely] Parse error:", e.message);
-    throw new Error("Could not parse extraction results");
+    console.error("[Wovely] Gemini first attempt failed:", e.name === "AbortError" ? "timeout (45s)" : e.message);
+  }
+
+  // Attempt 2: simplified prompt — flat rows, no components, faster response
+  console.log("[Wovely] Retrying with simplified prompt...");
+  const simplePrompt = `Extract this crochet pattern. Return ONLY valid JSON, no markdown, no backticks.
+{"title":"string","hook_size":"string","yarn_weight":"string","difficulty":"string","designer":"string","materials":[{"name":"string","amount":"string"}],"components":[{"name":"Main","make_count":1,"independent":false,"rows":[{"id":"row-1","label":"ROW 1","text":"instruction text","stitch_count":null,"action_item":false,"repeat_brackets":[]}]}],"pattern_notes":"string","assembly_notes":"string","confidence":"low"}
+Extract every row/round as its own entry. Keep instruction text exactly as written. Do not truncate.`;
+  const simpleParts = isTextMode
+    ? [{ text: simplePrompt + "\n\nPATTERN TEXT:\n" + textOrBase64 }]
+    : [{ text: simplePrompt }, { inline_data: { mime_type: mimeType || "image/jpeg", data: textOrBase64 } }];
+  const simpleBody = {
+    contents: [{ parts: simpleParts }],
+    generationConfig: { temperature: 0.1, maxOutputTokens: 32768 }
+  };
+  try {
+    const res2 = await geminiCall("gemini-2.5-flash", simpleBody);
+    const parsed2 = await parseGeminiResponse(res2);
+    console.log("[Wovely] Simplified extraction successful:", parsed2.title);
+    return parsed2;
+  } catch (e2) {
+    console.error("[Wovely] Simplified retry also failed:", e2.name === "AbortError" ? "timeout (45s)" : e2.message);
+    throw new Error("Pattern extraction failed after 2 attempts");
   }
 };
 
