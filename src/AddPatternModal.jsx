@@ -806,11 +806,11 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade}) => {
         if(isPDF){
           console.log("[Wovely] Using pdf.js text extraction for PDF...");
           let pdfText=await extractTextFromPDF(f);extractedText=pdfText;
-          // Smart truncation: cap at 40k chars at a natural line break
-          const TEXT_LIMIT=40000;
+          // Smart truncation: cap at 25k chars at a natural line break
+          const TEXT_LIMIT=25000;
           if(pdfText.length>TEXT_LIMIT){
             const lastNewline=pdfText.lastIndexOf("\n",TEXT_LIMIT);
-            pdfText=pdfText.slice(0,lastNewline>0?lastNewline:TEXT_LIMIT)+"\n[Note: Pattern truncated at 40,000 chars for processing. Full file saved and viewable while building.]";
+            pdfText=pdfText.slice(0,lastNewline>0?lastNewline:TEXT_LIMIT)+"\n[Note: Pattern truncated at 25,000 chars for processing. Full file saved and viewable while building.]";
             console.log("[Wovely] PDF text truncated from",extractedText.length,"to",pdfText.length,"chars");
           }
           // Detect complexity from page count + text density
