@@ -13,6 +13,7 @@ export default async function handler(req, res) {
   if (!rawText) return res.status(400).json({ error: "pdfText required" });
 
   const GEMINI_KEY = process.env.GEMINI_API_KEY;
+  console.log("[extract-pattern] ENV:", GEMINI_KEY ? "KEY EXISTS" : "KEY MISSING", "pdfText length:", rawText.length, "pageCount:", pageCount);
   if (!GEMINI_KEY) return res.status(500).json({ error: "API key not configured on server" });
 
   // Server-side truncation: 20k chars at a natural line break
@@ -103,12 +104,21 @@ Extract every row/round as its own entry. Keep instruction text exactly as writt
     );
     if (!r.ok) {
       const errBody = await r.text();
+      console.error("[extract-pattern] Gemini HTTP error:", r.status, errBody.substring(0, 500));
       throw new Error(`Gemini API error ${r.status}: ${errBody.substring(0, 300)}`);
     }
     const data = await r.json();
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    if (!text) {
+      const finishReason = data.candidates?.[0]?.finishReason || "unknown";
+      console.error("[extract-pattern] Gemini returned empty text, finishReason:", finishReason, "candidates:", JSON.stringify(data.candidates?.[0]).substring(0, 300));
+      throw new Error("Gemini returned empty response, finishReason: " + finishReason);
+    }
     const cleaned = text.replace(/```json/g, "").replace(/```/g, "").trim();
-    return JSON.parse(cleaned);
+    try { return JSON.parse(cleaned); } catch (parseErr) {
+      console.error("[extract-pattern] JSON parse failed, cleaned text starts:", cleaned.substring(0, 200), "ends:", cleaned.substring(cleaned.length - 200));
+      throw new Error("JSON parse failed: " + parseErr.message);
+    }
   };
 
   // Attempt 1: full structured prompt
