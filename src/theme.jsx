@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 
 export const T = {
-  bg:"#FFFFFF", surface:"#F8F6FF", linen:"#F8F6FF", ink:"#1A1A2E", ink2:"#6B6B8A", ink3:"#6B6B8A",
+  bg:"#FFFFFF", surface:"#F8F6FF", linen:"#F8F6FF", ink:"#2D2D4E", ink2:"#6B6B8A", ink3:"#6B6B8A",
   border:"#EDE4F7", terra:"#9B7EC8", terraLt:"#EDE4F7", sage:"#5C9E7A", sageLt:"#D8EAD8", gold:"#C9853A",
   navy:"#2D3A7C", modal:"#FFFFFF", card:"#FFFFFF",
   serif:'"Playfair Display", Georgia, serif', sans:'"Inter", -apple-system, sans-serif',

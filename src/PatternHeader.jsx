@@ -35,7 +35,7 @@ const PatternHeader = ({
       {/* ── HERO: Snap & Stitch patterns get split photo+wireframe, others get clean fixed-height photo ── */}
       {p.snapConfidence&&p.snapComponents?.length ? (
         /* ── SNAP & STITCH SPLIT HERO ── */
-        <div style={{flexShrink:0,background:"#1A1A2E",marginTop:milestone?56:0,transition:"margin .3s"}}>
+        <div style={{flexShrink:0,background:"#2D2D4E",marginTop:milestone?56:0,transition:"margin .3s"}}>
           {/* top bar */}
           <div style={{position:"relative",zIndex:2,padding:"12px 18px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
             <button onClick={onBack} style={{background:"rgba(255,255,255,.12)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.15)",borderRadius:10,padding:"7px 16px",color:"#fff",cursor:"pointer",fontSize:13,fontWeight:500}}>← Back</button>
@@ -72,7 +72,7 @@ const PatternHeader = ({
             </div>
           </div>
           {/* progress bar row */}
-          <div style={{padding:"10px 18px 12px",background:"#1A1A2E"}}>
+          <div style={{padding:"10px 18px 12px",background:"#2D2D4E"}}>
             <div style={{display:"flex",alignItems:"center",gap:10}}>
               <div style={{flex:1}}><Bar val={done} color={T.terra} h={3} bg="rgba(255,255,255,.15)"/></div>
               <span style={{color:"rgba(255,255,255,.7)",fontSize:12,fontWeight:600,minWidth:36}}>{done}%</span>
