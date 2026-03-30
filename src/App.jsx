@@ -1577,7 +1577,7 @@ export default function Wovely() {
           const ns = await res.json();
           saveSession(ns);
           setAuthed(true);document.cookie="wovely_authed=1;path=/;max-age=31536000";
-          // Check if onboarding was completed
+          // Fetch profile to get real is_pro + onboarding status — always runs on mount
           try {
             const uid = (() => { try { const p=JSON.parse(atob(ns.access_token.split(".")[1])); return p.sub; } catch { return null; } })();
             if (uid) {
@@ -1592,9 +1592,11 @@ export default function Wovely() {
                   setIsPro(proStatus);
                   localStorage.setItem("yh_is_pro", String(proStatus));
                 }
+              } else {
+                console.warn("[Wovely] Profile fetch failed:", pr.status, "— using cached is_pro");
               }
             }
-          } catch {}
+          } catch (e) { console.warn("[Wovely] Profile fetch error:", e.message, "— using cached is_pro"); }
         } else {
           clearAuth();
         }
