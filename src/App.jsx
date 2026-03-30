@@ -1929,9 +1929,27 @@ export default function Wovely() {
   const handleAddPattern=async(p)=>{
     const user=supabaseAuth.getUser();
     const session=getSession();
+    // Deduplicate title: if user already has a pattern with same title, append (2), (3), etc.
+    let dedupTitle=p.title||"";
+    if(user&&session&&dedupTitle){
+      try{
+        const checkRes=await fetch(`${SUPABASE_URL}/rest/v1/patterns?user_id=eq.${user.id}&title=like.${encodeURIComponent(dedupTitle)}*&select=title`,{
+          headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${session.access_token}`},
+        });
+        if(checkRes.ok){
+          const existing=await checkRes.json();
+          const titles=new Set(existing.map(r=>r.title));
+          if(titles.has(dedupTitle)){
+            let n=2;
+            while(titles.has(`${p.title} (${n})`)) n++;
+            dedupTitle=`${p.title} (${n})`;
+          }
+        }
+      }catch(e){console.warn("[Wovely] Dedup check failed:",e.message);}
+    }
     // Optimistically add to local state
     const localId=p.id||"local_"+Date.now();
-    const localPattern={...p,id:localId};
+    const localPattern={...p,id:localId,title:dedupTitle};
     setUserPatterns(prev=>[localPattern,...prev]);
     setCreatedPattern(localPattern);
     // Persist to Supabase
@@ -1940,7 +1958,7 @@ export default function Wovely() {
         const res=await fetch(`${SUPABASE_URL}/rest/v1/patterns`,{
           method:"POST",
           headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${session.access_token}`,"Content-Type":"application/json","Prefer":"return=representation"},
-          body:JSON.stringify({user_id:user.id,title:p.title||"",cat:p.cat||"",source:p.source||"",source_url:p.source_url||"",notes:p.notes||"",difficulty:p.difficulty||"",yarn_weight:p.weight||"",hook_size:p.hook||"",gauge:p.gauge||{},tags:p.tags||[],is_ai_generated:!!p.is_ai_generated,is_starter:!!p.isStarter,image_url:p.image_url||"",photo:p.photo||"",cover_image_url:p.cover_image_url||null,row_count:(p.rows||[]).length,materials:p.materials||[],rows:p.rows||[],rating:p.rating||0,yardage:p.yardage||0,skeins:p.skeins||0,skein_yards:p.skeinYards||200,dimensions:p.dimensions||{},weight:p.weight||"",hook:p.hook||"",source_file_url:p.source_file_url||null,source_file_name:p.source_file_name||null,source_file_type:p.source_file_type||null,extracted_by_ai:!!p.extracted_by_ai,components:p.components||null}),
+          body:JSON.stringify({user_id:user.id,title:dedupTitle,cat:p.cat||"",source:p.source||"",source_url:p.source_url||"",notes:p.notes||"",difficulty:p.difficulty||"",yarn_weight:p.weight||"",hook_size:p.hook||"",gauge:p.gauge||{},tags:p.tags||[],is_ai_generated:!!p.is_ai_generated,is_starter:!!p.isStarter,image_url:p.image_url||"",photo:p.photo||"",cover_image_url:p.cover_image_url||null,row_count:(p.rows||[]).length,materials:p.materials||[],rows:p.rows||[],rating:p.rating||0,yardage:p.yardage||0,skeins:p.skeins||0,skein_yards:p.skeinYards||200,dimensions:p.dimensions||{},weight:p.weight||"",hook:p.hook||"",source_file_url:p.source_file_url||null,source_file_name:p.source_file_name||null,source_file_type:p.source_file_type||null,extracted_by_ai:!!p.extracted_by_ai,components:p.components||null}),
         });
         console.log("[Wovely] INSERT response status:", res.status);
         if(res.ok){
@@ -1975,6 +1993,18 @@ export default function Wovely() {
   const handleDeletePattern=(p)=>setDeleteTarget(p);
   const confirmDelete=()=>{if(deleteTarget){updatePatternStatus(deleteTarget,"deleted");setDeleteTarget(null);}};
   const parkInsteadOfDelete=()=>{if(deleteTarget){updatePatternStatus(deleteTarget,"parked");setDeleteTarget(null);}};
+  const handleRenamePattern=async(p,newTitle)=>{
+    const updated={...p,title:newTitle};
+    setUserPatterns(prev=>prev.map(x=>x.id===p.id?updated:x));
+    const user=supabaseAuth.getUser();const session=getSession();
+    const pid=p._supabaseId||p.id;
+    if(user&&session&&typeof pid==="string"&&!pid.startsWith("local_")&&!pid.startsWith("starter_")){
+      fetch(`${SUPABASE_URL}/rest/v1/patterns?id=eq.${pid}&user_id=eq.${user.id}`,{
+        method:"PATCH",headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${session.access_token}`,"Content-Type":"application/json","Prefer":"return=minimal"},
+        body:JSON.stringify({title:newTitle,updated_at:new Date().toISOString()}),
+      }).catch(e=>console.error("[Wovely] Rename error:",e));
+    }
+  };
   const handleCoverChange=(p)=>setCoverPickerTarget(p);
   const handleCoverConfirm=async(imageUrl)=>{
     const p=coverPickerTarget;if(!p)return;
@@ -2022,7 +2052,7 @@ export default function Wovely() {
           </div>
         </div>
         <div style={{flex:1,padding:"0 32px"}}>
-          {view==="collection"&&<CollectionView userPatterns={userPatterns} starterPatterns={starterPatterns} cat={cat} setCat={setCat} search={search} setSearch={setSearch} openDetail={openDetail} onAddPattern={openAddModal} isPro={isPro} tier={tier} onNavigate={navigateToView} onPark={handleParkPattern} onUnpark={handleUnparkPattern} onDelete={handleDeletePattern} onCoverChange={handleCoverChange} pct={pct} catFallbackPhoto={catFallbackPhoto} Photo={Photo} Bar={Bar} Stars={Stars} CATS={CATS} TIER_CONFIG={TIER_CONFIG}/>}
+          {view==="collection"&&<CollectionView userPatterns={userPatterns} starterPatterns={starterPatterns} cat={cat} setCat={setCat} search={search} setSearch={setSearch} openDetail={openDetail} onAddPattern={openAddModal} isPro={isPro} tier={tier} onNavigate={navigateToView} onPark={handleParkPattern} onUnpark={handleUnparkPattern} onDelete={handleDeletePattern} onCoverChange={handleCoverChange} onRename={handleRenamePattern} pct={pct} catFallbackPhoto={catFallbackPhoto} Photo={Photo} Bar={Bar} Stars={Stars} CATS={CATS} TIER_CONFIG={TIER_CONFIG}/>}
           {view==="wip"&&<div style={{padding:"24px 0 80px"}}><button onClick={()=>navigateToView("collection")} style={{background:"none",border:"none",color:T.terra,cursor:"pointer",fontSize:13,fontWeight:600,padding:0,marginBottom:20,display:"flex",alignItems:"center",gap:6}}>← Back</button>{inProgress.length===0?<div style={{textAlign:"center",padding:"80px 20px"}}><div style={{fontSize:48,marginBottom:14}}>🪡</div><div style={{fontFamily:T.serif,fontSize:20,fontWeight:600,color:"#2D2D4E",marginBottom:8}}>Nothing in progress</div><div style={{fontSize:14,color:"#6B6B8A",lineHeight:1.6}}>Open a pattern and start checking off rows.</div></div>:<div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:20}}>{inProgress.map((p,i)=><PatternCard key={p.id} p={p} delay={i*.06} onClick={()=>openDetail(p)} pct={pct} catFallbackPhoto={catFallbackPhoto} Photo={Photo} Bar={Bar} Stars={Stars}/>)}</div>}</div>}
           {view==="detail"&&selected&&<div style={{margin:"0 -40px"}}><Detail p={selected} onBack={detailOnBack} onSave={detailOnSave} pct={pct} estYards={estYards} estSkeins={estSkeins} pdfThumbUrl={pdfThumbUrl} CSS={CSS} Bar={Bar} Photo={Photo} Stars={Stars} WireframeViewer={WireframeViewer} Btn={Btn}/></div>}
           {view==="browse"&&<BrowseSitesView onSavePattern={handleAddPattern}/>}
@@ -2057,7 +2087,7 @@ export default function Wovely() {
         <button onClick={openAddModal} style={{background:T.terra,border:"none",borderRadius:9999,width:34,height:34,cursor:"pointer",color:"#fff",fontSize:20,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 10px rgba(155,126,200,.4)"}}>+</button>
       </div>
       <div style={{flex:1,overflowY:"auto",paddingBottom:100}}>
-        {view==="collection"&&<CollectionView userPatterns={userPatterns} starterPatterns={starterPatterns} cat={cat} setCat={setCat} search={search} setSearch={setSearch} openDetail={openDetail} onAddPattern={openAddModal} isPro={isPro} tier={tier} onNavigate={navigateToView} onPark={handleParkPattern} onUnpark={handleUnparkPattern} onDelete={handleDeletePattern} onCoverChange={handleCoverChange} pct={pct} catFallbackPhoto={catFallbackPhoto} Photo={Photo} Bar={Bar} Stars={Stars} CATS={CATS} TIER_CONFIG={TIER_CONFIG}/>}
+        {view==="collection"&&<CollectionView userPatterns={userPatterns} starterPatterns={starterPatterns} cat={cat} setCat={setCat} search={search} setSearch={setSearch} openDetail={openDetail} onAddPattern={openAddModal} isPro={isPro} tier={tier} onNavigate={navigateToView} onPark={handleParkPattern} onUnpark={handleUnparkPattern} onDelete={handleDeletePattern} onCoverChange={handleCoverChange} onRename={handleRenamePattern} pct={pct} catFallbackPhoto={catFallbackPhoto} Photo={Photo} Bar={Bar} Stars={Stars} CATS={CATS} TIER_CONFIG={TIER_CONFIG}/>}
         {view==="wip"&&<div style={{padding:"16px 18px 80px"}}>{inProgress.length===0?<div style={{textAlign:"center",padding:"60px 20px"}}><div style={{fontSize:48,marginBottom:14}}>🪡</div><div style={{fontFamily:T.serif,fontSize:18,fontWeight:600,color:"#2D2D4E",marginBottom:8}}>Nothing in progress</div><div style={{fontSize:14,color:"#6B6B8A",lineHeight:1.6}}>Open a pattern and start checking off rows.</div></div>:<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>{inProgress.map((p,i)=><PatternCard key={p.id} p={p} delay={i*.06} onClick={()=>openDetail(p)} pct={pct} catFallbackPhoto={catFallbackPhoto} Photo={Photo} Bar={Bar} Stars={Stars}/>)}</div>}</div>}
         {view==="detail"&&selected&&<Detail p={selected} onBack={detailOnBack} onSave={detailOnSave} pct={pct} estYards={estYards} estSkeins={estSkeins} pdfThumbUrl={pdfThumbUrl} CSS={CSS} Bar={Bar} Photo={Photo} Stars={Stars} WireframeViewer={WireframeViewer} Btn={Btn}/>}
         {view==="browse"&&<BrowseSitesView onSavePattern={handleAddPattern}/>}

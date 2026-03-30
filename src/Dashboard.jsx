@@ -2,17 +2,37 @@ import { useState, useRef, useEffect } from "react";
 import { T, useBreakpoint } from "./theme.jsx";
 import { PILL } from "./constants.js";
 
-const PatternCard = ({p,onClick,onPark,onUnpark,onDelete,onCoverChange,delay=0,pct,catFallbackPhoto,Photo,Bar,Stars}) => {
+const RenameModal = ({pattern,onSave,onCancel}) => {
+  const [val,setVal]=useState(pattern.title||"");
+  return (
+    <div style={{position:"fixed",inset:0,zIndex:600,display:"flex",alignItems:"center",justifyContent:"center",padding:16}} onClick={onCancel}>
+      <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,.5)",backdropFilter:"blur(3px)"}}/>
+      <div onClick={e=>e.stopPropagation()} style={{position:"relative",background:"#fff",borderRadius:16,padding:"24px 22px 20px",width:"100%",maxWidth:360,boxShadow:"0 12px 40px rgba(0,0,0,.2)"}}>
+        <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:18,fontWeight:700,color:"#2D2D4E",marginBottom:14}}>Rename pattern</div>
+        <input value={val} onChange={e=>setVal(e.target.value)} autoFocus style={{width:"100%",padding:"10px 14px",border:"1.5px solid #EDE4F7",borderRadius:10,fontSize:14,fontFamily:"Inter,sans-serif",color:"#2D2D4E",outline:"none",boxSizing:"border-box",marginBottom:16}} onFocus={e=>e.target.style.borderColor="#9B7EC8"} onBlur={e=>e.target.style.borderColor="#EDE4F7"}/>
+        <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
+          <button onClick={onCancel} style={{background:"none",border:`1px solid #EDE4F7`,borderRadius:10,padding:"8px 18px",fontSize:13,fontWeight:600,color:"#6B6B8A",cursor:"pointer"}}>Cancel</button>
+          <button onClick={()=>onSave(val.trim())} disabled={!val.trim()} style={{background:val.trim()?"#9B7EC8":"#D5CBE8",border:"none",borderRadius:10,padding:"8px 18px",fontSize:13,fontWeight:600,color:"#fff",cursor:val.trim()?"pointer":"not-allowed"}}>Save</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const PatternCard = ({p,onClick,onPark,onUnpark,onDelete,onCoverChange,onRename,delay=0,pct,catFallbackPhoto,Photo,Bar,Stars}) => {
   const done=pct(p);
   const [menuOpen,setMenuOpen]=useState(false);
+  const [renaming,setRenaming]=useState(false);
   const isParked=p.status==="parked";
   const cardPhoto=p.cover_image_url||(PILL.includes(p.photo)?catFallbackPhoto(p.cat):p.photo)||catFallbackPhoto(p.cat);
   const isPlaceholder=!p.cover_image_url&&PILL.includes(p.photo);
   return (
     <div className="card fu" onClick={onClick} style={{background:"#FFFFFF",borderRadius:16,overflow:"hidden",border:`1px solid ${T.border}`,cursor:"pointer",animationDelay:delay+"s",position:"relative",boxShadow:T.shadow}}>
+      {renaming&&<RenameModal pattern={p} onCancel={()=>setRenaming(false)} onSave={newTitle=>{setRenaming(false);onRename&&onRename(p,newTitle);}}/>}
       {!p.isStarter&&(onPark||onDelete)&&<div style={{position:"absolute",top:8,right:8,zIndex:5}}>
         <button onClick={e=>{e.stopPropagation();setMenuOpen(!menuOpen);}} style={{background:"rgba(0,0,0,.45)",backdropFilter:"blur(4px)",border:"none",borderRadius:99,width:28,height:28,cursor:"pointer",color:"#fff",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1}}>⋮</button>
         {menuOpen&&<div onClick={e=>e.stopPropagation()} style={{position:"absolute",right:0,top:32,background:T.modal,border:`1px solid ${T.border}`,borderRadius:10,boxShadow:"0 8px 24px rgba(155,126,200,.12)",zIndex:10,minWidth:150,overflow:"hidden"}}>
+          {onRename&&<div onClick={()=>{setMenuOpen(false);setRenaming(true);}} style={{padding:"10px 14px",fontSize:13,color:T.ink,cursor:"pointer",borderBottom:`1px solid ${T.border}`}} onMouseEnter={e=>e.currentTarget.style.background=T.linen} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>Rename pattern</div>}
           {!p.isStarter&&onCoverChange&&<div onClick={()=>{setMenuOpen(false);onCoverChange(p);}} style={{padding:"10px 14px",fontSize:13,color:T.ink,cursor:"pointer",borderBottom:`1px solid ${T.border}`}} onMouseEnter={e=>e.currentTarget.style.background=T.linen} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>Change cover image</div>}
           {isParked
             ?<div onClick={()=>{setMenuOpen(false);onUnpark&&onUnpark(p);}} style={{padding:"10px 14px",fontSize:13,color:T.ink,cursor:"pointer",borderBottom:`1px solid ${T.border}`}} onMouseEnter={e=>e.currentTarget.style.background=T.linen} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>Unpark</div>
@@ -132,7 +152,7 @@ const EmptySlotCard = ({onClick,slotIndex=0}) => (
   </div>
 );
 
-const CollectionView = ({userPatterns,starterPatterns,cat,setCat,search,setSearch,openDetail,onAddPattern,isPro,tier,setView,onPark,onUnpark,onDelete,onCoverChange,pct,catFallbackPhoto,Photo,Bar,Stars,CATS,TIER_CONFIG}) => {
+const CollectionView = ({userPatterns,starterPatterns,cat,setCat,search,setSearch,openDetail,onAddPattern,isPro,tier,setView,onPark,onUnpark,onDelete,onCoverChange,onRename,pct,catFallbackPhoto,Photo,Bar,Stars,CATS,TIER_CONFIG}) => {
   const{isDesktop,isMobile}=useBreakpoint();
   const allPatterns = [...userPatterns,...starterPatterns];
   const visible=allPatterns.filter(p=>p.status!=="deleted");
@@ -176,7 +196,7 @@ const CollectionView = ({userPatterns,starterPatterns,cat,setCat,search,setSearc
       {/* Unified grid */}
       {viewMode==="grid"?(
         <div style={{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(3,1fr)",gap:isMobile?14:20,padding:isDesktop?"0 0 80px":"0 18px 120px"}}>
-          {filteredAll.map((p,i)=><PatternCard key={p.id} p={p} delay={i*.04} onClick={()=>openDetail(p)} onPark={onPark} onUnpark={onUnpark} onDelete={onDelete} onCoverChange={onCoverChange} pct={pct} catFallbackPhoto={catFallbackPhoto} Photo={Photo} Bar={Bar} Stars={Stars}/>)}
+          {filteredAll.map((p,i)=><PatternCard key={p.id} p={p} delay={i*.04} onClick={()=>openDetail(p)} onPark={onPark} onUnpark={onUnpark} onDelete={onDelete} onCoverChange={onCoverChange} onRename={onRename} pct={pct} catFallbackPhoto={catFallbackPhoto} Photo={Photo} Bar={Bar} Stars={Stars}/>)}
           {!isPro&&cat==="All"&&!search&&Array.from({length:emptySlots}).map((_,i)=><EmptySlotCard key={"slot_"+i} slotIndex={i} onClick={onAddPattern}/>)}
         </div>
       ):(
