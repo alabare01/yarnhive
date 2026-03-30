@@ -418,7 +418,7 @@ const PaywallGate = ({onClose,onUpgrade,patternCount}) => (
           </div>
           <div style={{background:"rgba(255,255,255,.15)",borderRadius:10,padding:"6px 12px",fontSize:12,color:"#fff",fontWeight:600}}>✨ Pro</div>
         </div>
-        {["Unlimited pattern storage","All import methods — URL, PDF, Snap & Stitch, browser","Snap & Stitch, Stash Check, Pattern Help","Full calculator suite"].map(f=>(
+        {["Unlimited pattern storage","All import methods — URL, PDF, Snap & Stitch, browser","Snap & Stitch, Stash Check, Pattern Help","Full calculator suite","Cloud sync across all devices"].map(f=>(
           <div key={f} style={{display:"flex",alignItems:"center",gap:8,marginBottom:7}}>
             <div style={{width:16,height:16,borderRadius:99,background:"rgba(255,255,255,.2)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><span style={{fontSize:9,color:"#fff"}}>✓</span></div>
             <span style={{fontSize:13,color:"rgba(255,255,255,.85)"}}>{f}</span>
@@ -435,7 +435,7 @@ const PaywallGate = ({onClose,onUpgrade,patternCount}) => (
 const SidebarNav = ({view,onNavigate,count,isPro,onAddPattern,onSignOut,onUpgrade,userPatterns=[],allPatterns=[]}) => {
   const starterC=DEFAULT_STARTERS.length;const addedC=userPatterns.filter(p=>!p.isStarter).length;
   const wipCount=allPatterns.filter(p=>!p.isStarter&&(p.status==="in_progress"||p.started)).filter(p=>pct(p)<100).length;
-  const ITEMS=[{key:"collection",label:"My Wovely",sub:starterC+" starter"+(starterC!==1?"s":"")+" · "+addedC+" added",icon:"🧶"},{key:"wip",label:"On the Hook",sub:wipCount>0?wipCount+" active":"Currently making",icon:"🪡"},{key:"browse",label:"Find Patterns",sub:"Find & browse patterns",icon:"🌐"},{key:"stash",label:"Stash & Notions",sub:"Manage your yarn",icon:"🎀"},{key:"calculator",label:"The Workbench",sub:"Gauge, yardage & more",icon:"🧮"},{key:"stitch-check",label:"Stitch Check",sub:isPro?"Validate any pattern":"Pro feature",icon:"🛡️",proOnly:true},{key:"shopping",label:"Supply Run",sub:"Auto-generated",icon:"🛒"}];
+  const ITEMS=[{key:"collection",label:"My Wovely",sub:starterC+" starter"+(starterC!==1?"s":"")+" · "+addedC+" added",icon:"🧶"},{key:"wip",label:"On the Hook",sub:wipCount>0?wipCount+" active":"Currently making",icon:"🪡"},{key:"browse",label:"Find Patterns",sub:"Find free patterns",icon:"🌐"},{key:"stash",label:"Stash & Notions",sub:"Manage your yarn",icon:"🎀"},{key:"calculator",label:"The Workbench",sub:"Gauge, yardage & more",icon:"🧮"},{key:"stitch-check",label:"Stitch Check",sub:isPro?"Validate any pattern":"Pro feature",icon:"🛡️",proOnly:true},{key:"shopping",label:"Supply Run",sub:"Auto-generated",icon:"🛒"}];
   return (
     <div style={{width:260,background:"#9B7EC8",height:"100vh",position:"sticky",top:0,display:"flex",flexDirection:"column",flexShrink:0}}>
       <div onClick={()=>onNavigate("collection")} style={{padding:"32px 20px 24px",cursor:"pointer",transition:"opacity .15s"}} onMouseEnter={e=>e.currentTarget.style.opacity=".85"} onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
@@ -444,19 +444,19 @@ const SidebarNav = ({view,onNavigate,count,isPro,onAddPattern,onSignOut,onUpgrad
       <div style={{padding:"0 16px 8px"}}><button onClick={onAddPattern} style={{width:"100%",background:"rgba(255,255,255,.2)",color:"#fff",border:"none",borderRadius:9999,padding:"12px",fontSize:14,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"background .15s"}} onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,.3)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,.2)"}><span style={{fontSize:18}}>+</span> Add Pattern</button></div>
       <div style={{flex:1,overflowY:"auto",padding:"8px 0"}}>
         {ITEMS.map(item=>{const active=view===item.key;const locked=item.proOnly&&!isPro;return(
-          <div key={item.key} className="nav-item" onClick={()=>{if(locked){onUpgrade();return;}onNavigate(item.key);}} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 20px",background:active?"rgba(255,255,255,0.25)":"transparent",cursor:"pointer",transition:"background .12s",opacity:locked?.55:1}}>
+          <div key={item.key} className="nav-item" onClick={()=>{if(locked){onUpgrade();return;}onNavigate(item.key);}} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 20px",background:active?"rgba(255,255,255,0.2)":"transparent",cursor:"pointer",transition:"background .12s",opacity:locked?.55:1}}>
             <span style={{fontSize:18,width:24,textAlign:"center"}}>{item.icon}</span>
-            <div style={{flex:1}}><div style={{fontSize:14,fontWeight:600,color:"#fff"}}>{item.label}</div><div style={{fontSize:11,color:"rgba(255,255,255,0.65)",marginTop:1}}>{item.sub}</div></div>
-            {locked&&<span style={{fontSize:12,color:"rgba(255,255,255,0.65)"}}>🔒</span>}
+            <div style={{flex:1}}><div style={{fontSize:14,fontWeight:active?600:400,color:active?"#fff":"rgba(255,255,255,0.75)"}}>{item.label}</div><div style={{fontSize:11,color:"rgba(255,255,255,0.5)",marginTop:1}}>{item.sub}</div></div>
+            {locked&&<span style={{fontSize:12,color:"rgba(255,255,255,0.5)"}}>🔒</span>}
             {active&&!locked&&<div style={{width:6,height:6,borderRadius:99,background:"#fff"}}/>}
           </div>
         );})}
       </div>
       <div style={{padding:"0 0 8px"}}>
         {(()=>{const active=view==="profile";return(
-          <div className="nav-item" onClick={()=>onNavigate("profile")} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 20px",background:active?"rgba(255,255,255,0.25)":"transparent",cursor:"pointer",transition:"background .12s"}}>
+          <div className="nav-item" onClick={()=>onNavigate("profile")} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 20px",background:active?"rgba(255,255,255,0.2)":"transparent",cursor:"pointer",transition:"background .12s"}}>
             <span style={{fontSize:18,width:24,textAlign:"center"}}>👤</span>
-            <div style={{flex:1}}><div style={{fontSize:14,fontWeight:600,color:"#fff"}}>Profile & Settings</div><div style={{fontSize:11,color:"rgba(255,255,255,0.65)",marginTop:1}}>Your account</div></div>
+            <div style={{flex:1}}><div style={{fontSize:14,fontWeight:active?600:400,color:active?"#fff":"rgba(255,255,255,0.75)"}}>Profile & Settings</div><div style={{fontSize:11,color:"rgba(255,255,255,0.5)",marginTop:1}}>Your account</div></div>
             {active&&<div style={{width:6,height:6,borderRadius:99,background:"#fff"}}/>}
           </div>
         );})()}
@@ -475,7 +475,7 @@ const NavPanel = ({open,onClose,view,onNavigate,count,isPro,onSignOut,onUpgrade}
   const dismiss=()=>{setClosing(true);setTimeout(()=>{setClosing(false);onClose();},220);};
   const go=v=>{onNavigate(v);dismiss();};
   if(!open) return null;
-  const ITEMS=[{key:"collection",label:"My Wovely",sub:count+" patterns",icon:"🧶"},{key:"wip",label:"On the Hook",sub:"Currently making",icon:"🪡"},{key:"browse",label:"Find Patterns",sub:"Find & browse patterns",icon:"🌐"},{key:"stash",label:"Stash & Notions",sub:"Manage your yarn",icon:"🎀"},{key:"calculator",label:"The Workbench",sub:"Gauge, yardage & more",icon:"🧮"},{key:"stitch-check",label:"Stitch Check",sub:isPro?"Validate any pattern":"Pro feature",icon:"🛡️",proOnly:true},{key:"shopping",label:"Supply Run",sub:"Auto-generated needs",icon:"🛒"}];
+  const ITEMS=[{key:"collection",label:"My Wovely",sub:count+" patterns",icon:"🧶"},{key:"wip",label:"On the Hook",sub:"Currently making",icon:"🪡"},{key:"browse",label:"Find Patterns",sub:"Find free patterns",icon:"🌐"},{key:"stash",label:"Stash & Notions",sub:"Manage your yarn",icon:"🎀"},{key:"calculator",label:"The Workbench",sub:"Gauge, yardage & more",icon:"🧮"},{key:"stitch-check",label:"Stitch Check",sub:isPro?"Validate any pattern":"Pro feature",icon:"🛡️",proOnly:true},{key:"shopping",label:"Supply Run",sub:"Auto-generated needs",icon:"🛒"}];
   return (
     <div style={{position:"fixed",inset:0,zIndex:100}}>
       <div className={closing?"dim-out":"dim-in"} onClick={dismiss} style={{position:"absolute",inset:0,background:"rgba(28,23,20,.52)",backdropFilter:"blur(3px)"}}/>
@@ -485,19 +485,19 @@ const NavPanel = ({open,onClose,view,onNavigate,count,isPro,onSignOut,onUpgrade}
         </div>
         <div style={{flex:1,overflowY:"auto",paddingTop:6}}>
           {ITEMS.map(item=>{const active=view===item.key;const locked=item.proOnly&&!isPro;return(
-            <div key={item.key} className="nav-item" onClick={()=>{if(locked){onUpgrade();dismiss();return;}go(item.key);}} style={{display:"flex",alignItems:"center",gap:13,padding:"13px 20px",background:active?"rgba(255,255,255,0.25)":"transparent",cursor:"pointer",transition:"background .12s",opacity:locked?.55:1}}>
+            <div key={item.key} className="nav-item" onClick={()=>{if(locked){onUpgrade();dismiss();return;}go(item.key);}} style={{display:"flex",alignItems:"center",gap:13,padding:"13px 20px",background:active?"rgba(255,255,255,0.2)":"transparent",cursor:"pointer",transition:"background .12s",opacity:locked?.55:1}}>
               <span style={{fontSize:20,width:26,textAlign:"center"}}>{item.icon}</span>
-              <div style={{flex:1}}><div style={{fontSize:14,fontWeight:600,color:"#fff"}}>{item.label}</div><div style={{fontSize:11,color:"rgba(255,255,255,0.65)",marginTop:1}}>{item.sub}</div></div>
-              {locked&&<span style={{fontSize:12,color:"rgba(255,255,255,0.65)"}}>🔒</span>}
+              <div style={{flex:1}}><div style={{fontSize:14,fontWeight:active?600:400,color:active?"#fff":"rgba(255,255,255,0.75)"}}>{item.label}</div><div style={{fontSize:11,color:"rgba(255,255,255,0.5)",marginTop:1}}>{item.sub}</div></div>
+              {locked&&<span style={{fontSize:12,color:"rgba(255,255,255,0.5)"}}>🔒</span>}
               {active&&!locked&&<div style={{width:6,height:6,borderRadius:99,background:"#fff"}}/>}
             </div>
           );})}
         </div>
         <div style={{padding:"0 0 8px"}}>
           {(()=>{const active=view==="profile";return(
-            <div className="nav-item" onClick={()=>go("profile")} style={{display:"flex",alignItems:"center",gap:13,padding:"13px 20px",background:active?"rgba(255,255,255,0.25)":"transparent",cursor:"pointer",transition:"background .12s"}}>
+            <div className="nav-item" onClick={()=>go("profile")} style={{display:"flex",alignItems:"center",gap:13,padding:"13px 20px",background:active?"rgba(255,255,255,0.2)":"transparent",cursor:"pointer",transition:"background .12s"}}>
               <span style={{fontSize:20,width:26,textAlign:"center"}}>👤</span>
-              <div style={{flex:1}}><div style={{fontSize:14,fontWeight:600,color:"#fff"}}>Profile & Settings</div><div style={{fontSize:11,color:"rgba(255,255,255,0.65)",marginTop:1}}>Your account</div></div>
+              <div style={{flex:1}}><div style={{fontSize:14,fontWeight:active?600:400,color:active?"#fff":"rgba(255,255,255,0.75)"}}>Profile & Settings</div><div style={{fontSize:11,color:"rgba(255,255,255,0.5)",marginTop:1}}>Your account</div></div>
               {active&&<div style={{width:6,height:6,borderRadius:99,background:"#fff"}}/>}
             </div>
           );})()}
@@ -534,7 +534,9 @@ const EmailConfirmBanner = ({onDismiss,onResend}) => {
 const PRO_FEATURES = [
   {label:"Unlimited patterns",sub:"No cap. Save every pattern you'll ever make"},
   {label:"Unlimited Snap & Stitch",sub:"Scan as many finished objects as you want"},
+  {label:"Cloud sync",sub:"Access your Wovely on every device, always in sync"},
   {label:"Ask Bev",sub:"Get AI-powered help for any row you're stuck on"},
+  {label:"Advanced analytics",sub:"Track your making history and stash usage"},
   {label:"Early access",sub:"First to get every new feature we ship"},
 ];
 
@@ -828,8 +830,8 @@ const ProfileSettingsView = ({isPro,onOpenProModal,onGoHome,onEmailConfirmed}) =
 
 
 const BrowseSitesView = ({onSavePattern}) => {
-  const{isDesktop,isTablet}=useBreakpoint();
-  const [activeSite,setActiveSite]=useState(null),[currentUrl,setCurrentUrl]=useState(""),[importing,setImporting]=useState(false),[importErr,setImportErr]=useState(null),[importOk,setImportOk]=useState(false),[iframeLoaded,setIframeLoaded]=useState(false);
+  const{isDesktop}=useBreakpoint();
+  const [activeSite,setActiveSite]=useState(null),[currentUrl,setCurrentUrl]=useState(""),[importing,setImporting]=useState(false),[importErr,setImportErr]=useState(null),[importOk,setImportOk]=useState(false);
   const iframeRef=useRef(null);
   const SITES=[
     {name:"AllFreeCrochet",desc:"The largest free crochet pattern library.",url:"https://www.allfreecrochet.com",tags:["Blankets","Amigurumi","Wearables"],free:true,photo:PILL[4]},
@@ -841,27 +843,8 @@ const BrowseSitesView = ({onSavePattern}) => {
     {name:"Ravelry",desc:"World's largest pattern database.",url:"https://www.ravelry.com/patterns/library#craft=crochet",tags:["All categories","Free + Paid"],free:false,photo:PILL[0],note:"Log in on your device, then browse and save any pattern."},
     {name:"LoveCrafts",desc:"Quality free and paid patterns.",url:"https://www.lovecrafts.com/en-us/l/crochet/crochet-patterns?price=free",tags:["Garments","Modern"],free:false,photo:PILL[2]},
   ];
-  const proxyUrl=(u)=>"/api/proxy?url="+encodeURIComponent(u);
-  const handleIframeLoad=()=>{setIframeLoaded(true);try{const raw=iframeRef.current?.contentWindow?.location?.href;if(raw&&raw!=="about:blank"){const m=raw.match(/[?&]url=([^&]+)/);const real=m?decodeURIComponent(m[1]):raw;setCurrentUrl(real);setImportErr(null);setImportOk(false);}}catch(e){}};
-  const closeSite=()=>{setActiveSite(null);setCurrentUrl("");setImportErr(null);setImportOk(false);setIframeLoaded(false);};
-  const doImportUrl=async(url)=>{
-    if(!url) return;
-    setImporting(true);setImportErr(null);setImportOk(false);
-    try{
-      const res=await fetch("/api/fetch-pattern",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url})});
-      const data=await res.json(); if(!res.ok||data.error) throw new Error(data.error||"Could not read that page");
-      const rows=(data.rows||[]).map((r,i)=>({id:Date.now()+i,text:r.text,done:false,note:""}));
-      onSavePattern&&onSavePattern({id:Date.now(),photo:data.thumbnail_url||PILL[Math.floor(Math.random()*PILL.length)],rating:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:50,height:60},...data,rows});
-      setImportOk(true); setTimeout(closeSite,1800);
-    }catch(e){setImportErr("Couldn't read this page. Try navigating directly to the pattern and tapping Save again.");}
-    finally{setImporting(false);}
-  };
-  useEffect(()=>{
-    if(!activeSite)return;
-    const onMsg=(e)=>{if(e.data?.type==="IMPORT_URL"&&e.data.url){const raw=e.data.url;const m=raw.match(/[?&]url=([^&]+)/);const real=m?decodeURIComponent(m[1]):raw;setCurrentUrl(real);doImportUrl(real);}};
-    window.addEventListener("message",onMsg);
-    return ()=>window.removeEventListener("message",onMsg);
-  },[activeSite]);
+  const handleIframeLoad=()=>{try{const u=iframeRef.current?.contentWindow?.location?.href;if(u&&u!=="about:blank"){setCurrentUrl(u);setImportErr(null);setImportOk(false);}}catch(e){}};
+  const closeSite=()=>{setActiveSite(null);setCurrentUrl("");setImportErr(null);setImportOk(false);};
   const doImport=async()=>{
     const urlToImport=currentUrl||activeSite?.url; if(!urlToImport) return;
     setImporting(true);setImportErr(null);setImportOk(false);
@@ -875,22 +858,16 @@ const BrowseSitesView = ({onSavePattern}) => {
     finally{setImporting(false);}
   };
   if(activeSite) return (
-    <div style={{position:"fixed",top:0,left:0,width:"100vw",height:"100vh",zIndex:9999,display:"flex",flexDirection:"column",background:"#FFFFFF"}}>
-      <div style={{background:"#2D2D4E",padding:"10px 14px",display:"flex",alignItems:"center",gap:10,flexShrink:0,height:48}}>
+    <div style={{position:"fixed",inset:0,zIndex:300,display:"flex",flexDirection:"column",background:T.bg}}>
+      <div style={{background:"#1A1A2E",padding:"10px 14px",display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
         <button onClick={closeSite} style={{background:"rgba(255,255,255,.12)",border:"1px solid rgba(255,255,255,.2)",borderRadius:8,padding:"8px 14px",fontSize:13,fontWeight:600,color:"#fff",cursor:"pointer",flexShrink:0}}>← Back</button>
         <div style={{flex:1,background:"rgba(255,255,255,.08)",border:"1px solid rgba(255,255,255,.15)",borderRadius:10,padding:"7px 12px",display:"flex",alignItems:"center",gap:7,minWidth:0}}><span style={{fontSize:10,color:"rgba(255,255,255,.4)",flexShrink:0}}>🌐</span><div style={{fontSize:11,color:"rgba(255,255,255,.75)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1,fontFamily:"monospace"}}>{currentUrl||activeSite.url}</div></div>
         <button onClick={()=>window.open(currentUrl||activeSite.url,"_blank","noopener,noreferrer")} style={{background:"rgba(255,255,255,.08)",border:"1px solid rgba(255,255,255,.2)",borderRadius:8,padding:"8px 10px",fontSize:15,cursor:"pointer",flexShrink:0,color:"rgba(255,255,255,.7)"}}>↗</button>
       </div>
-      <div style={{background:"rgba(28,23,20,.06)",borderBottom:`1px solid ${T.border}`,padding:"5px 14px",display:"flex",alignItems:"center",gap:6,flexShrink:0,height:28}}>
-        <div style={{width:6,height:6,borderRadius:99,background:T.terra,flexShrink:0}}/><div style={{fontSize:10,color:T.ink3,fontWeight:500}}>Browsing {activeSite.name} inside Wovely</div><div style={{flex:1}}/><div style={{fontSize:10,color:T.ink3,opacity:.6}}>Tap "Import This Pattern" when ready</div>
+      <div style={{background:"rgba(28,23,20,.06)",borderBottom:`1px solid ${T.border}`,padding:"5px 14px",display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
+        <div style={{width:6,height:6,borderRadius:99,background:T.terra,flexShrink:0}}/><div style={{fontSize:10,color:T.ink3,fontWeight:500}}>Browsing {activeSite.name} inside Wovely</div><div style={{flex:1}}/><div style={{fontSize:10,color:T.ink3,opacity:.6}}>Tap "Save This Pattern" when ready</div>
       </div>
-      <div style={{flex:1,position:"relative",overflow:"hidden",minHeight:0}}>
-        {!iframeLoaded&&<div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:12,background:"#FFFFFF",zIndex:1}}>
-          <div className="spinner" style={{width:24,height:24,border:`3px solid ${T.border}`,borderTopColor:T.terra,borderRadius:"50%"}}/>
-          <div style={{fontSize:13,color:T.ink3}}>Loading {activeSite.name}...</div>
-        </div>}
-        <iframe ref={iframeRef} src={proxyUrl(activeSite.url)} onLoad={handleIframeLoad} style={{width:"100%",height:"100%",border:"none",display:"block"}} title={activeSite.name} sandbox="allow-scripts allow-same-origin allow-forms allow-popups"/>
-      </div>
+      <div style={{flex:1,position:"relative",overflow:"hidden"}}><iframe ref={iframeRef} src={activeSite.url} onLoad={handleIframeLoad} style={{width:"100%",height:"100%",border:"none"}} title={activeSite.name} sandbox="allow-scripts allow-same-origin allow-forms allow-popups"/></div>
       <div style={{background:T.surface,borderTop:`2px solid ${T.terra}`,padding:"12px 16px",flexShrink:0}}>
         {activeSite.note&&<div style={{fontSize:11,color:T.terra,marginBottom:8,display:"flex",gap:6,alignItems:"flex-start"}}><span style={{flexShrink:0}}>ℹ️</span><span>{activeSite.note}</span></div>}
         {importOk?<div style={{background:T.sageLt,borderRadius:12,padding:"12px 16px",display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:18}}>✅</span><div style={{fontSize:13,fontWeight:600,color:T.sage}}>Pattern saved to My Wovely!</div></div>
@@ -901,23 +878,18 @@ const BrowseSitesView = ({onSavePattern}) => {
     </div>
   );
   return (
-    <div style={{padding:isDesktop?"24px 0 80px":"16px 20px 100px",background:"#FFFFFF"}}>
-      <div style={{fontSize:14,color:"#6B6B8A",lineHeight:1.6,marginBottom:20}}>Browse any of these sites directly inside Wovely. Find a pattern you love, then import it in one tap.</div>
-      <div style={{background:"#EDE4F7",borderRadius:12,padding:"12px 16px",display:"flex",alignItems:"flex-start",gap:10,marginBottom:24}}>
-        <span style={{color:"#9B7EC8",fontSize:16,flexShrink:0,marginTop:1}}>ℹ</span>
-        <div style={{fontSize:13,color:"#6B6B8A",lineHeight:1.5}}>Some sites may require an account or purchase. Wovely gives you access to browse — what's available depends on the site.</div>
-      </div>
-      <div style={{display:"flex",flexWrap:"wrap",gap:20,justifyContent:"center"}}>
+    <div style={{padding:isDesktop?"24px 0 80px":"16px 18px 100px"}}>
+      <div style={{marginBottom:20}}><div style={{fontSize:13,color:T.ink2,lineHeight:1.7}}>Choose a source below. Browse for a pattern, then paste its URL to import it directly into your collection.</div></div>
+      <div style={{display:"grid",gap:14,gridTemplateColumns:isDesktop?"1fr 1fr":"1fr"}}>
         {SITES.map(s=>(
-          <div key={s.name} style={{background:"#FFFFFF",borderRadius:16,border:"1px solid #EDE4F7",boxShadow:"0 1px 4px rgba(0,0,0,0.06)",position:"relative",transition:"transform .15s,box-shadow .15s",overflow:"hidden",width:isDesktop?"calc(33.333% - 14px)":isTablet?"calc(50% - 10px)":"100%"}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-1px)";e.currentTarget.style.boxShadow="0 4px 16px rgba(155,126,200,0.12)";}} onMouseLeave={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="0 1px 4px rgba(0,0,0,0.06)";}}>
-            <div style={{background:"linear-gradient(135deg, #EDE4F7 0%, #F8F6FF 100%)",height:80,display:"flex",alignItems:"center",justifyContent:"center",position:"relative"}}>
-              <div style={{fontFamily:T.serif,fontSize:18,fontWeight:600,color:"#2D2D4E"}}>{s.name}</div>
-              <div style={{position:"absolute",top:12,right:12}}><div style={{background:s.free?"#5C9E7A":"#2D3A7C",borderRadius:9999,padding:"3px 10px",fontSize:10,fontWeight:700,color:"#fff"}}>{s.free?"FREE":"FREE + PAID"}</div></div>
+          <div key={s.name} style={{background:T.surface,borderRadius:16,overflow:"hidden",border:`1px solid ${T.border}`,boxShadow:"0 2px 8px rgba(28,23,20,.05)"}}>
+            <div style={{height:110,position:"relative",overflow:"hidden"}}><Photo src={s.photo} alt={s.name} style={{width:"100%",height:"100%"}}/><div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(20,14,10,.75) 0%,transparent 60%)"}}/>
+              <div style={{position:"absolute",bottom:10,left:12,right:12,display:"flex",justifyContent:"space-between",alignItems:"flex-end"}}><div style={{fontFamily:T.serif,fontSize:17,fontWeight:700,color:"#fff"}}>{s.name}</div><div style={{background:s.free?"rgba(92,122,94,.9)":"rgba(155,126,200,.9)",borderRadius:7,padding:"3px 8px",fontSize:10,fontWeight:700,color:"#fff"}}>{s.free?"FREE":"FREE + PAID"}</div></div>
             </div>
-            <div style={{padding:"16px 20px 20px",textAlign:"center"}}>
-              <div style={{fontSize:13,color:"#6B6B8A",lineHeight:1.5,marginBottom:12}}>{s.desc}</div>
-              <div style={{display:"flex",flexWrap:"wrap",gap:6,justifyContent:"center",marginBottom:16}}>{s.tags.map(t=><div key={t} style={{background:"#EDE4F7",borderRadius:9999,padding:"3px 10px",fontSize:10,fontWeight:600,color:"#9B7EC8"}}>{t}</div>)}</div>
-              <button onClick={()=>setActiveSite(s)} style={{width:"100%",background:"#9B7EC8",color:"#fff",border:"none",borderRadius:9999,padding:"10px",fontSize:13,fontWeight:600,cursor:"pointer"}}>Browse {s.name}</button>
+            <div style={{padding:"12px 14px"}}>
+              <div style={{fontSize:12,color:T.ink2,lineHeight:1.6,marginBottom:8}}>{s.desc}</div>
+              <div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:10}}>{s.tags.map(t=><div key={t} style={{background:T.linen,borderRadius:99,padding:"2px 9px",fontSize:10,color:T.ink2,border:`1px solid ${T.border}`}}>{t}</div>)}</div>
+              <button onClick={()=>setActiveSite(s)} style={{width:"100%",background:`linear-gradient(135deg,#2D3A7C,${T.terra})`,color:"#fff",border:"none",borderRadius:10,padding:"10px",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><span>🌐</span> Browse {s.name}</button>
             </div>
           </div>
         ))}
@@ -1317,7 +1289,7 @@ const MasterDocView = () => {
   if(authed) return (
     <div style={{minHeight:"100vh",background:"#FFFFFF",fontFamily:'"Inter",-apple-system,sans-serif'}}>
       <style>{`
-        .md-doc h1,.md-doc h2,.md-doc h3{font-family:"Playfair Display",Georgia,serif;color:#2D2D4E;margin:1.5em 0 .5em;}
+        .md-doc h1,.md-doc h2,.md-doc h3{font-family:"Playfair Display",Georgia,serif;color:#1A1A2E;margin:1.5em 0 .5em;}
         .md-doc h1{font-size:32px;border-bottom:2px solid #EDE4F7;padding-bottom:12px;}
         .md-doc h2{font-size:24px;color:#9B7EC8;}
         .md-doc h3{font-size:18px;}
@@ -1325,7 +1297,7 @@ const MasterDocView = () => {
         .md-doc ul,.md-doc ol{padding-left:24px;color:#6B6B8A;line-height:1.8;}
         .md-doc table{width:100%;border-collapse:collapse;margin:1em 0;}
         .md-doc th,.md-doc td{border:1px solid #EDE4F7;padding:10px 14px;text-align:left;font-size:14px;}
-        .md-doc th{background:#F8F6FF;font-weight:600;color:#2D2D4E;}
+        .md-doc th{background:#F8F6FF;font-weight:600;color:#1A1A2E;}
         .md-doc code{background:#F8F6FF;padding:2px 6px;border-radius:4px;font-size:13px;font-family:monospace;}
         .md-doc pre{background:#F8F6FF;padding:16px;border-radius:10px;overflow-x:auto;margin:1em 0;}
         .md-doc pre code{background:none;padding:0;}
@@ -1336,7 +1308,7 @@ const MasterDocView = () => {
       <div style={{maxWidth:900,margin:"0 auto",padding:"40px 24px"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24}}>
           <div>
-            <div style={{fontFamily:'"Playfair Display",Georgia,serif',fontSize:28,fontWeight:700,color:"#2D2D4E"}}>Wovely Admin</div>
+            <div style={{fontFamily:'"Playfair Display",Georgia,serif',fontSize:28,fontWeight:700,color:"#1A1A2E"}}>Wovely Admin</div>
             <div style={{fontSize:13,color:"#6B6B8A",marginTop:4}}>{doc?`Version ${doc.version} · Updated ${new Date(doc.updated_at).toLocaleDateString()}`:""}</div>
           </div>
           <button onClick={()=>{sessionStorage.removeItem("yh_master_pw");setDoc(null);setAuthed(false);setPw("");}} style={{background:"#F8F6FF",border:"1px solid #EDE4F7",borderRadius:8,padding:"8px 16px",fontSize:13,color:"#5C4F44",cursor:"pointer"}}>Lock</button>
@@ -1358,10 +1330,10 @@ const MasterDocView = () => {
       <div style={{width:"100%",maxWidth:380,padding:"40px 32px",background:"#FFFFFF",borderRadius:20,border:"1px solid #EDE4F7",boxShadow:"0 8px 32px rgba(155,126,200,.08)"}}>
         <div style={{textAlign:"center",marginBottom:28}}>
           <div style={{fontSize:40,marginBottom:12}}>🧶</div>
-          <div style={{fontFamily:'"Playfair Display",Georgia,serif',fontSize:22,fontWeight:700,color:"#2D2D4E"}}>Wovely Admin</div>
+          <div style={{fontFamily:'"Playfair Display",Georgia,serif',fontSize:22,fontWeight:700,color:"#1A1A2E"}}>Wovely Admin</div>
           <div style={{fontSize:13,color:"#6B6B8A",marginTop:6}}>Enter password to view</div>
         </div>
-        <input value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==="Enter"&&fetchDoc(pw)} type="password" placeholder="Password" style={{width:"100%",padding:"13px 16px",background:"#F8F6FF",border:"1.5px solid #EDE4F7",borderRadius:12,color:"#2D2D4E",fontSize:15,marginBottom:12,outline:"none"}}/>
+        <input value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==="Enter"&&fetchDoc(pw)} type="password" placeholder="Password" style={{width:"100%",padding:"13px 16px",background:"#F8F6FF",border:"1.5px solid #EDE4F7",borderRadius:12,color:"#1A1A2E",fontSize:15,marginBottom:12,outline:"none"}}/>
         {error&&<div style={{fontSize:12,color:"#9B7EC8",marginBottom:10}}>{error}</div>}
         <button onClick={()=>fetchDoc(pw)} disabled={loading||!pw} style={{width:"100%",background:"#9B7EC8",color:"#fff",border:"none",borderRadius:12,padding:"14px",fontSize:15,fontWeight:600,cursor:"pointer",opacity:loading?.6:1}}>{loading?"Loading…":"Unlock"}</button>
       </div>
@@ -1966,7 +1938,7 @@ export default function Wovely() {
       {showOnboarding&&<OnboardingScreen onComplete={()=>{setShowOnboarding(false);setJustCompletedOnboarding(true);localStorage.removeItem("yh_welcome_dismissed");navigate("/profile");}} onBackToAuth={async()=>{setShowOnboarding(false);await supabaseAuth.signOut();setAuthed(false);setIsPro(false);setUserPatterns([]);}}/>}
       {showPaywall&&<PaywallGate patternCount={userPatterns.length} onClose={()=>setShowPaywall(false)} onUpgrade={()=>setShowPaywall(false)}/>}
       {showProModal&&<ProInfoModal onClose={()=>setShowProModal(false)}/>}
-      {addOpen&&<AddPatternModal onClose={()=>setAddOpen(false)} onSave={handleAddPattern} isPro={isPro} patternCount={userPatterns.length} Btn={Btn} Photo={Photo} Bar={Bar} WireframeViewer={WireframeViewer} onUpgrade={()=>setShowProModal(true)} onBrowse={()=>{setAddOpen(false);navigateToView("browse");}}/>}
+      {addOpen&&<AddPatternModal onClose={()=>setAddOpen(false)} onSave={handleAddPattern} isPro={isPro} patternCount={userPatterns.length} Btn={Btn} Photo={Photo} Bar={Bar} WireframeViewer={WireframeViewer} onUpgrade={()=>setShowProModal(true)}/>}
       {createdPattern&&<PatternCreatedOverlay pattern={createdPattern} onStartBuilding={()=>{const p=createdPattern;setCreatedPattern(null);startAndOpenPattern(p);}} onGoToHive={()=>{setCreatedPattern(null);navigateToView("collection");}}/>}
       {readyPromptPattern&&<ReadyToBuildPrompt pattern={readyPromptPattern} onStartBuilding={()=>{const p=readyPromptPattern;setReadyPromptPattern(null);startAndOpenPattern(p);}} onViewDetails={()=>{const p=readyPromptPattern;setReadyPromptPattern(null);setSelected(p);navigateToView("detail",p._supabaseId||p.id);}} onDismiss={()=>setReadyPromptPattern(null)}/>}
       {deleteTarget&&<DeleteConfirmModal pattern={deleteTarget} isPro={isPro} onCancel={()=>setDeleteTarget(null)} onDelete={confirmDelete} onPark={parkInsteadOfDelete} onGoPro={()=>{setDeleteTarget(null);setShowProModal(true);}}/>}
@@ -1985,7 +1957,7 @@ export default function Wovely() {
         </div>
         <div style={{flex:1,padding:"0 32px"}}>
           {view==="collection"&&<CollectionView userPatterns={userPatterns} starterPatterns={starterPatterns} cat={cat} setCat={setCat} search={search} setSearch={setSearch} openDetail={openDetail} onAddPattern={openAddModal} isPro={isPro} tier={tier} onNavigate={navigateToView} onPark={handleParkPattern} onUnpark={handleUnparkPattern} onDelete={handleDeletePattern} onCoverChange={handleCoverChange} pct={pct} catFallbackPhoto={catFallbackPhoto} Photo={Photo} Bar={Bar} Stars={Stars} CATS={CATS} TIER_CONFIG={TIER_CONFIG}/>}
-          {view==="wip"&&<div style={{padding:"24px 0 80px"}}><button onClick={()=>navigateToView("collection")} style={{background:"none",border:"none",color:T.terra,cursor:"pointer",fontSize:13,fontWeight:600,padding:0,marginBottom:20,display:"flex",alignItems:"center",gap:6}}>← Back</button>{inProgress.length===0?<div style={{textAlign:"center",padding:"80px 20px"}}><div style={{fontSize:48,marginBottom:14}}>🪡</div><div style={{fontFamily:T.serif,fontSize:20,fontWeight:600,color:"#2D2D4E",marginBottom:8}}>Nothing in progress</div><div style={{fontSize:14,color:"#6B6B8A",lineHeight:1.6}}>Open a pattern and start checking off rows.</div></div>:<div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:20}}>{inProgress.map((p,i)=><PatternCard key={p.id} p={p} delay={i*.06} onClick={()=>openDetail(p)} pct={pct} catFallbackPhoto={catFallbackPhoto} Photo={Photo} Bar={Bar} Stars={Stars}/>)}</div>}</div>}
+          {view==="wip"&&<div style={{padding:"24px 0 80px"}}><button onClick={()=>navigateToView("collection")} style={{background:"none",border:"none",color:T.terra,cursor:"pointer",fontSize:13,fontWeight:600,padding:0,marginBottom:20,display:"flex",alignItems:"center",gap:6}}>← Back</button>{inProgress.length===0?<div style={{textAlign:"center",padding:"80px 20px"}}><div style={{fontSize:48,marginBottom:14}}>🪡</div><div style={{fontFamily:T.serif,fontSize:20,fontWeight:600,color:"#1A1A2E",marginBottom:8}}>Nothing in progress</div><div style={{fontSize:14,color:"#6B6B8A",lineHeight:1.6}}>Open a pattern and start checking off rows.</div></div>:<div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:20}}>{inProgress.map((p,i)=><PatternCard key={p.id} p={p} delay={i*.06} onClick={()=>openDetail(p)} pct={pct} catFallbackPhoto={catFallbackPhoto} Photo={Photo} Bar={Bar} Stars={Stars}/>)}</div>}</div>}
           {view==="detail"&&selected&&<div style={{margin:"0 -40px"}}><Detail p={selected} onBack={detailOnBack} onSave={detailOnSave} pct={pct} estYards={estYards} estSkeins={estSkeins} pdfThumbUrl={pdfThumbUrl} CSS={CSS} Bar={Bar} Photo={Photo} Stars={Stars} WireframeViewer={WireframeViewer} Btn={Btn}/></div>}
           {view==="browse"&&<BrowseSitesView onSavePattern={handleAddPattern}/>}
           {view==="stash"&&<div style={{paddingTop:24}}><YarnStash/></div>}
@@ -2006,7 +1978,7 @@ export default function Wovely() {
       <NavPanel open={navOpen} onClose={()=>setNavOpen(false)} view={view} onNavigate={navigateToView} count={userPatterns.length} isPro={isPro} onSignOut={handleSignOut} onUpgrade={()=>setShowProModal(true)}/>
       {showPaywall&&<PaywallGate patternCount={userPatterns.length} onClose={()=>setShowPaywall(false)} onUpgrade={()=>setShowPaywall(false)}/>}
       {showProModal&&<ProInfoModal onClose={()=>setShowProModal(false)}/>}
-      {addOpen&&<AddPatternModal onClose={()=>setAddOpen(false)} onSave={handleAddPattern} isPro={isPro} patternCount={userPatterns.length} Btn={Btn} Photo={Photo} Bar={Bar} WireframeViewer={WireframeViewer} onUpgrade={()=>setShowProModal(true)} onBrowse={()=>{setAddOpen(false);navigateToView("browse");}}/>}
+      {addOpen&&<AddPatternModal onClose={()=>setAddOpen(false)} onSave={handleAddPattern} isPro={isPro} patternCount={userPatterns.length} Btn={Btn} Photo={Photo} Bar={Bar} WireframeViewer={WireframeViewer} onUpgrade={()=>setShowProModal(true)}/>}
       {createdPattern&&<PatternCreatedOverlay pattern={createdPattern} onStartBuilding={()=>{const p=createdPattern;setCreatedPattern(null);startAndOpenPattern(p);}} onGoToHive={()=>{setCreatedPattern(null);navigateToView("collection");}}/>}
       {readyPromptPattern&&<ReadyToBuildPrompt pattern={readyPromptPattern} onStartBuilding={()=>{const p=readyPromptPattern;setReadyPromptPattern(null);startAndOpenPattern(p);}} onViewDetails={()=>{const p=readyPromptPattern;setReadyPromptPattern(null);setSelected(p);navigateToView("detail",p._supabaseId||p.id);}} onDismiss={()=>setReadyPromptPattern(null)}/>}
       {deleteTarget&&<DeleteConfirmModal pattern={deleteTarget} isPro={isPro} onCancel={()=>setDeleteTarget(null)} onDelete={confirmDelete} onPark={parkInsteadOfDelete} onGoPro={()=>{setDeleteTarget(null);setShowProModal(true);}}/>}
@@ -2019,7 +1991,7 @@ export default function Wovely() {
       </div>
       <div style={{flex:1,overflowY:"auto",paddingBottom:100}}>
         {view==="collection"&&<CollectionView userPatterns={userPatterns} starterPatterns={starterPatterns} cat={cat} setCat={setCat} search={search} setSearch={setSearch} openDetail={openDetail} onAddPattern={openAddModal} isPro={isPro} tier={tier} onNavigate={navigateToView} onPark={handleParkPattern} onUnpark={handleUnparkPattern} onDelete={handleDeletePattern} onCoverChange={handleCoverChange} pct={pct} catFallbackPhoto={catFallbackPhoto} Photo={Photo} Bar={Bar} Stars={Stars} CATS={CATS} TIER_CONFIG={TIER_CONFIG}/>}
-        {view==="wip"&&<div style={{padding:"16px 18px 80px"}}>{inProgress.length===0?<div style={{textAlign:"center",padding:"60px 20px"}}><div style={{fontSize:48,marginBottom:14}}>🪡</div><div style={{fontFamily:T.serif,fontSize:18,fontWeight:600,color:"#2D2D4E",marginBottom:8}}>Nothing in progress</div><div style={{fontSize:14,color:"#6B6B8A",lineHeight:1.6}}>Open a pattern and start checking off rows.</div></div>:<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>{inProgress.map((p,i)=><PatternCard key={p.id} p={p} delay={i*.06} onClick={()=>openDetail(p)} pct={pct} catFallbackPhoto={catFallbackPhoto} Photo={Photo} Bar={Bar} Stars={Stars}/>)}</div>}</div>}
+        {view==="wip"&&<div style={{padding:"16px 18px 80px"}}>{inProgress.length===0?<div style={{textAlign:"center",padding:"60px 20px"}}><div style={{fontSize:48,marginBottom:14}}>🪡</div><div style={{fontFamily:T.serif,fontSize:18,fontWeight:600,color:"#1A1A2E",marginBottom:8}}>Nothing in progress</div><div style={{fontSize:14,color:"#6B6B8A",lineHeight:1.6}}>Open a pattern and start checking off rows.</div></div>:<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>{inProgress.map((p,i)=><PatternCard key={p.id} p={p} delay={i*.06} onClick={()=>openDetail(p)} pct={pct} catFallbackPhoto={catFallbackPhoto} Photo={Photo} Bar={Bar} Stars={Stars}/>)}</div>}</div>}
         {view==="browse"&&<BrowseSitesView onSavePattern={handleAddPattern}/>}
         {view==="stash"&&<div style={{paddingTop:18}}><YarnStash/></div>}
         {view==="calculator"&&<div style={{paddingTop:18}}><Calculators/></div>}

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { T, useBreakpoint, Field } from "./theme.jsx";
-import { supabaseAuth, getSession, SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase.js";
+import { supabaseAuth, SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase.js";
 import { PHOTOS, APP_VERSION } from "./constants.js";
 
 const BeeAnimator = ({visible, isDesktop}) => {
@@ -90,9 +90,7 @@ const FormCard = ({cardStyle,isSignup,email,setEmail,pass,setPass,confirmPass,se
 export const WaitlistPopup = () => {
   const [show,setShow]=useState(false),[wlEmail,setWlEmail]=useState(""),[wlPhone,setWlPhone]=useState(""),[submitted,setSubmitted]=useState(false),[saving,setSaving]=useState(false);
   useEffect(()=>{
-    if(getSession()) return;
     if(document.cookie.includes("wovely_authed=1")) return;
-    if(localStorage.getItem("yh_popup_dismissed")==="1") return;
     const last=parseInt(localStorage.getItem("yh_popup_last_shown")||"0",10);
     if(Date.now()-last<86400000) return;
     const t=setTimeout(()=>{setShow(true);localStorage.setItem("yh_popup_last_shown",String(Date.now()));},3000);
@@ -105,13 +103,12 @@ export const WaitlistPopup = () => {
     setSaving(false);setSubmitted(true);
     setTimeout(()=>setShow(false),2000);
   };
-  const dismiss=()=>{setShow(false);localStorage.setItem("yh_popup_dismissed","1");};
   if(!show)return null;
   return(
     <div style={{position:"fixed",inset:0,zIndex:800,display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
-      <div onClick={dismiss} style={{position:"absolute",inset:0,background:"rgba(0,0,0,.5)"}}/>
+      <div onClick={()=>setShow(false)} style={{position:"absolute",inset:0,background:"rgba(0,0,0,.5)"}}/>
       <div className="fu" style={{position:"relative",zIndex:1,background:T.modal,borderRadius:20,padding:40,maxWidth:420,width:"100%",boxShadow:"0 20px 60px rgba(155,126,200,.2)"}}>
-        <button onClick={dismiss} style={{position:"absolute",top:14,right:16,background:"none",border:"none",color:T.ink3,fontSize:20,cursor:"pointer"}}>×</button>
+        <button onClick={()=>setShow(false)} style={{position:"absolute",top:14,right:16,background:"none",border:"none",color:T.ink3,fontSize:20,cursor:"pointer"}}>×</button>
         {submitted?<div style={{textAlign:"center",padding:"20px 0"}}><div style={{fontSize:40,marginBottom:12}}>🧶</div><div style={{fontFamily:T.serif,fontSize:20,fontWeight:700,color:T.ink}}>You're on the list!</div><div style={{fontSize:14,color:T.ink3,marginTop:8}}>We'll be in touch.</div></div>:(
           <>
             <div style={{textAlign:"center",marginBottom:24}}>
@@ -450,7 +447,7 @@ const Auth = ({onEnter,onEnterAsNew}) => {
                       {modal.badge}
                     </div>
                   )}
-                  <div style={{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:700,color:"#2D2D4E",lineHeight:1.15,marginBottom:4}}>{modal.title}</div>
+                  <div style={{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:700,color:"#1A1A2E",lineHeight:1.15,marginBottom:4}}>{modal.title}</div>
                   <div style={{fontSize:13,color:"rgba(28,23,20,0.5)",lineHeight:1.55,fontWeight:300}}>{modal.subtitle}</div>
                 </div>
               </div>
@@ -458,7 +455,7 @@ const Auth = ({onEnter,onEnterAsNew}) => {
               <div style={{background:"rgba(244,237,227,0.6)",borderRadius:14,overflow:"hidden",border:"1px solid rgba(28,23,20,0.07)",marginBottom:20}}>
                 {modal.features.map((f,i)=>(
                   <div key={i} style={{padding:"12px 16px",borderBottom: i<modal.features.length-1 ? "1px solid rgba(28,23,20,0.07)" : "none"}}>
-                    <div style={{fontSize:14,fontWeight:600,color:"#2D2D4E",lineHeight:1.2,marginBottom:2}}>{f.label}</div>
+                    <div style={{fontSize:14,fontWeight:600,color:"#1A1A2E",lineHeight:1.2,marginBottom:2}}>{f.label}</div>
                     <div style={{fontSize:12,color:"rgba(28,23,20,0.48)",lineHeight:1.5}}>{f.sub}</div>
                   </div>
                 ))}
@@ -473,7 +470,7 @@ const Auth = ({onEnter,onEnterAsNew}) => {
                   </div>
                 ) : (
                   <div>
-                    <div style={{fontSize:13,fontWeight:600,color:"#2D2D4E",marginBottom:10}}>Get notified when we launch</div>
+                    <div style={{fontSize:13,fontWeight:600,color:"#1A1A2E",marginBottom:10}}>Get notified when we launch</div>
                     <div style={{display:"flex",gap:8,marginBottom:8}}>
                       <input
                         value={notifyEmail}
@@ -481,7 +478,7 @@ const Auth = ({onEnter,onEnterAsNew}) => {
                         onKeyDown={e=>e.key==='Enter'&&handleNotifySubmit()}
                         placeholder="your@email.com"
                         type="email"
-                        style={{flex:1,padding:"13px 14px",background:"transparent",border:"none",borderBottom:"2px solid transparent",borderRadius:0,fontSize:14,color:"#2D2D4E",outline:"none",fontFamily:"inherit",transition:"border-color .2s"}}
+                        style={{flex:1,padding:"13px 14px",background:"transparent",border:"none",borderBottom:"2px solid transparent",borderRadius:0,fontSize:14,color:"#1A1A2E",outline:"none",fontFamily:"inherit",transition:"border-color .2s"}}
                         onFocus={e=>e.target.style.borderBottomColor="#9B7EC8"}
                         onBlur={e=>e.target.style.borderBottomColor="transparent"}
                       />

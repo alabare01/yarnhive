@@ -923,7 +923,7 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade}) => {
         setCoverUploading(false);
       }} style={{display:"none"}}/>
       {/* ── HERO ZONE ── */}
-      <div style={{position:"relative",height:200,margin:"0 -22px",overflow:"hidden",background:"#2D2D4E"}}>
+      <div style={{position:"relative",height:200,margin:"0 -22px",overflow:"hidden",background:"#1A1A2E"}}>
         {heroImg&&<><img src={heroImg} alt="" style={{position:"absolute",width:"100%",height:"100%",objectFit:"cover",filter:"blur(20px) saturate(1.2) brightness(0.6)",transform:"scale(1.1)",pointerEvents:"none"}}/>
         <img src={heroImg} alt={editTitle} style={{position:"absolute",left:"50%",transform:"translateX(-50%)",height:"100%",width:"auto",objectFit:"contain",zIndex:1}}/></>}
         {!heroImg&&<div style={{position:"absolute",inset:0,background:`linear-gradient(135deg,${T.terra},#6B2A10)`}}/>}
@@ -1092,7 +1092,7 @@ const BrowserImport = ({onSave,Btn,Photo}) => {
   );
   return (
     <div style={{paddingBottom:8}}>
-      <div style={{fontSize:13,color:T.ink2,lineHeight:1.7,marginBottom:14}}>Find patterns from curated sites. Browse in-app and tap Save.</div>
+      <div style={{fontSize:13,color:T.ink2,lineHeight:1.7,marginBottom:14}}>Browse curated pattern sites in-app. Find a pattern and tap Save.</div>
       <div style={{borderRadius:16,overflow:"hidden",border:`1px solid ${T.border}`}}>
         {SITES.map((s,i)=>(
           <div key={s.name} className="site-row" onClick={()=>setActive(s)} style={{display:"flex",alignItems:"center",gap:14,padding:"12px 16px",background:T.surface,borderTop:i>0?`1px solid ${T.border}`:"none",cursor:"pointer",transition:"background .12s"}}>
@@ -1106,7 +1106,7 @@ const BrowserImport = ({onSave,Btn,Photo}) => {
   );
 };
 
-const AddPatternModal = ({onClose,onSave,isPro,patternCount,Btn,Photo,Bar,WireframeViewer,onUpgrade,onBrowse}) => {
+const AddPatternModal = ({onClose,onSave,isPro,patternCount,Btn,Photo,Bar,WireframeViewer,onUpgrade}) => {
   const [method,setMethod]=useState(null),[closing,setClosing]=useState(false);
   const{isDesktop}=useBreakpoint();
   const dismiss=()=>{setClosing(true);setTimeout(()=>{setClosing(false);onClose();},220);};
@@ -1115,16 +1115,16 @@ const AddPatternModal = ({onClose,onSave,isPro,patternCount,Btn,Photo,Bar,Wirefr
     {key:"manual",icon:"✏️",label:"Manual Entry",sub:"Type it in yourself"},
     {key:"url",icon:"🔗",label:"Smart Import",sub:"Paste any pattern link"},
     {key:"pdf",icon:"📄",label:"PDF / Document",sub:"Upload & extract"},
-    {key:"browser",icon:"🌐",label:"Find Patterns",sub:"AllFreeCrochet, Drops & more"},
+    {key:"browser",icon:"🌐",label:"Browse Sites",sub:"AllFreeCrochet, Drops & more"},
     {key:"snap",icon:"✨",label:"Snap & Stitch",sub:"Photograph any finished object — 3 free scans/mo"},
   ];
   const MethodList=()=>(
     <>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
         {METHODS.filter(m=>m.key!=="snap").map(m=>(
-          <div key={m.key} onClick={()=>m.key==="browser"&&onBrowse?onBrowse():setMethod(m.key)} style={{background:T.card,border:`1.5px solid ${T.border}`,borderRadius:16,padding:20,cursor:"pointer",transition:"all .15s",boxShadow:T.shadow}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 8px 24px rgba(155,126,200,.12)";}} onMouseLeave={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow=T.shadow;}}>
+          <div key={m.key} onClick={()=>setMethod(m.key)} style={{background:T.card,border:`1.5px solid ${T.border}`,borderRadius:16,padding:20,cursor:"pointer",transition:"all .15s",boxShadow:T.shadow}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 8px 24px rgba(155,126,200,.12)";}} onMouseLeave={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow=T.shadow;}}>
             <div style={{fontSize:32,marginBottom:10}}>{m.icon}</div>
-            <div style={{fontSize:15,fontWeight:600,color:T.ink,marginBottom:4}}>{m.label==="Manual Entry"?"Write it yourself":m.label==="Smart Import"?"Paste a link":m.label==="PDF / Document"?"Upload a file":"Find Patterns"}</div>
+            <div style={{fontSize:15,fontWeight:600,color:T.ink,marginBottom:4}}>{m.label==="Manual Entry"?"Write it yourself":m.label==="Smart Import"?"Paste a link":m.label==="PDF / Document"?"Upload a file":"Explore free patterns"}</div>
             <div style={{fontSize:12,color:T.ink3,lineHeight:1.5}}>{m.sub}</div>
           </div>
         ))}
