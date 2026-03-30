@@ -1,5 +1,6 @@
 {
   "functions": {
+    "api/extract-pattern.js": { "maxDuration": 300 },
     "api/fetch-pattern.js": { "maxDuration": 60 }
   },
   "rewrites": [

@@ -785,14 +785,7 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade}) => {
       try{
         if(isPDF){
           console.log("[Wovely] Using pdf.js text extraction for PDF...");
-          let pdfText=await extractTextFromPDF(f);extractedText=pdfText;
-          // Smart truncation: cap at 25k chars at a natural line break
-          const TEXT_LIMIT=25000;
-          if(pdfText.length>TEXT_LIMIT){
-            const lastNewline=pdfText.lastIndexOf("\n",TEXT_LIMIT);
-            pdfText=pdfText.slice(0,lastNewline>0?lastNewline:TEXT_LIMIT)+"\n[Note: Pattern truncated at 25,000 chars for processing. Full file saved and viewable while building.]";
-            console.log("[Wovely] PDF text truncated from",extractedText.length,"to",pdfText.length,"chars");
-          }
+          const pdfText=await extractTextFromPDF(f);extractedText=pdfText;
           // Detect complexity from page count + text density
           const pageMatches=(pdfText.match(/--- PAGE \d+ ---/g)||[]).length;
           const textLen=pdfText.replace(/--- PAGE \d+ ---/g,"").replace(/\s+/g," ").trim().length;
@@ -802,7 +795,15 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade}) => {
           else if(pageMatches>=8||avgTextPerPage<500) lvl="detailed";
           console.log("[Wovely] Complexity:",lvl,"pages:",pageMatches,"avgText/page:",Math.round(avgTextPerPage));
           setComplexity(lvl);setComplexityStats({pages:pageMatches,textLen});
-          result=await extractPatternFromPDF(pdfText,f.name,fileMime,true);
+          // Server-side extraction — truncation + Gemini call handled by /api/extract-pattern
+          console.log("[Wovely] Sending to /api/extract-pattern, chars:",pdfText.length,"pages:",pageMatches);
+          const extractRes=await fetch("/api/extract-pattern",{
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({pdfText,pageCount:pageMatches}),
+          });
+          if(!extractRes.ok){const errBody=await extractRes.json().catch(()=>({}));throw new Error(errBody.error||"Server extraction failed: "+extractRes.status);}
+          result=await extractRes.json();
         } else {
           console.log("[Wovely] Using base64 extraction for image...");
           const base64Data=await fileToBase64(f);
