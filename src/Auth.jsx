@@ -246,7 +246,7 @@ const Auth = ({onEnter,onEnterAsNew}) => {
         {label:"Advanced analytics",sub:"Track your making history and stash usage"},
         {label:"Early access",sub:"First to get every new feature we ship"},
       ],
-      cta:"Get Pro — $9.99/mo",
+      cta:"Get Pro — $8.99/mo",
       ctaAlt:"$74.99/yr — save 37%",
       ctaAction: "signup",
       footnote:"Cancel anytime. No questions asked.",
@@ -366,7 +366,7 @@ const Auth = ({onEnter,onEnterAsNew}) => {
           <div style={{position:"absolute",top:0,left:0,right:0,bottom:0,background:"linear-gradient(135deg,rgba(255,255,255,0) 30%,rgba(255,255,255,0.07) 50%,rgba(255,255,255,0) 70%)",pointerEvents:"none"}}/>
           <div style={{position:"absolute",top:10,right:-20,background:"rgba(255,255,255,0.18)",padding:"3px 28px",transform:"rotate(35deg)",fontSize:7,fontWeight:700,color:"rgba(255,255,255,0.9)",letterSpacing:".06em",whiteSpace:"nowrap"}}>SNAP & STITCH</div>
           <div style={{fontFamily:T.serif,fontSize:20,color:"#fff",fontWeight:700,lineHeight:1,position:"relative"}}>Pro</div>
-          <div style={{fontSize:10,color:"rgba(255,255,255,.65)",marginTop:4,lineHeight:1.4,position:"relative"}}>$9.99/mo<br/>Unlimited everything</div>
+          <div style={{fontSize:10,color:"rgba(255,255,255,.65)",marginTop:4,lineHeight:1.4,position:"relative"}}>$8.99/mo<br/>Unlimited everything</div>
           <div style={{fontSize:9,color:"rgba(255,255,255,.75)",marginTop:6,fontWeight:600,letterSpacing:".05em",position:"relative"}}>SEE WHAT'S INCLUDED →</div>
         </div>
       </div>
