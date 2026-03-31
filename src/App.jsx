@@ -24,7 +24,7 @@ if (typeof document !== "undefined" && !document.getElementById("sb-font")) {
 
 // ─── ROUTE ↔ VIEW MAPPING ───────────────────────────────────────────────────
 const VIEW_TO_PATH = {collection:"/hive",detail:"/hive",wip:"/builds",browse:"/browse",stash:"/stash",calculator:"/tools","stitch-check":"/stitch-check",shopping:"/shopping",profile:"/profile"};
-const PATH_TO_VIEW = {"/hive":"collection","/builds":"wip","/browse":"browse","/stash":"stash","/tools":"calculator","/stitch-check":"stitch-check","/shopping":"shopping","/profile":"profile","/hive-vision":"hive-vision"};
+const PATH_TO_VIEW = {"/hive":"collection","/builds":"wip","/browse":"browse","/stash":"stash","/tools":"calculator","/stitch-check":"stitch-check","/shopping":"shopping","/profile":"profile","/hive-vision":"hive-vision","/privacy":"privacy","/terms":"terms"};
 const viewFromPath = (pathname) => {
   if(pathname.startsWith("/hive/")) return "detail";
   return PATH_TO_VIEW[pathname] || "collection";
@@ -836,6 +836,12 @@ const ProfileSettingsView = ({isPro,onOpenProModal,onGoHome,onEmailConfirmed}) =
           <div><div style={{fontSize:14,color:T.ink2}}>Dark mode</div><div style={{...SC_LABEL,marginTop:4}}>coming soon</div></div>
           <div style={{width:44,height:26,borderRadius:13,background:T.linen,opacity:.5,position:"relative",cursor:"not-allowed"}}><div style={{width:22,height:22,borderRadius:11,background:"#fff",position:"absolute",top:2,left:2,boxShadow:"0 1px 3px rgba(0,0,0,.15)"}}/></div>
         </div>
+      </div>
+
+      <div style={{textAlign:"center",padding:"20px 0 8px",fontSize:12,color:"#6B6B8A"}}>
+        <a href="/privacy" style={{color:"#6B6B8A",textDecoration:"none"}} onMouseEnter={e=>e.target.style.color="#9B7EC8"} onMouseLeave={e=>e.target.style.color="#6B6B8A"}>Privacy Policy</a>
+        <span style={{margin:"0 8px",opacity:.5}}>|</span>
+        <a href="/terms" style={{color:"#6B6B8A",textDecoration:"none"}} onMouseEnter={e=>e.target.style.color="#9B7EC8"} onMouseLeave={e=>e.target.style.color="#6B6B8A"}>Terms of Service</a>
       </div>
     </div>
   );
@@ -1892,9 +1898,10 @@ export default function Wovely() {
   if(location.pathname==="/master-doc") return <MasterDocView/>;
   // Redirect old /changelog URL to /master-doc
   if(location.pathname==="/changelog") return <Navigate to="/master-doc" replace/>;
-  // Public legal pages — accessible without auth
-  if(location.pathname==="/privacy") return <><CSS/><PrivacyPolicy/><LegalFooter/></>;
-  if(location.pathname==="/terms") return <><CSS/><TermsOfService/><LegalFooter/></>;
+  // Public legal pages — render without auth if not logged in, inside shell if logged in
+  if(!authed&&(location.pathname==="/privacy"||location.pathname==="/terms")) {
+    return <><CSS/>{location.pathname==="/privacy"?<PrivacyPolicy/>:<TermsOfService/>}<LegalFooter/></>;
+  }
 
   // Show nothing until session is validated against Supabase
   if(!authChecked) return <><CSS/><div style={{minHeight:"100vh",background:T.bg,display:"flex",alignItems:"center",justifyContent:"center"}}><div className="spinner" style={{width:28,height:28,border:`3px solid ${T.border}`,borderTopColor:T.terra,borderRadius:"50%"}}/></div></>;
@@ -2052,7 +2059,7 @@ export default function Wovely() {
     }
   };
   const inProgress=allPatterns.filter(p=>{const v=pct(p);return !p.isStarter&&p.status!=="deleted"&&p.status!=="parked"&&((p.status==="in_progress"&&v<100)||(p.started&&v<100)||(v>0&&v<100));});
-  const TITLE_MAP={collection:"My Wovely",wip:"On the Hook",browse:"Find Patterns",stash:"Stash & Notions",calculator:"The Workbench",shopping:"Supply Run",profile:"Profile & Settings"};
+  const TITLE_MAP={collection:"My Wovely",wip:"On the Hook",browse:"Find Patterns",stash:"Stash & Notions",calculator:"The Workbench",shopping:"Supply Run",profile:"Profile & Settings",privacy:"Privacy Policy",terms:"Terms of Service"};
 
   if(isDesktop) return (
     <div style={{display:"flex",minHeight:"100vh",width:"100%",background:T.bg,fontFamily:T.sans,position:"relative"}}>
@@ -2088,6 +2095,8 @@ export default function Wovely() {
           {view==="stitch-check"&&<div style={{paddingTop:24}}><StitchCheck/></div>}
           {view==="shopping"&&<div style={{paddingTop:24}}><ShoppingList/></div>}
           {view==="profile"&&<ProfileSettingsView isPro={isPro} onOpenProModal={()=>setShowProModal(true)} onGoHome={()=>navigate("/hive")} onEmailConfirmed={()=>setShowEmailBanner(false)}/>}
+          {view==="privacy"&&<PrivacyPolicy/>}
+          {view==="terms"&&<TermsOfService/>}
         </div>
       </div>
     </div>
@@ -2123,6 +2132,8 @@ export default function Wovely() {
         {view==="stitch-check"&&<div style={{paddingTop:18}}><StitchCheck/></div>}
         {view==="shopping"&&<div style={{paddingTop:18}}><ShoppingList/></div>}
         {view==="profile"&&<ProfileSettingsView isPro={isPro} onOpenProModal={()=>setShowProModal(true)} onGoHome={()=>navigate("/hive")} onEmailConfirmed={()=>setShowEmailBanner(false)}/>}
+        {view==="privacy"&&<PrivacyPolicy/>}
+        {view==="terms"&&<TermsOfService/>}
       </div>
       <div style={{position:"fixed",bottom:28,left:"50%",transform:"translateX(-50%)",zIndex:30,pointerEvents:"none"}}>
         <button onClick={openAddModal} style={{background:T.terra,color:"#fff",border:"none",borderRadius:9999,padding:"13px 26px",fontSize:14,fontWeight:600,cursor:"pointer",pointerEvents:"auto",boxShadow:"0 8px 28px rgba(155,126,200,.55)",display:"flex",alignItems:"center",gap:8,animation:"fabPulse 3s ease infinite"}}><span style={{fontSize:17}}>+</span> Add Pattern</button>
