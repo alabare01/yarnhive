@@ -12,6 +12,8 @@ import RowManager, { ensureRepeatBrackets } from "./RowManager.jsx";
 import AddPatternModal, { uploadPatternFile, buildRowsFromComponents } from "./AddPatternModal.jsx";
 import CollectionView, { PatternCard } from "./Dashboard.jsx";
 import Detail, { CoverImagePicker, DeleteConfirmModal, ReadyToBuildPrompt, PatternCreatedOverlay } from "./PatternDetail.jsx";
+import PrivacyPolicy from "./PrivacyPolicy.jsx";
+import TermsOfService from "./TermsOfService.jsx";
 
 if (typeof document !== "undefined" && !document.getElementById("sb-font")) {
   const l = document.createElement("link");
@@ -1071,6 +1073,14 @@ const ShoppingList = () => {
 
 const STARTER_PHOTO_MAP = {Blankets:PHOTOS.blanket,Amigurumi:PHOTOS.granny,Wearables:PHOTOS.cardigan,Accessories:PHOTOS.tote,Home:PHOTOS.pillow};
 
+const LegalFooter = () => (
+  <div style={{textAlign:"center",padding:"24px 16px 32px",fontSize:12,color:"#6B6B8A"}}>
+    <a href="/privacy" style={{color:"#6B6B8A",textDecoration:"none"}} onMouseEnter={e=>e.target.style.color="#9B7EC8"} onMouseLeave={e=>e.target.style.color="#6B6B8A"}>Privacy Policy</a>
+    <span style={{margin:"0 8px",opacity:.5}}>|</span>
+    <a href="/terms" style={{color:"#6B6B8A",textDecoration:"none"}} onMouseEnter={e=>e.target.style.color="#9B7EC8"} onMouseLeave={e=>e.target.style.color="#6B6B8A"}>Terms of Service</a>
+  </div>
+);
+
 const WelcomeToast = ({visible}) => (
   <div style={{position:"fixed",top:16,right:16,zIndex:900,background:T.terra,color:"#fff",borderRadius:14,padding:"12px 24px",fontSize:14,fontWeight:600,boxShadow:"0 8px 32px rgba(155,126,200,.4)",display:"flex",alignItems:"center",gap:8,opacity:visible?1:0,transform:visible?"translateX(0)":"translateX(20px)",transition:"opacity .4s ease, transform .4s ease",pointerEvents:"none"}}>
     <span style={{fontSize:18}}>🧶</span> Welcome back! Your Wovely is ready.
@@ -1880,17 +1890,21 @@ export default function Wovely() {
   if(location.pathname==="/master-doc") return <MasterDocView/>;
   // Redirect old /changelog URL to /master-doc
   if(location.pathname==="/changelog") return <Navigate to="/master-doc" replace/>;
+  // Public legal pages — accessible without auth
+  if(location.pathname==="/privacy") return <><CSS/><PrivacyPolicy/><LegalFooter/></>;
+  if(location.pathname==="/terms") return <><CSS/><TermsOfService/><LegalFooter/></>;
+
   // Show nothing until session is validated against Supabase
   if(!authChecked) return <><CSS/><div style={{minHeight:"100vh",background:T.bg,display:"flex",alignItems:"center",justifyContent:"center"}}><div className="spinner" style={{width:28,height:28,border:`3px solid ${T.border}`,borderTopColor:T.terra,borderRadius:"50%"}}/></div></>;
   if(!authed) {
     // Auth guard: redirect any non-root path to / when not logged in
     if(location.pathname!=="/") return <Navigate to="/" replace/>;
-    return <><CSS/><WaitlistPopup/><Auth onEnter={handleSignIn} onEnterAsNew={handleNewSignup}/></>;
+    return <><CSS/><WaitlistPopup/><Auth onEnter={handleSignIn} onEnterAsNew={handleNewSignup}/><LegalFooter/></>;
   }
   // Authed users on root redirect to /hive
   if(location.pathname==="/") return <Navigate to="/hive" replace/>;
   // Unknown routes redirect to /hive
-  const knownPaths=["/hive","/builds","/browse","/stash","/tools","/stitch-check","/shopping","/profile","/hive-vision","/master-doc"];
+  const knownPaths=["/hive","/builds","/browse","/stash","/tools","/stitch-check","/shopping","/profile","/hive-vision","/master-doc","/privacy","/terms"];
   if(!knownPaths.some(p=>location.pathname===p||location.pathname.startsWith("/hive/"))) return <Navigate to="/hive" replace/>;
   const detailOnSave=u=>{
     setUserPatterns(prev=>prev.map(p=>p.id===u.id?u:p));setStarterPatterns(prev=>prev.map(p=>p.id===u.id?u:p));setSelected(u);
