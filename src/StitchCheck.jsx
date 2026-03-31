@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { T, useBreakpoint } from "./theme.jsx";
+import posthog from "posthog-js";
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
 
@@ -86,6 +87,7 @@ const StitchCheck = () => {
 
   const runCheck = async (patternText) => {
     if (!patternText.trim()) return;
+    posthog.capture("stitch_check_run");
     setLoading(true); setError(null); setReport(null); setProgress(10); setPhase("Preparing pattern text\u2026");
     const intv = setInterval(() => setProgress(p => Math.min(p + 2, 85)), 200);
     try {

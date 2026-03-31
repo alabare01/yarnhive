@@ -9,7 +9,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@posthog/react": "^1.8.2",
     "@supabase/supabase-js": "^2.101.0",
+    "posthog-js": "^1.364.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^7.13.2",

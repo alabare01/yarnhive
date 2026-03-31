@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useLocation, useParams, Routes, Route, Navigate } from "react-router-dom";
+import posthog from "posthog-js";
 import { T, useBreakpoint, Field } from "./theme.jsx";
 import { SUPABASE_URL, SUPABASE_ANON_KEY, APP_ORIGIN, saveSession, getSession, supabaseAuth } from "./supabase.js";
 import { PHOTOS, PILL, APP_VERSION } from "./constants.js";
@@ -542,6 +543,7 @@ const ProInfoModal = ({onClose,onUpgrade}) => {
   const{isDesktop}=useBreakpoint();
   const [upgrading,setUpgrading]=useState(false);
   const handleCheckout=async()=>{
+    posthog.capture("upgrade_clicked");
     setUpgrading(true);
     try{
       const user=supabaseAuth.getUser();const s=getSession();
@@ -1620,6 +1622,9 @@ export default function Wovely() {
             } catch (e) { console.warn("[Wovely] Profile fetch error:", e.message, "— using cached is_pro"); }
             finally { isFetchingProfile.current = false; }
           }
+          // Identify user for PostHog analytics on session restore
+          const restoredUser=supabaseAuth.getUser();
+          if(restoredUser) posthog.identify(restoredUser.id,{email:restoredUser.email});
           setAuthed(true);document.cookie="wovely_authed=1;path=/;max-age=31536000";
         } else {
           clearAuth();
@@ -1639,6 +1644,7 @@ export default function Wovely() {
     if(!upgradeStatus) return;
     window.history.replaceState({},"",window.location.pathname);
     if(upgradeStatus==="success"){
+      posthog.capture("upgrade_completed");
       setUpgradeToast("success");
       // Re-fetch profile to pick up is_pro=true from webhook
       const s=getSession();
@@ -1659,7 +1665,7 @@ export default function Wovely() {
     }
   },[]);
 
-  const handleSignOut = async () => { await supabaseAuth.signOut(); setAuthed(false); setIsPro(false); setUserPatterns([]); localStorage.removeItem("yh_last_url"); localStorage.removeItem("yh_is_pro"); document.cookie="wovely_authed=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/"; navigate("/"); };
+  const handleSignOut = async () => { posthog.reset(); await supabaseAuth.signOut(); setAuthed(false); setIsPro(false); setUserPatterns([]); localStorage.removeItem("yh_last_url"); localStorage.removeItem("yh_is_pro"); document.cookie="wovely_authed=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/"; navigate("/"); };
 
   // Navigation helper — translates view keys to URL paths
   const navigateToView = useCallback((v, patternId) => {
@@ -1814,6 +1820,7 @@ export default function Wovely() {
   };
 
   const handleNewSignup = () => {
+    posthog.capture("user_signed_up");
     setAuthed(true);document.cookie="wovely_authed=1;path=/;max-age=31536000";
     navigate("/hive");
     setShowOnboarding(true);
@@ -1845,6 +1852,9 @@ export default function Wovely() {
         }
       } catch (e) { console.warn("[Wovely] Sign-in profile prefetch failed:", e.message); }
     }
+    const user=supabaseAuth.getUser();
+    if(user) posthog.identify(user.id,{email:user.email});
+    posthog.capture("user_logged_in");
     setAuthed(true);document.cookie="wovely_authed=1;path=/;max-age=31536000";
     const lastUrl=localStorage.getItem("yh_last_url");
     navigate(lastUrl&&lastUrl.startsWith("/hive/")?lastUrl:"/hive");
@@ -1927,6 +1937,7 @@ export default function Wovely() {
     }
   };
   const handleAddPattern=async(p)=>{
+    posthog.capture("pattern_uploaded",{file_type:p.source_file_type||"unknown"});
     const user=supabaseAuth.getUser();
     const session=getSession();
     // Deduplicate title: if user already has a pattern with same title, append (2), (3), etc.
