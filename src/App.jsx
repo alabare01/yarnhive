@@ -1863,12 +1863,26 @@ export default function Wovely() {
     sessionStorage.setItem("yh_banner_dismissed","1");
   };
 
+  const checkUpgradeIntent=async()=>{
+    if(localStorage.getItem("yh_upgrade_intent")!=="true") return;
+    localStorage.removeItem("yh_upgrade_intent");
+    const user=supabaseAuth.getUser();const s=getSession();
+    if(!user||!s) return;
+    try{
+      const uid=(()=>{try{const p=JSON.parse(atob(s.access_token.split(".")[1]));return p.sub;}catch{return null;}})();
+      const res=await fetch("/api/stripe-checkout",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId:uid||user.id,email:user.email})});
+      const data=await res.json();
+      if(res.ok&&data.url) window.location.href=data.url;
+    }catch(e){console.error("[Wovely] Upgrade intent checkout failed:",e);}
+  };
+
   const handleNewSignup = () => {
     posthog.capture("user_signed_up");
     setAuthed(true);document.cookie="wovely_authed=1;path=/;max-age=31536000";
     navigate("/hive");
     setShowOnboarding(true);
     setShowWelcomeBanner(true);
+    checkUpgradeIntent();
     setTimeout(()=>{
       setShowWelcomeBanner(false);
       showEmailBannerIfNeeded();
@@ -1905,6 +1919,7 @@ export default function Wovely() {
     setShowWelcomeToast(true);
     setTimeout(()=>setShowWelcomeToast(false),3000);
     showEmailBannerIfNeeded();
+    checkUpgradeIntent();
   };
 
   // Restore last pattern URL on boot (runs once when authed on / or /hive)

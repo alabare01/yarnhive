@@ -317,7 +317,10 @@ const Auth = ({onEnter,onEnterAsNew}) => {
   };
 
   const handleModalCTA = () => {
-    if (modal.ctaAction === 'signup') { closeModal(); setScreen('signup'); }
+    if (modal.ctaAction === 'signup') {
+      if (activeModal === 'pro') localStorage.setItem("yh_upgrade_intent","true");
+      closeModal(); setScreen('signup');
+    }
   };
 
   const WelcomeCard = () => (
