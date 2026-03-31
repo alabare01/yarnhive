@@ -53,6 +53,27 @@ export default async function handler(req, res) {
 
     const prompt = `You are a crochet pattern parser. Extract the complete crochet pattern from the page text below. Return ONLY a raw JSON object — no markdown, no code fences, no explanation. Just the JSON.
 
+IGNORE ALL OF THE FOLLOWING — this is web page noise, not pattern content:
+- Navigation menus, header links, footer links, breadcrumbs
+- Blog post listings, "related posts", "you might also like" sections
+- Instagram feeds, social media embeds, Pinterest buttons, share links
+- Comment sections, user reviews, reply threads
+- Sidebar content, category lists, tag clouds, archive links
+- Author bios, "about the designer" sections (except the designer name)
+- Advertisement text, sponsored content, affiliate disclaimers
+- Photo captions, image descriptions, alt text
+- Newsletter signup forms, popup text, cookie notices
+
+FOCUS ONLY ON:
+- Rows and rounds with stitch instructions (e.g. "Row 1: Ch 20, sc in 2nd ch from hook...")
+- Stitch counts in parentheses (e.g. "(24 sts)", "(40)")
+- Materials lists: yarn name/weight/yardage, hook size, notions
+- Pattern notes, gauge, abbreviations, special stitches
+- Section and component headers (e.g. "Body", "Sleeves", "Border")
+- Assembly and finishing instructions
+
+If the page contains multiple patterns or blog posts, extract ONLY the pattern that is most prominently featured or that the URL directly references. Do not extract content from related post listings or suggested patterns.
+
 Schema:
 {
   "title": "pattern name",
@@ -73,7 +94,8 @@ Important:
 - Keep instruction text exactly as written
 - Set independent: true on a component ONLY when the pattern explicitly says it can be worked separately or simultaneously (e.g. "make 2 separately", "can be worked at the same time"). Default is false.
 - If the pattern has no clear components, use a single component with name matching the pattern title
-- If no crochet pattern exists return: {"error": "No crochet pattern found"}
+- If no crochet pattern instructions are found, return: {"error": "No crochet pattern found"}
+- NEVER hallucinate or invent pattern steps — if the page text does not contain actual stitch instructions, return empty rows and components arrays rather than guessing
 
 Page content:
 ${text}`;
