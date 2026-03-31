@@ -109,7 +109,7 @@ const CSS = () => (
   `}</style>
 );
 
-const pct = p => { const checkable=(p.rows||[]).filter(r=>!r.isHeader); return checkable.length ? Math.round(checkable.filter(r=>r.done).length/checkable.length*100) : 0; };
+const pct = p => { const checkable=(p.rows||[]).filter(r=>!r.isHeader&&!r.isNoteOnly); return checkable.length ? Math.round(checkable.filter(r=>r.done).length/checkable.length*100) : 0; };
 
 const DEFAULT_STARTERS = [
   {id:"starter_granny",title:"Granny Square",cat:"Blankets",hook:"5.0mm",weight:"Worsted",yardage:120,notes:"",source:"Wovely Starter",photo:"https://res.cloudinary.com/dmaupzhcx/image/upload/v1774406093/jutheu06ck9xiyfklwd4.png",cover_image_url:"https://res.cloudinary.com/dmaupzhcx/image/upload/v1774406093/jutheu06ck9xiyfklwd4.png",materials:[],rating:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:12,height:12},isStarter:true,rows:[

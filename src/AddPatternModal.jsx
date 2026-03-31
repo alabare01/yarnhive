@@ -286,7 +286,7 @@ const buildRowsFromComponents = (components) => {
       const prefix = isAction ? "📌 " : "";
       const labelText = r.label ? r.label + ": " : "";
       const stitchSuffix = r.stitch_count ? " (" + r.stitch_count + ")" : "";
-      rows.push({ id: "row-" + rowId++, text: prefix + labelText + r.text + stitchSuffix, done: false, note: "", isAction, componentName: comp.name, repeat_brackets: r.repeat_brackets || [] });
+      rows.push({ id: "row-" + rowId++, text: prefix + labelText + r.text + stitchSuffix, done: false, note: r.note || "", isAction, componentName: comp.name, repeat_brackets: r.repeat_brackets || [] });
     });
   });
   return rows;

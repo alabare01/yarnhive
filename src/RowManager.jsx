@@ -196,8 +196,9 @@ const RowManager = ({
         const seenAbbr=new Set();
         return linearSections.map((sec,si)=>{
           const secKey=sec.header?.id||"sec-"+si;
-          const secDone=sec.rows.filter(r=>r.done).length;
-          const secTotal=sec.rows.length;
+          const countable=sec.rows.filter(r=>!r.isNoteOnly);
+          const secDone=countable.filter(r=>r.done).length;
+          const secTotal=countable.length;
           const secComplete=secTotal>0&&secDone===secTotal;
           const defaultOpen=sec.rows.some(r=>!r.done)||!sec.header;
           const open=expandedSections[secKey]!==undefined?expandedSections[secKey]:defaultOpen;
@@ -238,7 +239,7 @@ const RowManager = ({
             </div>}
           </div>
           {!r.done&&!rowLocked&&(r.repeat_brackets||[]).some(b=>b.count>1)&&<div style={{padding:"0 8px 10px 47px"}}><SubCounter row={r} globalIdx={globalIdx} onDotTap={handleDotTap}/></div>}
-          {r.note&&noteEdit!==r.id&&!rowLocked&&<div onClick={e=>{e.stopPropagation();setNoteEdit(r.id);}} style={{padding:"0 8px 10px 47px",fontSize:12,color:T.ink3,fontStyle:"italic",cursor:"pointer"}}>📝 {r.note}</div>}
+          {r.note&&noteEdit!==r.id&&!rowLocked&&<div onClick={e=>{e.stopPropagation();setNoteEdit(r.id);}} style={{padding:"0 8px 10px 47px",fontSize:12,color:T.ink3,lineHeight:1.5,cursor:"pointer"}}><span style={{fontSize:11}}>📌</span> <span style={{fontStyle:"italic"}}>{r.note}</span></div>}
           {newAbbr.length>0&&!rowLocked&&<div style={{padding:"0 8px 10px 47px",display:"flex",flexWrap:"wrap",gap:4}} onClick={e=>e.stopPropagation()}>{newAbbr.map(a=><button key={a.raw} onClick={e=>{e.stopPropagation();window.open(a.url,"_blank","noopener,noreferrer");}} style={{background:"transparent",color:T.terra,border:"1px solid rgba(155,126,200,0.4)",borderRadius:4,padding:"2px 6px",fontSize:10,fontWeight:500,cursor:"pointer"}}>{a.raw}</button>)}</div>}
           {noteEdit===r.id&&!rowLocked&&<div style={{padding:"0 8px 12px 47px",display:"flex",alignItems:"center",gap:8}}><input value={r.note} onChange={e=>updateNote(r.id,e.target.value)} placeholder="Add a note for this row…" style={{flex:1,padding:"9px 12px",background:T.linen,border:`1.5px solid ${T.terra}`,borderRadius:9,fontSize:13,color:T.ink,outline:"none"}}/>{noteSaved&&<span style={{fontSize:11,color:T.sage,fontWeight:600,flexShrink:0}}>Note saved</span>}</div>}
         </div>
