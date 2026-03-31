@@ -178,27 +178,14 @@ const Auth = ({onEnter,onEnterAsNew}) => {
   const Badges = ({onBadgeClick}) => (
     <div style={{marginTop:18}}>
       <div style={{fontSize:9,color:T.ink3,textTransform:"uppercase",letterSpacing:".12em",marginBottom:8,fontWeight:600,textAlign:"center"}}>Coming to mobile</div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-        <div onClick={()=>onBadgeClick('ios')} style={{background:"#000",borderRadius:12,padding:"8px 12px",display:"flex",alignItems:"center",gap:8,boxShadow:"0 4px 12px rgba(0,0,0,0.4)",border:"1px solid rgba(255,255,255,0.08)",cursor:"pointer",transition:"opacity .15s"}} onMouseEnter={e=>e.currentTarget.style.opacity='.75'} onMouseLeave={e=>e.currentTarget.style.opacity='1'}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-          <div style={{flex:1,minWidth:0}}>
-            <div style={{fontSize:7,color:"rgba(255,255,255,.45)",letterSpacing:".07em",lineHeight:1}}>DOWNLOAD ON THE</div>
-            <div style={{fontSize:13,fontWeight:600,color:"#fff",lineHeight:1.25}}>App Store</div>
-          </div>
-          <div style={{fontSize:8,color:"rgba(255,255,255,.35)",border:"1px solid rgba(255,255,255,.15)",borderRadius:5,padding:"2px 6px"}}>Soon</div>
+      <div style={{display:"flex",gap:10,justifyContent:"center"}}>
+        <div style={{background:"#1C1C1E",borderRadius:12,padding:"10px 16px",display:"flex",alignItems:"center",gap:10,opacity:.7,cursor:"default"}}>
+          <svg width="20" height="24" viewBox="0 0 384 512" fill="#fff"><path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5c0 26.2 4.8 53.3 14.4 81.2 12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/></svg>
+          <div><div style={{fontSize:13,fontWeight:600,color:"#fff",fontFamily:"Inter,sans-serif",lineHeight:1.2}}>App Store</div><div style={{fontSize:10,color:"rgba(255,255,255,.6)",fontFamily:"Inter,sans-serif"}}>Coming Soon</div></div>
         </div>
-        <div onClick={()=>onBadgeClick('android')} style={{background:"#000",borderRadius:12,padding:"8px 12px",display:"flex",alignItems:"center",gap:8,boxShadow:"0 4px 12px rgba(0,0,0,0.4)",border:"1px solid rgba(255,255,255,0.08)",cursor:"pointer",transition:"opacity .15s"}} onMouseEnter={e=>e.currentTarget.style.opacity='.75'} onMouseLeave={e=>e.currentTarget.style.opacity='1'}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <path d="M4.5 21.5L13.5 12L4.5 2.5C4 2.8 3.5 3.4 3.5 4.2v15.6c0 .8.5 1.4 1 1.7z" fill="#4285F4"/>
-            <path d="M17 15.5L14 13.8 13.5 12 14 10.2 17 8.5 20.5 10.5c1 .6 1 1.4 0 2L17 15.5z" fill="#FBBC05"/>
-            <path d="M4.5 21.5L13.5 12 17 15.5 6.5 21.2c-.8.4-1.6.3-2-.3z" fill="#EA4335"/>
-            <path d="M4.5 2.5L13.5 12 17 8.5 6.5 2.8c-.8-.4-1.6-.3-2 .3-.1.1-.1.2 0 .4z" fill="#34A853"/>
-          </svg>
-          <div style={{flex:1,minWidth:0}}>
-            <div style={{fontSize:7,color:"rgba(255,255,255,.45)",letterSpacing:".07em",lineHeight:1}}>GET IT ON</div>
-            <div style={{fontSize:13,fontWeight:600,color:"#fff",lineHeight:1.25}}>Google Play</div>
-          </div>
-          <div style={{fontSize:8,color:"rgba(255,255,255,.35)",border:"1px solid rgba(255,255,255,.15)",borderRadius:5,padding:"2px 6px"}}>Soon</div>
+        <div style={{background:"#1C1C1E",borderRadius:12,padding:"10px 16px",display:"flex",alignItems:"center",gap:10,opacity:.7,cursor:"default"}}>
+          <svg width="18" height="20" viewBox="0 0 512 512" fill="#fff"><path d="M93.6 28.3l187.2 107.5L93.6 483.7c-5.1-4.4-8.2-10.8-8.2-18V46.3c0-7.2 3.1-13.6 8.2-18zm22.7-17L330 135.8 282.4 256 116.3 11.3zm0 473.4L282.4 256l47.6 120.2-213.7 124.5zM345.6 256l80.8-46.4c14.3-8.2 14.3-28.9 0-37.2L345.6 126l-52.8 130 52.8 130z"/></svg>
+          <div><div style={{fontSize:13,fontWeight:600,color:"#fff",fontFamily:"Inter,sans-serif",lineHeight:1.2}}>Google Play</div><div style={{fontSize:10,color:"rgba(255,255,255,.6)",fontFamily:"Inter,sans-serif"}}>Coming Soon</div></div>
         </div>
       </div>
     </div>
