@@ -930,7 +930,10 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade}) => {
   if(stage==="uploading"||stage==="extracting"||stage==="building") return (
     <div style={{padding:"48px 20px 36px",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:0}}>
       <style>{`@keyframes spinLoader{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}`}</style>
-      <div style={{width:60,height:60,borderRadius:"50%",border:"4px solid transparent",borderTopColor:"#9B7EC8",animation:"spinLoader 1s linear infinite",marginBottom:24,display:"flex",alignItems:"center",justifyContent:"center"}}><img src="/bev_neutral.png" style={{width:40,height:40,objectFit:"contain"}} alt="Bev"/></div>
+      <div style={{position:"relative",width:60,height:60,marginBottom:24}}>
+        <div style={{position:"absolute",inset:0,borderRadius:"50%",border:"4px solid transparent",borderTopColor:"#9B7EC8",animation:"spinLoader 1s linear infinite"}}/>
+        <img src="/bev_neutral.png" style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:40,height:40,objectFit:"contain"}} alt="Bev"/>
+      </div>
       <div style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:600,color:"#2D2D4E",marginBottom:8,lineHeight:1.4}}>{loadingInfo.headline}</div>
       {loadingInfo.sub&&(
         <div style={{fontSize:14,fontFamily:"Inter,sans-serif",fontWeight:400,color:"#6B6B8A",lineHeight:1.7,marginBottom:16,maxWidth:300}}>

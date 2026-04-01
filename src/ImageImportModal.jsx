@@ -55,8 +55,11 @@ const ImageImportModal = ({ onClose, onPatternSaved, userId, isPro }) => {
   const [validationReport, setValidationReport] = useState(null);
   const [showFullReport, setShowFullReport] = useState(false);
   const [proUpgradeBanner, setProUpgradeBanner] = useState(false);
+  const [coverUrl, setCoverUrl] = useState(null);
+  const [coverUploading, setCoverUploading] = useState(false);
   const fileRef = useRef(null);
   const dropRef = useRef(null);
+  const coverFileRef = useRef(null);
   const { isDesktop } = useBreakpoint();
 
   const dismiss = () => { setClosing(true); setTimeout(() => { setClosing(false); onClose(); }, 220); };
@@ -190,8 +193,8 @@ const ImageImportModal = ({ onClose, onPatternSaved, userId, isPro }) => {
       dimensions: { width: 50, height: 60 },
       materials: mats,
       rows,
-      photo: items[0]?.thumb || PILL[Math.floor(Math.random() * PILL.length)],
-      cover_image_url: null,
+      photo: coverUrl || items[0]?.thumb || PILL[Math.floor(Math.random() * PILL.length)],
+      cover_image_url: coverUrl || null,
       source_file_url: "",
       source_file_name: items[0]?.file.name || "",
       source_file_type: items[0]?.file.type || "",
@@ -343,10 +346,30 @@ const ImageImportModal = ({ onClose, onPatternSaved, userId, isPro }) => {
     ? matList.slice(0, 2).map(m => m.name).join(", ") + " +" + (matList.length - 2) + " more"
     : matList.map(m => m.name).join(", ");
 
+  const heroImg = coverUrl || (items[0]?.thumb) || null;
   const reviewContent = extracted ? (
-    <div style={{ paddingBottom: 8 }}>
-      {/* ── Two-column layout matching AddPatternModal ── */}
-      <div style={{ display: "flex", gap: 24, marginTop: 4 }}>
+    <div style={{paddingBottom:8,background:"#FFFFFF",margin:"-0px -22px -40px",padding:"0 22px 40px"}}>
+      <input ref={coverFileRef} type="file" accept="image/*" onChange={async(e)=>{
+        const f=e.target.files?.[0];if(!f)return;setCoverUploading(true);
+        const fd=new FormData();fd.append("file",f);fd.append("upload_preset","yarnhive_patterns");fd.append("transformation","c_fill,g_auto,ar_16:9");
+        try{const res=await fetch("https://api.cloudinary.com/v1_1/dmaupzhcx/image/upload",{method:"POST",body:fd});if(res.ok){const d=await res.json();setCoverUrl(d.secure_url);}}catch{}
+        setCoverUploading(false);
+      }} style={{display:"none"}}/>
+      {/* ── HERO ZONE ── */}
+      <div style={{position:"relative",height:200,margin:"0 -22px",overflow:"hidden",background:"#2D2D4E"}}>
+        {heroImg&&<><img src={heroImg} alt="" style={{position:"absolute",width:"100%",height:"100%",objectFit:"cover",filter:"blur(20px) saturate(1.2) brightness(0.6)",transform:"scale(1.1)",pointerEvents:"none"}}/>
+        <img src={heroImg} alt={editTitle} style={{position:"absolute",left:"50%",transform:"translateX(-50%)",height:"100%",width:"auto",objectFit:"contain",zIndex:1}}/></>}
+        {!heroImg&&<div style={{position:"absolute",inset:0,background:`linear-gradient(135deg,${T.terra},#6B2A10)`}}/>}
+        <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(20,14,10,.85) 0%,rgba(20,14,10,.15) 60%)",zIndex:2}}/>
+        <div style={{position:"absolute",bottom:16,left:22,right:80,zIndex:3}}>
+          <div style={{fontFamily:T.serif,fontSize:22,fontWeight:700,color:"#fff",lineHeight:1.15,textShadow:"0 2px 8px rgba(0,0,0,.4)",marginBottom:4}}>{editTitle||"Untitled Pattern"}</div>
+          {editDesigner&&<div style={{fontSize:12,color:"rgba(255,255,255,.7)"}}>{editDesigner}</div>}
+        </div>
+        <button onClick={handleSave} style={{position:"absolute",top:14,right:22,zIndex:3,background:"rgba(255,255,255,.2)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.25)",borderRadius:99,padding:"7px 16px",color:"#fff",fontSize:12,fontWeight:600,cursor:"pointer"}}>Looks good ✓</button>
+        <button onClick={()=>coverFileRef.current?.click()} style={{position:"absolute",top:14,left:22,zIndex:3,background:"rgba(255,255,255,.15)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.2)",borderRadius:99,padding:"5px 12px",color:"rgba(255,255,255,.8)",fontSize:11,cursor:"pointer"}}>📷 Change Cover</button>
+      </div>
+      {/* ── CONTENT ZONE: two columns ── */}
+      <div style={{ display: "flex", gap: 24, marginTop: 20 }}>
         {/* LEFT 58% — pattern details */}
         <div style={{ flex: "0 0 58%", minWidth: 0 }}>
           <div style={{ marginBottom: 12 }}>
