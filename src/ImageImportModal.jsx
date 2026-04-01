@@ -1,13 +1,32 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { T, useBreakpoint } from "./theme.jsx";
 import { PILL } from "./constants.js";
 import { buildRowsFromComponents } from "./AddPatternModal.jsx";
 
-const fileToBase64 = (file) => new Promise((resolve, reject) => {
-  const reader = new FileReader();
-  reader.onload = () => resolve(reader.result);
-  reader.onerror = reject;
-  reader.readAsDataURL(file);
+const MAX_DIM = 1200;
+const JPEG_QUALITY = 0.75;
+
+const compressImage = (file) => new Promise((resolve, reject) => {
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    URL.revokeObjectURL(url);
+    let w = img.width, h = img.height;
+    if (w > MAX_DIM || h > MAX_DIM) {
+      if (w > h) { h = Math.round(h * MAX_DIM / w); w = MAX_DIM; }
+      else { w = Math.round(w * MAX_DIM / h); h = MAX_DIM; }
+    }
+    const cvs = document.createElement("canvas");
+    cvs.width = w; cvs.height = h;
+    cvs.getContext("2d").drawImage(img, 0, 0, w, h);
+    const dataUrl = cvs.toDataURL("image/jpeg", JPEG_QUALITY);
+    const raw = dataUrl.split(",")[1];
+    const compressedKB = Math.round(raw.length * 3 / 4 / 1024);
+    console.log(`[ImageImport] ${file.name}: ${Math.round(file.size / 1024)}KB -> ~${compressedKB}KB (${w}x${h})`);
+    resolve({ base64: raw, thumb: dataUrl });
+  };
+  img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Failed to load image: " + file.name)); };
+  img.src = url;
 });
 
 const LOADING_MSGS = [
@@ -18,9 +37,8 @@ const LOADING_MSGS = [
 ];
 
 const ImageImportModal = ({ onClose, onPatternSaved, userId, isPro }) => {
-  const [files, setFiles] = useState([]);
-  const [thumbs, setThumbs] = useState([]);
-  const [stage, setStage] = useState("pick"); // pick | loading | review | error
+  const [items, setItems] = useState([]); // [{file, thumb, base64}]
+  const [stage, setStage] = useState("pick");
   const [loadingMsg, setLoadingMsg] = useState(LOADING_MSGS[0]);
   const [extracted, setExtracted] = useState(null);
   const [errorMsg, setErrorMsg] = useState("");
@@ -29,22 +47,21 @@ const ImageImportModal = ({ onClose, onPatternSaved, userId, isPro }) => {
   const [editHook, setEditHook] = useState("");
   const [editWeight, setEditWeight] = useState("");
   const [closing, setClosing] = useState(false);
+  const [dragIdx, setDragIdx] = useState(null);
   const fileRef = useRef(null);
   const dropRef = useRef(null);
   const { isDesktop } = useBreakpoint();
 
   const dismiss = () => { setClosing(true); setTimeout(() => { setClosing(false); onClose(); }, 220); };
 
-  const handleFiles = (fileList) => {
+  const handleFiles = async (fileList) => {
     const arr = Array.from(fileList).filter(f => f.type.startsWith("image/"));
     if (arr.length === 0) return;
-    setFiles(arr);
-    // Generate thumbnails
-    arr.forEach(f => {
-      const reader = new FileReader();
-      reader.onload = () => setThumbs(prev => [...prev, reader.result]);
-      reader.readAsDataURL(f);
-    });
+    const results = await Promise.all(arr.map(async (f) => {
+      const { base64, thumb } = await compressImage(f);
+      return { file: f, thumb, base64 };
+    }));
+    setItems(prev => [...prev, ...results]);
   };
 
   const handleDrop = (e) => {
@@ -65,8 +82,27 @@ const ImageImportModal = ({ onClose, onPatternSaved, userId, isPro }) => {
     if (dropRef.current) dropRef.current.style.borderColor = T.border;
   };
 
+  // Reorder drag handlers for thumbnails
+  const onThumbDragStart = useCallback((e, i) => {
+    setDragIdx(i);
+    e.dataTransfer.effectAllowed = "move";
+  }, []);
+  const onThumbDragOver = useCallback((e, i) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (dragIdx === null || dragIdx === i) return;
+    setItems(prev => {
+      const next = [...prev];
+      const [moved] = next.splice(dragIdx, 1);
+      next.splice(i, 0, moved);
+      return next;
+    });
+    setDragIdx(i);
+  }, [dragIdx]);
+  const onThumbDragEnd = useCallback(() => { setDragIdx(null); }, []);
+
   const handleSubmit = async () => {
-    if (files.length === 0) return;
+    if (items.length === 0) return;
     setStage("loading");
     setLoadingMsg(LOADING_MSGS[0]);
 
@@ -77,15 +113,13 @@ const ImageImportModal = ({ onClose, onPatternSaved, userId, isPro }) => {
     }, 3000);
 
     try {
-      const base64Strings = await Promise.all(files.map(f => fileToBase64(f)));
-
       const res = await fetch("/api/extract-pattern-vision", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          images: base64Strings,
-          pageCount: files.length,
-          fileName: files[0].name,
+          images: items.map(it => it.base64),
+          pageCount: items.length,
+          fileName: items[0].file.name,
         }),
       });
 
@@ -127,11 +161,11 @@ const ImageImportModal = ({ onClose, onPatternSaved, userId, isPro }) => {
       dimensions: { width: 50, height: 60 },
       materials: mats,
       rows,
-      photo: thumbs[0] || PILL[Math.floor(Math.random() * PILL.length)],
+      photo: items[0]?.thumb || PILL[Math.floor(Math.random() * PILL.length)],
       cover_image_url: null,
       source_file_url: "",
-      source_file_name: files[0]?.name || "",
-      source_file_type: files[0]?.type || "",
+      source_file_name: items[0]?.file.name || "",
+      source_file_type: items[0]?.file.type || "",
       extracted_by_ai: true,
       components: extracted.components || [],
       assembly_notes: extracted.assembly_notes || "",
@@ -175,17 +209,44 @@ const ImageImportModal = ({ onClose, onPatternSaved, userId, isPro }) => {
         style={{ display: "none" }}
       />
 
-      {files.length > 0 && (
+      {items.length > 0 && (
         <div style={{ marginTop: 14 }}>
-          <div style={{ fontSize: 12, fontWeight: 600, color: T.ink2, marginBottom: 8 }}>
-            {files.length} photo{files.length > 1 ? "s" : ""} selected
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: T.ink2 }}>
+              {items.length} photo{items.length > 1 ? "s" : ""} selected
+            </div>
+            {items.length > 1 && (
+              <div style={{ fontSize: 10, color: T.ink3 }}>Drag to set page order</div>
+            )}
           </div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            {thumbs.map((t, i) => (
-              <img key={i} src={t} alt={`Preview ${i + 1}`} style={{
-                width: 64, height: 64, borderRadius: 10, objectFit: "cover",
-                border: `1px solid ${T.border}`,
-              }} />
+            {items.map((it, i) => (
+              <div
+                key={i}
+                draggable
+                onDragStart={(e) => onThumbDragStart(e, i)}
+                onDragOver={(e) => onThumbDragOver(e, i)}
+                onDragEnd={onThumbDragEnd}
+                style={{
+                  position: "relative", width: 72, cursor: "grab",
+                  opacity: dragIdx === i ? 0.5 : 1, transition: "opacity .15s",
+                }}
+              >
+                <img src={it.thumb} alt={`Page ${i + 1}`} style={{
+                  width: 72, height: 72, borderRadius: 10, objectFit: "cover",
+                  border: dragIdx === i ? `2px solid #9B7EC8` : `1px solid ${T.border}`,
+                }} />
+                <div style={{
+                  position: "absolute", top: -6, left: -6, width: 20, height: 20, borderRadius: 99,
+                  background: "#9B7EC8", color: "#fff", fontSize: 10, fontWeight: 700,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  boxShadow: "0 1px 4px rgba(0,0,0,.15)",
+                }}>{i + 1}</div>
+                <div style={{
+                  position: "absolute", top: 4, right: 4, fontSize: 12, color: "rgba(255,255,255,.9)",
+                  textShadow: "0 1px 3px rgba(0,0,0,.5)", cursor: "grab", userSelect: "none",
+                }}>⠿</div>
+              </div>
             ))}
           </div>
         </div>
@@ -193,13 +254,13 @@ const ImageImportModal = ({ onClose, onPatternSaved, userId, isPro }) => {
 
       <button
         onClick={handleSubmit}
-        disabled={files.length === 0}
+        disabled={items.length === 0}
         style={{
           width: "100%", marginTop: 18,
-          background: files.length > 0 ? "#9B7EC8" : T.disabled,
+          background: items.length > 0 ? "#9B7EC8" : T.disabled,
           color: "#fff", border: "none", borderRadius: 99, padding: "14px",
-          fontSize: 15, fontWeight: 600, cursor: files.length > 0 ? "pointer" : "not-allowed",
-          boxShadow: files.length > 0 ? "0 4px 16px rgba(155,126,200,.3)" : "none",
+          fontSize: 15, fontWeight: 600, cursor: items.length > 0 ? "pointer" : "not-allowed",
+          boxShadow: items.length > 0 ? "0 4px 16px rgba(155,126,200,.3)" : "none",
           transition: "background .2s",
         }}
       >Extract pattern</button>
@@ -238,7 +299,7 @@ const ImageImportModal = ({ onClose, onPatternSaved, userId, isPro }) => {
       <div style={{ fontSize: 13, color: T.ink2, textAlign: "center", lineHeight: 1.7, marginBottom: 20 }}>
         {errorMsg || "We had trouble reading this pattern. Try clearer photos or fewer images."}
       </div>
-      <button onClick={() => { setStage("pick"); setFiles([]); setThumbs([]); setErrorMsg(""); }} style={{
+      <button onClick={() => { setStage("pick"); setItems([]); setErrorMsg(""); }} style={{
         width: "100%", background: "#9B7EC8", color: "#fff", border: "none", borderRadius: 99,
         padding: "14px", fontSize: 15, fontWeight: 600, cursor: "pointer",
       }}>Try again</button>
@@ -254,7 +315,6 @@ const ImageImportModal = ({ onClose, onPatternSaved, userId, isPro }) => {
 
   const reviewContent = extracted ? (
     <div style={{ paddingBottom: 8 }}>
-      {/* Title and designer editable fields */}
       <div style={{ marginBottom: 12 }}>
         <div style={{ fontSize: 9, color: T.ink3, textTransform: "uppercase", letterSpacing: ".1em", marginBottom: 4 }}>Pattern Title</div>
         <input value={editTitle} onChange={e => setEditTitle(e.target.value)} placeholder="Pattern name" style={{
@@ -269,23 +329,17 @@ const ImageImportModal = ({ onClose, onPatternSaved, userId, isPro }) => {
           background: "transparent", fontSize: 13, color: T.ink2, outline: "none",
         }} onFocus={e => e.target.style.borderBottomColor = "#9B7EC8"} onBlur={e => e.target.style.borderBottomColor = "transparent"} />
       </div>
-
-      {/* Pill badges */}
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
         {editHook && <span style={{ background: T.terraLt, color: T.terra, borderRadius: 99, padding: "4px 10px", fontSize: 10, fontWeight: 600 }}>Hook {editHook}</span>}
         {editWeight && <span style={{ background: T.sageLt, color: T.sage, borderRadius: 99, padding: "4px 10px", fontSize: 10, fontWeight: 600 }}>{editWeight}</span>}
         {totalRows > 0 && <span style={{ background: T.linen, color: T.ink2, borderRadius: 99, padding: "4px 10px", fontSize: 10, fontWeight: 500 }}>{totalRows} rows</span>}
       </div>
-
-      {/* Materials */}
       {matList.length > 0 && (
         <div style={{ marginBottom: 16 }}>
           <div style={{ fontSize: 9, color: T.ink3, textTransform: "uppercase", letterSpacing: ".1em", marginBottom: 6 }}>Materials</div>
           <span style={{ fontSize: 12, color: T.ink2 }}>{matSummary}</span>
         </div>
       )}
-
-      {/* Components accordion */}
       {(extracted?.components || []).length > 0 && (
         <div style={{ marginBottom: 16 }}>
           <div style={{ fontSize: 9, color: T.ink3, textTransform: "uppercase", letterSpacing: ".1em", marginBottom: 8 }}>
@@ -310,14 +364,12 @@ const ImageImportModal = ({ onClose, onPatternSaved, userId, isPro }) => {
           ))}
         </div>
       )}
-
-      {/* Save button */}
       <button onClick={handleSave} style={{
         width: "100%", background: "linear-gradient(135deg,#9B7EC8,#7B5FB5)", color: "#fff",
         border: "none", borderRadius: 99, padding: "15px", fontSize: 15, fontWeight: 600,
         cursor: "pointer", boxShadow: "0 8px 28px rgba(155,126,200,.5)", marginBottom: 8,
       }}>Looks good — save pattern</button>
-      <button onClick={() => { setStage("pick"); setFiles([]); setThumbs([]); setExtracted(null); }} style={{
+      <button onClick={() => { setStage("pick"); setItems([]); setExtracted(null); }} style={{
         width: "100%", background: "transparent", color: T.ink3, border: "none",
         borderRadius: 99, padding: "10px", fontSize: 13, cursor: "pointer",
       }}>Try different photos</button>
@@ -351,7 +403,6 @@ const ImageImportModal = ({ onClose, onPatternSaved, userId, isPro }) => {
     </div>
   );
 
-  // Mobile bottom sheet
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 400, display: "flex", alignItems: "flex-end" }}>
       <div className={closing ? "dim-out" : "dim-in"} onClick={dismiss} style={{ position: "absolute", inset: 0, background: "rgba(28,23,20,.6)", backdropFilter: "blur(4px)" }} />

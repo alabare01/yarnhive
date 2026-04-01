@@ -1,7 +1,7 @@
 // api/extract-pattern-vision.js
 // Vercel serverless function — extracts crochet pattern from uploaded images via Gemini Files API
 
-export const config = { maxDuration: 300 };
+export const config = { maxDuration: 300, api: { bodyParser: { sizeLimit: "10mb" } } };
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
