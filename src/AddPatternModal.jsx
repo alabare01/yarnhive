@@ -822,6 +822,32 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade}) => {
           // Detect complexity from page count + text density
           const pageMatches=(pdfText.match(/--- PAGE \d+ ---/g)||[]).length;
           const textLen=pdfText.replace(/--- PAGE \d+ ---/g,"").replace(/\s+/g," ").trim().length;
+          if(textLen<200){
+            // Image-based PDF detected (scanned/photo) — route to vision extraction
+            console.log("[Wovely] Image-based PDF detected, routing to vision extraction, textLen:",textLen,"pages:",pageMatches);
+            setComplexity("complex");setComplexityStats({pages:pageMatches,textLen});
+            // Render each PDF page to JPEG via pdf.js canvas
+            const pageImages=[];
+            const arrayBuf=await f.arrayBuffer();
+            const typedArr=new Uint8Array(arrayBuf);
+            const pdfDoc=await window.pdfjsLib.getDocument({data:typedArr}).promise;
+            for(let pi=1;pi<=pdfDoc.numPages;pi++){
+              const pg=await pdfDoc.getPage(pi);
+              const vp=pg.getViewport({scale:2});
+              const cvs=document.createElement("canvas");
+              cvs.width=vp.width;cvs.height=vp.height;
+              await pg.render({canvasContext:cvs.getContext("2d"),viewport:vp}).promise;
+              pageImages.push(cvs.toDataURL("image/jpeg",0.85));
+            }
+            console.log("[Wovely] Rendered",pageImages.length,"PDF pages as images, sending to /api/extract-pattern-vision");
+            const extractRes=await fetch("/api/extract-pattern-vision",{
+              method:"POST",
+              headers:{"Content-Type":"application/json"},
+              body:JSON.stringify({images:pageImages,pageCount:pageMatches,fileName:f.name}),
+            });
+            if(!extractRes.ok){const errBody=await extractRes.json().catch(()=>({}));throw new Error(errBody.error||"Server extraction failed: "+extractRes.status);}
+            result=await extractRes.json();
+          } else {
           const avgTextPerPage=pageMatches>0?textLen/pageMatches:textLen;
           let lvl="simple";
           if(pageMatches>=20||avgTextPerPage<200) lvl="complex";
@@ -837,6 +863,7 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade}) => {
           });
           if(!extractRes.ok){const errBody=await extractRes.json().catch(()=>({}));throw new Error(errBody.error||"Server extraction failed: "+extractRes.status);}
           result=await extractRes.json();
+          }
         } else {
           console.log("[Wovely] Using base64 extraction for image...");
           const base64Data=await fileToBase64(f);
