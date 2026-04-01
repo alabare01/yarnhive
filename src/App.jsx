@@ -2105,8 +2105,8 @@ export default function Wovely() {
   const TITLE_MAP={collection:"My Wovely",wip:"On the Hook",browse:"Find Patterns",stash:"Stash & Notions",calculator:"The Workbench",shopping:"Supply Run",profile:"Profile & Settings",privacy:"Privacy Policy",terms:"Terms of Service"};
 
   if(isDesktop) return (
-    <div style={{display:"flex",minHeight:"100vh",width:"100%",background:T.bg,fontFamily:T.sans,position:"relative",paddingTop:importJob?64:0}}>
-      {importJob&&<ImportProgressBanner job={importJob} onDismiss={()=>setImportJob(null)}/>}
+    <div style={{display:"flex",minHeight:"100vh",width:"100%",background:T.bg,fontFamily:T.sans,position:"relative",paddingTop:importJob?(importJob.status==="review"?120:64):0}}>
+      {importJob&&<ImportProgressBanner job={importJob} onDismiss={()=>setImportJob(null)} onBannerSave={()=>{if(importJob?.patternData){console.log('[Wovely] Banner save:',importJob.patternData.title);handleAddPattern({...importJob.patternData,validation_report:importJob.validationReport||null});setImportJob({stage:'done',pct:100,status:'done',patternTitle:importJob.patternTitle});}}} onBannerDiscard={()=>setImportJob(null)}/>}
       <CSS/>
       {showOnboarding&&<OnboardingScreen onComplete={()=>{setShowOnboarding(false);setJustCompletedOnboarding(true);localStorage.removeItem("yh_welcome_dismissed");navigate("/profile");}} onBackToAuth={async()=>{setShowOnboarding(false);await supabaseAuth.signOut();setAuthed(false);setIsPro(false);setUserPatterns([]);}}/>}
       {showPaywall&&<PaywallGate patternCount={userPatterns.length} onClose={()=>setShowPaywall(false)} onUpgrade={()=>setShowPaywall(false)}/>}
@@ -2149,8 +2149,8 @@ export default function Wovely() {
   );
 
   return (
-    <div style={{fontFamily:T.sans,background:T.bg,minHeight:"100vh",maxWidth:isTablet?680:430,margin:"0 auto",display:"flex",flexDirection:"column",position:"relative",paddingTop:importJob?64:0}}>
-      {importJob&&<ImportProgressBanner job={importJob} onDismiss={()=>setImportJob(null)}/>}
+    <div style={{fontFamily:T.sans,background:T.bg,minHeight:"100vh",maxWidth:isTablet?680:430,margin:"0 auto",display:"flex",flexDirection:"column",position:"relative",paddingTop:importJob?(importJob.status==="review"?120:64):0}}>
+      {importJob&&<ImportProgressBanner job={importJob} onDismiss={()=>setImportJob(null)} onBannerSave={()=>{if(importJob?.patternData){console.log('[Wovely] Banner save:',importJob.patternData.title);handleAddPattern({...importJob.patternData,validation_report:importJob.validationReport||null});setImportJob({stage:'done',pct:100,status:'done',patternTitle:importJob.patternTitle});}}} onBannerDiscard={()=>setImportJob(null)}/>}
       <CSS/>
       {showOnboarding&&<OnboardingScreen onComplete={()=>{setShowOnboarding(false);setJustCompletedOnboarding(true);localStorage.removeItem("yh_welcome_dismissed");navigate("/profile");}} onBackToAuth={async()=>{setShowOnboarding(false);await supabaseAuth.signOut();setAuthed(false);setIsPro(false);setUserPatterns([]);}}/>}
       <WelcomeToast visible={showWelcomeToast}/>

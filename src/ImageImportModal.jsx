@@ -147,29 +147,45 @@ const ImageImportModal = ({ onClose, onPatternSaved, userId, isPro, onImportProg
       const result = await res.json();
       onImportProgress?.({stage:'building',pct:82,status:'running',patternTitle:null});
       console.log('[ImageImport] Extraction complete, pattern:', result?.title);
-      // Auto-save when banner mode — skip confirmation screen
+      // Banner mode: fire review status with pattern data
       if (onImportProgress) {
-        try {
-          const autoRows = buildRowsFromComponents(result.components);
-          const autoMats = (result.materials || []).map((m, i) => ({ id: i + 1, name: m.name || "", amount: m.amount || "", yardage: 0, notes: m.notes || "" }));
-          console.log('[ImageImport] Calling onSave (auto-save)...');
-          onPatternSaved({
-            id: Date.now(), title: result.title || "Imported Pattern", source: result.designer || "Photo Import",
-            cat: "Uncategorized", hook: result.hook_size || "", weight: result.yarn_weight || "",
-            notes: result.pattern_notes || "", yardage: 0, rating: 0, skeins: 0, skeinYards: 200,
-            gauge: { stitches: 12, rows: 16, size: 4 }, dimensions: { width: 50, height: 60 },
-            materials: autoMats, rows: autoRows,
-            photo: items[0]?.thumb || PILL[Math.floor(Math.random() * PILL.length)],
-            cover_image_url: null, source_file_url: "", source_file_name: items[0]?.file.name || "",
-            source_file_type: items[0]?.file.type || "", extracted_by_ai: true,
-            components: result.components || [], assembly_notes: result.assembly_notes || "",
-            difficulty: result.difficulty || "", abbreviations_map: result.abbreviations_map || {},
-            suggested_resources: result.suggested_resources || [],
-          });
-          console.log('[ImageImport] onSave complete');
-          onImportProgress({stage:'done',pct:100,status:'done',patternTitle:result.title||'Your pattern'});
-          console.log('[ImageImport] Banner: firing done signal');
-        } catch(ex) { console.error('[ImageImport] Auto-save error:',ex); onImportProgress({stage:'error',pct:0,status:'error',patternTitle:null}); }
+        const autoRows = buildRowsFromComponents(result.components);
+        const autoMats = (result.materials || []).map((m, i) => ({ id: i + 1, name: m.name || "", amount: m.amount || "", yardage: 0, notes: m.notes || "" }));
+        const patternData = {
+          id: Date.now(), title: result.title || "Imported Pattern", source: result.designer || "Photo Import",
+          cat: "Uncategorized", hook: result.hook_size || "", weight: result.yarn_weight || "",
+          notes: result.pattern_notes || "", yardage: 0, rating: 0, skeins: 0, skeinYards: 200,
+          gauge: { stitches: 12, rows: 16, size: 4 }, dimensions: { width: 50, height: 60 },
+          materials: autoMats, rows: autoRows,
+          photo: items[0]?.thumb || PILL[Math.floor(Math.random() * PILL.length)],
+          cover_image_url: null, source_file_url: "", source_file_name: items[0]?.file.name || "",
+          source_file_type: items[0]?.file.type || "", extracted_by_ai: true,
+          components: result.components || [], assembly_notes: result.assembly_notes || "",
+          difficulty: result.difficulty || "", abbreviations_map: result.abbreviations_map || {},
+          suggested_resources: result.suggested_resources || [],
+        };
+        console.log('[ImageImport] Extraction complete, entering banner review:', result?.title);
+        onImportProgress({stage:'review',pct:90,status:'review',patternTitle:result.title||'Your pattern',patternData,validationReport:null,isPro});
+        // Run Stitch Check in background and update banner
+        if (GEMINI_API_KEY) {
+          (async () => {
+            try {
+              const valText = JSON.stringify(result, null, 2);
+              const trimmed = valText.length > 20000 ? valText.slice(0, valText.lastIndexOf("\n", 20000) || 20000) : valText;
+              const controller = new AbortController(); const timeout = setTimeout(() => controller.abort(), 90000);
+              const vr = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ contents: [{ parts: [{ text: VALIDATION_PROMPT + "\n\nPATTERN TEXT:\n" + trimmed }] }], generationConfig: { temperature: 0.1, maxOutputTokens: 65536 } }),
+                signal: controller.signal,
+              });
+              clearTimeout(timeout);
+              const rawText = await vr.text();
+              if (vr.ok) { const d = JSON.parse(rawText); const raw = d.candidates?.[0]?.content?.parts?.[0]?.text || ""; const parsed = JSON.parse(raw.replace(/```json/g, "").replace(/```/g, "").trim());
+                onImportProgress(prev => ({ ...prev, validationReport: parsed, patternData: { ...patternData, validation_report: parsed } }));
+              }
+            } catch (e) { console.warn("[ImageImport] Banner Stitch Check failed:", e); }
+          })();
+        }
         clearInterval(msgInterval);
         return;
       }
