@@ -662,30 +662,58 @@ const ManualEntryForm = ({onSave,Btn}) => {
 };
 
 const URLImportForm = ({onSave,Btn,Photo,initialUrl}) => {
-  const [url,setUrl]=useState(initialUrl||""),[loading,setLoading]=useState(false),[progress,setProgress]=useState(0),[phase,setPhase]=useState(""),[preview,setPreview]=useState(null),[error,setError]=useState(null);
+  const [url,setUrl]=useState(initialUrl||""),[loading,setLoading]=useState(false),[stageText,setStageText]=useState(""),[preview,setPreview]=useState(null),[error,setError]=useState(null);
+  const [validating,setValidating]=useState(false),[validationReport,setValidationReport]=useState(null);
   const autoTriggered=useRef(false);
   const doImport=async()=>{
     if(!url.trim()) return;
-    setLoading(true);setError(null);setPreview(null);setProgress(0);setPhase("Fetching pattern page…");
-    const p1=setInterval(()=>setProgress(p=>Math.min(p+3,28)),120);
+    setLoading(true);setError(null);setPreview(null);setValidationReport(null);setValidating(false);
+    const MSGS=["Fetching pattern page...","Reading and extracting...","Structuring your pattern...","Almost there..."];
+    let msgIdx=0;setStageText(MSGS[0]);
+    const msgIntv=setInterval(()=>{msgIdx=(msgIdx+1)%MSGS.length;setStageText(MSGS[msgIdx]);},6000);
     let data;
     try{
       const res=await fetch("/api/fetch-pattern",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url:url.trim()})});
-      clearInterval(p1);setProgress(30);setPhase("Reading and extracting pattern…");
-      const p2=setInterval(()=>setProgress(p=>Math.min(p+1,84)),120);
-      data=await res.json(); clearInterval(p2);
+      data=await res.json();
       if(!res.ok||data.error) throw new Error(data.error||"Could not read that page");
-      setPhase("Structuring your pattern…");setProgress(90);
-      await new Promise(r=>setTimeout(r,400));setProgress(100);await new Promise(r=>setTimeout(r,300));
-    }catch(err){setError("Couldn't read that pattern. Try a different URL or use Manual Entry.");setLoading(false);setProgress(0);return;}
-    const rows=(data.rows||[]).map((r,i)=>({id:Date.now()+i,text:r.text||"",done:false,note:""}));
+    }catch(err){clearInterval(msgIntv);setError("Couldn't read that pattern. Try a different URL or use Manual Entry.");setLoading(false);return;}
+    clearInterval(msgIntv);
+    const rows=(data.rows||[]).map((r,i)=>({id:Date.now()+i,text:r.text||"",done:false,note:r.note||""}));
     const estimatedYardage=data.yardage>0?data.yardage:(data.materials||[]).reduce((sum,m)=>{if(m.yardage>0)return sum+m.yardage;const t=((m.name||"")+" "+(m.amount||"")).toLowerCase();const b=t.match(/(\d+)\s*ball/),s=t.match(/(\d+)\s*skein/);if(b)return sum+parseInt(b[1])*200;if(s)return sum+parseInt(s[1])*200;return sum;},0);
     const missing=[];if(!data.hook)missing.push("hook size");if(!data.weight)missing.push("yarn weight");if(!(data.yardage>0)&&!(estimatedYardage>0))missing.push("yardage");if(!(data.materials||[]).length)missing.push("materials list");
-    // Build preview from explicit fields only — never spread raw API data to avoid stale/leaked fields
     setPreview({title:data.title||"",source:data.source||"",source_url:url.trim(),cat:data.cat||"Uncategorized",hook:data.hook||"",weight:data.weight||"",notes:data.notes||"",materials:data.materials||[],rows,yardage:estimatedYardage||data.yardage||0,photo:data.thumbnail_url||PILL[Math.floor(Math.random()*PILL.length)],cover_image_url:data.thumbnail_url||null,smartNote:rows.length+" steps extracted and ready to track.",qualityNote:missing.length===0?null:"Not found on source page: "+missing.join(", ")+". Pattern quality depends on the source."});
     setLoading(false);
+    // Run Stitch Check in background — same as PDF import
+    const pageText=rows.map(r=>r.text).join("\n");
+    if(pageText&&GEMINI_API_KEY){
+      setValidating(true);
+      const valText=pageText.length>20000?pageText.slice(0,pageText.lastIndexOf("\n",20000)||20000):pageText;
+      (async()=>{
+        try{
+          const controller=new AbortController();
+          const timeout=setTimeout(()=>controller.abort(),90000);
+          const vr=await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,{
+            method:"POST",headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({contents:[{parts:[{text:VALIDATION_PROMPT+"\n\nPATTERN TEXT:\n"+valText}]}],generationConfig:{temperature:0.1,maxOutputTokens:65536}}),
+            signal:controller.signal,
+          });
+          clearTimeout(timeout);
+          const rawText=await vr.text();
+          if(vr.ok){const d=JSON.parse(rawText);const raw=d.candidates?.[0]?.content?.parts?.[0]?.text||"";const parsed=JSON.parse(raw.replace(/```json/g,"").replace(/```/g,"").trim());setValidationReport(parsed);}
+        }catch(e){console.warn("[Wovely] URL Stitch Check failed:",e);}
+        setValidating(false);
+      })();
+    }
   };
   useEffect(()=>{if(initialUrl&&!autoTriggered.current){autoTriggered.current=true;doImport();}},[]);
+  if(loading) return (
+    <div style={{padding:"48px 20px 36px",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center"}}>
+      <style>{`@keyframes spinLoader{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}@keyframes fadeInMsg{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}`}</style>
+      <div style={{width:60,height:60,borderRadius:"50%",border:"4px solid transparent",borderTopColor:"#9B7EC8",animation:"spinLoader 1s linear infinite",marginBottom:24}}/>
+      <div style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:600,color:"#2D2D4E",marginBottom:8}}>Reading pattern page...</div>
+      <div key={stageText} style={{fontSize:13,fontFamily:"Inter,sans-serif",color:"#9B7EC8",animation:"fadeInMsg .4s ease both"}}>{stageText}</div>
+    </div>
+  );
   return (
     <div style={{paddingBottom:8}}>
       <div style={{fontSize:13,color:T.ink2,lineHeight:1.7,marginBottom:14}}>Paste any crochet pattern URL. We read the page and extract every step automatically.</div>
@@ -694,11 +722,10 @@ const URLImportForm = ({onSave,Btn,Photo,initialUrl}) => {
           <span style={{color:T.ink3}}>🔗</span>
           <input value={url} onChange={e=>setUrl(e.target.value)} onKeyDown={e=>e.key==="Enter"&&doImport()} placeholder="https://www.allfreecrochet.com/…" style={{border:"none",background:"transparent",flex:1,fontSize:14,color:T.ink,outline:"none"}}/>
         </div>
-        <button onClick={doImport} disabled={!url.trim()||loading} style={{background:T.terra,color:"#fff",border:"none",borderRadius:12,padding:"0 18px",fontWeight:600,fontSize:14,cursor:"pointer",boxShadow:"0 4px 14px rgba(155,126,200,.3)",opacity:!url.trim()||loading?0.6:1}}>{loading?"…":"Go"}</button>
+        <button onClick={doImport} disabled={!url.trim()} style={{background:T.terra,color:"#fff",border:"none",borderRadius:12,padding:"0 18px",fontWeight:600,fontSize:14,cursor:"pointer",boxShadow:"0 4px 14px rgba(155,126,200,.3)",opacity:!url.trim()?0.6:1}}>Go</button>
       </div>
-      {loading&&<div style={{padding:"24px 0 32px"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}><div style={{fontSize:13,color:T.ink2,fontWeight:500}}>{phase}</div><div style={{fontSize:13,color:T.terra,fontWeight:700}}>{progress}%</div></div><div style={{background:T.border,borderRadius:99,height:6,overflow:"hidden",marginBottom:10}}><div className="progress-bar-fill" style={{width:progress+"%",height:6,borderRadius:99,transition:"width .3s ease"}}/></div></div>}
       {error&&<div style={{background:"#FFF0EE",borderRadius:12,padding:"14px 16px",marginBottom:14,border:"1px solid #F5C6BB"}}><div style={{fontSize:13,color:"#C05A5A",fontWeight:600,marginBottom:4}}>Couldn't read this URL</div><div style={{fontSize:12,color:T.ink2,lineHeight:1.6}}>{error}</div></div>}
-      {preview&&!loading&&(
+      {preview&&(
         <div className="fu" style={{background:T.linen,borderRadius:16,overflow:"hidden",border:`1px solid ${T.border}`}}>
           <div style={{height:100,position:"relative"}}><Photo src={preview.photo} alt="pattern" style={{width:"100%",height:"100%"}}/></div>
           <div style={{padding:"14px"}}>
@@ -707,13 +734,15 @@ const URLImportForm = ({onSave,Btn,Photo,initialUrl}) => {
             <div style={{fontSize:12,color:T.ink3,marginBottom:8}}>{[preview.hook&&"Hook "+preview.hook,preview.weight,preview.yardage>0&&"~"+preview.yardage+" yds"].filter(Boolean).join(" · ")}</div>
             {preview.smartNote&&<div style={{background:T.sageLt,borderRadius:8,padding:"8px 12px",marginBottom:10,display:"flex",gap:8}}><span>✨</span><span style={{fontSize:12,color:T.sage}}>{preview.smartNote}</span></div>}
             {preview.qualityNote&&<div style={{background:"#FFF8EC",borderRadius:8,padding:"8px 12px",marginBottom:12,border:"1px solid #F0D9A8",display:"flex",gap:8,alignItems:"flex-start"}}><span style={{fontSize:13,flexShrink:0}}>⚠️</span><span style={{fontSize:11,color:"#8B6914",lineHeight:1.6}}>{preview.qualityNote}</span></div>}
+            {validating&&<div style={{background:T.card,borderRadius:10,padding:"12px",marginBottom:12,display:"flex",alignItems:"center",gap:10}}><div className="spinner" style={{width:16,height:16,border:`2px solid ${T.border}`,borderTopColor:T.terra,borderRadius:"50%",flexShrink:0}}/><span style={{fontSize:12,color:T.ink2}}>Running Stitch Check...</span></div>}
+            {validationReport&&<div style={{background:T.sageLt,borderRadius:10,padding:"10px 12px",marginBottom:12,display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:14}}>{(validationReport.checks||[]).every(c=>c.status==="pass")?"✅":"⚠️"}</span><span style={{fontSize:12,fontWeight:600,color:T.sage}}>Stitch Check: {displayScore(validationReport)}%</span></div>}
             {preview.rows?.length>0&&<div style={{background:T.surface,borderRadius:10,padding:"10px 12px",marginBottom:12,maxHeight:160,overflowY:"auto",border:`1px solid ${T.border}`}}><div style={{fontSize:10,color:T.ink3,textTransform:"uppercase",letterSpacing:".07em",marginBottom:8,fontWeight:600}}>Preview — {preview.rows.length} steps</div>{preview.rows.slice(0,5).map((r,i)=><div key={i} style={{fontSize:12,color:T.ink2,padding:"4px 0",borderBottom:i<4?`1px solid ${T.border}`:"none",lineHeight:1.5}}>{r.text}</div>)}{preview.rows.length>5&&<div style={{fontSize:11,color:T.ink3,marginTop:6}}>+{preview.rows.length-5} more steps…</div>}</div>}
-            <Btn onClick={()=>onSave({id:Date.now(),rating:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:50,height:60},...preview})}>Save to My Wovely</Btn>
-            <div style={{marginTop:8}}><Btn variant="ghost" onClick={()=>{setPreview(null);setUrl("");}}>Try different URL</Btn></div>
+            <Btn onClick={()=>onSave({id:Date.now(),rating:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:50,height:60},...preview,validation_report:validationReport||null})}>Save to My Wovely</Btn>
+            <div style={{marginTop:8}}><Btn variant="ghost" onClick={()=>{setPreview(null);setUrl("");setValidationReport(null);}}>Try different URL</Btn></div>
           </div>
         </div>
       )}
-      <div style={{marginTop:14,background:T.linen,borderRadius:12,padding:"12px 14px"}}><div style={{fontSize:11,color:T.ink3,fontWeight:600,marginBottom:4}}>Works great with</div><div style={{fontSize:12,color:T.ink2,lineHeight:1.8}}>AllFreeCrochet · Drops Design · Yarnspirations · LoveCrafts · Sarah Maker · WordPress pattern blogs</div></div>
+      {!preview&&<div style={{marginTop:14,background:T.linen,borderRadius:12,padding:"12px 14px"}}><div style={{fontSize:11,color:T.ink3,fontWeight:600,marginBottom:4}}>Works great with</div><div style={{fontSize:12,color:T.ink2,lineHeight:1.8}}>AllFreeCrochet · Drops Design · Yarnspirations · LoveCrafts · Sarah Maker · WordPress pattern blogs</div></div>}
     </div>
   );
 };
