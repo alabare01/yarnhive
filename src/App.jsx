@@ -25,15 +25,16 @@ if (typeof document !== "undefined" && !document.getElementById("sb-font")) {
 }
 
 // ─── ROUTE ↔ VIEW MAPPING ───────────────────────────────────────────────────
-const VIEW_TO_PATH = {collection:"/hive",detail:"/hive",wip:"/builds",browse:"/browse",stash:"/stash",calculator:"/tools","stitch-check":"/stitch-check",shopping:"/shopping",profile:"/profile"};
-const PATH_TO_VIEW = {"/hive":"collection","/builds":"wip","/browse":"browse","/stash":"stash","/tools":"calculator","/stitch-check":"stitch-check","/shopping":"shopping","/profile":"profile","/hive-vision":"hive-vision","/privacy":"privacy","/terms":"terms"};
+const VIEW_TO_PATH = {collection:"/",detail:"/",wip:"/builds",browse:"/browse",stash:"/stash",calculator:"/tools","stitch-check":"/stitch-check",shopping:"/shopping",profile:"/profile"};
+const PATH_TO_VIEW = {"/":"collection","/hive":"collection","/builds":"wip","/browse":"browse","/stash":"stash","/tools":"calculator","/stitch-check":"stitch-check","/shopping":"shopping","/profile":"profile","/hive-vision":"hive-vision","/privacy":"privacy","/terms":"terms"};
 const viewFromPath = (pathname) => {
+  if(pathname.startsWith("/pattern/")) return "detail";
   if(pathname.startsWith("/hive/")) return "detail";
   return PATH_TO_VIEW[pathname] || "collection";
 };
 const patternIdFromPath = (pathname) => {
-  const m = pathname.match(/^\/hive\/(.+)$/);
-  return m ? decodeURIComponent(m[1]) : null;
+  const m = pathname.match(/^\/(pattern|hive)\/(.+)$/);
+  return m ? decodeURIComponent(m[2]) : null;
 };
 
 // PHOTOS, PILL imported from ./constants.js
@@ -1716,9 +1717,9 @@ export default function Wovely() {
   // Navigation helper — translates view keys to URL paths
   const navigateToView = useCallback((v, patternId) => {
     if (v === "detail" && patternId) {
-      navigate("/hive/" + encodeURIComponent(patternId));
+      navigate("/pattern/" + encodeURIComponent(patternId));
     } else {
-      const path = VIEW_TO_PATH[v] || "/hive";
+      const path = VIEW_TO_PATH[v] || "/";
       if (path !== location.pathname) navigate(path);
     }
   }, [navigate, location.pathname]);
@@ -1795,14 +1796,14 @@ export default function Wovely() {
     const allP=[...userPatterns,...starterPatterns];
     const match=allP.find(p=>String(p.id)===pid||String(p._supabaseId)===pid);
     if(match) setSelected(match);
-    else if(authed&&authChecked&&patternsFetched&&allP.length>0) navigate("/hive",{replace:true});
+    else if(authed&&authChecked&&patternsFetched&&allP.length>0) navigate("/",{replace:true});
   },[view,location.pathname,userPatterns,starterPatterns,authed,authChecked,patternsFetched]);
 
   // Last URL memory: save pattern detail URLs on navigate
   // Clearing happens only on intentional actions (sign out, explicit dashboard nav)
   useEffect(()=>{
     if(!authed) return;
-    if(location.pathname.startsWith("/hive/") && patternIdFromPath(location.pathname)){
+    if((location.pathname.startsWith("/pattern/")||location.pathname.startsWith("/hive/")) && patternIdFromPath(location.pathname)){
       console.log("[Wovely] yh_last_url saved:", location.pathname);
       localStorage.setItem("yh_last_url",location.pathname);
     }
@@ -1812,7 +1813,7 @@ export default function Wovely() {
   useEffect(()=>{
     if(view==="hive-vision"&&authed){
       setAddOpen(true);
-      navigate("/hive",{replace:true});
+      navigate("/",{replace:true});
     }
   },[view,authed]);
 
@@ -1881,7 +1882,7 @@ export default function Wovely() {
   const handleNewSignup = () => {
     posthog.capture("user_signed_up");
     setAuthed(true);document.cookie="wovely_authed=1;path=/;max-age=31536000";
-    navigate("/hive");
+    navigate("/");
     setShowOnboarding(true);
     setShowWelcomeBanner(true);
     checkUpgradeIntent();
@@ -1917,7 +1918,7 @@ export default function Wovely() {
     posthog.capture("user_logged_in");
     setAuthed(true);document.cookie="wovely_authed=1;path=/;max-age=31536000";
     const lastUrl=localStorage.getItem("yh_last_url");
-    navigate(lastUrl&&lastUrl.startsWith("/hive/")?lastUrl:"/hive");
+    navigate(lastUrl&&(lastUrl.startsWith("/pattern/")||lastUrl.startsWith("/hive/"))?lastUrl.replace("/hive/","/pattern/"):"/")
     setShowWelcomeToast(true);
     setTimeout(()=>setShowWelcomeToast(false),3000);
     showEmailBannerIfNeeded();
@@ -1931,9 +1932,9 @@ export default function Wovely() {
     if(!authed||!authChecked) return;
     if(location.pathname!=="/"&&location.pathname!=="/hive") return;
     const lastUrl=localStorage.getItem("yh_last_url");
-    if(lastUrl&&lastUrl.startsWith("/hive/")){
+    if(lastUrl&&(lastUrl.startsWith("/pattern/")||lastUrl.startsWith("/hive/"))){
       lastUrlRestoreRef.current=true;
-      navigate(lastUrl, {replace:true});
+      navigate(lastUrl.replace("/hive/","/pattern/"), {replace:true});
     }
   },[authed,authChecked,location.pathname,navigate]);
 
@@ -1953,11 +1954,9 @@ export default function Wovely() {
     if(location.pathname!=="/") return <Navigate to="/" replace/>;
     return <><CSS/><WaitlistPopup/><Auth onEnter={handleSignIn} onEnterAsNew={handleNewSignup}/><LegalFooter/></>;
   }
-  // Authed users on root redirect to /hive
-  if(location.pathname==="/") return <Navigate to="/hive" replace/>;
-  // Unknown routes redirect to /hive
-  const knownPaths=["/hive","/builds","/browse","/stash","/tools","/stitch-check","/shopping","/profile","/hive-vision","/master-doc","/privacy","/terms"];
-  if(!knownPaths.some(p=>location.pathname===p||location.pathname.startsWith("/hive/"))) return <Navigate to="/hive" replace/>;
+  // Unknown routes redirect to /
+  const knownPaths=["/","/hive","/builds","/browse","/stash","/tools","/stitch-check","/shopping","/profile","/hive-vision","/master-doc","/privacy","/terms"];
+  if(!knownPaths.some(p=>location.pathname===p||location.pathname.startsWith("/pattern/")||location.pathname.startsWith("/hive/"))) return <Navigate to="/" replace/>;
   const detailOnSave=u=>{
     setUserPatterns(prev=>prev.map(p=>p.id===u.id?u:p));setStarterPatterns(prev=>prev.map(p=>p.id===u.id?u:p));setSelected(u);
     const user=supabaseAuth.getUser();const session=getSession();
@@ -1970,7 +1969,7 @@ export default function Wovely() {
       }).then(r=>{console.log("[Wovely] Row progress PATCH status:",r.status,"for pattern:",pid);if(!r.ok)r.text().then(t=>console.error("[Wovely] Row PATCH error body:",t));}).catch(e=>console.error("[Wovely] Row progress save error:",e));
     }
   };
-  const detailOnBack=()=>{localStorage.removeItem("yh_last_url");navigate("/hive");};
+  const detailOnBack=()=>{localStorage.removeItem("yh_last_url");navigate("/");};
 
   const startAndOpenPattern=(p)=>{
     const updated={...p,started:true};
@@ -2141,7 +2140,7 @@ export default function Wovely() {
           {view==="calculator"&&<div style={{paddingTop:24}}><Calculators/></div>}
           {view==="stitch-check"&&<div style={{paddingTop:24}}><StitchCheck/></div>}
           {view==="shopping"&&<div style={{paddingTop:24}}><ShoppingList/></div>}
-          {view==="profile"&&<ProfileSettingsView isPro={isPro} onOpenProModal={()=>setShowProModal(true)} onGoHome={()=>navigate("/hive")} onEmailConfirmed={()=>setShowEmailBanner(false)}/>}
+          {view==="profile"&&<ProfileSettingsView isPro={isPro} onOpenProModal={()=>setShowProModal(true)} onGoHome={()=>navigate("/")} onEmailConfirmed={()=>setShowEmailBanner(false)}/>}
           {view==="privacy"&&<PrivacyPolicy/>}
           {view==="terms"&&<TermsOfService/>}
         </div>
@@ -2181,7 +2180,7 @@ export default function Wovely() {
         {view==="calculator"&&<div style={{paddingTop:18}}><Calculators/></div>}
         {view==="stitch-check"&&<div style={{paddingTop:18}}><StitchCheck/></div>}
         {view==="shopping"&&<div style={{paddingTop:18}}><ShoppingList/></div>}
-        {view==="profile"&&<ProfileSettingsView isPro={isPro} onOpenProModal={()=>setShowProModal(true)} onGoHome={()=>navigate("/hive")} onEmailConfirmed={()=>setShowEmailBanner(false)}/>}
+        {view==="profile"&&<ProfileSettingsView isPro={isPro} onOpenProModal={()=>setShowProModal(true)} onGoHome={()=>navigate("/")} onEmailConfirmed={()=>setShowEmailBanner(false)}/>}
         {view==="privacy"&&<PrivacyPolicy/>}
         {view==="terms"&&<TermsOfService/>}
       </div>

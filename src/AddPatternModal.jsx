@@ -879,6 +879,21 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade,onImportProgress}) => {
       catch(ex){clearInterval(intv2);clearInterval(intv3);console.error("[Wovely] Extraction failed:",ex);onImportProgress?.({stage:'error',pct:0,status:'error',patternTitle:null});setStage("error");setErrorMsg("We couldn't read this pattern automatically.");setExtracted({title:f.name.replace(/\.(pdf|jpg|png|jpeg)$/i,"").replace(/[-_]/g," "),components:[],materials:[],pattern_notes:"",hook_size:"",yarn_weight:"",designer:"",difficulty:"",assembly_notes:""});return;}
       clearInterval(intv2);clearInterval(intv3);setProgress(66);
       onImportProgress?.({stage:'building',pct:80,status:'running',patternTitle:null});
+      console.log('[Wovely] Extraction complete, pattern:', result?.title);
+      // Auto-save when banner mode (onImportProgress present) — skip confirmation screen
+      if(onImportProgress){
+        try{
+          const autoRows=buildRowsFromComponents(result.components);
+          const autoMats=(result.materials||[]).map((m,i)=>({id:i+1,name:m.name||"",amount:m.amount||"",yardage:0,notes:m.notes||""}));
+          const autoCover=fileInfo?.coverUrl||null;
+          console.log('[Wovely] Calling onSave (auto-save)...');
+          onSave({id:Date.now(),title:result.title||"Imported Pattern",source:result.designer||"PDF Import",cat:"Uncategorized",hook:result.hook_size||"",weight:result.yarn_weight||"",notes:result.pattern_notes||"",yardage:0,rating:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:50,height:60},materials:autoMats,rows:autoRows,photo:autoCover||PILL[Math.floor(Math.random()*PILL.length)],cover_image_url:autoCover,source_file_url:fileInfo?.url||"",source_file_name:fileInfo?.name||"",source_file_type:fileInfo?.type||"",extracted_by_ai:true,components:result.components||[],assembly_notes:result.assembly_notes||"",difficulty:result.difficulty||"",abbreviations_map:result.abbreviations_map||{},suggested_resources:result.suggested_resources||[]});
+          console.log('[Wovely] onSave complete');
+          onImportProgress({stage:'done',pct:100,status:'done',patternTitle:result.title||'Your pattern'});
+          console.log('[Wovely] Banner: firing done signal');
+        }catch(ex){console.error('[Wovely] Auto-save error:',ex);onImportProgress({stage:'error',pct:0,status:'error',patternTitle:null});}
+        return;
+      }
       setStage("building");setStageText("Building your workspace...");
       await new Promise(r=>setTimeout(r,600));setProgress(100);
       setExtracted(result);setEditTitle(result.title||"");setEditDesigner(result.designer||"");setEditHook(result.hook_size||"");setEditWeight(result.yarn_weight||"");

@@ -146,6 +146,33 @@ const ImageImportModal = ({ onClose, onPatternSaved, userId, isPro, onImportProg
 
       const result = await res.json();
       onImportProgress?.({stage:'building',pct:82,status:'running',patternTitle:null});
+      console.log('[ImageImport] Extraction complete, pattern:', result?.title);
+      // Auto-save when banner mode — skip confirmation screen
+      if (onImportProgress) {
+        try {
+          const autoRows = buildRowsFromComponents(result.components);
+          const autoMats = (result.materials || []).map((m, i) => ({ id: i + 1, name: m.name || "", amount: m.amount || "", yardage: 0, notes: m.notes || "" }));
+          console.log('[ImageImport] Calling onSave (auto-save)...');
+          onPatternSaved({
+            id: Date.now(), title: result.title || "Imported Pattern", source: result.designer || "Photo Import",
+            cat: "Uncategorized", hook: result.hook_size || "", weight: result.yarn_weight || "",
+            notes: result.pattern_notes || "", yardage: 0, rating: 0, skeins: 0, skeinYards: 200,
+            gauge: { stitches: 12, rows: 16, size: 4 }, dimensions: { width: 50, height: 60 },
+            materials: autoMats, rows: autoRows,
+            photo: items[0]?.thumb || PILL[Math.floor(Math.random() * PILL.length)],
+            cover_image_url: null, source_file_url: "", source_file_name: items[0]?.file.name || "",
+            source_file_type: items[0]?.file.type || "", extracted_by_ai: true,
+            components: result.components || [], assembly_notes: result.assembly_notes || "",
+            difficulty: result.difficulty || "", abbreviations_map: result.abbreviations_map || {},
+            suggested_resources: result.suggested_resources || [],
+          });
+          console.log('[ImageImport] onSave complete');
+          onImportProgress({stage:'done',pct:100,status:'done',patternTitle:result.title||'Your pattern'});
+          console.log('[ImageImport] Banner: firing done signal');
+        } catch(ex) { console.error('[ImageImport] Auto-save error:',ex); onImportProgress({stage:'error',pct:0,status:'error',patternTitle:null}); }
+        clearInterval(msgInterval);
+        return;
+      }
       setExtracted(result);
       setEditTitle(result.title || "");
       setEditDesigner(result.designer || "");
