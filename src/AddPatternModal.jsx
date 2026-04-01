@@ -1204,68 +1204,58 @@ const AddPatternModal = ({onClose,onSave,isPro,patternCount,Btn,Photo,Bar,Wirefr
       </div>
     </>
   );
-  // ── MINIMIZED FLOATING CARD ──
-  if(minimized){
-    return (
-      <div style={{position:"fixed",bottom:24,right:24,zIndex:9999,width:380,maxHeight:560,overflowY:"auto",borderRadius:20,boxShadow:"0 8px 48px rgba(0,0,0,0.22)",background:"#fff",display:"flex",flexDirection:"column"}}>
-        <div style={{flexShrink:0,padding:"14px 18px 0",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <div style={{display:"flex",alignItems:"center",gap:8}}>
-            <button onClick={onExpand} style={{background:T.terraLt,border:"none",borderRadius:99,padding:"4px 12px",fontSize:11,fontWeight:600,color:T.terra,cursor:"pointer"}}>⤢ Expand</button>
-            <span style={{fontSize:12,color:T.ink2,fontWeight:500}}>Importing\u2026</span>
-          </div>
-          <button onClick={dismiss} style={{background:T.linen,border:"none",borderRadius:99,width:28,height:28,cursor:"pointer",fontSize:14,color:T.ink3,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
-        </div>
-        <div style={{flex:1,overflowY:"auto",padding:"8px 18px 18px"}}>
-          {method==="manual"&&<ManualEntryForm onSave={handleSave} Btn={Btn}/>}
-          {method==="url"&&<URLImportForm onSave={handleSave} Btn={Btn} Photo={Photo} initialUrl={initialUrl}/>}
-          {method==="pdf"&&<PDFUploadForm onSave={handleSave} Btn={Btn} isPro={isPro} onUpgrade={()=>{if(onUpgrade){dismiss();onUpgrade();}}}/>}
-          {method==="browser"&&<BrowserImport onSave={handleSave} Btn={Btn} Photo={Photo}/>}
-          {method==="snap"&&<HiveVisionForm onSave={handleSave} Btn={Btn} Bar={Bar} WireframeViewer={WireframeViewer}/>}
-        </div>
+  // ── SINGLE RENDER TREE — style-only change when minimized ──
+  const minStyle = {position:"fixed",bottom:24,right:24,zIndex:9999,width:380,maxHeight:560,borderRadius:20,boxShadow:"0 8px 48px rgba(0,0,0,0.22)",background:"#fff",display:"flex",flexDirection:"column",overflow:"hidden"};
+  const deskStyle = {position:"relative",background:T.surface,borderRadius:20,width:"100%",maxWidth:580,maxHeight:"85vh",display:"flex",flexDirection:"column",zIndex:1,boxShadow:"0 24px 64px rgba(28,23,20,.3)"};
+  const mobStyle = {position:"relative",background:T.surface,borderRadius:"24px 24px 0 0",width:"100%",maxHeight:"92vh",display:"flex",flexDirection:"column",zIndex:1};
+  const containerStyle = minimized ? minStyle : isDesktop ? deskStyle : mobStyle;
+  const pad = minimized ? "8px 18px 18px" : isDesktop ? "0 28px 32px" : "0 22px 40px";
+
+  const header = minimized ? (
+    <div style={{flexShrink:0,padding:"14px 18px 0",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+      <div style={{display:"flex",alignItems:"center",gap:8}}>
+        <button onClick={onExpand} style={{background:T.terraLt,border:"none",borderRadius:99,padding:"4px 12px",fontSize:11,fontWeight:600,color:T.terra,cursor:"pointer"}}>⤢ Expand</button>
+        <span style={{fontSize:12,color:T.ink2,fontWeight:500}}>Importing…</span>
       </div>
-    );
-  }
-  if(isDesktop) return (
-    <div style={{position:"fixed",inset:0,zIndex:400,display:"flex",alignItems:"center",justifyContent:"center"}}>
-      <div className={closing?"dim-out":"dim-in"} onClick={backdropClick} style={{position:"absolute",inset:0,background:"rgba(28,23,20,.6)",backdropFilter:"blur(4px)"}}/>
-      <div className={closing?"":"fu"} style={{position:"relative",background:T.surface,borderRadius:20,width:"100%",maxWidth:580,maxHeight:"85vh",display:"flex",flexDirection:"column",zIndex:1,boxShadow:"0 24px 64px rgba(28,23,20,.3)"}}>
-        <div style={{flexShrink:0,padding:"24px 28px 0"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-            {method?<button onClick={()=>setMethod(null)} style={{background:"none",border:"none",color:T.terra,cursor:"pointer",fontSize:14,fontWeight:600,padding:0}}>← Back</button>:<div style={{fontFamily:T.serif,fontSize:22,color:T.ink}}>What are you adding to your Wovely?</div>}
-          </div>
-          {method&&<div style={{fontSize:12,color:T.ink3,marginBottom:14,fontWeight:500}}>{METHODS.find(m=>m.key===method)?.icon} {METHODS.find(m=>m.key===method)?.label}</div>}
-        </div>
-        <div style={{flex:1,overflowY:"auto",padding:"0 28px 32px"}}>
-          {!method&&<MethodList/>}
-          {method==="manual"&&<ManualEntryForm onSave={handleSave} Btn={Btn}/>}
-          {method==="url"&&<URLImportForm onSave={handleSave} Btn={Btn} Photo={Photo} initialUrl={initialUrl} onMinimize={onMinimize} onExtractionStart={()=>{extractingRef.current=true;}} onExtractionEnd={()=>{extractingRef.current=false;}}/>}
-          {method==="pdf"&&<PDFUploadForm onSave={handleSave} Btn={Btn} isPro={isPro} onUpgrade={()=>{if(onUpgrade){dismiss();onUpgrade();}}} onMinimize={onMinimize} onExtractionStart={()=>{extractingRef.current=true;}} onExtractionEnd={()=>{extractingRef.current=false;}}/>}
-          {method==="browser"&&<BrowserImport onSave={handleSave} Btn={Btn} Photo={Photo}/>}
-          {method==="snap"&&<HiveVisionForm onSave={handleSave} Btn={Btn} Bar={Bar} WireframeViewer={WireframeViewer}/>}
-        </div>
+      <button onClick={dismiss} style={{background:T.linen,border:"none",borderRadius:99,width:28,height:28,cursor:"pointer",fontSize:14,color:T.ink3,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
+    </div>
+  ) : isDesktop ? (
+    <div style={{flexShrink:0,padding:"24px 28px 0"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+        {method?<button onClick={()=>setMethod(null)} style={{background:"none",border:"none",color:T.terra,cursor:"pointer",fontSize:14,fontWeight:600,padding:0}}>← Back</button>:<div style={{fontFamily:T.serif,fontSize:22,color:T.ink}}>What are you adding to your Wovely?</div>}
       </div>
+      {method&&<div style={{fontSize:12,color:T.ink3,marginBottom:14,fontWeight:500}}>{METHODS.find(m=>m.key===method)?.icon} {METHODS.find(m=>m.key===method)?.label}</div>}
+    </div>
+  ) : (
+    <div style={{flexShrink:0,padding:"16px 22px 0"}}>
+      <div style={{width:36,height:3,background:T.border,borderRadius:99,margin:"0 auto 18px"}}/>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+        {method?<button onClick={()=>setMethod(null)} style={{background:"none",border:"none",color:T.terra,cursor:"pointer",fontSize:14,fontWeight:600,padding:0}}>← Back</button>:<div style={{fontFamily:T.serif,fontSize:22,color:T.ink}}>Add Pattern</div>}
+      </div>
+      {method&&<div style={{fontSize:12,color:T.ink3,marginBottom:12,fontWeight:500}}>{METHODS.find(m=>m.key===method)?.icon} {METHODS.find(m=>m.key===method)?.label}</div>}
     </div>
   );
+
+  const content = (
+    <div style={{flex:1,overflowY:"auto",padding:pad}}>
+      {!method&&<MethodList/>}
+      {method==="manual"&&<ManualEntryForm onSave={handleSave} Btn={Btn}/>}
+      {method==="url"&&<URLImportForm onSave={handleSave} Btn={Btn} Photo={Photo} initialUrl={initialUrl} onMinimize={minimized?undefined:onMinimize} onExtractionStart={()=>{extractingRef.current=true;}} onExtractionEnd={()=>{extractingRef.current=false;}}/>}
+      {method==="pdf"&&<PDFUploadForm onSave={handleSave} Btn={Btn} isPro={isPro} onUpgrade={()=>{if(onUpgrade){dismiss();onUpgrade();}}} onMinimize={minimized?undefined:onMinimize} onExtractionStart={()=>{extractingRef.current=true;}} onExtractionEnd={()=>{extractingRef.current=false;}}/>}
+      {method==="browser"&&<BrowserImport onSave={handleSave} Btn={Btn} Photo={Photo}/>}
+      {method==="snap"&&<HiveVisionForm onSave={handleSave} Btn={Btn} Bar={Bar} WireframeViewer={WireframeViewer}/>}
+    </div>
+  );
+
+  if(minimized) return (<div style={minStyle}>{header}{content}</div>);
+  const wrapStyle = isDesktop
+    ? {position:"fixed",inset:0,zIndex:400,display:"flex",alignItems:"center",justifyContent:"center"}
+    : {position:"fixed",inset:0,zIndex:400,display:"flex",alignItems:"flex-end"};
+  const animClass = isDesktop ? (closing?"":"fu") : (closing?"":"su");
   return (
-    <div style={{position:"fixed",inset:0,zIndex:400,display:"flex",alignItems:"flex-end"}}>
+    <div style={wrapStyle}>
       <div className={closing?"dim-out":"dim-in"} onClick={backdropClick} style={{position:"absolute",inset:0,background:"rgba(28,23,20,.6)",backdropFilter:"blur(4px)"}}/>
-      <div className={closing?"":"su"} style={{position:"relative",background:T.surface,borderRadius:"24px 24px 0 0",width:"100%",maxHeight:"92vh",display:"flex",flexDirection:"column",zIndex:1}}>
-        <div style={{flexShrink:0,padding:"16px 22px 0"}}>
-          <div style={{width:36,height:3,background:T.border,borderRadius:99,margin:"0 auto 18px"}}/>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-            {method?<button onClick={()=>setMethod(null)} style={{background:"none",border:"none",color:T.terra,cursor:"pointer",fontSize:14,fontWeight:600,padding:0}}>← Back</button>:<div style={{fontFamily:T.serif,fontSize:22,color:T.ink}}>Add Pattern</div>}
-          </div>
-          {method&&<div style={{fontSize:12,color:T.ink3,marginBottom:12,fontWeight:500}}>{METHODS.find(m=>m.key===method)?.icon} {METHODS.find(m=>m.key===method)?.label}</div>}
-        </div>
-        <div style={{flex:1,overflowY:"auto",padding:"0 22px 40px"}}>
-          {!method&&<MethodList/>}
-          {method==="manual"&&<ManualEntryForm onSave={handleSave} Btn={Btn}/>}
-          {method==="url"&&<URLImportForm onSave={handleSave} Btn={Btn} Photo={Photo} initialUrl={initialUrl} onMinimize={onMinimize} onExtractionStart={()=>{extractingRef.current=true;}} onExtractionEnd={()=>{extractingRef.current=false;}}/>}
-          {method==="pdf"&&<PDFUploadForm onSave={handleSave} Btn={Btn} isPro={isPro} onUpgrade={()=>{if(onUpgrade){dismiss();onUpgrade();}}} onMinimize={onMinimize} onExtractionStart={()=>{extractingRef.current=true;}} onExtractionEnd={()=>{extractingRef.current=false;}}/>}
-          {method==="browser"&&<BrowserImport onSave={handleSave} Btn={Btn} Photo={Photo}/>}
-          {method==="snap"&&<HiveVisionForm onSave={handleSave} Btn={Btn} Bar={Bar} WireframeViewer={WireframeViewer}/>}
-        </div>
-      </div>
+      <div className={animClass} style={containerStyle}>{header}{content}</div>
     </div>
   );
 };
