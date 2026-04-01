@@ -2,6 +2,9 @@ import { useState, useRef, useCallback } from "react";
 import { T, useBreakpoint } from "./theme.jsx";
 import { PILL } from "./constants.js";
 import { buildRowsFromComponents } from "./AddPatternModal.jsx";
+import { VALIDATION_PROMPT, CHECK_ICON, displayScore, badgeForScore } from "./StitchCheck.jsx";
+
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
 
 const MAX_DIM = 1200;
 const JPEG_QUALITY = 0.75;
@@ -48,6 +51,8 @@ const ImageImportModal = ({ onClose, onPatternSaved, userId, isPro }) => {
   const [editWeight, setEditWeight] = useState("");
   const [closing, setClosing] = useState(false);
   const [dragIdx, setDragIdx] = useState(null);
+  const [validating, setValidating] = useState(false);
+  const [validationReport, setValidationReport] = useState(null);
   const fileRef = useRef(null);
   const dropRef = useRef(null);
   const { isDesktop } = useBreakpoint();
@@ -137,6 +142,28 @@ const ImageImportModal = ({ onClose, onPatternSaved, userId, isPro }) => {
       setEditHook(result.hook_size || "");
       setEditWeight(result.yarn_weight || "");
       setStage("review");
+      // Run Stitch Check in background (non-blocking)
+      if (GEMINI_API_KEY) {
+        setValidating(true);
+        const valText = JSON.stringify(result, null, 2);
+        const trimmed = valText.length > 20000 ? valText.slice(0, valText.lastIndexOf("\n", 20000) || 20000) : valText;
+        (async () => {
+          try {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 90000);
+            const vr = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+              method: "POST", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ contents: [{ parts: [{ text: VALIDATION_PROMPT + "\n\nPATTERN TEXT:\n" + trimmed }] }], generationConfig: { temperature: 0.1, maxOutputTokens: 65536 } }),
+              signal: controller.signal,
+            });
+            clearTimeout(timeout);
+            const rawText = await vr.text();
+            if (!vr.ok) { console.warn("[ImageImport] Stitch Check API error:", vr.status, rawText.substring(0, 200)); setValidating(false); return; }
+            const d = JSON.parse(rawText); const raw = d.candidates?.[0]?.content?.parts?.[0]?.text || ""; const parsed = JSON.parse(raw.replace(/```json/g, "").replace(/```/g, "").trim()); setValidationReport(parsed);
+          } catch (e) { console.warn("[ImageImport] Stitch Check background validation failed:", e); }
+          setValidating(false);
+        })();
+      }
     } catch (err) {
       clearInterval(msgInterval);
       console.error("[ImageImport] Extraction failed:", err);
@@ -172,6 +199,7 @@ const ImageImportModal = ({ onClose, onPatternSaved, userId, isPro }) => {
       difficulty: extracted.difficulty || "",
       abbreviations_map: extracted.abbreviations_map || {},
       suggested_resources: extracted.suggested_resources || [],
+      validation_report: isPro && validationReport ? validationReport : null,
     });
     dismiss();
   };
@@ -364,6 +392,45 @@ const ImageImportModal = ({ onClose, onPatternSaved, userId, isPro }) => {
           ))}
         </div>
       )}
+
+      {/* Stitch Check */}
+      {validating ? (
+        <div style={{ background: T.card, borderRadius: 16, padding: "24px 20px", boxShadow: T.shadowLg, display: "flex", flexDirection: "column", alignItems: "center", gap: 12, marginBottom: 16, animation: "scPulseImg 2s ease-in-out infinite" }}>
+          <style>{`@keyframes scPulseImg{0%,100%{opacity:1}50%{opacity:.85}}@keyframes scSpinImg{0%{stroke-dashoffset:${Math.round(2*Math.PI*28)}}50%{stroke-dashoffset:0}100%{stroke-dashoffset:${Math.round(2*Math.PI*28)}}}`}</style>
+          <div style={{ position: "relative", width: 60, height: 60 }}>
+            <svg width="60" height="60" viewBox="0 0 60 60" style={{ transform: "rotate(-90deg)" }}>
+              <circle cx="30" cy="30" r="28" fill="none" stroke={T.linen} strokeWidth="3" />
+              <circle cx="30" cy="30" r="28" fill="none" stroke={T.terra} strokeWidth="3" strokeLinecap="round" strokeDasharray={Math.round(2*Math.PI*28)} style={{ animation: "scSpinImg 2.5s ease-in-out infinite" }} />
+            </svg>
+          </div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: T.ink }}>Running Stitch Check...</div>
+          <div style={{ fontSize: 11, color: T.ink3, textAlign: "center", lineHeight: 1.5 }}>Checking stitch counts and round sequence</div>
+        </div>
+      ) : validationReport ? (() => {
+        const scScore = displayScore(validationReport);
+        const scBadge = badgeForScore(scScore);
+        return (
+          <div style={{ background: T.surface, borderRadius: 16, padding: 16, boxShadow: "0 4px 20px rgba(155,126,200,.08)", border: `1px solid ${T.border}`, marginBottom: 16 }}>
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 10 }}>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: scBadge.color, marginBottom: 2 }}>{scBadge.label}</div>
+                <div style={{ fontSize: 10, color: T.ink3 }}>Stitch Check</div>
+              </div>
+              <div style={{ width: 48, height: 48, borderRadius: "50%", border: `3px solid ${scBadge.color}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <span style={{ fontSize: 16, fontWeight: 700, fontFamily: T.serif, color: isPro ? scBadge.color : "transparent", textShadow: isPro ? "none" : `0 0 8px ${scBadge.color}` }}>{scScore}%</span>
+              </div>
+            </div>
+            {(validationReport.checks || []).slice(0, isPro ? 3 : 2).map(c => (
+              <div key={c.id} style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 4 }}>
+                <span style={{ fontSize: 11 }}>{CHECK_ICON[c.status] || "\u2753"}</span>
+                <span style={{ fontSize: 11, color: T.ink2 }}>{c.label}</span>
+              </div>
+            ))}
+            {!isPro && <div style={{ fontSize: 10, color: T.ink3, marginTop: 6 }}>Upgrade to Pro for the full report</div>}
+          </div>
+        );
+      })() : null}
+
       <button onClick={handleSave} style={{
         width: "100%", background: "linear-gradient(135deg,#9B7EC8,#7B5FB5)", color: "#fff",
         border: "none", borderRadius: 99, padding: "15px", fontSize: 15, fontWeight: 600,
