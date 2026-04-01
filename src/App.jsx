@@ -469,9 +469,9 @@ const SidebarNav = ({view,onNavigate,count,isPro,onAddPattern,onSignOut,onUpgrad
         :<div style={{background:"rgba(255,255,255,.15)",borderRadius:12,padding:"14px"}}><div style={{fontSize:12,fontWeight:700,color:"#fff",marginBottom:3}}>✨ Upgrade to Pro</div><div style={{fontSize:11,color:"rgba(255,255,255,.75)",lineHeight:1.5,marginBottom:10}}>Unlimited patterns, all imports, Snap & Stitch, cloud sync.</div><div onClick={onUpgrade} style={{background:"rgba(255,255,255,.2)",borderRadius:9999,padding:"8px",textAlign:"center",fontSize:12,fontWeight:700,color:"#fff",cursor:"pointer"}}>$8.99/mo</div></div>}
         {onSignOut&&<button onClick={onSignOut} style={{width:"100%",background:"rgba(255,255,255,.15)",border:"none",borderRadius:9999,padding:"8px",fontSize:12,color:"#fff",cursor:"pointer",marginTop:10,fontWeight:500}}>Sign out</button>}
         <div style={{textAlign:"center",marginTop:12,fontSize:11}}>
-          <a href="/privacy" style={{color:"rgba(255,255,255,.5)",textDecoration:"none"}} onClick={e=>{e.preventDefault();onNavigate("privacy");}}>Privacy</a>
+          <span onClick={()=>onNavigate("privacy")} style={{color:"rgba(255,255,255,.5)",cursor:"pointer"}}>Privacy</span>
           <span style={{margin:"0 6px",color:"rgba(255,255,255,.3)"}}>|</span>
-          <a href="/terms" style={{color:"rgba(255,255,255,.5)",textDecoration:"none"}} onClick={e=>{e.preventDefault();onNavigate("terms");}}>Terms</a>
+          <span onClick={()=>onNavigate("terms")} style={{color:"rgba(255,255,255,.5)",cursor:"pointer"}}>Terms</span>
         </div>
       </div>
     </div>
@@ -515,9 +515,9 @@ const NavPanel = ({open,onClose,view,onNavigate,count,isPro,onSignOut,onUpgrade}
           :<div style={{background:"rgba(255,255,255,.15)",borderRadius:12,padding:"14px 16px"}}><div style={{fontSize:12,fontWeight:700,color:"#fff",marginBottom:3}}>✨ Upgrade to Pro</div><div style={{fontSize:11,color:"rgba(255,255,255,.75)",lineHeight:1.5,marginBottom:10}}>Unlimited patterns, all imports, Snap & Stitch.</div><div onClick={onUpgrade} style={{background:"rgba(255,255,255,.2)",borderRadius:9999,padding:"8px",textAlign:"center",fontSize:12,fontWeight:700,color:"#fff",cursor:"pointer"}}>$8.99/mo</div></div>}
           {onSignOut&&<button onClick={onSignOut} style={{width:"100%",background:"rgba(255,255,255,.15)",border:"none",borderRadius:9999,padding:"8px",fontSize:12,color:"#fff",cursor:"pointer",marginTop:10,fontWeight:500}}>Sign out</button>}
           <div style={{textAlign:"center",marginTop:12,fontSize:11}}>
-            <a href="/privacy" style={{color:"rgba(255,255,255,.5)",textDecoration:"none"}} onClick={e=>{e.preventDefault();dismiss();onNavigate("privacy");}}>Privacy</a>
+            <span onClick={()=>{dismiss();onNavigate("privacy");}} style={{color:"rgba(255,255,255,.5)",cursor:"pointer"}}>Privacy</span>
             <span style={{margin:"0 6px",color:"rgba(255,255,255,.3)"}}>|</span>
-            <a href="/terms" style={{color:"rgba(255,255,255,.5)",textDecoration:"none"}} onClick={e=>{e.preventDefault();dismiss();onNavigate("terms");}}>Terms</a>
+            <span onClick={()=>{dismiss();onNavigate("terms");}} style={{color:"rgba(255,255,255,.5)",cursor:"pointer"}}>Terms</span>
           </div>
         </div>
       </div>
@@ -622,6 +622,7 @@ const ProInfoModal = ({onClose,onUpgrade}) => {
 };
 
 const ProfileSettingsView = ({isPro,onOpenProModal,onGoHome,onEmailConfirmed}) => {
+  const profileNav=useNavigate();
   const [username,setUsername]=useState(""),[displayName,setDisplayName]=useState(""),[bio,setBio]=useState("");
   const [socialInstagram,setSocialInstagram]=useState(""),[socialPinterest,setSocialPinterest]=useState(""),[socialRavelry,setSocialRavelry]=useState("");
   const [profileSaving,setProfileSaving]=useState(false),[profileMsg,setProfileMsg]=useState(null),[profileLoaded,setProfileLoaded]=useState(false);
@@ -849,9 +850,9 @@ const ProfileSettingsView = ({isPro,onOpenProModal,onGoHome,onEmailConfirmed}) =
       </div>
 
       <div style={{textAlign:"center",padding:"20px 0 8px",fontSize:12,color:"#6B6B8A"}}>
-        <a href="/privacy" style={{color:"#6B6B8A",textDecoration:"none"}} onMouseEnter={e=>e.target.style.color="#9B7EC8"} onMouseLeave={e=>e.target.style.color="#6B6B8A"}>Privacy Policy</a>
+        <span onClick={()=>profileNav("/privacy")} style={{color:"#6B6B8A",cursor:"pointer"}} onMouseEnter={e=>e.target.style.color="#9B7EC8"} onMouseLeave={e=>e.target.style.color="#6B6B8A"}>Privacy Policy</span>
         <span style={{margin:"0 8px",opacity:.5}}>|</span>
-        <a href="/terms" style={{color:"#6B6B8A",textDecoration:"none"}} onMouseEnter={e=>e.target.style.color="#9B7EC8"} onMouseLeave={e=>e.target.style.color="#6B6B8A"}>Terms of Service</a>
+        <span onClick={()=>profileNav("/terms")} style={{color:"#6B6B8A",cursor:"pointer"}} onMouseEnter={e=>e.target.style.color="#9B7EC8"} onMouseLeave={e=>e.target.style.color="#6B6B8A"}>Terms of Service</span>
       </div>
     </div>
   );
@@ -1108,13 +1109,16 @@ const ShoppingList = () => {
 
 const STARTER_PHOTO_MAP = {Blankets:PHOTOS.blanket,Amigurumi:PHOTOS.granny,Wearables:PHOTOS.cardigan,Accessories:PHOTOS.tote,Home:PHOTOS.pillow};
 
-const LegalFooter = () => (
-  <div style={{textAlign:"center",padding:"24px 16px 32px",fontSize:12,color:"#6B6B8A"}}>
-    <a href="/privacy" style={{color:"#6B6B8A",textDecoration:"none"}} onMouseEnter={e=>e.target.style.color="#9B7EC8"} onMouseLeave={e=>e.target.style.color="#6B6B8A"}>Privacy Policy</a>
-    <span style={{margin:"0 8px",opacity:.5}}>|</span>
-    <a href="/terms" style={{color:"#6B6B8A",textDecoration:"none"}} onMouseEnter={e=>e.target.style.color="#9B7EC8"} onMouseLeave={e=>e.target.style.color="#6B6B8A"}>Terms of Service</a>
-  </div>
-);
+const LegalFooter = () => {
+  const legalNav=useNavigate();
+  return (
+    <div style={{textAlign:"center",padding:"24px 16px 32px",fontSize:12,color:"#6B6B8A"}}>
+      <span onClick={()=>legalNav("/privacy")} style={{color:"#6B6B8A",cursor:"pointer"}} onMouseEnter={e=>e.target.style.color="#9B7EC8"} onMouseLeave={e=>e.target.style.color="#6B6B8A"}>Privacy Policy</span>
+      <span style={{margin:"0 8px",opacity:.5}}>|</span>
+      <span onClick={()=>legalNav("/terms")} style={{color:"#6B6B8A",cursor:"pointer"}} onMouseEnter={e=>e.target.style.color="#9B7EC8"} onMouseLeave={e=>e.target.style.color="#6B6B8A"}>Terms of Service</span>
+    </div>
+  );
+};
 
 const WelcomeToast = ({visible}) => (
   <div style={{position:"fixed",top:16,right:16,zIndex:900,background:T.terra,color:"#fff",borderRadius:14,padding:"12px 24px",fontSize:14,fontWeight:600,boxShadow:"0 8px 32px rgba(155,126,200,.4)",display:"flex",alignItems:"center",gap:8,opacity:visible?1:0,transform:visible?"translateX(0)":"translateX(20px)",transition:"opacity .4s ease, transform .4s ease",pointerEvents:"none"}}>
