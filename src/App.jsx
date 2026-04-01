@@ -1599,6 +1599,7 @@ export default function Wovely() {
   const [showWelcomeBanner,setShowWelcomeBanner]=useState(false);
   const [showWelcomeToast,setShowWelcomeToast]=useState(false);
   const [showProModal,setShowProModal]=useState(false);
+  const [pendingMethod,setPendingMethod]=useState(null);
   const [showOnboarding,setShowOnboarding]=useState(false);
   const [justCompletedOnboarding,setJustCompletedOnboarding]=useState(false);
   const [createdPattern,setCreatedPattern]=useState(null);
@@ -2048,7 +2049,6 @@ export default function Wovely() {
       }catch(e){console.error("[Wovely] Pattern save error:",e);}
     }
   };
-  const [pendingMethod,setPendingMethod]=useState(null);
   const openAddModal=(method)=>{if(tier.atCap){setShowPaywall(true);return;}setPendingImportUrl(null);setPendingMethod(method||null);setAddOpen(true);};
   const handleImportUrl=(u)=>{if(tier.atCap){setShowPaywall(true);return;}setPendingImportUrl(u);setPendingMethod("url");setAddOpen(true);};
   const updatePatternStatus=(p,status)=>{
