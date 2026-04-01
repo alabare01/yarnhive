@@ -343,94 +343,125 @@ const ImageImportModal = ({ onClose, onPatternSaved, userId, isPro }) => {
 
   const reviewContent = extracted ? (
     <div style={{ paddingBottom: 8 }}>
-      <div style={{ marginBottom: 12 }}>
-        <div style={{ fontSize: 9, color: T.ink3, textTransform: "uppercase", letterSpacing: ".1em", marginBottom: 4 }}>Pattern Title</div>
-        <input value={editTitle} onChange={e => setEditTitle(e.target.value)} placeholder="Pattern name" style={{
-          width: "100%", padding: "6px 0", border: "none", borderBottom: "1px solid transparent",
-          background: "transparent", fontSize: 16, fontWeight: 600, fontFamily: T.serif, color: T.ink, outline: "none",
-        }} onFocus={e => e.target.style.borderBottomColor = "#9B7EC8"} onBlur={e => e.target.style.borderBottomColor = "transparent"} />
-      </div>
-      <div style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: 9, color: T.ink3, textTransform: "uppercase", letterSpacing: ".1em", marginBottom: 4 }}>Designer</div>
-        <input value={editDesigner} onChange={e => setEditDesigner(e.target.value)} placeholder="Designer name" style={{
-          width: "100%", padding: "6px 0", border: "none", borderBottom: "1px solid transparent",
-          background: "transparent", fontSize: 13, color: T.ink2, outline: "none",
-        }} onFocus={e => e.target.style.borderBottomColor = "#9B7EC8"} onBlur={e => e.target.style.borderBottomColor = "transparent"} />
-      </div>
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
-        {editHook && <span style={{ background: T.terraLt, color: T.terra, borderRadius: 99, padding: "4px 10px", fontSize: 10, fontWeight: 600 }}>Hook {editHook}</span>}
-        {editWeight && <span style={{ background: T.sageLt, color: T.sage, borderRadius: 99, padding: "4px 10px", fontSize: 10, fontWeight: 600 }}>{editWeight}</span>}
-        {totalRows > 0 && <span style={{ background: T.linen, color: T.ink2, borderRadius: 99, padding: "4px 10px", fontSize: 10, fontWeight: 500 }}>{totalRows} rows</span>}
-      </div>
-      {matList.length > 0 && (
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 9, color: T.ink3, textTransform: "uppercase", letterSpacing: ".1em", marginBottom: 6 }}>Materials</div>
-          <span style={{ fontSize: 12, color: T.ink2 }}>{matSummary}</span>
-        </div>
-      )}
-      {(extracted?.components || []).length > 0 && (
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 9, color: T.ink3, textTransform: "uppercase", letterSpacing: ".1em", marginBottom: 8 }}>
-            Components ({extracted.components.length})
+      {/* ── Two-column layout matching AddPatternModal ── */}
+      <div style={{ display: "flex", gap: 24, marginTop: 4 }}>
+        {/* LEFT 58% — pattern details */}
+        <div style={{ flex: "0 0 58%", minWidth: 0 }}>
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 9, color: T.ink3, textTransform: "uppercase", letterSpacing: ".1em", marginBottom: 4 }}>Pattern Title</div>
+            <input value={editTitle} onChange={e => setEditTitle(e.target.value)} placeholder="Pattern name" style={{
+              width: "100%", padding: "6px 0", border: "none", borderBottom: "1px solid transparent",
+              background: "transparent", fontSize: 16, fontWeight: 600, fontFamily: T.serif, color: T.ink, outline: "none",
+            }} onFocus={e => e.target.style.borderBottomColor = T.terra} onBlur={e => e.target.style.borderBottomColor = "transparent"} />
           </div>
-          {extracted.components.map((c, i) => (
-            <div key={i} style={{
-              background: T.surface, border: `1px solid ${T.border}`, borderRadius: 10,
-              padding: "10px 14px", marginBottom: 6,
-            }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: T.ink }}>
-                {c.name}{c.make_count > 1 ? " \u00d7 " + c.make_count : ""}
-                <span style={{ fontSize: 11, color: T.ink3, marginLeft: 8 }}>{(c.rows || []).length} rows</span>
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 9, color: T.ink3, textTransform: "uppercase", letterSpacing: ".1em", marginBottom: 4 }}>Designer</div>
+            <input value={editDesigner} onChange={e => setEditDesigner(e.target.value)} placeholder="Designer name" style={{
+              width: "100%", padding: "6px 0", border: "none", borderBottom: "1px solid transparent",
+              background: "transparent", fontSize: 13, color: T.ink2, outline: "none",
+            }} onFocus={e => e.target.style.borderBottomColor = T.terra} onBlur={e => e.target.style.borderBottomColor = "transparent"} />
+          </div>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
+            {editHook && <span style={{ background: T.terraLt, color: T.terra, borderRadius: 99, padding: "4px 10px", fontSize: 10, fontWeight: 600 }}>Hook {editHook}</span>}
+            {editWeight && <span style={{ background: T.sageLt, color: T.sage, borderRadius: 99, padding: "4px 10px", fontSize: 10, fontWeight: 600 }}>{editWeight}</span>}
+            {totalRows > 0 && <span style={{ background: T.linen, color: T.ink2, borderRadius: 99, padding: "4px 10px", fontSize: 10, fontWeight: 500 }}>{totalRows} rows</span>}
+          </div>
+          {matList.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 9, color: T.ink3, textTransform: "uppercase", letterSpacing: ".1em", marginBottom: 6 }}>Materials</div>
+              <span style={{ fontSize: 12, color: T.ink2 }}>{matSummary}</span>
+            </div>
+          )}
+          {(extracted?.components || []).length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 9, color: T.ink3, textTransform: "uppercase", letterSpacing: ".1em", marginBottom: 8 }}>
+                Components ({extracted.components.length})
               </div>
-              {(c.rows || []).slice(0, 3).map((r, j) => (
-                <div key={j} style={{ fontSize: 11, color: T.ink2, lineHeight: 1.5, padding: "2px 0" }}>
-                  {r.label}: {r.text?.substring(0, 60)}{r.text?.length > 60 ? "\u2026" : ""}
+              {extracted.components.map((c, i) => (
+                <div key={i} style={{
+                  background: T.surface, border: `1px solid ${T.border}`, borderRadius: 10,
+                  padding: "10px 14px", marginBottom: 6,
+                }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: T.ink }}>
+                    {c.name}{c.make_count > 1 ? " \u00d7 " + c.make_count : ""}
+                    <span style={{ fontSize: 11, color: T.ink3, marginLeft: 8 }}>{(c.rows || []).length} rows</span>
+                  </div>
+                  {(c.rows || []).slice(0, 3).map((r, j) => (
+                    <div key={j} style={{ fontSize: 11, color: T.ink2, lineHeight: 1.5, padding: "2px 0" }}>
+                      {r.label}: {r.text?.substring(0, 60)}{r.text?.length > 60 ? "\u2026" : ""}
+                    </div>
+                  ))}
+                  {(c.rows || []).length > 3 && <div style={{ fontSize: 10, color: T.ink3, marginTop: 4 }}>+{(c.rows || []).length - 3} more</div>}
                 </div>
               ))}
-              {(c.rows || []).length > 3 && <div style={{ fontSize: 10, color: T.ink3, marginTop: 4 }}>+{(c.rows || []).length - 3} more</div>}
             </div>
-          ))}
+          )}
         </div>
-      )}
-
-      {/* Stitch Check */}
-      {validating ? (
-        <div style={{ background: T.card, borderRadius: 16, padding: "24px 20px", boxShadow: T.shadowLg, display: "flex", flexDirection: "column", alignItems: "center", gap: 12, marginBottom: 16, animation: "scPulseImg 2s ease-in-out infinite" }}>
-          <style>{`@keyframes scPulseImg{0%,100%{opacity:1}50%{opacity:.85}}@keyframes scSpinImg{0%{stroke-dashoffset:${Math.round(2*Math.PI*28)}}50%{stroke-dashoffset:0}100%{stroke-dashoffset:${Math.round(2*Math.PI*28)}}}`}</style>
-          <div style={{ position: "relative", width: 60, height: 60 }}>
-            <svg width="60" height="60" viewBox="0 0 60 60" style={{ transform: "rotate(-90deg)" }}>
-              <circle cx="30" cy="30" r="28" fill="none" stroke={T.linen} strokeWidth="3" />
-              <circle cx="30" cy="30" r="28" fill="none" stroke={T.terra} strokeWidth="3" strokeLinecap="round" strokeDasharray={Math.round(2*Math.PI*28)} style={{ animation: "scSpinImg 2.5s ease-in-out infinite" }} />
-            </svg>
-          </div>
-          <div style={{ fontSize: 13, fontWeight: 600, color: T.ink }}>Running Stitch Check...</div>
-          <div style={{ fontSize: 11, color: T.ink3, textAlign: "center", lineHeight: 1.5 }}>Checking stitch counts and round sequence</div>
-        </div>
-      ) : validationReport ? (() => {
-        const scScore = displayScore(validationReport);
-        const scBadge = badgeForScore(scScore);
-        return (
-          <div style={{ background: T.surface, borderRadius: 16, padding: 16, boxShadow: "0 4px 20px rgba(155,126,200,.08)", border: `1px solid ${T.border}`, marginBottom: 16 }}>
-            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 10 }}>
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: scBadge.color, marginBottom: 2 }}>{scBadge.label}</div>
-                <div style={{ fontSize: 10, color: T.ink3 }}>Stitch Check</div>
+        {/* RIGHT 42% — Stitch Check */}
+        <div style={{ flex: "0 0 42%", minWidth: 0 }}>
+          {validating ? (
+            <div style={{ background: T.card, borderRadius: 16, padding: "36px 20px", boxShadow: T.shadowLg, display: "flex", flexDirection: "column", alignItems: "center", gap: 16, animation: "scPulseImg 2s ease-in-out infinite" }}>
+              <style>{`@keyframes scPulseImg{0%,100%{opacity:1}50%{opacity:.85}}@keyframes scSpinImg{0%{stroke-dashoffset:${Math.round(2*Math.PI*36)}}50%{stroke-dashoffset:0}100%{stroke-dashoffset:${Math.round(2*Math.PI*36)}}}`}</style>
+              <div style={{ position: "relative", width: 80, height: 80 }}>
+                <svg width="80" height="80" viewBox="0 0 80 80" style={{ transform: "rotate(-90deg)" }}>
+                  <circle cx="40" cy="40" r="36" fill="none" stroke={T.linen} strokeWidth="4" />
+                  <circle cx="40" cy="40" r="36" fill="none" stroke={T.terra} strokeWidth="4" strokeLinecap="round" strokeDasharray={Math.round(2*Math.PI*36)} style={{ animation: "scSpinImg 2.5s ease-in-out infinite" }} />
+                </svg>
               </div>
-              <div style={{ width: 48, height: 48, borderRadius: "50%", border: `3px solid ${scBadge.color}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <span style={{ fontSize: 16, fontWeight: 700, fontFamily: T.serif, color: isPro ? scBadge.color : "transparent", textShadow: isPro ? "none" : `0 0 8px ${scBadge.color}` }}>{scScore}%</span>
-              </div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: T.ink }}>Analyzing your pattern</div>
+              <div style={{ fontSize: 12, color: T.sage, textAlign: "center", maxWidth: 200, lineHeight: 1.5 }}>Checking stitch counts, round sequence and math errors before you start crocheting.</div>
             </div>
-            {(validationReport.checks || []).slice(0, isPro ? 3 : 2).map(c => (
-              <div key={c.id} style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 4 }}>
-                <span style={{ fontSize: 11 }}>{CHECK_ICON[c.status] || "\u2753"}</span>
-                <span style={{ fontSize: 11, color: T.ink2 }}>{c.label}</span>
+          ) : validationReport ? (() => {
+            const scScore = displayScore(validationReport);
+            const scBadge = badgeForScore(scScore);
+            return isPro ? (
+              <div style={{ background: T.surface, borderRadius: 16, padding: 20, boxShadow: "0 4px 20px rgba(155,126,200,.08)", border: `1px solid ${T.border}` }}>
+                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: scBadge.color, marginBottom: 2 }}>{scBadge.label}</div>
+                    <div style={{ fontSize: 10, color: T.ink3 }}>Stitch Check</div>
+                  </div>
+                  <div style={{ width: 56, height: 56, borderRadius: "50%", border: `3px solid ${scBadge.color}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "border-color .6s ease" }}>
+                    <span style={{ fontSize: 18, fontWeight: 700, fontFamily: T.serif, color: scBadge.color, transition: "color .6s ease" }}>{scScore}%</span>
+                  </div>
+                </div>
+                {(validationReport.checks || []).slice(0, 3).map(c => (
+                  <div key={c.id} style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 4 }}>
+                    <span style={{ fontSize: 11 }}>{CHECK_ICON[c.status] || "\u2753"}</span>
+                    <span style={{ fontSize: 11, color: T.ink2 }}>{c.label}</span>
+                  </div>
+                ))}
               </div>
-            ))}
-            {!isPro && <div style={{ fontSize: 10, color: T.ink3, marginTop: 6 }}>Upgrade to Pro for the full report</div>}
-          </div>
-        );
-      })() : null}
-
+            ) : (
+              <div style={{ background: T.surface, borderRadius: 16, padding: 20, boxShadow: "0 4px 20px rgba(155,126,200,.08)", border: `1px solid ${T.border}` }}>
+                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: scBadge.color, marginBottom: 2 }}>{scBadge.label}</div>
+                    <div style={{ fontSize: 10, color: T.ink3 }}>Stitch Check</div>
+                  </div>
+                  <div style={{ width: 56, height: 56, borderRadius: "50%", border: `3px solid ${scBadge.color}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <span style={{ fontSize: 18, fontWeight: 700, fontFamily: T.serif, color: scBadge.color, filter: "blur(8px)", WebkitFilter: "blur(8px)", userSelect: "none" }}>{scScore}%</span>
+                  </div>
+                </div>
+                {(validationReport.checks || []).slice(0, 2).map((c, i) => (
+                  <div key={c.id || i} style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 4 }}>
+                    <span style={{ fontSize: 11 }}>{CHECK_ICON[c.status] || "\u2753"}</span>
+                    <span style={{ fontSize: 11, color: T.ink2 }}>{c.label}</span>
+                    <div style={{ flex: 1, height: 12, background: `linear-gradient(to right,${T.ink3}22,transparent)`, borderRadius: 4 }} />
+                  </div>
+                ))}
+                <div style={{ borderTop: `1px solid ${T.border}`, marginTop: 8, paddingTop: 8 }}>
+                  <div style={{ fontSize: 10, color: T.ink3, marginBottom: 6 }}>Unlock full report</div>
+                </div>
+              </div>
+            );
+          })() : (
+            <div style={{ background: T.surface, borderRadius: 16, padding: 20, boxShadow: "0 4px 20px rgba(155,126,200,.08)", border: `1px solid ${T.border}`, display: "flex", alignItems: "center", justifyContent: "center", minHeight: 120, fontSize: 11, color: T.ink3 }}>Stitch Check unavailable</div>
+          )}
+        </div>
+      </div>
+      {/* ── Full-width actions below columns ── */}
+      <div style={{ height: 20 }} />
       <button onClick={handleSave} style={{
         width: "100%", background: "linear-gradient(135deg,#9B7EC8,#7B5FB5)", color: "#fff",
         border: "none", borderRadius: 99, padding: "15px", fontSize: 15, fontWeight: 600,
