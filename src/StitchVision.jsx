@@ -104,8 +104,8 @@ const StitchVision = ({ isPro, onUpgrade }) => {
       });
 
       clearInterval(intv);
-      if (!res.ok) throw new Error("Server error: " + res.status);
       const data = await res.json();
+      if (!res.ok) throw new Error(data.message || data.error || "Server error: " + res.status);
       incrementUsage();
       setResult(data);
       setStage("result");

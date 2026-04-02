@@ -113,7 +113,7 @@ export default async function handler(req, res) {
     console.log("[stitch-vision] Identified:", result.stitch_name, "confidence:", result.confidence);
     return res.status(200).json(result);
   } catch (err) {
-    console.error("[stitch-vision] Error:", err.message);
-    return res.status(500).json({ error: "Stitch identification failed", message: err.message });
+    console.error("[stitch-vision] FATAL:", err.name, err.message, err.stack?.substring(0, 500));
+    return res.status(500).json({ error: "Fatal error", name: err.name, message: err.message, stack: err.stack?.substring(0, 300) });
   }
 }
