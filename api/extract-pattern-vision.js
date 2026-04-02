@@ -1,90 +1,9 @@
 // api/extract-pattern-vision.js
-// Vercel serverless function — extracts crochet pattern from uploaded images via Gemini Files API
+// Vercel serverless function — extracts crochet pattern from images or PDF URL via Gemini
 
 export const config = { maxDuration: 300, api: { bodyParser: { sizeLimit: "10mb" } } };
 
-export default async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-
-  if (req.method === "OPTIONS") return res.status(200).end();
-  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
-
-  try {
-
-  const { images, pageCount, fileName } = req.body || {};
-  if (!images || !Array.isArray(images) || images.length === 0) return res.status(400).json({ error: "images array required" });
-
-  const GEMINI_KEY = process.env.GEMINI_API_KEY;
-  console.log("[extract-pattern-vision] ENV:", GEMINI_KEY ? "KEY EXISTS" : "KEY MISSING", "image count:", images.length, "pageCount:", pageCount, "fileName:", fileName);
-  if (!GEMINI_KEY) return res.status(500).json({ error: "API key not configured on server" });
-
-  // Step 1: Upload each image to Gemini Files API
-  const fileUris = [];
-  for (let i = 0; i < images.length; i++) {
-    const base64Data = images[i];
-    // Strip data URI prefix if present
-    const raw = base64Data.includes(",") ? base64Data.split(",")[1] : base64Data;
-    const binaryBuffer = Buffer.from(raw, "base64");
-
-    // Detect mime type from data URI prefix or default to jpeg
-    let mimeType = "image/jpeg";
-    if (base64Data.startsWith("data:")) {
-      const match = base64Data.match(/^data:(image\/[^;]+);/);
-      if (match) mimeType = match[1];
-    }
-
-    const boundary = "----GeminiUpload" + Date.now() + i;
-    const metadataPart = JSON.stringify({ file: { mimeType, displayName: fileName || `image-${i + 1}` } });
-
-    const bodyParts = [
-      `--${boundary}\r\n`,
-      `Content-Type: application/json; charset=UTF-8\r\n\r\n`,
-      metadataPart,
-      `\r\n--${boundary}\r\n`,
-      `Content-Type: ${mimeType}\r\n\r\n`,
-    ];
-
-    const textEncoder = new TextEncoder();
-    const prefix = textEncoder.encode(bodyParts.join(""));
-    const suffix = textEncoder.encode(`\r\n--${boundary}--\r\n`);
-
-    const fullBody = new Uint8Array(prefix.length + binaryBuffer.length + suffix.length);
-    fullBody.set(prefix, 0);
-    fullBody.set(new Uint8Array(binaryBuffer), prefix.length);
-    fullBody.set(suffix, prefix.length + binaryBuffer.length);
-
-    console.log("[extract-pattern-vision] Uploading image", i + 1, "of", images.length, "size:", binaryBuffer.length, "bytes", "mime:", mimeType);
-
-    const uploadRes = await fetch(
-      `https://generativelanguage.googleapis.com/upload/v1beta/files?uploadType=multipart&key=${GEMINI_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": `multipart/related; boundary=${boundary}` },
-        body: fullBody,
-      }
-    );
-
-    if (!uploadRes.ok) {
-      const errBody = await uploadRes.text();
-      console.error("[extract-pattern-vision] File upload failed for image", i + 1, ":", uploadRes.status, errBody.substring(0, 500));
-      return res.status(500).json({ error: `Image upload failed for image ${i + 1}: ${uploadRes.status}` });
-    }
-
-    const uploadData = await uploadRes.json();
-    const uri = uploadData.file?.uri;
-    if (!uri) {
-      console.error("[extract-pattern-vision] No file URI returned for image", i + 1, JSON.stringify(uploadData).substring(0, 300));
-      return res.status(500).json({ error: `No file URI returned for image ${i + 1}` });
-    }
-
-    console.log("[extract-pattern-vision] Uploaded image", i + 1, "uri:", uri);
-    fileUris.push({ uri, mimeType });
-  }
-
-  // Step 2: Build prompts — copied VERBATIM from api/extract-pattern.js
-  const fullPrompt = `You are a crochet pattern extraction specialist. You will analyze this pattern using a strict 4-step process. Return ONLY valid JSON with no markdown, no backticks, no explanation.
+const fullPrompt = `You are a crochet pattern extraction specialist. You will analyze this pattern using a strict 4-step process. Return ONLY valid JSON with no markdown, no backticks, no explanation.
 
 ═══ STEP 1 — STRUCTURE ANALYSIS ═══
 Before extracting anything, silently determine:
@@ -148,17 +67,31 @@ SUGGESTED RESOURCES: Extract {label, url} objects from any "Tutorials", "Resourc
 
 Be thorough — extract every component, every round, every material. Ensure the JSON is complete and valid. Do not truncate.`;
 
-  const simplePrompt = `Extract this crochet pattern. Return ONLY valid JSON, no markdown, no backticks.
+const simplePrompt = `Extract this crochet pattern. Return ONLY valid JSON, no markdown, no backticks.
 {"title":"string","hook_size":"string","yarn_weight":"string","difficulty":"string","designer":"string","materials":[{"name":"string","amount":"string"}],"components":[{"name":"Main","make_count":1,"independent":false,"rows":[{"id":"row-1","label":"ROW 1","text":"instruction text","stitch_count":null,"action_item":false,"repeat_brackets":[]}]}],"pattern_notes":"string","assembly_notes":"string","confidence":"low"}
 Extract every row/round as its own entry. Keep instruction text exactly as written. Do not truncate.`;
 
-  // Step 3: Call Gemini generateContent with file references
-  const callGemini = async (prompt, maxTokens) => {
-    const parts = [
-      ...fileUris.map(f => ({ file_data: { mime_type: f.mimeType, file_uri: f.uri } })),
-      { text: prompt },
-    ];
+const parseGeminiJson = (text) => {
+  const cleaned = text.replace(/^[\s\S]*?```(?:json|JSON)?\s*\n?/i, "").replace(/\n?\s*```[\s\S]*$/, "").trim();
+  const toParse = cleaned.startsWith("{") || cleaned.startsWith("[") ? cleaned : text.replace(/```json/gi, "").replace(/```/g, "").trim();
+  return JSON.parse(toParse);
+};
 
+export default async function handler(req, res) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  if (req.method === "OPTIONS") return res.status(200).end();
+  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+
+  try {
+
+  const { images, pageCount, fileName, pdfUrl, filename } = req.body || {};
+  const GEMINI_KEY = process.env.GEMINI_API_KEY;
+  if (!GEMINI_KEY) return res.status(500).json({ error: "API key not configured on server" });
+
+  const callGemini = async (parts, maxTokens) => {
     const r = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`,
       {
@@ -179,38 +112,129 @@ Extract every row/round as its own entry. Keep instruction text exactly as writt
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
     if (!text) {
       const finishReason = data.candidates?.[0]?.finishReason || "unknown";
-      console.error("[extract-pattern-vision] Gemini returned empty text, finishReason:", finishReason, "candidates:", JSON.stringify(data.candidates?.[0]).substring(0, 300));
+      console.error("[extract-pattern-vision] Gemini empty response, finishReason:", finishReason);
       throw new Error("Gemini returned empty response, finishReason: " + finishReason);
     }
-    const cleaned = text.replace(/^[\s\S]*?```(?:json|JSON)?\s*\n?/i, "").replace(/\n?\s*```[\s\S]*$/, "").trim();
-    // If stripping fences removed everything or didn't find fences, fall back to raw trim
-    const toParse = cleaned.startsWith("{") || cleaned.startsWith("[") ? cleaned : text.replace(/```json/gi, "").replace(/```/g, "").trim();
-    try { return JSON.parse(toParse); } catch (parseErr) {
-      console.error("[extract-pattern-vision] JSON parse failed, text starts:", toParse.substring(0, 300), "ends:", toParse.substring(toParse.length - 200));
+    try { return parseGeminiJson(text); } catch (parseErr) {
+      console.error("[extract-pattern-vision] JSON parse failed, text starts:", text.substring(0, 300));
       throw new Error("JSON parse failed: " + parseErr.message);
     }
   };
 
-  // Attempt 1: full structured prompt
-  console.log("[extract-pattern-vision] Attempt 1: full prompt, images:", fileUris.length, "fileName:", fileName);
-  try {
-    const result = await callGemini(fullPrompt, 65536);
-    console.log("[extract-pattern-vision] Success:", result.title, "—", (result.components || []).length, "components");
+  const runWithRetry = async (buildParts) => {
+    console.log("[extract-pattern-vision] Attempt 1: full prompt");
+    try {
+      const result = await callGemini(buildParts(fullPrompt), 65536);
+      console.log("[extract-pattern-vision] Success:", result.title, "—", (result.components || []).length, "components");
+      return result;
+    } catch (e) {
+      console.error("[extract-pattern-vision] Attempt 1 failed:", e.message);
+    }
+    console.log("[extract-pattern-vision] Attempt 2: simplified prompt");
+    try {
+      const result = await callGemini(buildParts(simplePrompt), 32768);
+      console.log("[extract-pattern-vision] Simplified success:", result.title);
+      return result;
+    } catch (e2) {
+      console.error("[extract-pattern-vision] Attempt 2 also failed:", e2.message);
+      throw new Error("Pattern extraction failed after 2 attempts");
+    }
+  };
+
+  // ── PDF URL PATH: fetch PDF from storage, send to Gemini as native PDF ──
+  if (pdfUrl) {
+    const pdfFileName = filename || fileName || "pattern.pdf";
+    console.log("[extract-pattern-vision] URL path: fetching PDF from", pdfUrl, "filename:", pdfFileName);
+
+    let pdfResponse;
+    try { pdfResponse = await fetch(pdfUrl); } catch (fetchErr) {
+      console.error("[extract-pattern-vision] PDF fetch network error:", fetchErr.message);
+      return res.status(502).json({ error: "PDF fetch failed", fallback: true });
+    }
+    if (!pdfResponse.ok) {
+      console.error("[extract-pattern-vision] PDF fetch HTTP error:", pdfResponse.status);
+      return res.status(502).json({ error: "PDF fetch failed", fallback: true });
+    }
+    const pdfBuffer = await pdfResponse.arrayBuffer();
+    const pdfBase64 = Buffer.from(pdfBuffer).toString("base64");
+    console.log("[extract-pattern-vision] Vision API [URL path]: PDF fetched, size:", pdfBuffer.byteLength, "bytes");
+
+    const result = await runWithRetry((prompt) => [
+      { inline_data: { mime_type: "application/pdf", data: pdfBase64 } },
+      { text: prompt },
+    ]);
     return res.status(200).json(result);
-  } catch (e) {
-    console.error("[extract-pattern-vision] Attempt 1 failed:", e.message);
   }
 
-  // Attempt 2: simplified prompt — flat rows, faster response
-  console.log("[extract-pattern-vision] Attempt 2: simplified prompt");
-  try {
-    const result = await callGemini(simplePrompt, 32768);
-    console.log("[extract-pattern-vision] Simplified success:", result.title);
-    return res.status(200).json(result);
-  } catch (e2) {
-    console.error("[extract-pattern-vision] Attempt 2 also failed:", e2.message);
-    return res.status(500).json({ error: "Pattern extraction failed after 2 attempts" });
+  // ── IMAGES ARRAY PATH: upload each image to Gemini Files API ──
+  if (!images || !Array.isArray(images) || images.length === 0) return res.status(400).json({ error: "images array or pdfUrl required" });
+  console.log("[extract-pattern-vision] Images path, count:", images.length, "pageCount:", pageCount, "fileName:", fileName);
+
+  const fileUris = [];
+  for (let i = 0; i < images.length; i++) {
+    const base64Data = images[i];
+    const raw = base64Data.includes(",") ? base64Data.split(",")[1] : base64Data;
+    const binaryBuffer = Buffer.from(raw, "base64");
+
+    let mimeType = "image/jpeg";
+    if (base64Data.startsWith("data:")) {
+      const match = base64Data.match(/^data:(image\/[^;]+);/);
+      if (match) mimeType = match[1];
+    }
+
+    const boundary = "----GeminiUpload" + Date.now() + i;
+    const metadataPart = JSON.stringify({ file: { mimeType, displayName: fileName || `image-${i + 1}` } });
+
+    const bodyParts = [
+      `--${boundary}\r\n`,
+      `Content-Type: application/json; charset=UTF-8\r\n\r\n`,
+      metadataPart,
+      `\r\n--${boundary}\r\n`,
+      `Content-Type: ${mimeType}\r\n\r\n`,
+    ];
+
+    const textEncoder = new TextEncoder();
+    const prefix = textEncoder.encode(bodyParts.join(""));
+    const suffix = textEncoder.encode(`\r\n--${boundary}--\r\n`);
+
+    const fullBody = new Uint8Array(prefix.length + binaryBuffer.length + suffix.length);
+    fullBody.set(prefix, 0);
+    fullBody.set(new Uint8Array(binaryBuffer), prefix.length);
+    fullBody.set(suffix, prefix.length + binaryBuffer.length);
+
+    console.log("[extract-pattern-vision] Uploading image", i + 1, "of", images.length, "size:", binaryBuffer.length, "bytes", "mime:", mimeType);
+
+    const uploadRes = await fetch(
+      `https://generativelanguage.googleapis.com/upload/v1beta/files?uploadType=multipart&key=${GEMINI_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": `multipart/related; boundary=${boundary}` },
+        body: fullBody,
+      }
+    );
+
+    if (!uploadRes.ok) {
+      const errBody = await uploadRes.text();
+      console.error("[extract-pattern-vision] File upload failed for image", i + 1, ":", uploadRes.status, errBody.substring(0, 500));
+      return res.status(500).json({ error: `Image upload failed for image ${i + 1}: ${uploadRes.status}` });
+    }
+
+    const uploadData = await uploadRes.json();
+    const uri = uploadData.file?.uri;
+    if (!uri) {
+      console.error("[extract-pattern-vision] No file URI returned for image", i + 1, JSON.stringify(uploadData).substring(0, 300));
+      return res.status(500).json({ error: `No file URI returned for image ${i + 1}` });
+    }
+
+    console.log("[extract-pattern-vision] Uploaded image", i + 1, "uri:", uri);
+    fileUris.push({ uri, mimeType });
   }
+
+  const result = await runWithRetry((prompt) => [
+    ...fileUris.map(f => ({ file_data: { mime_type: f.mimeType, file_uri: f.uri } })),
+    { text: prompt },
+  ]);
+  return res.status(200).json(result);
 
   } catch (err) {
     console.error("[extract-pattern-vision] UNHANDLED ERROR:", err.message, err.stack);
