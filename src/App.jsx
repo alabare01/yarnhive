@@ -438,7 +438,7 @@ const PaywallGate = ({onClose,onUpgrade,patternCount}) => (
 
 
 const SidebarNav = ({view,onNavigate,count,isPro,onAddPattern,onSignOut,onUpgrade,userPatterns=[],allPatterns=[]}) => {
-  const starterC=DEFAULT_STARTERS.length;const addedC=userPatterns.filter(p=>!p.isStarter).length;
+  const starterC=DEFAULT_STARTERS.length;const addedC=userPatterns.filter(p=>!p.isStarter&&p.status!=="deleted"&&p.status!=="parked").length;
   const wipCount=allPatterns.filter(p=>!p.isStarter&&(p.status==="in_progress"||p.started)).filter(p=>pct(p)<100).length;
   const ITEMS=[{key:"collection",label:"My Wovely",sub:starterC+" starter"+(starterC!==1?"s":"")+" · "+addedC+" added",icon:"🧶"},{key:"wip",label:"On the Hook",sub:wipCount>0?wipCount+" active":"Currently making",icon:"🪡"},{key:"browse",label:"Find Patterns",sub:"Find & browse patterns",icon:"🌐"},{key:"stash",label:"Stash & Notions",sub:"Manage your yarn",icon:"🎀"},{key:"calculator",label:"The Workbench",sub:"Gauge, yardage & more",icon:"🧮"},{key:"stitch-check",label:"Stitch Check",sub:isPro?"Validate any pattern":"Pro feature",icon:"🛡️",proOnly:true},{key:"snap",label:"Snap & Stitch",sub:"Photo to pattern",icon:"✨",disabled:true},{key:"shopping",label:"Supply Run",sub:"Auto-generated",icon:"🛒"}];
   return (
@@ -1736,7 +1736,7 @@ export default function Wovely() {
     if(!user||!session) return;
     (async()=>{
       try{
-        const res=await fetch(`${SUPABASE_URL}/rest/v1/patterns?user_id=eq.${user.id}&order=created_at.desc`,{
+        const res=await fetch(`${SUPABASE_URL}/rest/v1/patterns?user_id=eq.${user.id}&status=neq.deleted&order=created_at.desc`,{
           headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${session.access_token}`},
         });
         if(res.ok){
