@@ -776,7 +776,7 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade}) => {
   const handleFile=async(e)=>{
     const f=e.target.files?.[0];if(!f)return;
     // Size check before anything
-    if(f.size>10*1024*1024){setStage("error");setErrorMsg("Pattern file is too large for automatic reading (max 10MB). Try a smaller file.");return;}
+    if(f.size>50*1024*1024){setStage("error");setErrorMsg("Pattern file is too large (max 50MB). Try a smaller file.");return;}
     try{
       const fileMime=f.type||"application/pdf";
       const isPDF=fileMime==="application/pdf"||f.name.toLowerCase().endsWith(".pdf");
