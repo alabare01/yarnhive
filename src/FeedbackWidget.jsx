@@ -166,13 +166,14 @@ export default function FeedbackWidget({ user }) {
       aria-label="Send feedback"
       style={{
         background: "none", border: "none", cursor: "pointer", padding: 4,
-        display: "flex", alignItems: "center", justifyContent: "center",
+        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
         animation: "fbHeartPulse 2.5s ease-in-out infinite", flexShrink: 0,
       }}
     >
       <svg width="28" height="26" viewBox="0 0 24 24" fill={C.lavender} xmlns="http://www.w3.org/2000/svg">
         <path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z"/>
       </svg>
+      <div style={{ fontSize: 9, fontWeight: 600, color: "#9B7EC8", letterSpacing: 0.5, textTransform: "uppercase", marginTop: 2, fontFamily: "Inter, sans-serif", lineHeight: 1 }}>Talk to Us</div>
     </button>
   );
 
