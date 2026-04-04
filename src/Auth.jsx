@@ -367,6 +367,9 @@ const Auth = ({onEnter,onEnterAsNew}) => {
 
   return (
     <div style={{minHeight:"100vh",fontFamily:T.sans,position:"relative",overflow:"hidden",background:"#0A0804"}}>
+      <div style={{position:"fixed",top:0,right:0,zIndex:999,width:120,height:120,overflow:"hidden",pointerEvents:"none"}}>
+        <div style={{position:"absolute",top:28,right:-30,width:140,background:"#9B7EC8",color:"white",fontSize:11,fontWeight:700,fontFamily:"Inter, sans-serif",letterSpacing:"0.12em",textAlign:"center",padding:"6px 0",transform:"rotate(45deg)",boxShadow:"0 2px 8px rgba(0,0,0,0.2)"}}>BETA</div>
+      </div>
       <style>{`
         @keyframes sheetUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
         @keyframes modalPop { from{opacity:0;transform:scale(.95) translateY(8px)} to{opacity:1;transform:scale(1) translateY(0)} }
