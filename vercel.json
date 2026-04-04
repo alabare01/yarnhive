@@ -6,7 +6,8 @@
     "api/stripe-webhook.js": { "maxDuration": 30 },
     "api/stitch-vision.js": { "maxDuration": 30 },
     "api/send-feedback.js": { "maxDuration": 10 },
-    "api/notify-signup.js": { "maxDuration": 10 }
+    "api/notify-signup.js": { "maxDuration": 10 },
+    "api/test-logger.js": { "maxDuration": 10 }
   },
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
