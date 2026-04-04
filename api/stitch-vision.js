@@ -19,6 +19,11 @@ const PROMPT = `You are an expert crochet stitch identifier with deep knowledge 
 
 Analyze this image and identify the specific crochet stitch or stitch pattern shown. Focus exclusively on the stitch texture and structure — ignore yarn color, yarn weight, and the overall shape of the finished object.
 
+IMPORTANT — Stitches vs Construction Techniques:
+A STITCH is a specific technique for forming individual loops — examples: Single Crochet, Double Crochet, Bobble Stitch, Moss Stitch, Shell Stitch. A CONSTRUCTION TECHNIQUE is how a project is assembled — examples: Amigurumi, Granny Square, In the Round, Tapestry Crochet, Tunisian. These are NOT stitches.
+If the image shows a construction technique rather than a specific stitch pattern, identify the DOMINANT STITCH used within that construction. For example, if you see Amigurumi, identify the stitch being used (likely Single Crochet or Magic Ring Single Crochet). If you see a Granny Square, identify the stitch pattern within it.
+Never return a construction technique, project type, or color pattern as the stitch_name. stitch_name must always be a specific crochet stitch.
+
 Rules:
 - Be specific. "Single crochet" is better than "basic stitch." "Moss stitch" is better than "textured stitch."
 - If you can see a clear repeating stitch pattern, name it precisely.
