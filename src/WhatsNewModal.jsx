@@ -63,8 +63,8 @@ export default function WhatsNewModal() {
       {/* Sheet / Card */}
       <div style={isMobile ? {
         position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 301,
-        background: "#fff", borderRadius: "20px 20px 0 0",
-        maxHeight: "85vh", overflowY: "auto",
+        background: "#fff", borderRadius: "24px 24px 0 0",
+        maxHeight: "70vh", overflowY: "auto",
         transform: entered ? "translateY(0)" : "translateY(100%)",
         transition: "transform 0.3s ease-out",
       } : {
@@ -80,7 +80,7 @@ export default function WhatsNewModal() {
         <div style={{
           background: "linear-gradient(135deg, #9B7EC8, #7B5EA8)",
           padding: 24, display: "flex", flexDirection: "column", alignItems: "center", gap: 12,
-          borderRadius: isMobile ? "20px 20px 0 0" : "16px 16px 0 0",
+          borderRadius: isMobile ? "24px 24px 0 0" : "16px 16px 0 0",
         }}>
           <img src="/bev_neutral.png" alt="Bev" style={{ width: 64, height: 64, borderRadius: "50%", border: "3px solid white", objectFit: "cover" }} />
           <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 22, fontWeight: 700, color: "#fff", textAlign: "center" }}>What's New in Wovely 🎉</div>
