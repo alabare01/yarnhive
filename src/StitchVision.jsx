@@ -88,7 +88,7 @@ const StitchVision = ({ isPro, onUpgrade }) => {
 
       // Upload to Supabase Storage
       const session = getSession();
-      const user = supabaseAuth.getUser();
+      const { data: { user } } = await supabaseAuth.getUser();
       console.log("[StitchVision] Step 2: Uploading — user:", user?.id, "session:", !!session?.access_token);
       if (!session?.access_token || !user) throw new Error("Not authenticated");
       const filePath = `stitch-vision/${user.id}/${Date.now()}.jpg`;
@@ -122,7 +122,7 @@ const StitchVision = ({ isPro, onUpgrade }) => {
       // Save result to Supabase (best-effort, don't block)
       try {
         const session2 = getSession();
-        const user2 = supabaseAuth.getUser();
+        const { data: { user: user2 } } = await supabaseAuth.getUser();
         console.log("[stitch-vision] Saving result, user:", user2?.id, "session:", !!session2);
         const saveRes = await fetch(`${SUPABASE_URL}/rest/v1/stitch_results`, {
           method: "POST",
