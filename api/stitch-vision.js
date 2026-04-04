@@ -160,10 +160,17 @@ export default async function handler(req, res) {
   console.log("[STITCH-STEP-5] Parsing Gemini response");
   try {
     const data = await geminiRes.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
     const finishReason = data.candidates?.[0]?.finishReason;
-    console.log("[STITCH-STEP-5] Raw text:", text.substring(0, 500));
-    console.log("[STITCH-STEP-5] Finish reason:", finishReason);
+    const parts = data.candidates?.[0]?.content?.parts || [];
+    console.log("[STITCH-STEP-5] Parts count:", parts.length, "finish reason:", finishReason);
+    let text = "";
+    for (const part of parts) {
+      const t = part.text || "";
+      console.log("[STITCH-STEP-5] Part type:", part.thought ? "thinking" : "output", "length:", t.length, "preview:", t.substring(0, 100));
+      if (!part.thought && t.trim().length > 0) { text = t; break; }
+    }
+    if (!text && parts.length > 0) text = parts[parts.length - 1]?.text || "";
+    console.log("[STITCH-STEP-5] Selected text:", text.substring(0, 500));
 
     if (!text) {
       console.error("[STITCH-STEP-5] Empty text — finishReason:", finishReason, "full response:", JSON.stringify(data).substring(0, 500));
