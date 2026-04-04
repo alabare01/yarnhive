@@ -44,16 +44,18 @@ export default async function handler(req, res) {
     if (!GEMINI_KEY) return res.status(500).json({ error: "API key not configured" });
 
     // Step 1: Fetch image
-    console.log("[stitch-vision] Fetching image from:", imageUrl);
+    console.log("[stitch-vision] Fetching image URL:", imageUrl);
     let imgRes;
     try { imgRes = await fetch(imageUrl); } catch (fetchErr) {
-      console.error("[stitch-vision] Image fetch network error:", fetchErr.message);
-      return res.status(502).json({ error: "Could not fetch image", detail: fetchErr.message });
+      console.error("[stitch-vision] Image fetch network error — full error:", fetchErr);
+      return res.status(200).json({ error: true, message: "Could not load the uploaded image. Please try again." });
     }
-    console.log("[stitch-vision] Image fetch status:", imgRes.status);
+    console.log("[stitch-vision] Image fetch status:", imgRes.status, "content-type:", imgRes.headers.get("content-type"), "content-length:", imgRes.headers.get("content-length"));
     if (!imgRes.ok) {
-      console.error("[stitch-vision] Image fetch failed:", imgRes.status);
-      return res.status(502).json({ error: "Could not fetch image: " + imgRes.status });
+      let respBody = "";
+      try { respBody = await imgRes.text(); } catch {}
+      console.error("[stitch-vision] Image fetch failed — status:", imgRes.status, "body:", respBody.substring(0, 500));
+      return res.status(200).json({ error: true, message: "Could not load the uploaded image. Please try again." });
     }
 
     // Step 2: Get raw buffer and detect MIME type
@@ -66,7 +68,7 @@ export default async function handler(req, res) {
     let fileName = "unknown";
     try { fileName = new URL(imageUrl).pathname.split("/").pop() || "unknown"; } catch {}
 
-    console.log("[stitch-vision] Image fetched — file:", fileName, "size:", originalSize, "bytes, mime:", originalMime);
+    console.log("[stitch-vision] Image fetched — file:", fileName, "size:", originalSize, "bytes, mime:", originalMime, "buffer valid:", Buffer.isBuffer(imgBuffer));
 
     // Step 3: Normalize MIME type — convert HEIC and other non-standard formats to JPEG
     if (NEEDS_CONVERSION.has(mimeType) || !mimeType.startsWith("image/")) {
