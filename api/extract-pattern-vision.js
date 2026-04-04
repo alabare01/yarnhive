@@ -85,6 +85,10 @@ export default async function handler(req, res) {
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
+  const _url = process.env.VITE_SUPABASE_URL;
+  const _key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const _t0 = Date.now();
+
   try {
 
   const { images, pageCount, fileName, pdfUrl, filename } = req.body || {};
@@ -163,6 +167,13 @@ export default async function handler(req, res) {
       { inline_data: { mime_type: "application/pdf", data: pdfBase64 } },
       { text: prompt },
     ]);
+    if (_url && _key) {
+      fetch(`${_url}/rest/v1/vercel_logs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': _key, 'Authorization': `Bearer ${_key}`, 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ timestamp: new Date().toISOString(), level: 'info', message: `POST /api/extract-pattern-vision → 200 pdf-url (${Date.now() - _t0}ms)`, source: 'serverless', request_path: '/api/extract-pattern-vision', request_method: 'POST', status_code: 200, project_id: 'wovely' })
+      }).catch(() => {});
+    }
     return res.status(200).json(result);
   }
 
@@ -234,10 +245,24 @@ export default async function handler(req, res) {
     ...fileUris.map(f => ({ file_data: { mime_type: f.mimeType, file_uri: f.uri } })),
     { text: prompt },
   ]);
+  if (_url && _key) {
+    fetch(`${_url}/rest/v1/vercel_logs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': _key, 'Authorization': `Bearer ${_key}`, 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ timestamp: new Date().toISOString(), level: 'info', message: `POST /api/extract-pattern-vision → 200 images (${Date.now() - _t0}ms)`, source: 'serverless', request_path: '/api/extract-pattern-vision', request_method: 'POST', status_code: 200, project_id: 'wovely' })
+    }).catch(() => {});
+  }
   return res.status(200).json(result);
 
   } catch (err) {
     console.error("[extract-pattern-vision] UNHANDLED ERROR:", err.message, err.stack);
+    if (_url && _key) {
+      fetch(`${_url}/rest/v1/vercel_logs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': _key, 'Authorization': `Bearer ${_key}`, 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ timestamp: new Date().toISOString(), level: 'error', message: `[extract-pattern-vision] error: ${err.message} (${Date.now() - _t0}ms)`, source: 'serverless', request_path: '/api/extract-pattern-vision', request_method: 'POST', status_code: 500, project_id: 'wovely' })
+      }).catch(() => {});
+    }
     return res.status(500).json({ error: "Internal server error", message: err.message });
   }
 }

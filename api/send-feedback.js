@@ -60,6 +60,10 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
+  const _url = process.env.VITE_SUPABASE_URL;
+  const _key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const _t0 = Date.now();
+
   // Env var checks
   if (!process.env.VITE_SUPABASE_URL) {
     console.error('[send-feedback] Missing VITE_SUPABASE_URL');
@@ -149,9 +153,23 @@ export default async function handler(req, res) {
       // Don't fail the request — feedback was already saved
     }
 
+    if (_url && _key) {
+      fetch(`${_url}/rest/v1/vercel_logs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': _key, 'Authorization': `Bearer ${_key}`, 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ timestamp: new Date().toISOString(), level: 'info', message: `POST /api/send-feedback → 200 (${Date.now() - _t0}ms)`, source: 'serverless', request_path: '/api/send-feedback', request_method: 'POST', status_code: 200, project_id: 'wovely' })
+      }).catch(() => {});
+    }
     return res.status(200).json({ success: true });
   } catch (err) {
     console.error('[send-feedback] Unexpected error:', err);
+    if (_url && _key) {
+      fetch(`${_url}/rest/v1/vercel_logs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': _key, 'Authorization': `Bearer ${_key}`, 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ timestamp: new Date().toISOString(), level: 'error', message: `[send-feedback] error: ${err.message} (${Date.now() - _t0}ms)`, source: 'serverless', request_path: '/api/send-feedback', request_method: 'POST', status_code: 500, project_id: 'wovely' })
+      }).catch(() => {});
+    }
     return res.status(500).json({ error: 'Internal server error' });
   }
 }

@@ -9,6 +9,10 @@ export default async function handler(req, res) {
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
+  const _url = process.env.VITE_SUPABASE_URL;
+  const _key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const _t0 = Date.now();
+
   const { url } = req.body || {};
   if (!url) return res.status(400).json({ error: "URL required" });
 
@@ -158,10 +162,24 @@ ${text}`;
       }));
     }
 
+    if (_url && _key) {
+      fetch(`${_url}/rest/v1/vercel_logs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': _key, 'Authorization': `Bearer ${_key}`, 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ timestamp: new Date().toISOString(), level: 'info', message: `POST /api/fetch-pattern → 200 (${Date.now() - _t0}ms)`, source: 'serverless', request_path: '/api/fetch-pattern', request_method: 'POST', status_code: 200, project_id: 'wovely' })
+      }).catch(() => {});
+    }
     return res.status(200).json({ ...parsed, rows, thumbnail_url });
 
   } catch (err) {
     console.error("[fetch-pattern]", err.message);
+    if (_url && _key) {
+      fetch(`${_url}/rest/v1/vercel_logs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': _key, 'Authorization': `Bearer ${_key}`, 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ timestamp: new Date().toISOString(), level: 'error', message: `[fetch-pattern] error: ${err.message} (${Date.now() - _t0}ms)`, source: 'serverless', request_path: '/api/fetch-pattern', request_method: 'POST', status_code: 500, project_id: 'wovely' })
+      }).catch(() => {});
+    }
     return res.status(500).json({ error: err.message || "Failed to extract pattern" });
   }
 }
