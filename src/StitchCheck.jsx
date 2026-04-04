@@ -191,7 +191,7 @@ const StitchCheck = () => {
 
   return (
     <div style={{ padding: isDesktop ? "0 0 80px" : "0 18px 80px" }}>
-      <div style={{ fontFamily: T.serif, fontSize: 22, color: T.ink, marginBottom: 4, fontWeight: 700 }}>Stitch Check</div>
+      <div style={{ fontFamily: T.serif, fontSize: 22, color: T.ink, marginBottom: 4, fontWeight: 700 }}>Bev's Notes</div>
       <div style={{ fontSize: 13, color: T.ink3, marginBottom: 24, lineHeight: 1.6 }}>Before you pick up your hook \u2014 let Wovely check the math.</div>
 
       {error && (

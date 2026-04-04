@@ -22,7 +22,7 @@ const StitchResultPage = () => {
         const rows = await res.json();
         if (!rows.length) throw new Error("Not found");
         setData(rows[0]);
-        document.title = `${rows[0].result?.stitch_name || "Stitch"} — Wovely Stitch Vision`;
+        document.title = `${rows[0].result?.stitch_name || "Stitch"} — Wovely Stitch-O-Vision`;
       } catch (e) { setError(e.message); }
       setLoading(false);
     })();
@@ -51,7 +51,7 @@ const StitchResultPage = () => {
           <img src="/bev_neutral.png" alt="Bev" style={{ width: 28, height: 28, objectFit: "contain" }} />
           <span style={{ fontFamily: "'Playfair Display',serif", fontSize: 18, fontWeight: 700, color: "#2D3A7C" }}>Wovely</span>
         </div>
-        <span style={{ fontSize: 12, color: "#9B7EC8", fontWeight: 600, letterSpacing: ".05em", textTransform: "uppercase" }}>Stitch Vision</span>
+        <span style={{ fontSize: 12, color: "#9B7EC8", fontWeight: 600, letterSpacing: ".05em", textTransform: "uppercase" }}>Stitch-O-Vision</span>
       </header>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "calc(100vh - 56px)" }}>
         <div style={{ textAlign: "center" }}>
@@ -72,7 +72,7 @@ const StitchResultPage = () => {
           <img src="/bev_neutral.png" alt="Bev" style={{ width: 28, height: 28, objectFit: "contain" }} />
           <span style={{ fontFamily: "'Playfair Display',serif", fontSize: 18, fontWeight: 700, color: "#2D3A7C" }}>Wovely</span>
         </div>
-        <span style={{ fontSize: 12, color: "#9B7EC8", fontWeight: 600, letterSpacing: ".05em", textTransform: "uppercase" }}>Stitch Vision</span>
+        <span style={{ fontSize: 12, color: "#9B7EC8", fontWeight: 600, letterSpacing: ".05em", textTransform: "uppercase" }}>Stitch-O-Vision</span>
       </header>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "calc(100vh - 56px)" }}>
         <div style={{ textAlign: "center", padding: 20 }}>
@@ -97,7 +97,7 @@ const StitchResultPage = () => {
           <img src="/bev_neutral.png" alt="Bev" style={{ width: 28, height: 28, objectFit: "contain" }} />
           <span style={{ fontFamily: "'Playfair Display',serif", fontSize: 18, fontWeight: 700, color: "#2D3A7C" }}>Wovely</span>
         </div>
-        <span style={{ fontSize: 12, color: "#9B7EC8", fontWeight: 600, letterSpacing: ".05em", textTransform: "uppercase" }}>Stitch Vision</span>
+        <span style={{ fontSize: 12, color: "#9B7EC8", fontWeight: 600, letterSpacing: ".05em", textTransform: "uppercase" }}>Stitch-O-Vision</span>
       </header>
 
       <div style={{ maxWidth: 560, margin: "0 auto", padding: "32px 16px 120px" }}>
