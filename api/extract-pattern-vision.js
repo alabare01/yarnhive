@@ -1,6 +1,8 @@
 // api/extract-pattern-vision.js
 // Vercel serverless function — extracts crochet pattern from images or PDF URL via Gemini
 
+import { withLogging } from './utils/logger.js';
+
 export const config = { maxDuration: 300, api: { bodyParser: { sizeLimit: "10mb" } } };
 
 const fullPrompt = `You are a crochet pattern extraction specialist. You will analyze this pattern using a strict 4-step process. Return ONLY valid JSON with no markdown, no backticks, no explanation.
@@ -77,7 +79,7 @@ const parseGeminiJson = (text) => {
   return JSON.parse(toParse);
 };
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -241,3 +243,5 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "Internal server error", message: err.message });
   }
 }
+
+export default withLogging(handler);

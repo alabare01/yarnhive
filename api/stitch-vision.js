@@ -1,6 +1,8 @@
 // api/stitch-vision.js
 // Vercel serverless function — identifies crochet stitch from a photo via Gemini
 
+import { withLogging, writeLog } from './utils/logger.js';
+
 export const config = { maxDuration: 30, api: { bodyParser: { sizeLimit: "10mb" } } };
 
 import sharp from "sharp";
@@ -44,7 +46,7 @@ const NEEDS_CONVERSION = new Set([
   "image/avif", "image/tiff", "image/bmp", "image/x-ms-bmp",
 ]);
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -230,3 +232,5 @@ export default async function handler(req, res) {
     return res.status(200).json({ error: true, message: "Could not interpret the stitch analysis. Please try a clearer photo." });
   }
 }
+
+export default withLogging(handler);

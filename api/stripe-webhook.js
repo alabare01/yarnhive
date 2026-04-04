@@ -6,6 +6,8 @@
 //   SUPABASE_SERVICE_ROLE_KEY — from Supabase dashboard > Settings > API (bypasses RLS)
 //   VITE_SUPABASE_URL — Supabase project URL
 
+import { withLogging } from './utils/logger.js';
+
 export const config = { api: { bodyParser: false } };
 
 import Stripe from 'stripe';
@@ -26,7 +28,7 @@ function getRawBody(req) {
   });
 }
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
   const sig = req.headers['stripe-signature'];
@@ -80,3 +82,5 @@ export default async function handler(req, res) {
 
   res.json({ received: true });
 }
+
+export default withLogging(handler);

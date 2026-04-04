@@ -1,7 +1,9 @@
 // api/fetch-pattern.js
 // Vercel serverless function — fetches a URL server-side and extracts pattern via Gemini
 
-export default async function handler(req, res) {
+import { withLogging } from './utils/logger.js';
+
+async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -165,3 +167,5 @@ ${text}`;
     return res.status(500).json({ error: err.message || "Failed to extract pattern" });
   }
 }
+
+export default withLogging(handler);

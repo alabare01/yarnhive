@@ -2,6 +2,7 @@
 // Accepts user feedback, stores in Supabase, sends formatted email via Resend
 // Env vars: SUPABASE_SERVICE_ROLE_KEY, VITE_SUPABASE_URL, RESEND_API_KEY
 
+import { withLogging } from './utils/logger.js';
 import { createClient } from '@supabase/supabase-js';
 
 let _supabase = null;
@@ -53,7 +54,7 @@ function buildEmailBody(data) {
   return lines.join('\n');
 }
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -155,3 +156,5 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Internal server error' });
   }
 }
+
+export default withLogging(handler);
