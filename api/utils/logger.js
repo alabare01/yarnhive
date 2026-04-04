@@ -54,8 +54,8 @@ export function withLogging(handler) {
       await handler(req, res);
       const duration = Date.now() - start;
 
-      // Fire-and-forget after response
-      writeLog({
+      // Await so Vercel doesn't kill the function before the log write completes
+      await writeLog({
         level: capturedStatus >= 400 ? 'error' : 'info',
         message: `${method} ${path} → ${capturedStatus} (${duration}ms)`,
         request_path: path,
@@ -71,7 +71,7 @@ export function withLogging(handler) {
         res.status(500).json({ error: 'Internal server error' });
       }
 
-      writeLog({
+      await writeLog({
         level: 'error',
         message: `UNHANDLED: ${method} ${path} — ${err.message}`,
         request_path: path,
