@@ -1406,6 +1406,21 @@ const MasterDocView = () => {
 // ─── CHANGELOG DATA & PAGE ──────────────────────────────────────────────────
 const CHANGELOG_ENTRIES = [
   {
+    version: "v1.6.0", date: "April 4, 2026", major: false,
+    changes: {
+      "New": [
+        "🌀 Stitch Vision is now Stitch-O-Vision",
+        "💜 Bev's Notes replaces Stitch Check in nav",
+        "📊 Structured API logging to Supabase vercel_logs table",
+        "🚨 Client-side error reporting — captures unhandled JS errors and promise rejections",
+        "🧠 Stitch-O-Vision prompt now distinguishes stitches from construction techniques",
+      ],
+      "Fixed": [
+        "📱 FeedbackWidget bottom sheet no longer hidden behind FAB on iOS",
+      ],
+    },
+  },
+  {
     version: "v1.5.x", date: "March 24, 2026", major: true,
     changes: {
       "New": [
