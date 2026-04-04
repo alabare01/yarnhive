@@ -1,7 +1,9 @@
 // api/stitch-vision.js
 // Vercel serverless function — identifies crochet stitch from a photo via Gemini
 
-export const config = { maxDuration: 30, api: { bodyParser: { sizeLimit: "1mb" } } };
+export const config = { maxDuration: 30, api: { bodyParser: { sizeLimit: "10mb" } } };
+
+import sharp from "sharp";
 
 const PROMPT = `You are an expert crochet stitch identifier.
 Analyze this image and identify the crochet stitch or stitch pattern shown.
@@ -19,6 +21,12 @@ Return ONLY a JSON object with no markdown, no backticks:
 }
 
 If you cannot identify the specific stitch, give your best guess and set confidence to "low". If the image doesn't show a crochet stitch at all, set not_crochet to true.`;
+
+// MIME types that need conversion to JPEG for Gemini compatibility
+const NEEDS_CONVERSION = new Set([
+  "image/heic", "image/heif", "image/heic-sequence", "image/heif-sequence",
+  "image/avif", "image/tiff", "image/bmp", "image/x-ms-bmp",
+]);
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -48,50 +56,88 @@ export default async function handler(req, res) {
       return res.status(502).json({ error: "Could not fetch image: " + imgRes.status });
     }
 
-    // Step 2: Convert to base64
-    let imgBase64, mimeType;
-    try {
-      const imgArrayBuffer = await imgRes.arrayBuffer();
-      console.log("[stitch-vision] Image buffer size:", imgArrayBuffer.byteLength);
-      const imgUint8 = new Uint8Array(imgArrayBuffer);
-      imgBase64 = Buffer.from(imgUint8).toString("base64");
-      mimeType = imgRes.headers.get("content-type") || "image/jpeg";
-      console.log("[stitch-vision] Base64 length:", imgBase64.length, "mime:", mimeType);
-    } catch (bufErr) {
-      console.error("[stitch-vision] Buffer conversion error:", bufErr.message);
-      return res.status(500).json({ error: "Image processing failed", detail: bufErr.message });
-    }
+    // Step 2: Get raw buffer and detect MIME type
+    let imgBuffer = Buffer.from(await imgRes.arrayBuffer());
+    let mimeType = (imgRes.headers.get("content-type") || "image/jpeg").split(";")[0].trim().toLowerCase();
+    const originalSize = imgBuffer.byteLength;
+    const originalMime = mimeType;
 
-    if (imgBase64.length > 4000000) {
-      console.error("[stitch-vision] Image too large for Gemini:", imgBase64.length, "chars");
-      return res.status(413).json({ error: "Image too large — try a smaller or more compressed photo" });
-    }
+    // Extract filename from URL for logging
+    let fileName = "unknown";
+    try { fileName = new URL(imageUrl).pathname.split("/").pop() || "unknown"; } catch {}
 
-    // Step 3: Call Gemini
-    console.log("[stitch-vision] Base64 ready, length:", imgBase64.length, "calling Gemini...");
-    const r = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [
-            { inline_data: { mime_type: mimeType, data: imgBase64 } },
-            { text: PROMPT },
-          ] }],
-          generationConfig: { temperature: 0.1, maxOutputTokens: 1024 },
-        }),
+    console.log("[stitch-vision] Image fetched — file:", fileName, "size:", originalSize, "bytes, mime:", originalMime);
+
+    // Step 3: Normalize MIME type — convert HEIC and other non-standard formats to JPEG
+    if (NEEDS_CONVERSION.has(mimeType) || !mimeType.startsWith("image/")) {
+      console.log("[stitch-vision] Converting", mimeType, "to JPEG");
+      try {
+        imgBuffer = await sharp(imgBuffer).jpeg({ quality: 85 }).toBuffer();
+        mimeType = "image/jpeg";
+        console.log("[stitch-vision] Converted to JPEG, new size:", imgBuffer.byteLength, "bytes");
+      } catch (convErr) {
+        console.error("[stitch-vision] MIME conversion failed:", convErr.message);
+        return res.status(422).json({ error: "Could not process this image format. Try taking a screenshot and uploading that instead." });
       }
-    );
+    }
+
+    // Step 4: Resize if over 4MB — scale to max 1500px on longest side
+    if (imgBuffer.byteLength > 4 * 1024 * 1024) {
+      console.log("[stitch-vision] Image over 4MB (" + imgBuffer.byteLength + " bytes), resizing to max 1500px");
+      try {
+        imgBuffer = await sharp(imgBuffer)
+          .resize({ width: 1500, height: 1500, fit: "inside", withoutEnlargement: true })
+          .jpeg({ quality: 80 })
+          .toBuffer();
+        mimeType = "image/jpeg";
+        console.log("[stitch-vision] Resized to", imgBuffer.byteLength, "bytes");
+      } catch (resizeErr) {
+        console.error("[stitch-vision] Resize failed:", resizeErr.message);
+        return res.status(422).json({ error: "Could not resize image. Try uploading a smaller photo." });
+      }
+    }
+
+    // Step 5: Convert to base64
+    const imgBase64 = imgBuffer.toString("base64");
+    console.log("[stitch-vision] Ready for Gemini — file:", fileName, "size:", imgBuffer.byteLength, "bytes, mime:", mimeType, "base64 length:", imgBase64.length);
+
+    // Step 6: Call Gemini
+    let r;
+    try {
+      r = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [
+              { inline_data: { mime_type: mimeType, data: imgBase64 } },
+              { text: PROMPT },
+            ] }],
+            generationConfig: { temperature: 0.1, maxOutputTokens: 1024 },
+          }),
+        }
+      );
+    } catch (geminiNetErr) {
+      console.error("[stitch-vision] Gemini network error:", geminiNetErr.message);
+      return res.status(502).json({ error: "Could not reach the stitch identification service. Please try again in a moment." });
+    }
+
     console.log("[stitch-vision] Gemini status:", r.status);
 
     if (!r.ok) {
       const errBody = await r.text();
       console.error("[stitch-vision] Gemini error:", r.status, errBody.substring(0, 500));
-      return res.status(500).json({ error: "Gemini error: " + r.status, detail: errBody.substring(0, 200) });
+      if (r.status === 429) {
+        return res.status(429).json({ error: "Our stitch identifier is busy right now. Please wait a moment and try again." });
+      }
+      if (r.status >= 500) {
+        return res.status(502).json({ error: "The stitch identification service is temporarily unavailable. Please try again." });
+      }
+      return res.status(500).json({ error: "Stitch identification failed. Please try again with a different photo." });
     }
 
-    // Step 4: Parse response
+    // Step 7: Parse response
     const data = await r.json();
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
     const finishReason = data.candidates?.[0]?.finishReason;
@@ -99,7 +145,7 @@ export default async function handler(req, res) {
     console.log("[stitch-vision] Finish reason:", finishReason);
 
     if (!text) {
-      return res.status(500).json({ error: "Empty response from Gemini", message: `No text in response. finishReason: ${finishReason}`, raw: JSON.stringify(data).substring(0, 300) });
+      return res.status(500).json({ error: "The stitch identifier couldn't analyze this image. Try a clearer, well-lit photo of the stitch.", detail: `finishReason: ${finishReason}` });
     }
 
     let toParse = text.replace(/^[\s\S]*?```(?:json|JSON)?\s*/i, "").replace(/\s*```[\s\S]*$/i, "").trim();
@@ -110,13 +156,14 @@ export default async function handler(req, res) {
 
     let result;
     try { result = JSON.parse(toParse); } catch (parseErr) {
-      return res.status(500).json({ error: "Failed to parse Gemini response", message: parseErr.message, raw_gemini_text: text.substring(0, 500) });
+      console.error("[stitch-vision] JSON parse failed:", parseErr.message, "raw:", toParse.substring(0, 300));
+      return res.status(500).json({ error: "Could not interpret the stitch analysis. Please try again with a different photo." });
     }
 
     console.log("[stitch-vision] Identified:", result.stitch_name, "confidence:", result.confidence);
     return res.status(200).json(result);
   } catch (err) {
     console.error("[stitch-vision] FATAL:", err.name, err.message, err.stack?.substring(0, 500));
-    return res.status(500).json({ error: "Fatal error", name: err.name, message: err.message, stack: err.stack?.substring(0, 300) });
+    return res.status(500).json({ error: "Something went wrong analyzing your photo. Please try again." });
   }
 }
