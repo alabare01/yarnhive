@@ -39,6 +39,16 @@ body::after {
   pointer-events: none;
 }
 
+@media (max-width: 768px) {
+  body::after {
+    background: linear-gradient(
+      160deg,
+      rgba(250,248,245,0.72) 0%,
+      rgba(245,240,250,0.68) 100%
+    );
+  }
+}
+
 #root {
   position: relative;
   z-index: 1;

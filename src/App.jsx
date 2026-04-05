@@ -514,20 +514,20 @@ const NavPanel = ({open,onClose,view,onNavigate,count,isPro,onSignOut,onUpgrade}
           );})}
           <div style={{position:"sticky",bottom:0,height:32,background:"linear-gradient(to top, rgba(120,80,180,0.4) 0%, transparent 100%)",pointerEvents:"none",marginTop:-32,flexShrink:0}} />
         </div>
-        <div style={{flexShrink:0,borderTop:"1px solid rgba(255,255,255,0.1)",paddingTop:12,padding:"12px 0 8px"}}>
+        <div style={{flexShrink:0,borderTop:"1px solid rgba(255,255,255,0.1)",padding:"8px 0 4px"}}>
           {(()=>{const active=view==="profile";return(
-            <div className="nav-item" onClick={()=>go("profile")} style={{display:"flex",alignItems:"center",gap:13,padding:"13px 20px",background:active?"rgba(255,255,255,0.25)":"transparent",cursor:"pointer",transition:"background .12s"}}>
-              <span style={{fontSize:20,width:26,textAlign:"center"}}>👤</span>
-              <div style={{flex:1}}><div style={{fontSize:14,fontWeight:600,color:"#fff"}}>Profile & Settings</div><div style={{fontSize:11,color:"rgba(255,255,255,0.65)",marginTop:1}}>Your account</div></div>
-              {active&&<div style={{width:6,height:6,borderRadius:99,background:"#fff"}}/>}
+            <div className="nav-item" onClick={()=>go("profile")} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 16px",background:active?"rgba(255,255,255,0.25)":"transparent",cursor:"pointer",transition:"background .12s"}}>
+              <span style={{fontSize:16,width:22,textAlign:"center"}}>👤</span>
+              <div style={{flex:1}}><div style={{fontSize:13,fontWeight:600,color:"#fff"}}>Profile & Settings</div><div style={{fontSize:10,color:"rgba(255,255,255,0.65)",marginTop:1}}>Your account</div></div>
+              {active&&<div style={{width:5,height:5,borderRadius:99,background:"#fff"}}/>}
             </div>
           );})()}
         </div>
-        <div style={{padding:"0 18px 36px"}}>
-          {isPro?<div style={{background:"rgba(255,255,255,.15)",borderRadius:12,padding:"12px 14px",display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:18}}>✨</span><div><div style={{fontSize:12,fontWeight:700,color:"#fff"}}>Wovely Pro</div><div style={{fontSize:11,color:"rgba(255,255,255,.7)"}}>All features active</div></div></div>
-          :<div style={{background:"rgba(255,255,255,.15)",borderRadius:12,padding:"14px 16px"}}><div style={{fontSize:12,fontWeight:700,color:"#fff",marginBottom:3}}>✨ Upgrade to Pro</div><div style={{fontSize:11,color:"rgba(255,255,255,.75)",lineHeight:1.5,marginBottom:10}}>Unlimited patterns, all imports, Snap & Stitch.</div><div onClick={onUpgrade} style={{background:"rgba(255,255,255,.2)",borderRadius:9999,padding:"8px",textAlign:"center",fontSize:12,fontWeight:700,color:"#fff",cursor:"pointer"}}>$8.99/mo</div></div>}
-          {onSignOut&&<button onClick={onSignOut} style={{width:"100%",background:"rgba(255,255,255,.15)",border:"none",borderRadius:9999,padding:"8px",fontSize:12,color:"#fff",cursor:"pointer",marginTop:10,fontWeight:500}}>Sign out</button>}
-          <div style={{textAlign:"center",marginTop:12,fontSize:11}}>
+        <div style={{padding:"0 14px 20px",flexShrink:0}}>
+          {isPro?<div style={{background:"rgba(255,255,255,.15)",borderRadius:10,padding:"8px 12px",marginTop:6,marginBottom:6,display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:14}}>✨</span><div><div style={{fontSize:11,fontWeight:700,color:"#fff"}}>Wovely Pro</div><div style={{fontSize:10,color:"rgba(255,255,255,.7)"}}>All features active</div></div></div>
+          :<div style={{background:"rgba(255,255,255,.15)",borderRadius:10,padding:"10px 12px",marginTop:6,marginBottom:6}}><div style={{fontSize:11,fontWeight:700,color:"#fff",marginBottom:2}}>✨ Upgrade to Pro</div><div style={{fontSize:10,color:"rgba(255,255,255,.75)",lineHeight:1.5,marginBottom:8}}>Unlimited patterns, all imports, Snap & Stitch.</div><div onClick={onUpgrade} style={{background:"rgba(255,255,255,.2)",borderRadius:9999,padding:"6px",textAlign:"center",fontSize:11,fontWeight:700,color:"#fff",cursor:"pointer"}}>$8.99/mo</div></div>}
+          {onSignOut&&<button onClick={onSignOut} style={{width:"100%",background:"rgba(255,255,255,.15)",border:"none",borderRadius:9999,padding:"6px 16px",fontSize:11,color:"#fff",cursor:"pointer",marginTop:6,fontWeight:500}}>Sign out</button>}
+          <div style={{textAlign:"center",marginTop:4,fontSize:10,opacity:0.5}}>
             <span onClick={()=>{dismiss();onNavigate("privacy");}} style={{color:"rgba(255,255,255,.5)",cursor:"pointer"}}>Privacy</span>
             <span style={{margin:"0 6px",color:"rgba(255,255,255,.3)"}}>|</span>
             <span onClick={()=>{dismiss();onNavigate("terms");}} style={{color:"rgba(255,255,255,.5)",cursor:"pointer"}}>Terms</span>
