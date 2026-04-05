@@ -447,7 +447,7 @@ const SidebarNav = ({view,onNavigate,count,isPro,onAddPattern,onSignOut,onUpgrad
   const wipCount=allPatterns.filter(p=>!p.isStarter&&(p.status==="in_progress"||p.started)).filter(p=>pct(p)<100).length;
   const ITEMS=[{key:"collection",label:"My Wovely",sub:starterC+" starter"+(starterC!==1?"s":"")+" · "+addedC+" added",icon:"🧶"},{key:"wip",label:"On the Hook",sub:wipCount>0?wipCount+" active":"Currently making",icon:"🪡"},{key:"browse",label:"Find Patterns",sub:"Find & browse patterns",icon:"🌐"},{key:"stash",label:"Stash & Notions",sub:"Manage your yarn",icon:"🎀"},{key:"calculator",label:"The Workbench",sub:"Gauge, yardage & more",icon:"🧮"},{key:"stitch-check",label:"Bev's Notes",sub:isPro?"Validate any pattern":"Pro feature",icon:"🛡️",proOnly:true},{key:"stitch-vision",label:"Stitch-O-Vision",sub:"Identify any stitch from a photo",icon:"🌀"},{key:"shopping",label:"Supply Run",sub:"Auto-generated",icon:"🛒"}];
   return (
-    <div style={{width:260,background:"#9B7EC8",height:"100vh",position:"sticky",top:0,display:"flex",flexDirection:"column",flexShrink:0}}>
+    <div style={{width:260,background:"#9B7EC8",height:"100vh",position:"sticky",top:0,display:"flex",flexDirection:"column",flexShrink:0,zIndex:10}}>
       <div onClick={()=>onNavigate("collection")} style={{padding:"20px 16px 16px",cursor:"pointer",transition:"opacity .15s",display:"flex",flexDirection:"column",alignItems:"flex-start",gap:4}} onMouseEnter={e=>e.currentTarget.style.opacity=".85"} onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
           <div style={{width:44,height:44,borderRadius:"50%",background:"rgba(255,255,255,0.95)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:"0 2px 12px rgba(0,0,0,0.15)"}}><img src="/bev_neutral.png" alt="Bev" style={{width:36,height:36,borderRadius:"50%",objectFit:"cover"}}/></div>
@@ -2145,7 +2145,7 @@ export default function Wovely() {
   const TITLE_MAP={collection:null,wip:"On the Hook",browse:"Find Patterns",stash:"Stash & Notions",calculator:"The Workbench",shopping:"Supply Run",profile:"Profile & Settings",privacy:"Privacy Policy",terms:"Terms of Service"};
 
   if(isDesktop) return (
-    <div style={{display:"flex",minHeight:"100vh",width:"100%",background:T.bg,fontFamily:T.sans,position:"relative"}}>
+    <div style={{display:"flex",minHeight:"100vh",width:"100%",background:T.bg,fontFamily:T.sans,position:"relative",zIndex:0}}>
       <CSS/>
       <WhatsNewModal/>
       {showOnboarding&&<OnboardingScreen onComplete={()=>{setShowOnboarding(false);setJustCompletedOnboarding(true);localStorage.removeItem("yh_welcome_dismissed");navigate("/profile");}} onBackToAuth={async()=>{setShowOnboarding(false);await supabaseAuth.signOut();setAuthed(false);setIsPro(false);setUserPatterns([]);}}/>}

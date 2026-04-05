@@ -330,12 +330,12 @@ const CollectionView = ({userPatterns,starterPatterns,cat,setCat,search,setSearc
   return (
     <div style={{ position: "relative", minHeight: "100vh", background: "transparent" }}>
       {/* Fixed background image */}
-      <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 0, backgroundImage: "url('/wovely_landing_bg_v1.png')", backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat", pointerEvents: "none" }} />
+      <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: -2, backgroundImage: "url('/wovely_landing_bg_v1.png')", backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat", pointerEvents: "none" }} />
       {/* Fixed gradient overlay */}
-      <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 1, background: "linear-gradient(160deg, rgba(250,248,245,0.82) 0%, rgba(245,240,250,0.79) 100%)", pointerEvents: "none" }} />
+      <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: -1, background: "linear-gradient(160deg, rgba(250,248,245,0.82) 0%, rgba(245,240,250,0.79) 100%)", pointerEvents: "none" }} />
 
       {/* Content */}
-      <div style={{ position: "relative", zIndex: 2, maxWidth: 1280, margin: "0 auto", padding: isMobile ? "16px 16px 120px" : "24px 32px 80px", boxSizing: "border-box", width: "100%" }}>
+      <div style={{ position: "relative", zIndex: 0, maxWidth: 1280, margin: "0 auto", padding: isMobile ? "16px 16px 120px" : "24px 32px 80px", boxSizing: "border-box", width: "100%" }}>
         {/* Two-column grid on desktop, single column on mobile */}
         <div style={isMobile ? { display: "flex", flexDirection: "column", gap: 16 } : {
           display: "grid", gridTemplateColumns: "1fr 320px", gridTemplateRows: "auto auto 1fr", gap: 24,
