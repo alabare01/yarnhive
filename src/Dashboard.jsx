@@ -336,7 +336,12 @@ const CollectionView = ({userPatterns,starterPatterns,cat,setCat,search,setSearc
 
   return (
     <div style={{
-      background: "linear-gradient(160deg, #FAF8F5 0%, #F5F0FA 100%)",
+      background: "linear-gradient(160deg, rgba(250,248,245,0.92) 0%, rgba(245,240,250,0.90) 100%), url('/wovely_landing_bg_v1.png')",
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      backgroundAttachment: "scroll",
+      backgroundRepeat: "no-repeat",
+      position: "relative",
       minHeight: "100vh",
       padding: isMobile ? "20px 16px 120px" : "28px 32px 80px",
     }}>
