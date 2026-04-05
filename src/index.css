@@ -4,24 +4,9 @@ html {
 
 body {
   height: 100%;
-  background-image: url('/wovely_landing_bg_v1.png');
-  background-size: cover;
-  background-position: center center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-  background-origin: border-box;
+  min-height: 100vh;
   background-color: #FAF8F5;
-}
-
-@media (max-width: 768px) {
-  body {
-    background-size: cover;
-    background-position: center top;
-    background-attachment: scroll;
-  }
-  body::before {
-    background-attachment: scroll;
-  }
+  position: relative;
 }
 
 body::before {
@@ -29,19 +14,33 @@ body::before {
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  background-image: url('/wovely_landing_bg_v1.png');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  z-index: -1;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
   background: linear-gradient(
     160deg,
-    rgba(250,248,245,0.83) 0%,
-    rgba(245,240,250,0.80) 100%
+    rgba(250,248,245,0.82) 0%,
+    rgba(245,240,250,0.79) 100%
   );
+  z-index: -1;
   pointer-events: none;
-  z-index: 0;
 }
 
 #root {
   position: relative;
   z-index: 1;
-  min-height: 100%;
+  min-height: 100vh;
 }
