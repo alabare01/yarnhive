@@ -260,6 +260,7 @@ const OnTheHook = ({ inProgress, openDetail, onAddPattern, pct, catFallbackPhoto
   const hero = inProgress[0];
   const rest = inProgress.slice(1);
   const heroPhoto = hero.cover_image_url || hero.photo || catFallbackPhoto(hero.cat);
+  const hasCoverPhoto = !!(hero.cover_image_url || hero.photo);
   const rows = Array.isArray(hero.rows) ? hero.rows : [];
   const doneRows = rows.filter(r => r && r.done).length;
   const totalRows = rows.length;
@@ -273,16 +274,21 @@ const OnTheHook = ({ inProgress, openDetail, onAddPattern, pct, catFallbackPhoto
         borderRadius: GLASS.radius, boxShadow: GLASS.shadow, border: GLASS.border,
         overflow: "hidden", cursor: "pointer", width: "100%", maxWidth: "100%", boxSizing: "border-box",
       }}>
-        {/* Hero image with fade */}
-        <div style={{ height: isMobile ? 160 : 200, overflow: "hidden", borderRadius: `${GLASS.radius}px ${GLASS.radius}px 0 0`, position: "relative", background: "linear-gradient(135deg, #EDE4F7, #F5F0FA)" }}>
+        {/* Hero image with cinematic fades */}
+        <div style={{ height: isMobile ? 160 : 200, overflow: "hidden", borderRadius: `${GLASS.radius}px ${GLASS.radius}px 0 0`, position: "relative", background: hasCoverPhoto ? "linear-gradient(135deg, #EDE4F7, #F5F0FA)" : "#1a1a2e" }}>
           {heroPhoto
-            ? <Photo src={heroPhoto} alt={hero.title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", position: "relative", zIndex: 0 }} />
+            ? <Photo src={heroPhoto} alt={hero.title} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: hasCoverPhoto ? "center" : "top center", display: "block", position: "relative", zIndex: 0, opacity: hasCoverPhoto ? 1 : 0.85 }} />
             : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <span style={{ fontFamily: PF, fontSize: 40, color: ACCENT, opacity: 0.5 }}>{(hero.title || "?")[0]}</span>
               </div>
           }
-          {/* White fade at bottom */}
-          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "60%", background: "linear-gradient(to top, rgba(255,255,255,0.95) 0%, transparent 100%)", zIndex: 1 }} />
+          {/* Bottom fade */}
+          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "65%", background: "linear-gradient(to top, rgba(255,255,255,0.97) 0%, transparent 100%)", zIndex: 1 }} />
+          {/* Side fades for PDF/non-cover patterns */}
+          {!hasCoverPhoto && <>
+            <div style={{ position: "absolute", top: 0, left: 0, width: "15%", height: "100%", background: "linear-gradient(to right, rgba(255,255,255,0.6) 0%, transparent 100%)", zIndex: 1 }} />
+            <div style={{ position: "absolute", top: 0, right: 0, width: "15%", height: "100%", background: "linear-gradient(to left, rgba(255,255,255,0.6) 0%, transparent 100%)", zIndex: 1 }} />
+          </>}
         </div>
         <div style={{ padding: isMobile ? 16 : "20px 22px 22px", boxSizing: "border-box", width: "100%" }}>
           <div style={{ fontFamily: PF, fontSize: 18, fontWeight: 600, color: NAVY, marginBottom: 6 }}>{hero.title}</div>
@@ -313,6 +319,7 @@ const OnTheHook = ({ inProgress, openDetail, onAddPattern, pct, catFallbackPhoto
               <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 8, WebkitOverflowScrolling: "touch", scrollbarWidth: "none", msOverflowStyle: "none" }}>
                 {rest.map(p => {
                   const photo = p.cover_image_url || p.photo;
+                  const hasCover = !!(p.cover_image_url || p.photo);
                   return (
                     <div key={p.id} onClick={(e) => { e.stopPropagation(); openDetail(p); }} style={{
                       flexShrink: 0, width: 130, borderRadius: 14,
@@ -320,10 +327,16 @@ const OnTheHook = ({ inProgress, openDetail, onAddPattern, pct, catFallbackPhoto
                       background: GLASS_LIGHT.bg, backdropFilter: GLASS_LIGHT.blur, WebkitBackdropFilter: GLASS_LIGHT.blur,
                       cursor: "pointer",
                     }}>
-                      {photo
-                        ? <img src={photo} alt={p.title} style={{ width: "100%", height: 85, objectFit: "cover", display: "block" }} />
-                        : <div style={{ height: 85, background: "linear-gradient(135deg,#EDE4F7,#F5F0FA)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: PF, fontSize: 24, color: ACCENT, opacity: 0.6 }}>{p.title?.charAt(0) || "?"}</div>
-                      }
+                      <div style={{ height: 85, position: "relative", overflow: "hidden", background: hasCover ? undefined : "#1a1a2e" }}>
+                        {photo
+                          ? <img src={photo} alt={p.title} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: hasCover ? "center" : "top center", display: "block", opacity: hasCover ? 1 : 0.85 }} />
+                          : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg,#EDE4F7,#F5F0FA)", fontFamily: PF, fontSize: 24, color: ACCENT, opacity: 0.6 }}>{p.title?.charAt(0) || "?"}</div>
+                        }
+                        {!hasCover && photo && <>
+                          <div style={{ position: "absolute", top: 0, left: 0, width: "20%", height: "100%", background: "linear-gradient(to right, rgba(255,255,255,0.6) 0%, transparent 100%)", zIndex: 1 }} />
+                          <div style={{ position: "absolute", top: 0, right: 0, width: "20%", height: "100%", background: "linear-gradient(to left, rgba(255,255,255,0.6) 0%, transparent 100%)", zIndex: 1 }} />
+                        </>}
+                      </div>
                       <p style={{ fontSize: 11, color: INK, padding: "8px 10px", margin: 0, lineHeight: 1.4, fontFamily: INTER, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{p.title}</p>
                     </div>
                   );
