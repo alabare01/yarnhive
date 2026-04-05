@@ -133,9 +133,9 @@ const InfoTooltip = ({ text, alignRight }) => {
     <span style={{ position: "relative", display: "inline-flex", alignItems: "center", marginLeft: 8 }}>
       <span onMouseEnter={() => setVisible(true)} onMouseLeave={() => setVisible(false)} onTouchStart={e => { e.stopPropagation(); setVisible(v => !v); }} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 16, height: 16, borderRadius: "50%", background: "rgba(155,126,200,0.15)", color: ACCENT, fontSize: 10, fontFamily: INTER, fontWeight: 700, cursor: "default", userSelect: "none", flexShrink: 0, lineHeight: 1 }}>i</span>
       {visible && (
-        <span style={{ position: "absolute", bottom: "calc(100% + 8px)", background: NAVY, color: "#fff", fontFamily: INTER, fontSize: 12, fontWeight: 400, lineHeight: 1.5, padding: "8px 12px", borderRadius: 10, maxWidth: 220, whiteSpace: "normal", boxShadow: "0 4px 16px rgba(0,0,0,0.15)", zIndex: 100, pointerEvents: "none", ...(alignRight ? { right: 0, left: "auto", transform: "none" } : { left: "50%", transform: "translateX(-50%)" }) }}>
+        <span style={{ position: "absolute", bottom: "calc(100% + 8px)", background: "rgba(45,58,124,0.88)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", color: "#fff", fontFamily: INTER, fontSize: 12, fontWeight: 400, lineHeight: 1.5, padding: "8px 12px", borderRadius: 10, maxWidth: 260, minWidth: 180, whiteSpace: "normal", wordBreak: "break-word", boxShadow: "0 4px 16px rgba(0,0,0,0.15)", zIndex: 100, pointerEvents: "none", ...(alignRight ? { right: 0, left: "auto", transform: "none" } : { left: "50%", transform: "translateX(-50%)" }) }}>
           {text}
-          <span style={{ position: "absolute", top: "100%", borderWidth: 5, borderStyle: "solid", borderColor: `${NAVY} transparent transparent transparent`, width: 0, height: 0, ...(alignRight ? { right: 12, left: "auto", transform: "none" } : { left: "50%", transform: "translateX(-50%)" }) }} />
+          <span style={{ position: "absolute", top: "100%", borderWidth: 5, borderStyle: "solid", borderColor: "rgba(45,58,124,0.88) transparent transparent transparent", width: 0, height: 0, ...(alignRight ? { right: 12, left: "auto", transform: "none" } : { left: "50%", transform: "translateX(-50%)" }) }} />
         </span>
       )}
     </span>
