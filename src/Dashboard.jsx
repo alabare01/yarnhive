@@ -120,47 +120,17 @@ const EmptySlotCard = ({onClick,slotIndex=0}) => (
 // Playfair italic accent span helper
 const Em = ({ children }) => <span style={{ fontFamily: PF, fontStyle: "italic", color: ACCENT }}>{children}</span>;
 
-// ─── BEV CORNER (glass card, typing animation, personalized messages) ───────
-const BevCorner = ({ patterns, isMobile, pct }) => {
-  const textRef = useRef(null);
+// ─── BEV CORNER (glass card, JS typewriter, personalized messages) ──────────
+const BevCorner = ({ patterns, isMobile }) => {
   const [msgIndex, setMsgIndex] = useState(0);
-
-  // Inject typing keyframes once
-  useEffect(() => {
-    const styleId = "bev-typing-style";
-    if (document.getElementById(styleId)) return;
-    const style = document.createElement("style");
-    style.id = styleId;
-    style.textContent = `
-      @keyframes bevTyping { from { width: 0 } to { width: 100% } }
-      @keyframes bevBlink { 0%, 100% { border-color: #9B7EC8 } 50% { border-color: transparent } }
-      .bev-typing-text {
-        display: block;
-        overflow: hidden;
-        white-space: nowrap;
-        width: 0;
-        max-width: 100%;
-        box-sizing: border-box;
-        border-right: 2px solid #9B7EC8;
-        animation: bevTyping 2.8s steps(45) forwards, bevBlink 0.7s step-end 2.8s 4;
-        animation-fill-mode: forwards;
-      }
-      .bev-typing-done {
-        white-space: normal !important;
-        width: 100% !important;
-        border-right: none !important;
-        overflow: visible !important;
-      }
-    `;
-    document.head.appendChild(style);
-    return () => { const el = document.getElementById(styleId); if (el) el.remove(); };
-  }, []);
+  const [displayText, setDisplayText] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
 
   // Build personalized messages from pattern data
   const getBevMessages = () => {
     const msgs = [];
-    const inProg = patterns.filter(p => p.status === "in_progress" || p.started);
-    const totalRowsDone = patterns.reduce((sum, p) => {
+    const inProg = patterns.filter(p => !p.isStarter && (p.status === "in_progress" || p.started));
+    const totalRowsDone = patterns.filter(p => !p.isStarter).reduce((sum, p) => {
       if (!Array.isArray(p.rows)) return sum;
       return sum + p.rows.filter(r => r && r.done).length;
     }, 0);
@@ -204,14 +174,20 @@ const BevCorner = ({ patterns, isMobile, pct }) => {
     return () => clearInterval(t);
   }, [bevMessages.length]);
 
-  // After typing animation completes, allow text wrapping
+  // JS typewriter — character by character, wraps naturally
   useEffect(() => {
-    if (textRef.current) textRef.current.classList.remove("bev-typing-done");
-    const t = setTimeout(() => { if (textRef.current) textRef.current.classList.add("bev-typing-done"); }, 5600);
-    return () => clearTimeout(t);
+    const msg = bevMessages[msgIndex % bevMessages.length];
+    if (!msg) return;
+    setDisplayText("");
+    setIsTyping(true);
+    let i = 0;
+    const timer = setInterval(() => {
+      i++;
+      setDisplayText(msg.slice(0, i));
+      if (i >= msg.length) { clearInterval(timer); setIsTyping(false); }
+    }, 42);
+    return () => clearInterval(timer);
   }, [msgIndex]);
-
-  const currentMsg = bevMessages[msgIndex % bevMessages.length];
 
   return (
     <div style={{
@@ -226,8 +202,11 @@ const BevCorner = ({ patterns, isMobile, pct }) => {
         width: isMobile ? 68 : 88, height: "auto", flexShrink: 0,
         filter: "drop-shadow(0 6px 20px rgba(155,126,200,0.4))",
       }} />
-      <div style={{ fontFamily: INTER, fontSize: 15, color: INK, lineHeight: 1.6, flex: 1, minWidth: 0, overflow: "hidden" }}>
-        <span key={currentMsg} ref={textRef} className="bev-typing-text">{currentMsg}</span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ fontFamily: INTER, fontSize: 15, color: INK, lineHeight: 1.6, margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word", minHeight: "1.6em" }}>
+          {displayText}
+          {isTyping && <span style={{ display: "inline-block", width: 2, height: "1em", background: ACCENT, marginLeft: 1, verticalAlign: "middle" }} />}
+        </p>
       </div>
     </div>
   );
@@ -353,13 +332,13 @@ const BragShelf = ({ patterns, pct, isMobile }) => {
       .catch(() => setStitchCount(0));
   }, []);
 
-  const rowsTracked = patterns.reduce((sum, p) => {
+  const rowsTracked = patterns.filter(p => !p.isStarter).reduce((sum, p) => {
     if (!Array.isArray(p.rows)) return sum;
     return sum + p.rows.filter(r => r && r.done === true).length;
   }, 0);
 
   const stats = [
-    { value: patterns.length, label: "Patterns Saved" },
+    { value: patterns.filter(p => !p.isStarter).length, label: "Patterns Saved" },
     { value: rowsTracked, label: "Rows Tracked" },
     { value: stitchCount, label: "Stitches Found" },
   ];
@@ -395,6 +374,7 @@ const CollectionView = ({userPatterns,starterPatterns,cat,setCat,search,setSearc
   const visible=allPatterns.filter(p=>p.status!=="deleted");
   const starterPats=visible.filter(p=>p.isStarter);
   const addedPats=visible.filter(p=>!p.isStarter);
+  console.log("PATTERNS: userPatterns="+userPatterns.length+", starters="+starterPats.length+", user's own="+addedPats.length+", visible total="+visible.length);
   const filteredAll=[...addedPats,...starterPats].filter(p=>(cat==="All"||p.cat===cat)&&(!search||p.title.toLowerCase().includes(search.toLowerCase())));
   const inProgress=visible.filter(p=>{const v=pct(p);return !p.isStarter&&p.status!=="parked"&&(p.status==="in_progress"||p.started||(v>0&&v<100))&&v<100;}).sort((a,b)=>new Date(b.updated_at||0)-new Date(a.updated_at||0));
   const [viewMode,setViewMode]=useState("grid");
@@ -414,7 +394,7 @@ const CollectionView = ({userPatterns,starterPatterns,cat,setCat,search,setSearc
             </p>
           </div>
 
-          <BevCorner patterns={visible} isMobile={isMobile} pct={pct} />
+          <BevCorner patterns={visible} isMobile={isMobile} />
 
           <OnTheHook inProgress={inProgress} openDetail={openDetail} onAddPattern={onAddPattern} pct={pct} catFallbackPhoto={catFallbackPhoto} Photo={Photo} isMobile={isMobile} />
 
