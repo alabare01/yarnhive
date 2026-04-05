@@ -327,35 +327,8 @@ const CollectionView = ({userPatterns,starterPatterns,cat,setCat,search,setSearc
   console.log("ALL PATTERNS:", visible.length);
   console.log("IN PROGRESS:", inProgress.length, inProgress.map(p=>p.title));
 
-  // Body-level background — no z-index conflicts
-  useEffect(() => {
-    document.body.style.backgroundImage = "url('/wovely_landing_bg_v1.png')";
-    document.body.style.backgroundSize = "cover";
-    document.body.style.backgroundPosition = "center";
-    document.body.style.backgroundAttachment = "fixed";
-    document.body.style.backgroundRepeat = "no-repeat";
-    document.body.style.backgroundColor = "#FAF8F5";
-    return () => {
-      document.body.style.backgroundImage = "";
-      document.body.style.backgroundSize = "";
-      document.body.style.backgroundPosition = "";
-      document.body.style.backgroundAttachment = "";
-      document.body.style.backgroundRepeat = "";
-      document.body.style.backgroundColor = "";
-    };
-  }, []);
-
-  // Gradient overlay on body
-  useEffect(() => {
-    const overlay = document.createElement("div");
-    overlay.id = "wovely-bg-overlay";
-    overlay.style.cssText = "position:fixed;top:0;left:0;right:0;bottom:0;background:linear-gradient(160deg,rgba(250,248,245,0.82) 0%,rgba(245,240,250,0.79) 100%);pointer-events:none;z-index:0;";
-    document.body.appendChild(overlay);
-    return () => { const el = document.getElementById("wovely-bg-overlay"); if (el) el.remove(); };
-  }, []);
-
   return (
-    <div style={{ minHeight: "100vh" }}>
+    <div style={{ minHeight: "100vh", background: "linear-gradient(160deg, #FAF8F5 0%, #F5F0FA 100%)" }}>
       <div style={{ maxWidth: 1280, margin: "0 auto", padding: isMobile ? "16px 16px 120px" : "24px 32px 80px", boxSizing: "border-box", width: "100%" }}>
         {/* Two-column grid on desktop, single column on mobile */}
         <div style={isMobile ? { display: "flex", flexDirection: "column", gap: 16 } : {
