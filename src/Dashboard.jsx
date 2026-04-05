@@ -259,10 +259,12 @@ const OnTheHook = ({ inProgress, openDetail, onAddPattern, pct, catFallbackPhoto
 
   const hero = inProgress[0];
   const rest = inProgress.slice(1);
-  const heroPhoto = hero.cover_image_url || hero.photo || catFallbackPhoto(hero.cat);
+  // Match library card src resolution exactly
+  const heroCardPhoto = hero.cover_image_url || (PILL.includes(hero.photo) ? catFallbackPhoto(hero.cat) : hero.photo) || catFallbackPhoto(hero.cat);
+  const heroIsPlaceholder = !hero.cover_image_url && PILL.includes(hero.photo);
+  const heroHasImage = !!heroCardPhoto && !heroIsPlaceholder;
   const hasCoverPhoto = !!(hero.cover_image_url || hero.photo);
   const rows = Array.isArray(hero.rows) ? hero.rows : [];
-  console.log("HERO IMAGE:", hero.title, "cover_image_url:", hero.cover_image_url, "photo:", hero.photo, "resolved:", heroPhoto);
   const doneRows = rows.filter(r => r && r.done).length;
   const totalRows = rows.length;
 
@@ -277,8 +279,8 @@ const OnTheHook = ({ inProgress, openDetail, onAddPattern, pct, catFallbackPhoto
       }}>
         {/* Hero image with cinematic fades */}
         <div style={{ height: isMobile ? 160 : 200, overflow: "hidden", borderRadius: `${GLASS.radius}px ${GLASS.radius}px 0 0`, position: "relative", background: "linear-gradient(135deg, #EDE4F7 0%, #D4C5ED 50%, #F5F0FA 100%)" }}>
-          {heroPhoto
-            ? <img src={heroPhoto} alt={hero.title} onError={e => { e.target.style.display = "none"; e.target.parentElement.style.background = "linear-gradient(135deg, #EDE4F7 0%, #D4C5ED 50%, #F5F0FA 100%)"; }} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: hasCoverPhoto ? "center" : "top center", display: "block", position: "relative", zIndex: 0, opacity: hasCoverPhoto ? 1 : 0.85 }} />
+          {heroHasImage
+            ? <Photo src={heroCardPhoto} alt={hero.title} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top", display: "block", position: "relative", zIndex: 0 }} />
             : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <span style={{ fontFamily: PF, fontSize: 40, color: ACCENT, opacity: 0.5 }}>{(hero.title || "?")[0]}</span>
               </div>
