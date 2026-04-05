@@ -142,15 +142,15 @@ const BevCorner = ({ patterns, isMobile }) => {
       gridColumn: "1 / -1",
       display: "flex", alignItems: "flex-start", gap: 16,
       padding: "20px 24px", background: CARD.bg, borderRadius: CARD.radius,
-      border: CARD.border, marginBottom: 20,
+      border: CARD.border, boxShadow: "0 2px 16px rgba(155,126,200,0.08)", marginBottom: 24,
     }}>
       <img src="/bev_neutral.png" alt="Bev" style={{
-        width: isMobile ? 60 : 80, height: "auto", flexShrink: 0,
-        filter: "drop-shadow(0 4px 16px rgba(155,126,200,0.35))",
+        width: isMobile ? 68 : 88, height: "auto", flexShrink: 0,
+        filter: "drop-shadow(0 6px 20px rgba(155,126,200,0.4))",
       }} />
       <div style={{
         position: "relative", background: "#F8F6FF",
-        borderRadius: "4px 18px 18px 18px", padding: "14px 18px", flex: 1,
+        borderRadius: "4px 18px 18px 18px", padding: "18px 22px", flex: 1,
       }}>
         <div style={{ fontFamily: INTER, fontSize: 15, color: INK, lineHeight: 1.6 }}>{content}</div>
       </div>
@@ -160,7 +160,7 @@ const BevCorner = ({ patterns, isMobile }) => {
 
 // ─── ZONE B: ON THE HOOK ────────────────────────────────────────────────────
 const OnTheHook = ({ inProgress, openDetail, onAddPattern, pct, catFallbackPhoto, Photo, isMobile }) => {
-  const sectionLabel = <div style={{ fontFamily: PF, fontSize: 20, fontWeight: 600, color: NAVY, marginBottom: 10 }}>On the Hook</div>;
+  const sectionLabel = <div style={{ fontFamily: PF, fontSize: 20, fontWeight: 600, color: NAVY, marginBottom: 12 }}>On the Hook</div>;
 
   if (inProgress.length === 0) {
     return (
@@ -209,7 +209,7 @@ const OnTheHook = ({ inProgress, openDetail, onAddPattern, pct, catFallbackPhoto
               </div>
           }
         </div>
-        <div style={{ padding: 20 }}>
+        <div style={{ padding: "20px 22px 22px" }}>
           <div style={{ fontFamily: PF, fontSize: 18, fontWeight: 600, color: NAVY, marginBottom: 6 }}>{hero.title}</div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: totalRows > 0 ? 12 : 0 }}>
             {hero.difficulty && <span style={{ fontFamily: INTER, fontSize: 10, background: PILL_BG, color: ACCENT, borderRadius: 20, padding: "3px 10px" }}>{hero.difficulty}</span>}
@@ -220,52 +220,48 @@ const OnTheHook = ({ inProgress, openDetail, onAddPattern, pct, catFallbackPhoto
               <div style={{ height: 6, background: "#EDE4F7", borderRadius: 3, overflow: "hidden", margin: "0 0 6px" }}>
                 <div style={{ width: (doneRows / totalRows * 100) + "%", height: "100%", background: ACCENT, borderRadius: 3, transition: "width .3s" }} />
               </div>
-              <div style={{ fontFamily: INTER, fontSize: 11, color: MUTED }}>{doneRows} of {totalRows} rows</div>
+              <div style={{ fontFamily: INTER, fontSize: 11, color: MUTED, marginBottom: 18 }}>{doneRows} of {totalRows} rows</div>
             </>
           )}
           <button style={{
             background: ACCENT, color: "#fff", border: "none", borderRadius: 12,
             padding: "12px 20px", fontSize: 14, fontWeight: 500, cursor: "pointer", width: "100%",
-            marginTop: 16, fontFamily: INTER,
+            marginTop: 18, fontFamily: INTER,
           }}>Pick up where you left off →</button>
+
+          {/* Scroll row for remaining — inside hero card */}
+          {rest.length > 0 && (
+            <div style={{ marginTop: 16 }}>
+              <div style={{ fontFamily: INTER, fontSize: 11, fontWeight: 600, color: "#9B87B8", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>Also in progress</div>
+              <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 8, WebkitOverflowScrolling: "touch", scrollbarWidth: "none", msOverflowStyle: "none" }}>
+                {rest.map(p => {
+                  const photo = p.cover_image_url || p.photo;
+                  return (
+                    <div key={p.id} onClick={(e) => { e.stopPropagation(); openDetail(p); }} style={{
+                      flexShrink: 0, width: 130, borderRadius: 14, border: "1px solid #EDE4F7",
+                      overflow: "hidden", background: "#fff", cursor: "pointer",
+                    }}>
+                      {photo
+                        ? <img src={photo} alt={p.title} style={{ width: "100%", height: 85, objectFit: "cover", display: "block" }} />
+                        : <div style={{
+                            height: 85, background: "linear-gradient(135deg,#EDE4F7,#F5F0FA)",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            fontFamily: PF, fontSize: 24, color: ACCENT, opacity: 0.6,
+                          }}>{p.title?.charAt(0) || "?"}</div>
+                      }
+                      <p style={{
+                        fontSize: 11, color: INK, padding: "8px 10px", margin: 0, lineHeight: 1.4,
+                        fontFamily: INTER, overflow: "hidden", display: "-webkit-box",
+                        WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
+                      }}>{p.title}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Scroll row for remaining */}
-      {rest.length > 0 && (
-        <>
-          <div style={{ fontFamily: INTER, fontSize: 11, color: MUTED, letterSpacing: "0.06em", textTransform: "uppercase", margin: "16px 0 8px" }}>Also in progress</div>
-          <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}>
-            {rest.map(p => {
-              const photo = p.cover_image_url || p.photo || catFallbackPhoto(p.cat);
-              return (
-                <div key={p.id} onClick={() => openDetail(p)} style={{
-                  flexShrink: 0, width: 150, background: CARD.bg, borderRadius: CARD.radius,
-                  boxShadow: CARD.shadow, border: CARD.border, overflow: "hidden", cursor: "pointer",
-                }}>
-                  <div style={{
-                    height: 90, overflow: "hidden", position: "relative",
-                    background: "linear-gradient(135deg, #EDE4F7, #F5F0FA)",
-                  }}>
-                    {photo
-                      ? <Photo src={photo} alt={p.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          <span style={{ fontFamily: PF, fontSize: 28, color: ACCENT, opacity: 0.4 }}>{(p.title || "?")[0]}</span>
-                        </div>
-                    }
-                  </div>
-                  <div style={{ padding: 10 }}>
-                    <div style={{
-                      fontSize: 12, fontFamily: INTER, color: INK, lineHeight: 1.3,
-                      overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
-                    }}>{p.title}</div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </>
-      )}
     </div>
   );
 };
@@ -306,7 +302,7 @@ const BragShelf = ({ patterns, pct, isMobile }) => {
       ? { display: "flex", gap: 12, gridColumn: "1 / -1" }
       : { display: "flex", flexDirection: "column", gap: 12, position: "sticky", top: 20 }
     }>
-      <div style={{ fontFamily: INTER, fontSize: 10, color: MUTED, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 4, ...(isMobile ? { display: "none" } : {}) }}>Your Wovely</div>
+      <div style={{ fontFamily: INTER, fontSize: 11, fontWeight: 600, color: "#9B87B8", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8, ...(isMobile ? { display: "none" } : {}) }}>Your Wovely</div>
       {stats.map(s => (
         <div key={s.label} style={{
           flex: isMobile ? 1 : undefined,
@@ -334,7 +330,7 @@ const CollectionView = ({userPatterns,starterPatterns,cat,setCat,search,setSearc
   const starterPats=visible.filter(p=>p.isStarter);
   const addedPats=visible.filter(p=>!p.isStarter);
   const filteredAll=[...addedPats,...starterPats].filter(p=>(cat==="All"||p.cat===cat)&&(!search||p.title.toLowerCase().includes(search.toLowerCase())));
-  const inProgress=visible.filter(p=>{const v=pct(p);return v>0&&v<100;});
+  const inProgress=visible.filter(p=>{const v=pct(p);return (p.status==="in_progress"||p.started||(v>0&&v<100))&&v<100;});
   const [viewMode,setViewMode]=useState("grid");
   const emptySlots=isPro?0:Math.max(0,TIER_CONFIG.free.patternCap-addedPats.length);
 
@@ -349,13 +345,14 @@ const CollectionView = ({userPatterns,starterPatterns,cat,setCat,search,setSearc
         display: "grid",
         gridTemplateColumns: "1fr 320px",
         gridTemplateRows: "auto auto 1fr",
-        gap: 20,
+        gap: 24,
       }}>
 
-        {/* Page header — full width */}
+        {/* Time-of-day greeting — replaces redundant "My Wovely" header */}
         <div style={{ gridColumn: "1 / -1" }}>
-          <div style={{ fontFamily: PF, fontSize: "clamp(28px, 4vw, 38px)", fontWeight: 700, color: NAVY, lineHeight: 1.1, margin: 0 }}>My Wovely</div>
-          <div style={{ fontFamily: INTER, fontSize: 14, color: "#9B87B8", marginTop: 4, marginBottom: 28, letterSpacing: "0.02em" }}>Your crochet space</div>
+          <p style={{ fontFamily: PF, fontStyle: "italic", fontSize: 16, color: "#9B87B8", marginBottom: 20, marginTop: 4 }}>
+            Good {new Date().getHours() < 12 ? "morning" : new Date().getHours() < 17 ? "afternoon" : "evening"}, here's your space.
+          </p>
         </div>
 
         {/* ZONE A — Bev Corner — full width */}
@@ -376,8 +373,8 @@ const CollectionView = ({userPatterns,starterPatterns,cat,setCat,search,setSearc
         <BragShelf patterns={visible} pct={pct} isMobile={isMobile} />
 
         {/* ZONE C — Your Library — full width */}
-        <div style={{ gridColumn: "1 / -1" }}>
-          <div style={{ fontFamily: PF, fontSize: 20, fontWeight: 600, color: NAVY, marginBottom: 10 }}>Your Library</div>
+        <div style={{ gridColumn: "1 / -1", marginTop: 32 }}>
+          <div style={{ fontFamily: PF, fontSize: 20, fontWeight: 600, color: NAVY, marginBottom: 12 }}>Your Library</div>
 
           {/* Search */}
           <div style={{ marginBottom: 12 }}>
