@@ -120,6 +120,28 @@ const EmptySlotCard = ({onClick,slotIndex=0}) => (
 // Playfair italic accent span helper
 const Em = ({ children }) => <span style={{ fontFamily: PF, fontStyle: "italic", color: ACCENT }}>{children}</span>;
 
+// Info tooltip — hover on desktop, tap toggle on mobile
+const InfoTooltip = ({ text, alignRight }) => {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    if (!visible) return;
+    const dismiss = () => setVisible(false);
+    document.addEventListener("touchstart", dismiss);
+    return () => document.removeEventListener("touchstart", dismiss);
+  }, [visible]);
+  return (
+    <span style={{ position: "relative", display: "inline-flex", alignItems: "center", marginLeft: 8 }}>
+      <span onMouseEnter={() => setVisible(true)} onMouseLeave={() => setVisible(false)} onTouchStart={e => { e.stopPropagation(); setVisible(v => !v); }} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 16, height: 16, borderRadius: "50%", background: "rgba(155,126,200,0.15)", color: ACCENT, fontSize: 10, fontFamily: INTER, fontWeight: 700, cursor: "default", userSelect: "none", flexShrink: 0, lineHeight: 1 }}>i</span>
+      {visible && (
+        <span style={{ position: "absolute", bottom: "calc(100% + 8px)", background: NAVY, color: "#fff", fontFamily: INTER, fontSize: 12, fontWeight: 400, lineHeight: 1.5, padding: "8px 12px", borderRadius: 10, maxWidth: 220, whiteSpace: "normal", boxShadow: "0 4px 16px rgba(0,0,0,0.15)", zIndex: 100, pointerEvents: "none", ...(alignRight ? { right: 0, left: "auto", transform: "none" } : { left: "50%", transform: "translateX(-50%)" }) }}>
+          {text}
+          <span style={{ position: "absolute", top: "100%", borderWidth: 5, borderStyle: "solid", borderColor: `${NAVY} transparent transparent transparent`, width: 0, height: 0, ...(alignRight ? { right: 12, left: "auto", transform: "none" } : { left: "50%", transform: "translateX(-50%)" }) }} />
+        </span>
+      )}
+    </span>
+  );
+};
+
 // ─── BEV CORNER (glass card, JS typewriter, personalized messages) ──────────
 const BevCorner = ({ patterns, isMobile }) => {
   const [msgIndex, setMsgIndex] = useState(0);
@@ -214,7 +236,7 @@ const BevCorner = ({ patterns, isMobile }) => {
 
 // ─── ON THE HOOK ────────────────────────────────────────────────────────────
 const OnTheHook = ({ inProgress, openDetail, onAddPattern, pct, catFallbackPhoto, Photo, isMobile }) => {
-  const sectionLabel = <div style={{ fontFamily: PF, fontSize: 20, fontWeight: 600, color: NAVY, marginBottom: 12 }}>On the Hook</div>;
+  const sectionLabel = <div style={{ display: "flex", alignItems: "center", marginBottom: 12 }}><span style={{ fontFamily: PF, fontSize: 20, fontWeight: 600, color: NAVY }}>On the Hook</span><InfoTooltip text="Your most recently touched pattern — pick up right where you left off." /></div>;
 
   if (inProgress.length === 0) {
     return (
@@ -287,7 +309,7 @@ const OnTheHook = ({ inProgress, openDetail, onAddPattern, pct, catFallbackPhoto
           {/* Scroll row for remaining */}
           {rest.length > 0 && (
             <div style={{ marginTop: 16 }}>
-              <div style={{ fontFamily: INTER, fontSize: 11, fontWeight: 600, color: "#9B87B8", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>Also in progress</div>
+              <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}><span style={{ fontFamily: INTER, fontSize: 11, fontWeight: 600, color: "#9B87B8", letterSpacing: "0.1em", textTransform: "uppercase" }}>Also in progress</span><InfoTooltip text="Everything else you've started. Tap any to jump in." /></div>
               <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 8, WebkitOverflowScrolling: "touch", scrollbarWidth: "none", msOverflowStyle: "none" }}>
                 {rest.map(p => {
                   const photo = p.cover_image_url || p.photo;
@@ -349,7 +371,7 @@ const BragShelf = ({ patterns, pct, isMobile }) => {
       ? { display: "flex", gap: 12, gridColumn: "1 / -1" }
       : { display: "flex", flexDirection: "column", gap: 12, position: "sticky", top: 20 }
     }>
-      <div style={{ fontFamily: INTER, fontSize: 11, fontWeight: 600, color: "#9B87B8", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8, ...(isMobile ? { display: "none" } : {}) }}>Your Wovely</div>
+      <div style={{ display: "flex", alignItems: "center", marginBottom: 8, ...(isMobile ? { display: "none" } : {}) }}><span style={{ fontFamily: INTER, fontSize: 11, fontWeight: 600, color: "#9B87B8", letterSpacing: "0.1em", textTransform: "uppercase" }}>Your Wovely</span><InfoTooltip text="A snapshot of your crochet journey so far." alignRight /></div>
       {stats.map(s => (
         <div key={s.label} style={{
           flex: isMobile ? 1 : undefined,
@@ -401,7 +423,7 @@ const CollectionView = ({userPatterns,starterPatterns,cat,setCat,search,setSearc
 
           {/* Your Library — full width */}
           <div style={{ gridColumn: "1 / -1", marginTop: 32 }}>
-            <div style={{ fontFamily: PF, fontSize: 20, fontWeight: 600, color: NAVY, marginBottom: 12 }}>Your Library</div>
+            <div style={{ display: "flex", alignItems: "center", marginBottom: 12 }}><span style={{ fontFamily: PF, fontSize: 20, fontWeight: 600, color: NAVY }}>Your Library</span><InfoTooltip text="Every pattern you've saved — search, filter, and dive in anytime." /></div>
             {/* Search bar — glass */}
             <div style={{ marginBottom: 12 }}>
               <div style={{ display: "flex", alignItems: "center", background: GLASS.bg, backdropFilter: GLASS.blur, WebkitBackdropFilter: GLASS.blur, border: GLASS.border, borderRadius: 12, padding: "10px 14px", gap: 9, boxShadow: GLASS.shadow }}>
