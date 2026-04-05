@@ -448,8 +448,12 @@ const SidebarNav = ({view,onNavigate,count,isPro,onAddPattern,onSignOut,onUpgrad
   const ITEMS=[{key:"collection",label:"My Wovely",sub:starterC+" starter"+(starterC!==1?"s":"")+" · "+addedC+" added",icon:"🧶"},{key:"wip",label:"On the Hook",sub:wipCount>0?wipCount+" active":"Currently making",icon:"🪡"},{key:"browse",label:"Find Patterns",sub:"Find & browse patterns",icon:"🌐"},{key:"stash",label:"Stash & Notions",sub:"Manage your yarn",icon:"🎀"},{key:"calculator",label:"The Workbench",sub:"Gauge, yardage & more",icon:"🧮"},{key:"stitch-check",label:"Bev's Notes",sub:isPro?"Validate any pattern":"Pro feature",icon:"🛡️",proOnly:true},{key:"stitch-vision",label:"Stitch-O-Vision",sub:"Identify any stitch from a photo",icon:"🌀"},{key:"shopping",label:"Supply Run",sub:"Auto-generated",icon:"🛒"}];
   return (
     <div style={{width:260,background:"#9B7EC8",height:"100vh",position:"sticky",top:0,display:"flex",flexDirection:"column",flexShrink:0}}>
-      <div onClick={()=>onNavigate("collection")} style={{padding:"32px 20px 24px",cursor:"pointer",transition:"opacity .15s"}} onMouseEnter={e=>e.currentTarget.style.opacity=".85"} onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
-        <div style={{fontFamily:T.serif,fontSize:26,fontWeight:700,color:"#fff",lineHeight:1}}>Wovely</div><div style={{fontSize:11,color:"rgba(255,255,255,.6)",marginTop:4}}>Your crochet space</div>
+      <div onClick={()=>onNavigate("collection")} style={{padding:"20px 16px 16px",cursor:"pointer",transition:"opacity .15s",display:"flex",flexDirection:"column",alignItems:"flex-start",gap:4}} onMouseEnter={e=>e.currentTarget.style.opacity=".85"} onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <img src="/bev_neutral.png" alt="Bev" style={{width:36,height:36,borderRadius:"50%",background:"rgba(255,255,255,0.15)",padding:3,filter:"drop-shadow(0 2px 8px rgba(0,0,0,0.2))"}}/>
+          <span style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:700,color:"#fff",letterSpacing:"-0.01em",lineHeight:1}}>Wovely</span>
+        </div>
+        <span style={{fontFamily:"Inter,sans-serif",fontSize:11,color:"rgba(255,255,255,0.5)",letterSpacing:"0.03em",paddingLeft:46}}>Your crochet space</span>
       </div>
       <div style={{padding:"0 16px 8px"}}><button onClick={onAddPattern} style={{width:"100%",background:"rgba(255,255,255,.2)",color:"#fff",border:"none",borderRadius:9999,padding:"12px",fontSize:14,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"background .15s"}} onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,.3)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,.2)"}><span style={{fontSize:18}}>+</span> Add Pattern</button></div>
       <div style={{flex:1,overflowY:"auto",padding:"8px 0"}}>
@@ -496,8 +500,12 @@ const NavPanel = ({open,onClose,view,onNavigate,count,isPro,onSignOut,onUpgrade}
     <div style={{position:"fixed",inset:0,zIndex:100}}>
       <div className={closing?"dim-out":"dim-in"} onClick={dismiss} style={{position:"absolute",inset:0,background:"rgba(28,23,20,.52)",backdropFilter:"blur(3px)"}}/>
       <div className={closing?"nav-close":"nav-open"} style={{position:"absolute",top:0,left:0,bottom:0,width:"80%",maxWidth:320,background:"#9B7EC8",display:"flex",flexDirection:"column",boxShadow:"6px 0 40px rgba(28,23,20,.2)"}}>
-        <div onClick={()=>go("collection")} style={{padding:"28px 18px 20px",cursor:"pointer",transition:"opacity .15s"}} onMouseEnter={e=>e.currentTarget.style.opacity=".85"} onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
-          <div style={{fontFamily:T.serif,fontSize:22,fontWeight:700,color:"#fff",lineHeight:1}}>Wovely</div><div style={{fontSize:11,color:"rgba(255,255,255,.65)",marginTop:3}}>Your crochet space</div>
+        <div onClick={()=>go("collection")} style={{padding:"20px 16px 16px",cursor:"pointer",transition:"opacity .15s",display:"flex",flexDirection:"column",alignItems:"flex-start",gap:4}} onMouseEnter={e=>e.currentTarget.style.opacity=".85"} onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <img src="/bev_neutral.png" alt="Bev" style={{width:36,height:36,borderRadius:"50%",background:"rgba(255,255,255,0.15)",padding:3,filter:"drop-shadow(0 2px 8px rgba(0,0,0,0.2))"}}/>
+            <span style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:700,color:"#fff",letterSpacing:"-0.01em",lineHeight:1}}>Wovely</span>
+          </div>
+          <span style={{fontFamily:"Inter,sans-serif",fontSize:11,color:"rgba(255,255,255,0.5)",letterSpacing:"0.03em",paddingLeft:46}}>Your crochet space</span>
         </div>
         <div style={{flex:1,overflowY:"auto",paddingTop:6}}>
           {ITEMS.map(item=>{const active=view===item.key;const locked=item.proOnly&&!isPro;const dis=!!item.disabled;return(
@@ -1767,7 +1775,7 @@ export default function Wovely() {
     (async()=>{
       try{
         const res=await fetch(`${SUPABASE_URL}/rest/v1/patterns?user_id=eq.${user.id}&status=neq.deleted&order=created_at.desc`,{
-          headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${session.access_token}`},
+          headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${session.access_token}`,"Range":"0-499"},
         });
         if(res.ok){
           const data=await res.json();

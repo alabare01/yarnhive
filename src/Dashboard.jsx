@@ -331,7 +331,6 @@ const CollectionView = ({userPatterns,starterPatterns,cat,setCat,search,setSearc
   const addedPats=visible.filter(p=>!p.isStarter);
   const filteredAll=[...addedPats,...starterPats].filter(p=>(cat==="All"||p.cat===cat)&&(!search||p.title.toLowerCase().includes(search.toLowerCase())));
   const inProgress=visible.filter(p=>{const v=pct(p);return !p.isStarter&&p.status!=="parked"&&(p.status==="in_progress"||p.started||(v>0&&v<100))&&v<100;}).sort((a,b)=>new Date(b.updated_at||0)-new Date(a.updated_at||0));
-  if(typeof console!=="undefined")console.log("[Dashboard] inProgress count:",inProgress.length,"names:",inProgress.map(p=>p.title));
   const [viewMode,setViewMode]=useState("grid");
   const emptySlots=isPro?0:Math.max(0,TIER_CONFIG.free.patternCap-addedPats.length);
 
