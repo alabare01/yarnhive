@@ -450,7 +450,7 @@ const SidebarNav = ({view,onNavigate,count,isPro,onAddPattern,onSignOut,onUpgrad
     <div style={{width:260,background:"#9B7EC8",height:"100vh",position:"sticky",top:0,display:"flex",flexDirection:"column",flexShrink:0}}>
       <div onClick={()=>onNavigate("collection")} style={{padding:"20px 16px 16px",cursor:"pointer",transition:"opacity .15s",display:"flex",flexDirection:"column",alignItems:"flex-start",gap:4}} onMouseEnter={e=>e.currentTarget.style.opacity=".85"} onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
-          <img src="/bev_neutral.png" alt="Bev" style={{width:36,height:36,borderRadius:"50%",background:"rgba(255,255,255,0.15)",padding:3,filter:"drop-shadow(0 2px 8px rgba(0,0,0,0.2))"}}/>
+          <div style={{width:44,height:44,borderRadius:"50%",background:"rgba(255,255,255,0.95)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:"0 2px 12px rgba(0,0,0,0.15)"}}><img src="/bev_neutral.png" alt="Bev" style={{width:36,height:36,borderRadius:"50%",objectFit:"cover"}}/></div>
           <span style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:700,color:"#fff",letterSpacing:"-0.01em",lineHeight:1}}>Wovely</span>
         </div>
         <span style={{fontFamily:"Inter,sans-serif",fontSize:11,color:"rgba(255,255,255,0.5)",letterSpacing:"0.03em",paddingLeft:46}}>Your crochet space</span>
@@ -502,7 +502,7 @@ const NavPanel = ({open,onClose,view,onNavigate,count,isPro,onSignOut,onUpgrade}
       <div className={closing?"nav-close":"nav-open"} style={{position:"absolute",top:0,left:0,bottom:0,width:"80%",maxWidth:320,background:"#9B7EC8",display:"flex",flexDirection:"column",boxShadow:"6px 0 40px rgba(28,23,20,.2)"}}>
         <div onClick={()=>go("collection")} style={{padding:"20px 16px 16px",cursor:"pointer",transition:"opacity .15s",display:"flex",flexDirection:"column",alignItems:"flex-start",gap:4}} onMouseEnter={e=>e.currentTarget.style.opacity=".85"} onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
-            <img src="/bev_neutral.png" alt="Bev" style={{width:36,height:36,borderRadius:"50%",background:"rgba(255,255,255,0.15)",padding:3,filter:"drop-shadow(0 2px 8px rgba(0,0,0,0.2))"}}/>
+            <div style={{width:44,height:44,borderRadius:"50%",background:"rgba(255,255,255,0.95)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:"0 2px 12px rgba(0,0,0,0.15)"}}><img src="/bev_neutral.png" alt="Bev" style={{width:36,height:36,borderRadius:"50%",objectFit:"cover"}}/></div>
             <span style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:700,color:"#fff",letterSpacing:"-0.01em",lineHeight:1}}>Wovely</span>
           </div>
           <span style={{fontFamily:"Inter,sans-serif",fontSize:11,color:"rgba(255,255,255,0.5)",letterSpacing:"0.03em",paddingLeft:46}}>Your crochet space</span>
@@ -2142,7 +2142,7 @@ export default function Wovely() {
     }
   };
   const inProgress=allPatterns.filter(p=>{const v=pct(p);return !p.isStarter&&p.status!=="deleted"&&p.status!=="parked"&&((p.status==="in_progress"&&v<100)||(p.started&&v<100)||(v>0&&v<100));});
-  const TITLE_MAP={collection:"",wip:"On the Hook",browse:"Find Patterns",stash:"Stash & Notions",calculator:"The Workbench",shopping:"Supply Run",profile:"Profile & Settings",privacy:"Privacy Policy",terms:"Terms of Service"};
+  const TITLE_MAP={collection:null,wip:"On the Hook",browse:"Find Patterns",stash:"Stash & Notions",calculator:"The Workbench",shopping:"Supply Run",profile:"Profile & Settings",privacy:"Privacy Policy",terms:"Terms of Service"};
 
   if(isDesktop) return (
     <div style={{display:"flex",minHeight:"100vh",width:"100%",background:T.bg,fontFamily:T.sans,position:"relative"}}>
@@ -2165,7 +2165,7 @@ export default function Wovely() {
         <WelcomeBanner visible={showWelcomeBanner}/>
         {showEmailBanner&&!showWelcomeBanner&&<EmailConfirmBanner onDismiss={handleDismissEmailBanner} onResend={handleResendEmail}/>}
         <div style={{background:"#FFFFFF",borderBottom:"1px solid #EDE4F7",padding:"0 32px",height:64,display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:20,flexShrink:0}}>
-          <div onClick={isAdam?handleLogoTap:undefined} style={{fontFamily:T.serif,fontSize:28,fontWeight:700,color:T.ink,cursor:isAdam?"pointer":"default"}}>{TITLE_MAP[view]||"Wovely"}</div>
+          <div onClick={isAdam?handleLogoTap:undefined} style={{fontFamily:T.serif,fontSize:28,fontWeight:700,color:T.ink,cursor:isAdam?"pointer":"default"}}>{TITLE_MAP[view]!==null?TITLE_MAP[view]:""}</div>
           <div style={{display:"flex",alignItems:"center",gap:12,position:"relative"}}>
             <FeedbackWidget user={supabaseAuth.getUser()}/>
             {isPro&&<div style={{background:T.terraLt,borderRadius:9999,padding:"4px 10px",fontSize:11,fontWeight:600,color:T.terra}}>✨ Pro</div>}
@@ -2209,7 +2209,7 @@ export default function Wovely() {
       {showWelcomeBanner&&<WelcomeBanner onDismiss={()=>setShowWelcomeBanner(false)}/>}
       <div style={{background:"#FFFFFF",borderBottom:"1px solid #EDE4F7",padding:"0 18px",height:56,display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:20,flexShrink:0}}>
         <button onClick={()=>setNavOpen(true)} style={{background:"none",border:"none",cursor:"pointer",padding:"8px 8px 8px 0",display:"flex",flexDirection:"column",gap:5}}><div style={{width:22,height:1.5,background:T.ink,borderRadius:99}}/><div style={{width:15,height:1.5,background:T.ink,borderRadius:99}}/><div style={{width:22,height:1.5,background:T.ink,borderRadius:99}}/></button>
-        <div onClick={isAdam?handleLogoTap:undefined} style={{fontFamily:T.serif,fontSize:20,fontWeight:700,color:T.ink,cursor:isAdam?"pointer":"default"}}>{TITLE_MAP[view]||"Wovely"}</div>
+        <div onClick={isAdam?handleLogoTap:undefined} style={{fontFamily:T.serif,fontSize:20,fontWeight:700,color:T.ink,cursor:isAdam?"pointer":"default"}}>{TITLE_MAP[view]!==null?TITLE_MAP[view]:""}</div>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
           <FeedbackWidget user={supabaseAuth.getUser()}/>
           <button onClick={()=>{if(tier.atCap){setShowPaywall(true);return;}setAddMenuOpen(v=>!v);}} style={{background:T.terra,border:"none",borderRadius:9999,width:34,height:34,cursor:"pointer",color:"#fff",fontSize:20,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 10px rgba(155,126,200,.4)"}}>+</button>
