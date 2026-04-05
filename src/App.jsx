@@ -498,14 +498,13 @@ const NavPanel = ({open,onClose,view,onNavigate,count,isPro,onSignOut,onUpgrade}
     <div style={{position:"fixed",inset:0,zIndex:100}}>
       <div className={closing?"dim-out":"dim-in"} onClick={dismiss} style={{position:"absolute",inset:0,background:"rgba(28,23,20,.52)",backdropFilter:"blur(3px)"}}/>
       <div className={closing?"nav-close":"nav-open"} style={{position:"absolute",top:0,left:0,bottom:0,width:"80%",maxWidth:320,background:"#9B7EC8",display:"flex",flexDirection:"column",boxShadow:"6px 0 40px rgba(28,23,20,.2)"}}>
-        <div onClick={()=>go("collection")} style={{display:"flex",flexDirection:"column",alignItems:"center",padding:"18px 16px 14px",gap:6,cursor:"pointer",transition:"opacity .15s",flexShrink:0}} onMouseEnter={e=>e.currentTarget.style.opacity=".85"} onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
-          <div style={{width:56,height:56,borderRadius:"50%",background:"rgba(255,255,255,0.95)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 4px 16px rgba(0,0,0,0.15)",marginBottom:2}}><img src="/bev_neutral.png" alt="Bev" style={{width:44,height:44,borderRadius:"50%",objectFit:"cover"}}/></div>
-          <span style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:700,color:"#fff",letterSpacing:"-0.01em",lineHeight:1}}>Wovely</span>
-          <span style={{fontFamily:"Inter,sans-serif",fontSize:10,color:"rgba(255,255,255,0.55)",letterSpacing:"0.04em",lineHeight:1}}>Your crochet space</span>
+        <div onClick={()=>go("collection")} style={{display:"flex",alignItems:"center",gap:10,padding:"14px 16px 10px",cursor:"pointer",transition:"opacity .15s",flexShrink:0}} onMouseEnter={e=>e.currentTarget.style.opacity=".85"} onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
+          <div style={{width:40,height:40,borderRadius:"50%",background:"rgba(255,255,255,0.95)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 10px rgba(0,0,0,0.15)",flexShrink:0}}><img src="/bev_neutral.png" alt="Bev" style={{width:32,height:32,borderRadius:"50%",objectFit:"cover"}}/></div>
+          <div><span style={{fontFamily:"'Playfair Display',serif",fontSize:18,fontWeight:700,color:"#fff",letterSpacing:"-0.01em",lineHeight:1,display:"block"}}>Wovely</span><span style={{fontFamily:"Inter,sans-serif",fontSize:10,color:"rgba(255,255,255,0.5)",letterSpacing:"0.04em",lineHeight:1,display:"block",marginTop:2}}>Your crochet space</span></div>
         </div>
-        <div style={{flex:1,overflowY:"auto",paddingTop:4}}>
+        <div style={{flex:1,overflowY:"auto",position:"relative"}}>
           {ITEMS.map(item=>{const active=view===item.key;const locked=item.proOnly&&!isPro;const dis=!!item.disabled;return(
-            <div key={item.key} className="nav-item" onClick={()=>{if(dis)return;if(locked){onUpgrade();dismiss();return;}go(item.key);}} style={{display:"flex",alignItems:"center",gap:13,padding:"13px 20px",background:active&&!dis?"rgba(255,255,255,0.25)":"transparent",cursor:dis?"not-allowed":"pointer",transition:"background .12s",opacity:dis?.4:locked?.55:1}}>
+            <div key={item.key} className="nav-item" onClick={()=>{if(dis)return;if(locked){onUpgrade();dismiss();return;}go(item.key);}} style={{display:"flex",alignItems:"center",gap:13,padding:"12px 20px",background:active&&!dis?"rgba(255,255,255,0.25)":"transparent",cursor:dis?"not-allowed":"pointer",transition:"background .12s",opacity:dis?.4:locked?.55:1}}>
               <span style={{fontSize:20,width:26,textAlign:"center"}}>{item.icon}</span>
               <div style={{flex:1}}><div style={{fontSize:14,fontWeight:600,color:"#fff"}}>{item.label}</div><div style={{fontSize:11,color:"rgba(255,255,255,0.65)",marginTop:1}}>{item.sub}</div></div>
               {dis&&<span style={{background:"rgba(255,255,255,.2)",borderRadius:99,padding:"2px 8px",fontSize:9,fontWeight:700,color:"rgba(255,255,255,.8)"}}>Soon</span>}
@@ -513,6 +512,7 @@ const NavPanel = ({open,onClose,view,onNavigate,count,isPro,onSignOut,onUpgrade}
               {active&&!locked&&!dis&&<div style={{width:6,height:6,borderRadius:99,background:"#fff"}}/>}
             </div>
           );})}
+          <div style={{position:"sticky",bottom:0,height:32,background:"linear-gradient(to top, rgba(120,80,180,0.4) 0%, transparent 100%)",pointerEvents:"none",marginTop:-32,flexShrink:0}} />
         </div>
         <div style={{marginTop:"auto",padding:"0 0 8px"}}>
           {(()=>{const active=view==="profile";return(
