@@ -1774,13 +1774,13 @@ export default function Wovely() {
     if(!user||!session) return;
     (async()=>{
       try{
-        const res=await fetch(`${SUPABASE_URL}/rest/v1/patterns?user_id=eq.${user.id}&status=neq.deleted&order=created_at.desc`,{
-          headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${session.access_token}`,"Range":"0-499"},
+        const res=await fetch(`${SUPABASE_URL}/rest/v1/patterns?user_id=eq.${user.id}&status=neq.deleted&order=created_at.desc&limit=500`,{
+          headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${session.access_token}`},
         });
-        if(res.ok){
+        console.log("[Wovely] Pattern fetch response status:", res.status, "content-range:", res.headers.get("content-range"));
+        if(res.ok||res.status===206){
           const data=await res.json();
-          console.log("[Wovely] Pattern fetch raw response:", JSON.stringify(data));
-          console.log("[Wovely] Pattern fetch count:", data.length);
+          console.log("[Wovely] Pattern fetch count:", data.length, "titles:", data.map(r=>r.title));
           if(data.length>0){
             const patterns=data.map(r=>({
               id:r.id,_supabaseId:r.id,title:r.title||"",cat:r.cat||"",source:r.source||"",source_url:r.source_url||"",

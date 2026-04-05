@@ -135,7 +135,7 @@ const BevCorner = ({ patterns, isMobile }) => {
       @keyframes bevTyping { from { width: 0; opacity: 0 } to { width: 100%; opacity: 1 } }
       @keyframes bevBlink { 0%, 100% { border-color: #9B7EC8 } 50% { border-color: transparent } }
       .bev-typing-text {
-        display: inline-block;
+        display: block;
         overflow: hidden;
         white-space: nowrap;
         width: 0;
@@ -144,6 +144,7 @@ const BevCorner = ({ patterns, isMobile }) => {
         animation: bevTyping 2.8s steps(45) forwards, bevBlink 0.7s step-end 2.8s 4;
         animation-fill-mode: forwards;
         max-width: 100%;
+        box-sizing: border-box;
       }
     `;
     document.head.appendChild(style);
@@ -167,7 +168,7 @@ const BevCorner = ({ patterns, isMobile }) => {
     <div style={{
       gridColumn: "1 / -1",
       display: "flex", alignItems: "center", gap: 16,
-      padding: "20px 24px",
+      padding: "20px 24px", overflow: "hidden",
       background: GLASS.bg, backdropFilter: GLASS.blur, WebkitBackdropFilter: GLASS.blur,
       borderRadius: GLASS.radius, border: GLASS.border, boxShadow: GLASS.shadow,
       marginBottom: 24,
@@ -176,7 +177,7 @@ const BevCorner = ({ patterns, isMobile }) => {
         width: isMobile ? 68 : 88, height: "auto", flexShrink: 0,
         filter: "drop-shadow(0 6px 20px rgba(155,126,200,0.4))",
       }} />
-      <div style={{ fontFamily: INTER, fontSize: 15, color: INK, lineHeight: 1.6 }}>
+      <div style={{ fontFamily: INTER, fontSize: 15, color: INK, lineHeight: 1.6, flex: 1, minWidth: 0, overflow: "hidden" }}>
         <span key={greetingText} className="bev-typing-text">{greetingText}</span>
       </div>
     </div>
@@ -220,7 +221,7 @@ const OnTheHook = ({ inProgress, openDetail, onAddPattern, pct, catFallbackPhoto
       <div onClick={() => openDetail(hero)} style={{
         background: GLASS.bg, backdropFilter: GLASS.blur, WebkitBackdropFilter: GLASS.blur,
         borderRadius: GLASS.radius, boxShadow: GLASS.shadow, border: GLASS.border,
-        overflow: "hidden", cursor: "pointer",
+        overflow: "hidden", cursor: "pointer", width: "100%", maxWidth: "100%", boxSizing: "border-box",
       }}>
         {/* Hero image with fade */}
         <div style={{ height: isMobile ? 160 : 200, overflow: "hidden", borderRadius: `${GLASS.radius}px ${GLASS.radius}px 0 0`, position: "relative", background: "linear-gradient(135deg, #EDE4F7, #F5F0FA)" }}>
@@ -233,7 +234,7 @@ const OnTheHook = ({ inProgress, openDetail, onAddPattern, pct, catFallbackPhoto
           {/* White fade at bottom */}
           <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "60%", background: "linear-gradient(to top, rgba(255,255,255,0.95) 0%, transparent 100%)", zIndex: 1 }} />
         </div>
-        <div style={{ padding: "20px 22px 22px" }}>
+        <div style={{ padding: isMobile ? 16 : "20px 22px 22px", boxSizing: "border-box", width: "100%" }}>
           <div style={{ fontFamily: PF, fontSize: 18, fontWeight: 600, color: NAVY, marginBottom: 6 }}>{hero.title}</div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: totalRows > 0 ? 12 : 0 }}>
             {hero.difficulty && <span style={{ fontFamily: INTER, fontSize: 10, background: PILL_BG, color: ACCENT, borderRadius: 20, padding: "3px 10px" }}>{hero.difficulty}</span>}
@@ -248,8 +249,8 @@ const OnTheHook = ({ inProgress, openDetail, onAddPattern, pct, catFallbackPhoto
             </>
           )}
           <button style={{
-            display: "inline-flex", alignItems: "center", gap: 8,
-            background: ACCENT, color: "#fff", border: "none", borderRadius: 14,
+            display: "inline-flex", alignItems: "center", gap: 8, alignSelf: "flex-start",
+            width: "auto", background: ACCENT, color: "#fff", border: "none", borderRadius: 14,
             padding: "12px 24px", fontSize: 14, fontWeight: 600, cursor: "pointer",
             fontFamily: INTER, letterSpacing: "0.01em",
             transition: "transform 0.15s ease, box-shadow 0.15s ease",
@@ -352,7 +353,7 @@ const CollectionView = ({userPatterns,starterPatterns,cat,setCat,search,setSearc
 
   return (
     <div style={{ minHeight: "100vh", background: "transparent" }}>
-      <div style={{ maxWidth: 1280, margin: "0 auto", padding: isMobile ? "16px 16px 120px" : "24px 32px 80px", boxSizing: "border-box", width: "100%" }}>
+      <div style={{ maxWidth: 1280, margin: "0 auto", padding: isMobile ? "16px 16px 160px" : "24px 32px 80px", boxSizing: "border-box", width: "100%" }}>
         {/* Two-column grid on desktop, single column on mobile */}
         <div style={isMobile ? { display: "flex", flexDirection: "column", gap: 16 } : {
           display: "grid", gridTemplateColumns: "1fr 320px", gridTemplateRows: "auto auto 1fr", gap: 24,
