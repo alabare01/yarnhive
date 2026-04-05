@@ -1,5 +1,19 @@
 export const CHANGELOG = [
   {
+    version: "37",
+    date: "2026-04-05",
+    updates: [
+      { emoji: "🏠", text: "My Wovely feels like home now — warm craft room background, glass cards, the whole vibe" },
+      { emoji: "🐍", text: "Bev actually talks to you now — she types out personalized messages and rotates them as you work" },
+      { emoji: "🎯", text: "On the Hook always shows your most recently worked pattern — jump right back in" },
+      { emoji: "📊", text: "Your Wovely stats are real and accurate — patterns saved, rows tracked, stitches found" },
+      { emoji: "💜", text: "Bev is now the Wovely logo in the sidebar — she lives here" },
+      { emoji: "ℹ️", text: "Little info tooltips on every section — hover or tap to learn what each area does" },
+      { emoji: "📱", text: "Mobile nav shows all your tools — nothing hidden, everything one tap away" },
+      { emoji: "🐛", text: "Fixed: last worked pattern now updates correctly when you track rows" },
+    ]
+  },
+  {
     version: "36",
     date: "2026-04-04",
     updates: [
