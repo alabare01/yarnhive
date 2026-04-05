@@ -120,22 +120,47 @@ const EmptySlotCard = ({onClick,slotIndex=0}) => (
 // Playfair italic accent span helper
 const Em = ({ children }) => <span style={{ fontFamily: PF, fontStyle: "italic", color: ACCENT }}>{children}</span>;
 
-// ─── BEV CORNER (glass card, typing animation, no speech bubble box) ────────
+// ─── BEV CORNER (glass card, typing animation) ─────────────────────────────
 const BevCorner = ({ patterns, isMobile }) => {
   const inProgress = patterns.filter(p => p.status === "in_progress" || p.started);
   const mostRecent = [...inProgress].sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0))[0];
 
-  let greeting;
+  // Inject typing keyframes once
+  useEffect(() => {
+    const styleId = "bev-typing-style";
+    if (document.getElementById(styleId)) return;
+    const style = document.createElement("style");
+    style.id = styleId;
+    style.textContent = `
+      @keyframes bevTyping { from { width: 0; opacity: 0 } to { width: 100%; opacity: 1 } }
+      @keyframes bevBlink { 0%, 100% { border-color: #9B7EC8 } 50% { border-color: transparent } }
+      .bev-typing-text {
+        display: inline-block;
+        overflow: hidden;
+        white-space: nowrap;
+        width: 0;
+        opacity: 0;
+        border-right: 2px solid #9B7EC8;
+        animation: bevTyping 1.6s steps(35) forwards, bevBlink 0.7s step-end 1.6s 4;
+        animation-fill-mode: forwards;
+        max-width: 100%;
+      }
+    `;
+    document.head.appendChild(style);
+    return () => { const el = document.getElementById(styleId); if (el) el.remove(); };
+  }, []);
+
+  let greetingText;
   if (patterns.length === 0) {
-    greeting = <>Your craft room is all set. <Em>Ready to add your first pattern?</Em> 🧶</>;
+    greetingText = "Your craft room is all set. Ready to add your first pattern? 🧶";
   } else if (inProgress.length > 0 && mostRecent && hoursSince(mostRecent.updated_at) > 72) {
-    greeting = <><Em>{mostRecent.title}</Em> is waiting for you — no rush, just saying hi 👀</>;
+    greetingText = `${mostRecent.title} is waiting for you — no rush, just saying hi 👀`;
   } else if (inProgress.length > 0 && mostRecent && hoursSince(mostRecent.updated_at) < 2) {
-    greeting = <>You're on a roll! <Em>Bev's taking notes.</Em> 💜</>;
+    greetingText = "You're on a roll! Bev's taking notes. 💜";
   } else if (new Date().getHours() >= 18 && new Date().getHours() <= 22) {
-    greeting = <>Evening crafting? <Em>Best kind of evening.</Em> 🌙</>;
+    greetingText = "Evening crafting? Best kind of evening. 🌙";
   } else {
-    greeting = <><Em>{inProgress.length} thing{inProgress.length !== 1 ? "s" : ""} in the works.</Em> Bev thinks you're doing great. 🐍</>;
+    greetingText = `${inProgress.length} thing${inProgress.length !== 1 ? "s" : ""} in the works. Bev thinks you're doing great. 🐍`;
   }
 
   return (
@@ -151,7 +176,9 @@ const BevCorner = ({ patterns, isMobile }) => {
         width: isMobile ? 68 : 88, height: "auto", flexShrink: 0,
         filter: "drop-shadow(0 6px 20px rgba(155,126,200,0.4))",
       }} />
-      <div style={{ fontFamily: INTER, fontSize: 15, color: INK, lineHeight: 1.6 }}>{greeting}</div>
+      <div style={{ fontFamily: INTER, fontSize: 15, color: INK, lineHeight: 1.6 }}>
+        <span key={greetingText} className="bev-typing-text">{greetingText}</span>
+      </div>
     </div>
   );
 };
