@@ -120,10 +120,10 @@ const EmptySlotCard = ({onClick,slotIndex=0}) => (
 // Playfair italic accent span helper
 const Em = ({ children }) => <span style={{ fontFamily: PF, fontStyle: "italic", color: ACCENT }}>{children}</span>;
 
-// ─── BEV CORNER (glass card, typing animation) ─────────────────────────────
-const BevCorner = ({ patterns, isMobile }) => {
-  const inProgress = patterns.filter(p => p.status === "in_progress" || p.started);
-  const mostRecent = [...inProgress].sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0))[0];
+// ─── BEV CORNER (glass card, typing animation, personalized messages) ───────
+const BevCorner = ({ patterns, isMobile, pct }) => {
+  const textRef = useRef(null);
+  const [msgIndex, setMsgIndex] = useState(0);
 
   // Inject typing keyframes once
   useEffect(() => {
@@ -132,42 +132,91 @@ const BevCorner = ({ patterns, isMobile }) => {
     const style = document.createElement("style");
     style.id = styleId;
     style.textContent = `
-      @keyframes bevTyping { from { width: 0; opacity: 0 } to { width: 100%; opacity: 1 } }
+      @keyframes bevTyping { from { width: 0 } to { width: 100% } }
       @keyframes bevBlink { 0%, 100% { border-color: #9B7EC8 } 50% { border-color: transparent } }
       .bev-typing-text {
         display: block;
         overflow: hidden;
         white-space: nowrap;
         width: 0;
-        opacity: 0;
+        max-width: 100%;
+        box-sizing: border-box;
         border-right: 2px solid #9B7EC8;
         animation: bevTyping 2.8s steps(45) forwards, bevBlink 0.7s step-end 2.8s 4;
         animation-fill-mode: forwards;
-        max-width: 100%;
-        box-sizing: border-box;
+      }
+      .bev-typing-done {
+        white-space: normal !important;
+        width: 100% !important;
+        border-right: none !important;
+        overflow: visible !important;
       }
     `;
     document.head.appendChild(style);
     return () => { const el = document.getElementById(styleId); if (el) el.remove(); };
   }, []);
 
-  let greetingText;
-  if (patterns.length === 0) {
-    greetingText = "Your craft room is all set. Ready to add your first pattern? 🧶";
-  } else if (inProgress.length > 0 && mostRecent && hoursSince(mostRecent.updated_at) > 72) {
-    greetingText = `${mostRecent.title} is waiting for you — no rush, just saying hi 👀`;
-  } else if (inProgress.length > 0 && mostRecent && hoursSince(mostRecent.updated_at) < 2) {
-    greetingText = "You're on a roll! Bev's taking notes. 💜";
-  } else if (new Date().getHours() >= 18 && new Date().getHours() <= 22) {
-    greetingText = "Evening crafting? Best kind of evening. 🌙";
-  } else {
-    greetingText = `${inProgress.length} thing${inProgress.length !== 1 ? "s" : ""} in the works. Bev thinks you're doing great. 🐍`;
-  }
+  // Build personalized messages from pattern data
+  const getBevMessages = () => {
+    const msgs = [];
+    const inProg = patterns.filter(p => p.status === "in_progress" || p.started);
+    const totalRowsDone = patterns.reduce((sum, p) => {
+      if (!Array.isArray(p.rows)) return sum;
+      return sum + p.rows.filter(r => r && r.done).length;
+    }, 0);
+    const mostRows = [...inProg].sort((a, b) => {
+      const ad = Array.isArray(a.rows) ? a.rows.filter(r => r && r.done).length : 0;
+      const bd = Array.isArray(b.rows) ? b.rows.filter(r => r && r.done).length : 0;
+      return bd - ad;
+    })[0];
+    const mostRowsDone = mostRows && Array.isArray(mostRows.rows) ? mostRows.rows.filter(r => r && r.done).length : 0;
+    const blankPatterns = inProg.filter(p => !p.rows || p.rows.length === 0);
+    const mostRecent = [...inProg].sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0))[0];
+    const hr = new Date().getHours();
+
+    if (mostRecent) {
+      const days = Math.floor((Date.now() - new Date(mostRecent.updated_at)) / 86400000);
+      if (days === 0) msgs.push(`You touched ${mostRecent.title} today. Bev noticed. Keep going. 💜`);
+      else if (days === 1) msgs.push(`${mostRecent.title} was just yesterday. Pick it back up? 🧶`);
+      else msgs.push(`${mostRecent.title} has been waiting ${days} days. No judgment from Bev. (Okay, a little judgment.) 👀`);
+    }
+    if (mostRows && mostRowsDone > 0) {
+      msgs.push(`Your furthest along: ${mostRows.title} with ${mostRowsDone} rows done. That's real progress. 🎉`);
+    } else if (totalRowsDone === 0 && inProg.length > 0) {
+      msgs.push(`${inProg.length} patterns saved, zero rows tracked. Bev thinks you might be a collector. No shame in that. 🐍`);
+    }
+    if (inProg.length >= 10) msgs.push(`${inProg.length} patterns in progress. Bev admires your ambition and also your optimism. 💜`);
+    else if (inProg.length > 0) msgs.push(`${inProg.length} things on the hook. Bev's keeping track so you don't have to. 🧶`);
+    if (hr >= 21) msgs.push("Late night crafting? Bev approves. Just don't lose count. 🌙");
+    else if (hr < 9) msgs.push("Morning craft session? Bev is impressed and slightly jealous of your dedication. ☀️");
+    else if (hr >= 17 && hr < 21) msgs.push("Evening crafting hour. Best hour of the day, according to Bev. 🌙");
+    if (blankPatterns.length > 0) msgs.push(`${blankPatterns.length} pattern${blankPatterns.length > 1 ? "s" : ""} saved but never opened. Bev's curious what you're saving them for. 🤔`);
+    if (msgs.length === 0) msgs.push("Your craft room is ready. What are we making today? 🧶");
+    return msgs;
+  };
+
+  const bevMessages = getBevMessages();
+
+  // Rotate messages
+  useEffect(() => {
+    if (bevMessages.length <= 1) return;
+    const t = setInterval(() => setMsgIndex(i => (i + 1) % bevMessages.length), 8000);
+    return () => clearInterval(t);
+  }, [bevMessages.length]);
+
+  // After typing animation completes, allow text wrapping
+  useEffect(() => {
+    if (textRef.current) textRef.current.classList.remove("bev-typing-done");
+    const t = setTimeout(() => { if (textRef.current) textRef.current.classList.add("bev-typing-done"); }, 5600);
+    return () => clearTimeout(t);
+  }, [msgIndex]);
+
+  const currentMsg = bevMessages[msgIndex % bevMessages.length];
 
   return (
     <div style={{
       gridColumn: "1 / -1",
-      display: "flex", alignItems: "center", gap: 16,
+      display: "flex", alignItems: "flex-start", gap: 12, width: "100%",
       padding: "20px 24px", overflow: "hidden",
       background: GLASS.bg, backdropFilter: GLASS.blur, WebkitBackdropFilter: GLASS.blur,
       borderRadius: GLASS.radius, border: GLASS.border, boxShadow: GLASS.shadow,
@@ -178,7 +227,7 @@ const BevCorner = ({ patterns, isMobile }) => {
         filter: "drop-shadow(0 6px 20px rgba(155,126,200,0.4))",
       }} />
       <div style={{ fontFamily: INTER, fontSize: 15, color: INK, lineHeight: 1.6, flex: 1, minWidth: 0, overflow: "hidden" }}>
-        <span key={greetingText} className="bev-typing-text">{greetingText}</span>
+        <span key={currentMsg} ref={textRef} className="bev-typing-text">{currentMsg}</span>
       </div>
     </div>
   );
@@ -365,7 +414,7 @@ const CollectionView = ({userPatterns,starterPatterns,cat,setCat,search,setSearc
             </p>
           </div>
 
-          <BevCorner patterns={visible} isMobile={isMobile} />
+          <BevCorner patterns={visible} isMobile={isMobile} pct={pct} />
 
           <OnTheHook inProgress={inProgress} openDetail={openDetail} onAddPattern={onAddPattern} pct={pct} catFallbackPhoto={catFallbackPhoto} Photo={Photo} isMobile={isMobile} />
 
