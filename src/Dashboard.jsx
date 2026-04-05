@@ -246,7 +246,7 @@ const OnTheHook = ({ inProgress, openDetail, onAddPattern, pct, catFallbackPhoto
     <div>
       {sectionLabel}
       {/* Hero card — glass */}
-      <div onClick={() => openDetail(hero)} style={{
+      <div key={`${hero.id}-${hero.updated_at}`} onClick={() => openDetail(hero)} style={{
         background: GLASS.bg, backdropFilter: GLASS.blur, WebkitBackdropFilter: GLASS.blur,
         borderRadius: GLASS.radius, boxShadow: GLASS.shadow, border: GLASS.border,
         overflow: "hidden", cursor: "pointer", width: "100%", maxWidth: "100%", boxSizing: "border-box",
@@ -374,7 +374,6 @@ const CollectionView = ({userPatterns,starterPatterns,cat,setCat,search,setSearc
   const visible=allPatterns.filter(p=>p.status!=="deleted");
   const starterPats=visible.filter(p=>p.isStarter);
   const addedPats=visible.filter(p=>!p.isStarter);
-  console.log("PATTERNS: userPatterns="+userPatterns.length+", starters="+starterPats.length+", user's own="+addedPats.length+", visible total="+visible.length);
   const filteredAll=[...addedPats,...starterPats].filter(p=>(cat==="All"||p.cat===cat)&&(!search||p.title.toLowerCase().includes(search.toLowerCase())));
   const inProgress=visible.filter(p=>{const v=pct(p);return !p.isStarter&&p.status!=="parked"&&(p.status==="in_progress"||p.started||(v>0&&v<100))&&v<100;}).sort((a,b)=>new Date(b.updated_at||0)-new Date(a.updated_at||0));
   const [viewMode,setViewMode]=useState("grid");

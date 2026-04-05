@@ -1994,7 +1994,8 @@ export default function Wovely() {
   const knownPaths=["/","/hive","/builds","/browse","/stash","/tools","/stitch-check","/stitch-vision","/shopping","/profile","/hive-vision","/master-doc","/privacy","/terms"];
   if(!knownPaths.some(p=>location.pathname===p||location.pathname.startsWith("/pattern/")||location.pathname.startsWith("/hive/"))) return <Navigate to="/" replace/>;
   const detailOnSave=u=>{
-    setUserPatterns(prev=>prev.map(p=>p.id===u.id?u:p));setStarterPatterns(prev=>prev.map(p=>p.id===u.id?u:p));setSelected(u);
+    const withTimestamp={...u,updated_at:new Date().toISOString()};
+    setUserPatterns(prev=>prev.map(p=>p.id===u.id?withTimestamp:p));setStarterPatterns(prev=>prev.map(p=>p.id===u.id?withTimestamp:p));setSelected(withTimestamp);
     const user=supabaseAuth.getUser();const session=getSession();
     const pid=u._supabaseId||u.id;
     if(user&&session&&typeof pid==="string"&&!pid.startsWith("local_")&&!pid.startsWith("onboard_")&&!pid.startsWith("starter_")){
