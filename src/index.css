@@ -9,7 +9,19 @@ body {
   background-position: center center;
   background-repeat: no-repeat;
   background-attachment: fixed;
+  background-origin: border-box;
   background-color: #FAF8F5;
+}
+
+@media (max-width: 768px) {
+  body {
+    background-size: cover;
+    background-position: center top;
+    background-attachment: scroll;
+  }
+  body::before {
+    background-attachment: scroll;
+  }
 }
 
 body::before {
