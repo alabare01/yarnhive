@@ -1748,7 +1748,7 @@ export default function Wovely() {
     }
   },[]);
 
-  const handleSignOut = async () => { posthog.reset(); await supabaseAuth.signOut(); setAuthed(false); setIsPro(false); setUserPatterns([]); localStorage.removeItem("yh_last_url"); localStorage.removeItem("yh_is_pro"); document.cookie="wovely_authed=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/"; navigate("/"); };
+  const handleSignOut = async () => { posthog.reset(); await supabaseAuth.signOut(); setAuthed(false); setIsPro(false); setUserPatterns([]); localStorage.removeItem("yh_is_pro"); try { sessionStorage.removeItem("wovely_redirect_intent"); } catch {} document.cookie="wovely_authed=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/"; navigate("/"); };
 
   // Navigation helper — translates view keys to URL paths
   const navigateToView = useCallback((v, patternId) => {
@@ -1835,13 +1835,11 @@ export default function Wovely() {
     else if(authed&&authChecked&&patternsFetched&&allP.length>0) navigate("/",{replace:true});
   },[view,location.pathname,userPatterns,starterPatterns,authed,authChecked,patternsFetched]);
 
-  // Last URL memory: save pattern detail URLs on navigate
-  // Clearing happens only on intentional actions (sign out, explicit dashboard nav)
+  // Last URL memory: save pattern detail URLs to sessionStorage with timestamp
   useEffect(()=>{
     if(!authed) return;
     if((location.pathname.startsWith("/pattern/")||location.pathname.startsWith("/hive/")) && patternIdFromPath(location.pathname)){
-      console.log("[Wovely] yh_last_url saved:", location.pathname);
-      localStorage.setItem("yh_last_url",location.pathname);
+      try { sessionStorage.setItem("wovely_redirect_intent",JSON.stringify({url:location.pathname,storedAt:Date.now()})); } catch {}
     }
   },[location.pathname,authed]);
 
@@ -1953,8 +1951,19 @@ export default function Wovely() {
     if(user) posthog.identify(user.id,{email:user.email});
     posthog.capture("user_logged_in");
     setAuthed(true);document.cookie="wovely_authed=1;path=/;max-age=31536000";
-    const lastUrl=localStorage.getItem("yh_last_url");
-    navigate(lastUrl&&(lastUrl.startsWith("/pattern/")||lastUrl.startsWith("/hive/"))?lastUrl.replace("/hive/","/pattern/"):"/");
+    // Post-login redirect: only restore pattern detail URLs saved within 15 minutes
+    let postLoginPath = "/";
+    try {
+      const raw = sessionStorage.getItem("wovely_redirect_intent");
+      if (raw) {
+        const { url, storedAt } = JSON.parse(raw);
+        if (url && (url.startsWith("/pattern/") || url.startsWith("/hive/")) && storedAt && (Date.now() - storedAt) < 15 * 60 * 1000) {
+          postLoginPath = url.replace("/hive/", "/pattern/");
+        }
+        sessionStorage.removeItem("wovely_redirect_intent");
+      }
+    } catch {}
+    navigate(postLoginPath);
     setShowWelcomeToast(true);
     setTimeout(()=>setShowWelcomeToast(false),3000);
     showEmailBannerIfNeeded();
@@ -1962,16 +1971,25 @@ export default function Wovely() {
   };
 
   // Restore last pattern URL on boot (runs once when authed on / or /hive)
+  // Only restores if stored within 15 minutes (quick return scenario)
   const lastUrlRestoreRef = useRef(false);
   useEffect(()=>{
     if(lastUrlRestoreRef.current) return;
     if(!authed||!authChecked) return;
     if(location.pathname!=="/"&&location.pathname!=="/hive") return;
-    const lastUrl=localStorage.getItem("yh_last_url");
-    if(lastUrl&&(lastUrl.startsWith("/pattern/")||lastUrl.startsWith("/hive/"))){
-      lastUrlRestoreRef.current=true;
-      navigate(lastUrl.replace("/hive/","/pattern/"), {replace:true});
-    }
+    try {
+      const raw = sessionStorage.getItem("wovely_redirect_intent");
+      if (raw) {
+        const { url, storedAt } = JSON.parse(raw);
+        if (url && (url.startsWith("/pattern/") || url.startsWith("/hive/")) && storedAt && (Date.now() - storedAt) < 15 * 60 * 1000) {
+          lastUrlRestoreRef.current = true;
+          sessionStorage.removeItem("wovely_redirect_intent");
+          navigate(url.replace("/hive/", "/pattern/"), { replace: true });
+          return;
+        }
+        sessionStorage.removeItem("wovely_redirect_intent");
+      }
+    } catch {}
   },[authed,authChecked,location.pathname,navigate]);
 
   // Secret founders dashboard — no auth required
