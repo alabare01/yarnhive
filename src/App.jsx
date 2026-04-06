@@ -978,10 +978,10 @@ const YarnStash = () => {
   const addYarn=()=>{if(!brand||!name)return;setStash(p=>[...p,{id:Date.now(),brand,name,weight,color,colorCode:"#8A8278",yardage:parseInt(yardage)||0,skeins:parseInt(skeins)||1,used:0}]);setBrand("");setName("");setColor("");setYardage("");setSkeins("1");setAdding(false);};
   const{isDesktop:isD}=useBreakpoint();
   const SC_LABEL = {fontSize:10,fontVariant:"small-caps",color:T.ink3,textTransform:"lowercase",letterSpacing:".14em",fontWeight:500};
-  const CARD = {background:T.card,borderRadius:16,padding:24,boxShadow:T.shadowLg};
+  const CARD = {background:"rgba(255,255,255,0.82)",backdropFilter:"blur(16px)",WebkitBackdropFilter:"blur(16px)",borderRadius:20,border:"1px solid rgba(255,255,255,0.6)",padding:24,boxShadow:"0 2px 4px rgba(0,0,0,0.04), 0 8px 32px rgba(155,126,200,0.13)"};
 
   if(stash.length===0&&!adding) return (
-    <div style={{padding:isD?"0 0 100px":"0 18px 100px"}}>
+    <div style={{padding:isD?"24px 24px 100px":"0 18px 100px",maxWidth:960,margin:"0 auto"}}>
       <div style={{...CARD,textAlign:"center",padding:"60px 32px"}}>
         <div style={{fontSize:48,marginBottom:16}}>🧶</div>
         <div style={{fontFamily:T.serif,fontSize:22,fontWeight:700,color:T.ink,marginBottom:8}}>Your stash is empty</div>
@@ -992,7 +992,7 @@ const YarnStash = () => {
   );
 
   return (
-    <div style={{padding:isD?"0 0 100px":"0 18px 100px"}}>
+    <div style={{padding:isD?"24px 24px 100px":"0 18px 100px",maxWidth:960,margin:"0 auto"}}>
       {/* Stats pills */}
       <div style={{display:"flex",gap:12,marginBottom:24}}>
         {[{label:"skeins",val:stash.reduce((a,y)=>a+y.skeins,0)},{label:"yardage",val:totalYards.toLocaleString()},{label:"yarn types",val:stash.length}].map(s=>(
