@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { T, useBreakpoint } from "./theme.jsx";
 import { PILL } from "./constants.js";
 import { SUPABASE_URL, SUPABASE_ANON_KEY, getSession, supabaseAuth } from "./supabase.js";
@@ -242,6 +243,7 @@ const BevCorner = ({ patterns, isMobile }) => {
 
 // ─── ON THE HOOK ────────────────────────────────────────────────────────────
 const OnTheHook = ({ inProgress, openDetail, onAddPattern, pct, catFallbackPhoto, Photo, isMobile }) => {
+  const navigate = useNavigate();
   const sectionLabel = <div style={{ display: "flex", alignItems: "center", marginBottom: 12 }}><span style={{ fontFamily: PF, fontSize: 20, fontWeight: 600, color: NAVY }}>On the Hook</span><InfoTooltip text="Your most recently touched pattern — pick up right where you left off." /></div>;
 
   if (inProgress.length === 0) {
@@ -358,6 +360,12 @@ const OnTheHook = ({ inProgress, openDetail, onAddPattern, pct, catFallbackPhoto
           )}
         </div>
       </div>
+      {/* Contextual link to full On the Hook page */}
+      {inProgress.length > 0 && (
+        <div onClick={() => navigate("/builds")} style={{ marginTop: 10, display: "flex", alignItems: "center", justifyContent: "flex-end", cursor: "pointer" }}>
+          <span style={{ fontFamily: INTER, fontSize: 12, fontWeight: 500, color: ACCENT, letterSpacing: "0.01em" }}>View all in progress →</span>
+        </div>
+      )}
     </div>
   );
 };
