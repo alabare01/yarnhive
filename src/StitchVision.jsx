@@ -281,7 +281,7 @@ const StitchVision = ({ isPro, onUpgrade }) => {
   const usage = getUsage();
   const usesLeft = isPro ? "unlimited" : Math.max(0, 3 - (usage.month === currentMonth() ? usage.count : 0));
   return (
-    <div style={{ maxWidth: 480, margin: "0 auto", padding: "40px 20px", textAlign: "center" }}>
+    <div style={{ maxWidth: 480, margin: "0 auto", padding: "40px 24px", textAlign: "center" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 6 }}>
         <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 26, fontWeight: 700, color: "#2D3A7C" }}>Stitch-O-Vision</div>
         <img src="/bev_neutral.png" alt="Bev" style={{ width: 20, height: 20, objectFit: "contain" }} />
