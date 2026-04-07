@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { initErrorReporter, setErrorReporterUser } from './utils/errorReporter.js';
-import { useNavigate, useLocation, useParams, Routes, Route, Navigate } from "react-router-dom";
+import { useNavigate, useLocation, useParams, Routes, Route, Navigate, useBlocker } from "react-router-dom";
 import posthog from "posthog-js";
 import { T, useBreakpoint, Field } from "./theme.jsx";
 import { SUPABASE_URL, SUPABASE_ANON_KEY, APP_ORIGIN, saveSession, getSession, supabaseAuth } from "./supabase.js";
@@ -1650,6 +1650,24 @@ export default function Wovely() {
   useEffect(() => {
     initErrorReporter();
   }, []);
+
+  // Navigation guard — warn before leaving during active import
+  const isImportActive = addOpen || addMinimized || imageImportOpen || imageMinimized;
+  useEffect(() => {
+    if (!isImportActive) return;
+    const handler = (e) => { e.preventDefault(); };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isImportActive]);
+
+  const blocker = useBlocker(isImportActive);
+  useEffect(() => {
+    if (blocker.state === "blocked") {
+      const leave = window.confirm("Wovely is still working on your pattern. If you leave now, you\u2019ll need to upload again. Stay?");
+      if (leave) blocker.proceed();
+      else blocker.reset();
+    }
+  }, [blocker]);
 
   // Guard to prevent concurrent profile fetches from racing
   const isFetchingProfile = useRef(false);

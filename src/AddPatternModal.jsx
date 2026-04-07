@@ -790,7 +790,7 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade,onMinimize,onExtractionStart,
         isPDF ? renderPDFCoverImage(f) : Promise.resolve(null)
       ]);
       clearInterval(intv1);
-      if(!uploaded){setStage("error");setErrorMsg("Upload failed — check your connection and try again.");return;}
+      if(!uploaded){onExtractionEnd?.();setStage("error");setErrorMsg("Upload failed — check your connection and try again.");return;}
       // Upload PDF cover image to Cloudinary using yarnhive_patterns preset
       let coverCloudinaryUrl=null;
       if(pdfCoverDataUrl){
