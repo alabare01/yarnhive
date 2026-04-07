@@ -9,7 +9,7 @@ import Calculators from "./Calculators.jsx";
 import StitchCheck from "./StitchCheck.jsx";
 import StitchVision from "./StitchVision.jsx";
 import StitchResultPage from "./StitchResultPage.jsx";
-import Auth, { WaitlistPopup } from "./Auth.jsx";
+import Auth from "./Auth.jsx";
 import PatternHeader from "./PatternHeader.jsx";
 import RowManager, { ensureRepeatBrackets } from "./RowManager.jsx";
 import AddPatternModal, { uploadPatternFile, buildRowsFromComponents } from "./AddPatternModal.jsx";
@@ -2010,7 +2010,7 @@ export default function Wovely() {
   if(!authed) {
     // Auth guard: redirect any non-root path to / when not logged in
     if(location.pathname!=="/") return <Navigate to="/" replace/>;
-    return <><CSS/><WaitlistPopup/><Auth onEnter={handleSignIn} onEnterAsNew={handleNewSignup}/><LegalFooter/></>;
+    return <><CSS/><Auth onEnter={handleSignIn} onEnterAsNew={handleNewSignup}/><LegalFooter/></>;
   }
   // Unknown routes redirect to /
   const knownPaths=["/","/hive","/builds","/browse","/stash","/tools","/stitch-check","/stitch-vision","/shopping","/profile","/hive-vision","/master-doc","/privacy","/terms"];

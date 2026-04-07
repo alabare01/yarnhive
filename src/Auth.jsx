@@ -87,47 +87,6 @@ const FormCard = ({cardStyle,isSignup,email,setEmail,pass,setPass,confirmPass,se
   );
 };
 
-export const WaitlistPopup = () => {
-  const [show,setShow]=useState(false),[wlEmail,setWlEmail]=useState(""),[wlPhone,setWlPhone]=useState(""),[submitted,setSubmitted]=useState(false),[saving,setSaving]=useState(false);
-  useEffect(()=>{
-    if(getSession()) return;
-    if(document.cookie.includes("wovely_authed=1")) return;
-    if(localStorage.getItem("yh_popup_dismissed")==="1") return;
-    const last=parseInt(localStorage.getItem("yh_popup_last_shown")||"0",10);
-    if(Date.now()-last<86400000) return;
-    const t=setTimeout(()=>{setShow(true);localStorage.setItem("yh_popup_last_shown",String(Date.now()));},3000);
-    return ()=>clearTimeout(t);
-  },[]);
-  const handleSubmit=async()=>{
-    if(!wlEmail.trim())return;
-    setSaving(true);
-    try{await fetch(`${SUPABASE_URL}/rest/v1/waitlist`,{method:"POST",headers:{"apikey":SUPABASE_ANON_KEY,"Content-Type":"application/json","Prefer":"return=minimal"},body:JSON.stringify({email:wlEmail.trim(),phone:wlPhone.trim()||null,platform:"web_popup"})});}catch{}
-    setSaving(false);setSubmitted(true);
-    setTimeout(()=>setShow(false),2000);
-  };
-  const dismiss=()=>{setShow(false);localStorage.setItem("yh_popup_dismissed","1");};
-  if(!show)return null;
-  return(
-    <div style={{position:"fixed",inset:0,zIndex:800,display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
-      <div onClick={dismiss} style={{position:"absolute",inset:0,background:"rgba(0,0,0,.5)"}}/>
-      <div className="fu" style={{position:"relative",zIndex:1,background:T.modal,borderRadius:20,padding:40,maxWidth:420,width:"100%",boxShadow:"0 20px 60px rgba(155,126,200,.2)"}}>
-        <button onClick={dismiss} style={{position:"absolute",top:14,right:16,background:"none",border:"none",color:T.ink3,fontSize:20,cursor:"pointer"}}>×</button>
-        {submitted?<div style={{textAlign:"center",padding:"20px 0"}}><div style={{fontSize:40,marginBottom:12}}>🧶</div><div style={{fontFamily:T.serif,fontSize:20,fontWeight:700,color:T.ink}}>You're on the list!</div><div style={{fontSize:14,color:T.ink3,marginTop:8}}>We'll be in touch.</div></div>:(
-          <>
-            <div style={{textAlign:"center",marginBottom:24}}>
-              <div style={{fontFamily:T.serif,fontSize:26,fontWeight:700,color:T.ink,lineHeight:1.2}}>Your next favorite pattern is waiting.</div>
-              <div style={{fontSize:14,color:T.ink3,marginTop:8,lineHeight:1.6}}>Get your first month of Pro free when we launch. No credit card needed.</div>
-            </div>
-            <div style={{marginBottom:12}}><input value={wlEmail} onChange={e=>setWlEmail(e.target.value)} placeholder="your@email.com" type="email" style={{width:"100%",padding:"13px 16px",background:"transparent",border:"none",borderBottom:"2px solid transparent",borderRadius:0,color:T.ink,fontSize:15,outline:"none",transition:"border-color .2s"}} onFocus={e=>e.target.style.borderBottomColor=T.terra} onBlur={e=>e.target.style.borderBottomColor="transparent"}/></div>
-            <div style={{marginBottom:16}}><input value={wlPhone} onChange={e=>setWlPhone(e.target.value)} placeholder="(555) 123-4567" type="tel" style={{width:"100%",padding:"13px 16px",background:"transparent",border:"none",borderBottom:"2px solid transparent",borderRadius:0,color:T.ink,fontSize:15,outline:"none",transition:"border-color .2s"}} onFocus={e=>e.target.style.borderBottomColor=T.terra} onBlur={e=>e.target.style.borderBottomColor="transparent"}/></div>
-            <button onClick={handleSubmit} disabled={saving} style={{width:"100%",background:T.terra,color:"#fff",border:"none",borderRadius:9999,padding:"15px",fontSize:14,fontWeight:600,cursor:"pointer",opacity:saving?.6:1}}>{saving?"Joining…":"Claim my free month →"}</button>
-          </>
-        )}
-      </div>
-    </div>
-  );
-};
-
 const Auth = ({onEnter,onEnterAsNew}) => {
   const [screen,setScreen]=useState("welcome"),[email,setEmail]=useState(""),[pass,setPass]=useState(""),[confirmPass,setConfirmPass]=useState("");
   const [loading,setLoading]=useState(false),[authError,setAuthError]=useState(null);
