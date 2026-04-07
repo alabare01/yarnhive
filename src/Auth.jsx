@@ -62,11 +62,11 @@ const INPUT_STYLE = {
 /* ── Left Column: Product Preview ── */
 const ProductPreview = () => {
   const bevText = useTypewriter(BEV_LINES);
-  const C = 2 * Math.PI * 22; // circumference for score circle r=22
+  const R = 26, CIRC = 2 * Math.PI * R, SC_OFF = CIRC * (1 - 0.97); // score circle r=26, 97%
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 18, padding: "48px 40px", justifyContent: "center", minHeight: "100vh", boxSizing: "border-box" }}>
-      <style>{`@keyframes drawCircle{from{stroke-dashoffset:138.2}to{stroke-dashoffset:4.1}}@keyframes bevPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,0.4)}50%{box-shadow:0 0 0 8px rgba(255,255,255,0)}}@keyframes cursorBlink{0%,100%{opacity:1}50%{opacity:0}}`}</style>
+      <style>{`@keyframes drawCircle{from{stroke-dashoffset:${CIRC}}to{stroke-dashoffset:${SC_OFF}}}@keyframes bevPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,0.4)}50%{box-shadow:0 0 0 8px rgba(255,255,255,0)}}@keyframes cursorBlink{0%,100%{opacity:1}50%{opacity:0}}`}</style>
 
       {/* Logo */}
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -121,56 +121,53 @@ const ProductPreview = () => {
         </div>
       </div>
 
-      {/* Card 2 — BevCheck */}
-      <div style={GLASS}>
-        <div style={{ fontSize: 9.5, fontWeight: 700, color: "#9B7EC8", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 12 }}>BevCheck</div>
-        <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-              <img src="https://res.cloudinary.com/dmaupzhcx/image/upload/v1775221393/covers/nhkp1grswddqxw0np1ux.jpg" alt="" style={{ width: 56, height: 56, borderRadius: 10, objectFit: "cover", flexShrink: 0, boxShadow: "0 2px 8px rgba(45,58,124,0.12)" }} />
-              <div>
+      {/* Card 2 — BevCheck (full-height image panel) */}
+      <div style={{ background: "rgba(255,255,255,0.84)", border: "1px solid rgba(155,126,200,0.18)", borderRadius: 14, overflow: "hidden", display: "flex" }}>
+        <img src="https://res.cloudinary.com/dmaupzhcx/image/upload/v1775221393/covers/nhkp1grswddqxw0np1ux.jpg" alt="" style={{ width: 90, flexShrink: 0, objectFit: "cover" }} />
+        <div style={{ flex: 1, padding: "14px 16px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+          <div>
+            <div style={{ fontSize: 9.5, fontWeight: 700, color: "#9B7EC8", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 8 }}>BevCheck</div>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 13, fontWeight: 500, color: "#2D2D4E" }}>Mommy Fiora the Forest Dragon</div>
                 <div style={{ fontSize: 11, color: "#6B6B8A", marginTop: 2 }}>Pattern reviewed &middot; Clean result</div>
               </div>
-            </div>
-            <div style={{ fontSize: 11, fontStyle: "italic", color: "#6B6B8A", lineHeight: 1.5, overflow: "hidden", maxHeight: 34, WebkitMaskImage: "linear-gradient(to right, #000 70%, transparent 100%)", maskImage: "linear-gradient(to right, #000 70%, transparent 100%)" }}>
-              Well-structured with accurate stitch counts throughout. All round sequences verified...
+              <div style={{ flexShrink: 0 }}>
+                <svg width="64" height="64" viewBox="0 0 64 64">
+                  <circle cx="32" cy="32" r={R} fill="none" stroke="#EDE4F7" strokeWidth="4" />
+                  <circle cx="32" cy="32" r={R} fill="none" stroke="#5B9B6B" strokeWidth="4"
+                    strokeLinecap="round" strokeDasharray={`${CIRC} ${CIRC}`}
+                    style={{ animation: "drawCircle 0.8s ease-out forwards", transformOrigin: "center", transform: "rotate(-90deg)" }} />
+                  <text x="32" y="32" textAnchor="middle" dominantBaseline="middle"
+                    style={{ fontSize: 13, fontWeight: 700, fill: "#2D2D4E" }}>97%</text>
+                </svg>
+              </div>
             </div>
           </div>
-          {/* Score circle */}
-          <div style={{ flexShrink: 0 }}>
-            <svg width="56" height="56" viewBox="0 0 56 56">
-              <circle cx="28" cy="28" r="22" fill="none" stroke="#EDE4F7" strokeWidth="4" />
-              <circle cx="28" cy="28" r="22" fill="none" stroke="#5B9B6B" strokeWidth="4"
-                strokeLinecap="round" strokeDasharray="138.2 138.2"
-                style={{ animation: "drawCircle 0.8s ease-out forwards", transformOrigin: "center", transform: "rotate(-90deg)" }} />
-              <text x="28" y="28" textAnchor="middle" dominantBaseline="middle"
-                style={{ fontSize: 11, fontWeight: 600, fill: "#2D2D4E" }}>97%</text>
-            </svg>
+          <div style={{ fontSize: 11, fontStyle: "italic", color: "#6B6B8A", lineHeight: 1.5, marginTop: 8, overflow: "hidden", maxHeight: 34, WebkitMaskImage: "linear-gradient(to right, #000 70%, transparent 100%)", maskImage: "linear-gradient(to right, #000 70%, transparent 100%)" }}>
+            Well-structured with accurate stitch counts throughout. All round sequences verified...
           </div>
         </div>
       </div>
 
-      {/* Card 3 — Stitch-O-Vision */}
-      <div style={GLASS}>
-        <div style={{ fontSize: 9.5, fontWeight: 700, color: "#9B7EC8", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10 }}>Stitch-O-Vision</div>
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <img src="https://res.cloudinary.com/dmaupzhcx/image/upload/v1775216417/covers/txihqunzlfgnu9i7pkdw.jpg" alt="" style={THUMB} />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 15, fontWeight: 600, color: "#2D2D4E" }}>Gingham Stitch</div>
-            <div style={{ fontSize: 11, color: "#6B6B8A", marginTop: 2 }}>Identified from pattern cover</div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6 }}>
-              <div style={{ flex: 1, height: 3, borderRadius: 2, background: "#EDE4F7" }}>
-                <div style={{ width: "91%", height: "100%", borderRadius: 2, background: "#5B9B6B" }} />
-              </div>
-              <span style={{ fontSize: 11, fontWeight: 500, color: "#5B9B6B", flexShrink: 0 }}>91% match</span>
-            </div>
+      {/* Card 3 — Stitch-O-Vision (full-height image panel) */}
+      <div style={{ background: "rgba(255,255,255,0.84)", border: "1px solid rgba(155,126,200,0.18)", borderRadius: 14, overflow: "hidden", display: "flex" }}>
+        <img src="https://vbtsdyxvqqwxjzpuseaf.supabase.co/storage/v1/object/public/pattern-files/stitch-vision/6e1a02d9-c210-4bc4-968e-dde3435565d1/1775515182975.jpg" alt="" style={{ width: 90, flexShrink: 0, objectFit: "cover" }} />
+        <div style={{ flex: 1, padding: "14px 16px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+          <div>
+            <div style={{ fontSize: 9.5, fontWeight: 700, color: "#9B7EC8", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 8 }}>Stitch-O-Vision</div>
+            <div style={{ fontSize: 15, fontWeight: 600, color: "#2D2D4E" }}>Moss Stitch</div>
+            <div style={{ fontSize: 10, fontStyle: "italic", color: "#6B6B8A", marginTop: 2 }}>Also known as: Linen Stitch, Granite Stitch</div>
+            <span style={TAG("rgba(92,158,122,0.15)", "#5B9B6B")}>&nbsp;High confidence&nbsp;</span>
           </div>
-        </div>
-        <div style={{ marginTop: 10 }}>
-          <a href="/stitch-vision" style={{ fontSize: 11, color: "#9B7EC8", fontWeight: 600, textDecoration: "none" }}>
-            Point your camera at any stitch &mdash; Bev will name it &rarr;
-          </a>
+          <div style={{ fontSize: 11, color: "#6B6B8A", lineHeight: 1.5, marginTop: 8, overflow: "hidden", maxHeight: 34, WebkitMaskImage: "linear-gradient(to right, #000 70%, transparent 100%)", maskImage: "linear-gradient(to right, #000 70%, transparent 100%)" }}>
+            Creates a dense, slightly textured fabric with a woven appearance. Popular for blankets, scarves, and garments...
+          </div>
+          <div style={{ marginTop: 8 }}>
+            <a href="/stitch-vision" style={{ fontSize: 11, color: "#9B7EC8", fontWeight: 600, textDecoration: "none" }}>
+              Point your camera at any stitch &mdash; Bev will name it &rarr;
+            </a>
+          </div>
         </div>
       </div>
 
