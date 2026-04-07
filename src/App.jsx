@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { initErrorReporter, setErrorReporterUser } from './utils/errorReporter.js';
-import { useNavigate, useLocation, useParams, Routes, Route, Navigate, useBlocker } from "react-router-dom";
+import { useNavigate, useLocation, useParams, Routes, Route, Navigate } from "react-router-dom";
 import posthog from "posthog-js";
 import { T, useBreakpoint, Field } from "./theme.jsx";
 import { SUPABASE_URL, SUPABASE_ANON_KEY, APP_ORIGIN, saveSession, getSession, supabaseAuth } from "./supabase.js";
@@ -1653,21 +1653,13 @@ export default function Wovely() {
 
   // Navigation guard — warn before leaving during active import
   const isImportActive = addOpen || addMinimized || imageImportOpen || imageMinimized;
+  const [pendingNav, setPendingNav] = useState(null); // {view, patternId} when blocked
   useEffect(() => {
     if (!isImportActive) return;
     const handler = (e) => { e.preventDefault(); };
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
   }, [isImportActive]);
-
-  const blocker = useBlocker(isImportActive);
-  useEffect(() => {
-    if (blocker.state === "blocked") {
-      const leave = window.confirm("Wovely is still working on your pattern. If you leave now, you\u2019ll need to upload again. Stay?");
-      if (leave) blocker.proceed();
-      else blocker.reset();
-    }
-  }, [blocker]);
 
   // Guard to prevent concurrent profile fetches from racing
   const isFetchingProfile = useRef(false);
@@ -1769,7 +1761,7 @@ export default function Wovely() {
   const handleSignOut = async () => { posthog.reset(); await supabaseAuth.signOut(); setAuthed(false); setIsPro(false); setUserPatterns([]); localStorage.removeItem("yh_is_pro"); try { sessionStorage.removeItem("wovely_redirect_intent"); } catch {} document.cookie="wovely_authed=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/"; navigate("/"); };
 
   // Navigation helper — translates view keys to URL paths
-  const navigateToView = useCallback((v, patternId) => {
+  const doNavigate = useCallback((v, patternId) => {
     if (v === "detail" && patternId) {
       navigate("/pattern/" + encodeURIComponent(patternId));
     } else {
@@ -1777,6 +1769,10 @@ export default function Wovely() {
       if (path !== location.pathname) navigate(path);
     }
   }, [navigate, location.pathname]);
+  const navigateToView = useCallback((v, patternId) => {
+    if (isImportActive) { setPendingNav({ view: v, patternId }); return; }
+    doNavigate(v, patternId);
+  }, [isImportActive, doNavigate]);
 
   // Starter patterns are hardcoded in DEFAULT_STARTERS — no DB fetch needed
 
@@ -2181,9 +2177,25 @@ export default function Wovely() {
   const inProgress=allPatterns.filter(p=>{const v=pct(p);return !p.isStarter&&p.status!=="deleted"&&p.status!=="parked"&&((p.status==="in_progress"&&v<100)||(p.started&&v<100)||(v>0&&v<100));});
   const TITLE_MAP={collection:null,wip:"On the Hook",browse:"Find Patterns",stash:"Stash & Notions",calculator:"The Workbench",shopping:"Supply Run",profile:"Profile & Settings",privacy:"Privacy Policy",terms:"Terms of Service"};
 
+  const navGuardModal = pendingNav && (
+    <div style={{position:"fixed",inset:0,zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+      <div onClick={()=>setPendingNav(null)} style={{position:"absolute",inset:0,background:"rgba(45,58,124,0.25)",backdropFilter:"blur(2px)",WebkitBackdropFilter:"blur(2px)"}}/>
+      <div style={{position:"relative",zIndex:1,background:"rgba(255,255,255,0.82)",backdropFilter:"blur(16px)",WebkitBackdropFilter:"blur(16px)",border:"1px solid rgba(255,255,255,0.45)",borderRadius:16,boxShadow:"0 4px 24px rgba(45,58,124,0.08)",padding:"28px 24px",maxWidth:360,width:"100%",textAlign:"center"}}>
+        <img src="/bev_neutral.png" alt="Bev" style={{width:48,height:48,objectFit:"contain",marginBottom:12}}/>
+        <div style={{fontFamily:"'Playfair Display',serif",fontSize:18,fontWeight:700,color:"#2D2D4E",marginBottom:8}}>Still working on your pattern</div>
+        <div style={{fontSize:13,color:"#6B6B8A",lineHeight:1.6,marginBottom:20}}>Wovely is still importing your pattern. If you leave now, you'll need to upload again.</div>
+        <div style={{display:"flex",gap:10}}>
+          <button onClick={()=>{const nav=pendingNav;setPendingNav(null);setAddOpen(false);setAddMinimized(false);setImageImportOpen(false);setImageMinimized(false);doNavigate(nav.view,nav.patternId);}} style={{flex:1,background:"transparent",border:`1px solid #EDE4F7`,borderRadius:10,padding:"11px 0",fontSize:13,fontWeight:500,color:"#6B6B8A",cursor:"pointer"}}>Leave</button>
+          <button onClick={()=>setPendingNav(null)} style={{flex:1,background:"#9B7EC8",border:"none",borderRadius:10,padding:"11px 0",fontSize:13,fontWeight:600,color:"#fff",cursor:"pointer",boxShadow:"0 4px 16px rgba(155,126,200,.3)"}}>Stay</button>
+        </div>
+      </div>
+    </div>
+  );
+
   if(isDesktop) return (
     <div style={{display:"flex",minHeight:"100vh",width:"100%",background:"transparent",fontFamily:T.sans,position:"relative"}}>
       <CSS/>
+      {navGuardModal}
       <WhatsNewModal/>
       {showOnboarding&&<OnboardingScreen onComplete={()=>{setShowOnboarding(false);setJustCompletedOnboarding(true);localStorage.removeItem("yh_welcome_dismissed");navigate("/profile");}} onBackToAuth={async()=>{setShowOnboarding(false);await supabaseAuth.signOut();setAuthed(false);setIsPro(false);setUserPatterns([]);}}/>}
       {showPaywall&&<PaywallGate patternCount={userPatterns.length} onClose={()=>setShowPaywall(false)} onUpgrade={()=>setShowPaywall(false)}/>}
@@ -2231,6 +2243,7 @@ export default function Wovely() {
   return (
     <div style={{fontFamily:T.sans,background:"transparent",minHeight:"100vh",maxWidth:isTablet?680:430,margin:"0 auto",display:"flex",flexDirection:"column",position:"relative"}}>
       <CSS/>
+      {navGuardModal}
       <WhatsNewModal/>
       {showOnboarding&&<OnboardingScreen onComplete={()=>{setShowOnboarding(false);setJustCompletedOnboarding(true);localStorage.removeItem("yh_welcome_dismissed");navigate("/profile");}} onBackToAuth={async()=>{setShowOnboarding(false);await supabaseAuth.signOut();setAuthed(false);setIsPro(false);setUserPatterns([]);}}/>}
       <WelcomeToast visible={showWelcomeToast}/>
