@@ -4,8 +4,7 @@ export const CHANGELOG = [
     date: "2026-04-07",
     updates: [
       { emoji: "🔧", text: "Fixed: import spinner now clears correctly when a pattern upload fails" },
-      { emoji: "🚧", text: "Fixed: navigation warning added when leaving a page during active import" },
-      { emoji: "📝", text: "Improved: \"Rows\" tab renamed to \"Instructions\" for all pattern types" },
+      { emoji: "📝", text: "Improved: \"Rows\" tab renamed to \"Instructions/Rows\" for all pattern types" },
     ]
   },
   {
