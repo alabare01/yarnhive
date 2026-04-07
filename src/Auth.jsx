@@ -43,7 +43,8 @@ const GLASS = {
   background: "rgba(255,255,255,0.84)",
   border: "1px solid rgba(155,126,200,0.18)",
   borderRadius: 13,
-  padding: "13px 15px",
+  padding: "16px 18px",
+  marginBottom: 4,
 };
 const TAG = (bg, color) => ({
   display: "inline-block", background: bg, color, borderRadius: 99,
@@ -60,11 +61,11 @@ const INPUT_STYLE = {
 const ProductPreview = () => {
   const bevText = useTypewriter(BEV_LINES);
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 14, padding: "36px 32px" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 18, padding: "48px 40px", justifyContent: "center", minHeight: "100vh", boxSizing: "border-box" }}>
       {/* Logo */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <img src="/bev_neutral.png" alt="Wovely" style={{ width: 28, height: 28, objectFit: "contain" }} />
-        <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 700, color: "#2D2D4E" }}>Wovely</div>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <img src="/bev_neutral.png" alt="Wovely" style={{ width: 36, height: 36, objectFit: "contain" }} />
+        <div style={{ fontFamily: T.serif, fontSize: 22, fontWeight: 700, color: "#2D2D4E" }}>Wovely</div>
       </div>
 
       {/* Headline */}
@@ -135,7 +136,7 @@ const ProductPreview = () => {
       </div>
 
       {/* Bev typing card */}
-      <div style={{ background: "rgba(155,126,200,0.07)", border: "1px solid rgba(155,126,200,0.18)", borderRadius: 13, padding: "12px 14px", display: "flex", gap: 10, alignItems: "flex-start" }}>
+      <div style={{ background: "rgba(255,255,255,0.84)", border: "1px solid rgba(155,126,200,0.18)", borderRadius: 13, padding: "16px 18px", marginBottom: 4, display: "flex", gap: 10, alignItems: "flex-start" }}>
         <style>{`@keyframes bevPulse{0%{box-shadow:0 0 0 0 rgba(155,126,200,0.4)}70%{box-shadow:0 0 0 8px rgba(155,126,200,0)}100%{box-shadow:0 0 0 0 rgba(155,126,200,0)}}@keyframes cursorBlink{0%,100%{opacity:1}50%{opacity:0}}`}</style>
         <div style={{ width: 30, height: 30, borderRadius: "50%", background: "#9B7EC8", flexShrink: 0, overflow: "hidden", animation: "bevPulse 2s ease-in-out infinite", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <img src="/bev_neutral.png" alt="Bev" style={{ width: 24, height: 24, objectFit: "cover" }} />
@@ -220,7 +221,7 @@ const SignupForm = ({ onEnter, onEnterAsNew }) => {
   const inputBlur = e => { e.target.style.borderColor = "#EDE4F7"; };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "40px 32px", maxWidth: 400, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
+    <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "48px 40px", maxWidth: 400, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
       {/* Heading */}
       <div style={{ marginBottom: 20 }}>
         <div style={{ fontFamily: T.serif, fontSize: 21, fontWeight: 700, color: "#2D2D4E", marginBottom: 4 }}>
@@ -318,15 +319,10 @@ const Auth = ({ onEnter, onEnterAsNew }) => {
 
   return (
     <div style={{ minHeight: "100vh", fontFamily: T.sans, display: "flex", flexDirection: isMobile ? "column" : "row" }}>
-      {/* BETA ribbon */}
-      <div style={{ position: "fixed", top: 0, right: 0, zIndex: 999, width: 120, height: 120, overflow: "hidden", pointerEvents: "none" }}>
-        <div style={{ position: "absolute", top: 28, right: -30, width: 140, background: "#9B7EC8", color: "white", fontSize: 11, fontWeight: 700, fontFamily: "Inter, sans-serif", letterSpacing: "0.12em", textAlign: "center", padding: "6px 0", transform: "rotate(45deg)", boxShadow: "0 2px 8px rgba(0,0,0,0.2)" }}>BETA</div>
-      </div>
-
       {/* Left — Product Preview */}
       <div style={{
         flex: isMobile ? "none" : 1.15,
-        background: "rgba(243,238,255,0.6)",
+        background: "rgba(243,238,255,0.45)",
         overflow: "auto",
         ...(isMobile ? {} : { minHeight: "100vh" }),
       }}>
@@ -338,7 +334,7 @@ const Auth = ({ onEnter, onEnterAsNew }) => {
         flex: isMobile ? "none" : 0.85,
         background: "rgba(255,255,255,0.96)",
         borderLeft: isMobile ? "none" : "1px solid #EDE4F7",
-        display: "flex", alignItems: "center", justifyContent: "center",
+        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
         ...(isMobile ? { minHeight: "auto" } : { minHeight: "100vh" }),
       }}>
         <SignupForm onEnter={onEnter} onEnterAsNew={onEnterAsNew} />
