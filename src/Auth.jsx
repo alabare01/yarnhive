@@ -61,8 +61,8 @@ const ProductPreview = () => {
 
       {/* Logo */}
       <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 20 }}>
-        <img src="/bev_neutral.png" alt="Wovely" style={{ width: 36, height: 36, objectFit: "contain" }} />
-        <div style={{ fontFamily: T.serif, fontSize: 22, fontWeight: 700, color: "#2D2D4E" }}>Wovely</div>
+        <img src="/bev_neutral.png" alt="Wovely" style={{ width: 40, height: 40, objectFit: "contain" }} />
+        <div style={{ fontFamily: T.serif, fontSize: 26, fontWeight: 700, color: "#2D2D4E" }}>Wovely</div>
       </div>
 
       {/* Headline */}
@@ -70,7 +70,7 @@ const ProductPreview = () => {
         Save, build and track every pattern you love.
       </div>
       <div style={{ fontSize: 13, color: "#6B6B8A", lineHeight: 1.6, marginBottom: 20 }}>
-        Import any PDF, follow every row, and let Bev keep you on track.
+        Import any pattern, follow every row, and let Bev keep you on track.
       </div>
 
       {/* ── HERO PATTERN CARD ── */}
