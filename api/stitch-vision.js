@@ -1,7 +1,7 @@
 // api/stitch-vision.js
 // Vercel serverless function — identifies crochet stitch from a photo via Gemini
 
-export const config = { maxDuration: 30, api: { bodyParser: { sizeLimit: "10mb" } } };
+export const config = { maxDuration: 60, api: { bodyParser: { sizeLimit: "10mb" } } };
 
 import sharp from "sharp";
 

@@ -1,6 +1,8 @@
 // api/extract-pattern.js
 // Vercel serverless function — extracts crochet pattern from PDF text via Gemini
 
+export const config = { maxDuration: 60 };
+
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
