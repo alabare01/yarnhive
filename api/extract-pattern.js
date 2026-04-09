@@ -102,17 +102,31 @@ Be thorough — extract every component, every round, every material. Ensure the
 Extract every row/round as its own entry. Keep instruction text exactly as written. Do not truncate.`;
 
   const callGemini = async (prompt, maxTokens) => {
-    const r = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt + "\n\nPATTERN TEXT:\n" + pdfText }] }],
-          generationConfig: { temperature: 0.1, maxOutputTokens: maxTokens },
-        }),
+    const controller = new AbortController();
+    const geminiTimeout = setTimeout(() => controller.abort(), 4000);
+    let r;
+    try {
+      r = await fetch(
+        `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt + "\n\nPATTERN TEXT:\n" + pdfText }] }],
+            generationConfig: { temperature: 0.1, maxOutputTokens: maxTokens },
+          }),
+          signal: controller.signal,
+        }
+      );
+    } catch (fetchErr) {
+      clearTimeout(geminiTimeout);
+      if (fetchErr.name === "AbortError") {
+        console.error("[extract-pattern] Gemini aborted after 4s timeout");
+        throw new Error("Gemini timeout after 4s");
       }
-    );
+      throw fetchErr;
+    }
+    clearTimeout(geminiTimeout);
     if (!r.ok) {
       const errBody = await r.text();
       console.error("[extract-pattern] Gemini HTTP error:", r.status, errBody.substring(0, 500));
