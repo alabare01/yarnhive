@@ -6,7 +6,7 @@ import { supabaseAuth, getSession, SUPABASE_URL, SUPABASE_ANON_KEY } from "./sup
 const BEV_LINES = [
   "Row 12 looks tight \u2014 loosen your tension before you continue.",
   "You\u2019ve got 3 patterns on the go. Want to pick up where you left off?",
-  "That\u2019s a Moss Stitch \u2014 I\u2019ve got a tutorial if you need a refresher.",
+  "That\u2019s a Moss Stitch \u2014 I\u2019ve got a tutorial if you need a refresher. \uD83E\uDDF6",
   "Your Floral Burst is 47% done. You\u2019ve got this!",
   "BevCheck found a yarn change note on row 24 \u2014 heads up!",
 ];
@@ -75,24 +75,28 @@ const ProductPreview = () => {
 
       {/* ── HERO PATTERN CARD ── */}
       <div style={{ ...CARD_SHELL, display: "flex", flexDirection: "row", height: 160 }}>
-        <img src="https://res.cloudinary.com/dmaupzhcx/image/upload/v1775584145/covers/acqcbj3e8y5jytqgzvtu.jpg" alt="" style={{ width: 140, flexShrink: 0, height: "100%", objectFit: "cover", display: "block" }} />
+        <div style={{ width: 140, flexShrink: 0, position: "relative", overflow: "hidden", alignSelf: "stretch", borderRadius: "13px 0 0 13px" }}>
+          <img src="/manatee_hero.png" alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "blur(12px)", transform: "scale(1.15)", opacity: 0.85 }} />
+          <img src="/manatee_hero.png" alt="" style={{ position: "relative", width: "100%", height: "100%", objectFit: "contain", zIndex: 1 }} />
+        </div>
         <div style={{ flex: 1, padding: "16px 18px", background: "rgba(255,255,255,0.84)", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
           <div>
             <div style={LBL}>NOW CRAFTING</div>
-            <div style={{ fontSize: 15, fontWeight: 600, color: "#2D2D4E", fontFamily: T.serif, marginTop: 4 }}>Floral Burst Granny Square</div>
-            <div style={{ fontSize: 11, color: "#6B6B8A", marginTop: 2 }}>Round 8 of 11 &middot; In progress</div>
+            <div style={{ fontSize: 15, fontWeight: 600, color: "#2D2D4E", fontFamily: T.serif, marginTop: 4 }}>Marina the Manatee</div>
+            <div style={{ fontSize: 11, color: "#6B6B8A", marginTop: 2 }}>Beth Folchetti (Mama Crochetti)</div>
+            <div style={{ fontSize: 11, color: "#6B6B8A", marginTop: 2 }}>Round 22 of 30 &middot; In progress</div>
           </div>
           <div>
             <div style={{ height: 4, borderRadius: 2, background: "#EDE4F7" }}>
-              <div style={{ width: "72%", height: "100%", borderRadius: 2, background: "#9B7EC8" }} />
+              <div style={{ width: "73%", height: "100%", borderRadius: 2, background: "#9B7EC8" }} />
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
-              <span style={{ fontSize: 10, fontWeight: 500, color: "#9B7EC8" }}>72% complete</span>
-              <span style={{ fontSize: 10, color: "#6B6B8A" }}>8 of 11 rounds</span>
+              <span style={{ fontSize: 10, fontWeight: 500, color: "#9B7EC8" }}>73% complete</span>
+              <span style={{ fontSize: 10, color: "#6B6B8A" }}>85 rows</span>
             </div>
             <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
               <span style={TAG("rgba(91,155,107,0.12)", "#5B9B6B")}>PDF imported</span>
-              <span style={TAG("rgba(155,126,200,0.12)", "#9B7EC8")}>Rounds tracked</span>
+              <span style={TAG("rgba(155,126,200,0.12)", "#9B7EC8")}>85 rows</span>
               <span style={TAG("rgba(201,168,76,0.12)", "#C9A84C")}>Yarn stash linked</span>
             </div>
           </div>
@@ -103,9 +107,10 @@ const ProductPreview = () => {
       <div style={{ display: "flex", flexDirection: "row", gap: 10, marginTop: 12 }}>
 
         {/* LEFT — BevCheck */}
-        <div style={{ ...CARD_SHELL, flex: 1, display: "flex", flexDirection: "column", height: 160 }}>
-          <div style={{ height: 72, overflow: "hidden" }}>
-            <img src="https://res.cloudinary.com/dmaupzhcx/image/upload/v1775221393/covers/nhkp1grswddqxw0np1ux.jpg" alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+        <div style={{ ...CARD_SHELL, flex: 1, display: "flex", flexDirection: "row", height: 160 }}>
+          <div style={{ width: 90, flexShrink: 0, position: "relative", overflow: "hidden", alignSelf: "stretch", borderRadius: "13px 0 0 13px" }}>
+            <img src="/mommy_fiora.png" alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "blur(12px)", transform: "scale(1.15)", opacity: 0.85 }} />
+            <img src="/mommy_fiora.png" alt="" style={{ position: "relative", width: "100%", height: "100%", objectFit: "contain", zIndex: 1 }} />
           </div>
           <div style={{ flex: 1, padding: "10px 12px", background: "rgba(255,255,255,0.84)", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
             <div>
@@ -128,9 +133,10 @@ const ProductPreview = () => {
         </div>
 
         {/* RIGHT — Stitch-O-Vision */}
-        <div style={{ ...CARD_SHELL, flex: 1, display: "flex", flexDirection: "column", height: 160 }}>
-          <div style={{ height: 72, overflow: "hidden" }}>
-            <img src="https://vbtsdyxvqqwxjzpuseaf.supabase.co/storage/v1/object/public/pattern-files/stitch-vision/6e1a02d9-c210-4bc4-968e-dde3435565d1/1775515182975.jpg" alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+        <div style={{ ...CARD_SHELL, flex: 1, display: "flex", flexDirection: "row", height: 160 }}>
+          <div style={{ width: 90, flexShrink: 0, position: "relative", overflow: "hidden", alignSelf: "stretch", borderRadius: "13px 0 0 13px" }}>
+            <img src="https://vbtsdyxvqqwxjzpuseaf.supabase.co/storage/v1/object/public/pattern-files/stitch-vision/6e1a02d9-c210-4bc4-968e-dde3435565d1/1775515182975.jpg" alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "blur(12px)", transform: "scale(1.15)", opacity: 0.85 }} />
+            <img src="https://vbtsdyxvqqwxjzpuseaf.supabase.co/storage/v1/object/public/pattern-files/stitch-vision/6e1a02d9-c210-4bc4-968e-dde3435565d1/1775515182975.jpg" alt="" style={{ position: "relative", width: "100%", height: "100%", objectFit: "contain", zIndex: 1 }} />
           </div>
           <div style={{ flex: 1, padding: "10px 12px", background: "rgba(255,255,255,0.84)", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
             <div>
@@ -151,23 +157,23 @@ const ProductPreview = () => {
         <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#fff", flexShrink: 0, overflow: "hidden", animation: "bevPulse 2s ease-in-out infinite", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <img src="/bev_neutral.png" alt="Bev" style={{ width: 32, height: 32, objectFit: "cover", borderRadius: "50%" }} />
         </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ flex: 1 }}>
           <div style={{ fontSize: 10, fontWeight: 600, color: "#fff", marginBottom: 2 }}>Bev</div>
           <div style={{ fontSize: 12, color: "#fff", fontStyle: "italic", minHeight: 16, lineHeight: 1.5 }}>
-            {bevText}<span style={{ display: "inline-block", width: 2, height: 12, background: "#fff", marginLeft: 1, verticalAlign: "text-bottom", animation: "cursorBlink 1s step-end infinite" }} />
+            <span>{bevText}</span><span style={{ display: "inline-block", width: 2, height: 12, background: "#fff", marginLeft: 1, verticalAlign: "text-bottom", animation: "cursorBlink 1s step-end infinite" }} />
           </div>
         </div>
       </div>
 
       {/* ── APP BADGES ── */}
       <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
-        <div style={{ flex: 1, background: "#fff", border: "1px solid #EDE4F7", borderRadius: 12, padding: "10px 14px", display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ flex: 1, background: "#fff", border: "1px solid #EDE4F7", borderRadius: 12, padding: "10px 14px", display: "flex", alignItems: "center", gap: 8, opacity: 0.5, cursor: "default" }}>
           <svg width="22" height="26" viewBox="0 0 384 512" fill="#000"><path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5c0 26.2 4.8 53.3 14.4 81.2 12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/></svg>
-          <div><div style={{ fontSize: 9, color: "#6B6B8A" }}>Download on the</div><div style={{ fontSize: 12, fontWeight: 600, color: "#2D2D4E" }}>App Store</div></div>
+          <div><div style={{ fontSize: 9, color: "#6B6B8A" }}>Download on the</div><div style={{ fontSize: 12, fontWeight: 600, color: "#2D2D4E" }}>App Store</div><div style={{ fontSize: 10, color: "#9B7EC8" }}>Coming soon</div></div>
         </div>
-        <div style={{ flex: 1, background: "#fff", border: "1px solid #EDE4F7", borderRadius: 12, padding: "10px 14px", display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ flex: 1, background: "#fff", border: "1px solid #EDE4F7", borderRadius: 12, padding: "10px 14px", display: "flex", alignItems: "center", gap: 8, opacity: 0.5, cursor: "default" }}>
           <svg width="22" height="24" viewBox="0 0 512 512"><path d="M93.6 28.3l187.2 107.5L93.6 483.7c-5.1-4.4-8.2-10.8-8.2-18V46.3c0-7.2 3.1-13.6 8.2-18z" fill="#4285F4"/><path d="M116.3 11.3L330 135.8 282.4 256 116.3 11.3z" fill="#34A853"/><path d="M116.3 500.7L282.4 256l47.6 120.2-213.7 124.5z" fill="#EA4335"/><path d="M345.6 256l80.8-46.4c14.3-8.2 14.3-28.9 0-37.2L345.6 126l-52.8 130 52.8 130z" fill="#FBBC05"/></svg>
-          <div><div style={{ fontSize: 9, color: "#6B6B8A" }}>Get it on</div><div style={{ fontSize: 12, fontWeight: 600, color: "#2D2D4E" }}>Google Play</div></div>
+          <div><div style={{ fontSize: 9, color: "#6B6B8A" }}>Get it on</div><div style={{ fontSize: 12, fontWeight: 600, color: "#2D2D4E" }}>Google Play</div><div style={{ fontSize: 10, color: "#9B7EC8" }}>Coming soon</div></div>
         </div>
       </div>
     </div>
