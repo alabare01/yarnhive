@@ -256,7 +256,7 @@ const OnTheHook = ({ inProgress, openDetail, onAddPattern, pct, catFallbackPhoto
         }}>
           <div style={{ fontFamily: INTER, fontSize: 14, color: MUTED, marginBottom: 4 }}>Nothing on the hook yet.</div>
           <div style={{ fontFamily: PF, fontStyle: "italic", fontSize: 14, color: ACCENT, marginBottom: 16 }}>Ready to start something?</div>
-          <button onClick={onAddPattern} style={{
+          <button onClick={()=>onAddPattern("pdf")} style={{
             background: ACCENT, color: "#fff", border: "none", borderRadius: 14,
             padding: "12px 24px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: INTER,
           }}>Import a Pattern</button>
