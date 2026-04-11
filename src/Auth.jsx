@@ -52,7 +52,7 @@ const INPUT_STYLE = {
 };
 
 /* ── Left Column: Product Preview ── */
-const ProductPreview = ({ badgesRef }) => {
+const ProductPreview = () => {
   const bevText = useTypewriter(BEV_LINES);
 
   return (
@@ -107,26 +107,26 @@ const ProductPreview = ({ badgesRef }) => {
       <div style={{ display: "flex", flexDirection: "row", gap: 10, marginTop: 12 }}>
 
         {/* LEFT — BevCheck */}
-        <div style={{ ...CARD_SHELL, flex: 1, display: "flex", flexDirection: "row", height: 160 }}>
-          <div style={{ width: 80, flexShrink: 0, position: "relative", overflow: "hidden", alignSelf: "stretch", borderRadius: "13px 0 0 13px" }}>
+        <div style={{ ...CARD_SHELL, overflow: "visible", flex: 1, display: "flex", flexDirection: "row", height: 160 }}>
+          <div style={{ width: 90, flexShrink: 0, position: "relative", overflow: "hidden", alignSelf: "stretch", borderRadius: "13px 0 0 13px" }}>
             <img src="/mommy_fiora.png" alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "blur(12px)", transform: "scale(1.15)", opacity: 0.85 }} />
             <img src="/mommy_fiora.png" alt="" style={{ position: "relative", width: "100%", height: "100%", objectFit: "contain", zIndex: 1 }} />
           </div>
-          <div style={{ flex: 1, padding: "10px 10px", background: "rgba(255,255,255,0.84)", display: "flex", flexDirection: "column", justifyContent: "space-between", minWidth: 0 }}>
-            <div>
-              <div style={{ ...LBL, whiteSpace: "nowrap" }}>BEVCHECK</div>
+          <div style={{ flex: 1, padding: "10px 10px", background: "rgba(255,255,255,0.84)", borderRadius: "0 13px 13px 0", display: "flex", flexDirection: "column", justifyContent: "space-between", overflow: "visible", minWidth: 0 }}>
+            <div style={{ overflow: "visible" }}>
+              <div style={{ ...LBL, whiteSpace: "nowrap", overflow: "visible" }}>BEVCHECK</div>
               <div style={{ fontSize: 12, fontWeight: 500, color: "#2D2D4E", marginTop: 2 }}>Mommy Fiora</div>
               <div style={{ fontSize: 10, color: "#6B6B8A", marginTop: 1 }}>Pattern reviewed</div>
             </div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <span style={{ fontSize: 10, fontWeight: 500, color: "#5B9B6B" }}>Clean result</span>
-              <svg width="40" height="40" viewBox="0 0 40 40">
+              <svg width="40" height="40" viewBox="0 0 40 40" style={{ flexShrink: 0 }}>
                 <circle cx="20" cy="20" r="14" fill="none" stroke="#EDE4F7" strokeWidth="3" />
                 <circle cx="20" cy="20" r="14" fill="none" stroke="#5B9B6B" strokeWidth="3"
                   strokeLinecap="round" strokeDasharray="87.96 87.96"
                   style={{ animation: "drawScore 0.8s ease-out forwards", transformOrigin: "center", transform: "rotate(-90deg)" }} />
-                <text x="20" y="20" textAnchor="middle" dominantBaseline="middle"
-                  style={{ fontSize: 8, fontWeight: 600, fill: "#2D2D4E" }}>97%</text>
+                <text x="20" y="21" textAnchor="middle" dominantBaseline="middle"
+                  style={{ fontSize: 10, fontWeight: 700, fill: "#2D2D4E" }}>97%</text>
               </svg>
             </div>
           </div>
@@ -166,7 +166,7 @@ const ProductPreview = ({ badgesRef }) => {
       </div>
 
       {/* ── APP BADGES ── */}
-      <div ref={badgesRef} style={{ display: "flex", gap: 10, marginTop: 12 }}>
+      <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
         <div style={{ flex: 1, background: "#fff", border: "1px solid #EDE4F7", borderRadius: 12, padding: "10px 14px", display: "flex", alignItems: "center", gap: 8, opacity: 0.5, cursor: "default" }}>
           <svg width="22" height="26" viewBox="0 0 384 512" fill="#000"><path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5c0 26.2 4.8 53.3 14.4 81.2 12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/></svg>
           <div><div style={{ fontSize: 9, color: "#6B6B8A" }}>Download on the</div><div style={{ fontSize: 12, fontWeight: 600, color: "#2D2D4E" }}>App Store</div><div style={{ fontSize: 10, color: "#9B7EC8" }}>Coming soon</div></div>
@@ -330,20 +330,20 @@ const SignupForm = ({ onEnter, onEnterAsNew }) => {
 };
 
 /* ── Sticky Mobile Scroll CTA ── */
-const MobileCTA = ({ badgesRef, signupRef }) => {
-  const [badgesVisible, setBadgesVisible] = useState(true);
+const MobileCTA = ({ signupRef }) => {
+  const [formVisible, setFormVisible] = useState(false);
 
   useEffect(() => {
-    if (!badgesRef?.current) return;
+    if (!signupRef?.current) return;
     const observer = new IntersectionObserver(
-      ([entry]) => setBadgesVisible(entry.isIntersecting),
-      { threshold: 0 }
+      ([entry]) => setFormVisible(entry.isIntersecting),
+      { threshold: 0.1 }
     );
-    observer.observe(badgesRef.current);
+    observer.observe(signupRef.current);
     return () => observer.disconnect();
-  }, [badgesRef]);
+  }, [signupRef]);
 
-  const show = badgesVisible;
+  const show = !formVisible;
 
   return (
     <div style={{
@@ -368,7 +368,6 @@ const MobileCTA = ({ badgesRef, signupRef }) => {
 const Auth = ({ onEnter, onEnterAsNew }) => {
   const { isDesktop, isMobile } = useBreakpoint();
   const signupRef = useRef(null);
-  const badgesRef = useRef(null);
 
   return (
     <div style={{ minHeight: "100vh", width: "100%", display: "flex", alignItems: "stretch", fontFamily: T.sans }}>
@@ -387,7 +386,7 @@ const Auth = ({ onEnter, onEnterAsNew }) => {
         position: "relative",
         ...(isMobile ? {} : { minHeight: "100vh" }),
       }}>
-        <ProductPreview badgesRef={badgesRef} />
+        <ProductPreview />
       </div>
 
       {/* Right — Signup Form */}
@@ -396,7 +395,7 @@ const Auth = ({ onEnter, onEnterAsNew }) => {
         background: "transparent",
         borderLeft: isMobile ? "none" : "1px solid rgba(255,255,255,0.45)",
         display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-        padding: isMobile ? "24px 16px" : 0,
+        padding: isMobile ? "32px 16px 80px" : 0,
         ...(isMobile ? { minHeight: "auto" } : { minHeight: "100vh" }),
       }}>
         <div style={{
@@ -413,7 +412,7 @@ const Auth = ({ onEnter, onEnterAsNew }) => {
         </div>
       </div>
     </div>
-    <div className="wovely-mobile-cta"><MobileCTA badgesRef={badgesRef} signupRef={signupRef} /></div>
+    <div className="wovely-mobile-cta"><MobileCTA signupRef={signupRef} /></div>
     </div>
   );
 };
