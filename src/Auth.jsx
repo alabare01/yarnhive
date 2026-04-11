@@ -107,23 +107,20 @@ const ProductPreview = () => {
       <div style={{ display: "flex", flexDirection: "row", gap: 10, marginTop: 12 }}>
 
         {/* LEFT — BevCheck */}
-        <div style={{ ...CARD_SHELL, flex: 1, display: "flex", flexDirection: "row", height: 160 }}>
-          <div style={{ width: 90, flexShrink: 0, position: "relative", overflow: "hidden", alignSelf: "stretch", borderRadius: "13px 0 0 13px" }}>
-            <img src="/mommy_fiora.png" alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "blur(12px)", transform: "scale(1.15)", opacity: 0.85 }} />
-            <img src="/mommy_fiora.png" alt="" style={{ position: "relative", width: "100%", height: "100%", objectFit: "contain", zIndex: 1 }} />
-          </div>
-          <div style={{ flex: 1, padding: "10px 8px", background: "rgba(255,255,255,0.84)", borderRadius: "0 13px 13px 0", display: "flex", flexDirection: "column", justifyContent: "space-between", minWidth: 0 }}>
+        <div style={{ background: "rgba(255,255,255,0.84)", border: "1px solid rgba(155,126,200,0.18)", borderRadius: 12, overflow: "hidden", flex: 1, display: "flex", flexDirection: "column", height: 160 }}>
+          <img src="/mommy_fiora.png" alt="" style={{ width: "100%", height: 70, objectFit: "cover", borderRadius: "12px 12px 0 0", display: "block" }} />
+          <div style={{ padding: "10px 12px 12px", display: "flex", flexDirection: "column", justifyContent: "space-between", flex: 1 }}>
             <div>
-              <div style={{ fontSize: 9, letterSpacing: 0, color: "#9B7EC8", fontWeight: 700, fontFamily: "Inter,sans-serif", whiteSpace: "nowrap" }}>BevCheck</div>
-              <div style={{ fontSize: 11, fontWeight: 500, color: "#2D2D4E", marginTop: 2 }}>Mommy Fiora</div>
-              <div style={{ fontSize: 10, color: "#6B6B8A", marginTop: 1 }}>Pattern reviewed</div>
+              <div style={{ fontSize: 9, fontWeight: 700, color: "#9B7EC8", letterSpacing: "0.5px", textTransform: "uppercase", fontFamily: "Inter,sans-serif" }}>BEVCHECK</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "#2D2D4E", marginTop: 1 }}>Mommy Fiora</div>
+              <div style={{ fontSize: 12, color: "#6B6B8A" }}>Pattern reviewed</div>
             </div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <span style={{ fontSize: 9, fontWeight: 500, color: "#5B9B6B" }}>Clean result</span>
-              <svg width="40" height="40" viewBox="0 0 40 40" style={{ flexShrink: 0 }}>
-                <circle cx="20" cy="20" r="14" fill="#5B9B6B" stroke="#5B9B6B" strokeWidth="3" />
-                <text x="20" y="21" textAnchor="middle" dominantBaseline="middle"
-                  style={{ fontSize: 12, fontWeight: 700, fill: "#fff" }}>97%</text>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 10, fontWeight: 500, color: "#5B9B6B", flex: 1 }}>Clean result</span>
+              <svg width="28" height="28" viewBox="0 0 28 28" style={{ flexShrink: 0 }}>
+                <circle cx="14" cy="14" r="13" fill="#5B9B6B" />
+                <text x="14" y="15" textAnchor="middle" dominantBaseline="middle"
+                  style={{ fontSize: 11, fontWeight: 700, fill: "#fff" }}>97%</text>
               </svg>
             </div>
           </div>
