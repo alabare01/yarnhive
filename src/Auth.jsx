@@ -112,19 +112,16 @@ const ProductPreview = () => {
             <img src="/mommy_fiora.png" alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "blur(12px)", transform: "scale(1.15)", opacity: 0.85 }} />
             <img src="/mommy_fiora.png" alt="" style={{ position: "relative", width: "100%", height: "100%", objectFit: "contain", zIndex: 1 }} />
           </div>
-          <div style={{ flex: 1, padding: "10px 8px", background: "rgba(255,255,255,0.84)", borderRadius: "0 13px 13px 0", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+          <div style={{ flex: 1, padding: "10px 8px", background: "rgba(255,255,255,0.84)", borderRadius: "0 13px 13px 0", display: "flex", flexDirection: "column", justifyContent: "space-between", minWidth: 0 }}>
             <div>
-              <div style={{ fontSize: 8, textTransform: "uppercase", letterSpacing: "0.3px", color: "#9B7EC8", fontWeight: 700, fontFamily: "Inter,sans-serif", whiteSpace: "nowrap" }}>BEVCHECK</div>
+              <div style={{ fontSize: 9, letterSpacing: 0, color: "#9B7EC8", fontWeight: 700, fontFamily: "Inter,sans-serif", whiteSpace: "nowrap" }}>BevCheck</div>
               <div style={{ fontSize: 11, fontWeight: 500, color: "#2D2D4E", marginTop: 2 }}>Mommy Fiora</div>
               <div style={{ fontSize: 10, color: "#6B6B8A", marginTop: 1 }}>Pattern reviewed</div>
             </div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <span style={{ fontSize: 9, fontWeight: 500, color: "#5B9B6B" }}>Clean result</span>
               <svg width="40" height="40" viewBox="0 0 40 40" style={{ flexShrink: 0 }}>
-                <circle cx="20" cy="20" r="14" fill="none" stroke="#EDE4F7" strokeWidth="3" />
-                <circle cx="20" cy="20" r="14" fill="none" stroke="#5B9B6B" strokeWidth="3"
-                  strokeLinecap="round" strokeDasharray="87.96 87.96"
-                  style={{ animation: "drawScore 0.8s ease-out forwards", transformOrigin: "center", transform: "rotate(-90deg)" }} />
+                <circle cx="20" cy="20" r="14" fill="#5B9B6B" stroke="#5B9B6B" strokeWidth="3" />
                 <text x="20" y="21" textAnchor="middle" dominantBaseline="middle"
                   style={{ fontSize: 12, fontWeight: 700, fill: "#fff" }}>97%</text>
               </svg>
@@ -356,7 +353,9 @@ const MobileCTA = ({ signupRef }) => {
       pointerEvents: show ? "auto" : "none",
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <img src="/bev_neutral.png" alt="Bev" style={{ height: 36, width: "auto", objectFit: "contain", flexShrink: 0 }} />
+        <div style={{ width: 36, height: 36, flexShrink: 0, borderRadius: "50%", background: "#F8F6FF", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+          <img src="/bev_neutral.png" alt="" style={{ width: 36, height: 36, objectFit: "contain" }} />
+        </div>
         <span style={{ fontFamily: "Inter,sans-serif", fontSize: 14, fontWeight: 600, color: "#2D2D4E" }}>Ready to start crafting?</span>
       </div>
       <button onClick={() => signupRef?.current?.scrollIntoView({ behavior: "smooth" })} style={{ background: "#9B7EC8", color: "#fff", fontSize: 13, fontWeight: 600, borderRadius: 20, padding: "8px 18px", border: "none", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>Sign up free ↓</button>
