@@ -44,8 +44,8 @@ const TAG = (bg, color) => ({
 });
 const LBL = { fontSize: 9, textTransform: "uppercase", letterSpacing: "0.8px", color: "#9B7EC8", fontWeight: 600, fontFamily: "Inter,sans-serif" };
 const CARD_SHELL = { background: "rgba(255,255,255,0.84)", border: "1px solid rgba(155,126,200,0.18)", borderRadius: 14, overflow: "hidden" };
-const CARD_LABEL = { fontSize: 9, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", color: "#9B7EC8", marginBottom: 4 };
-const CARD_TITLE = { fontSize: 14, fontWeight: 700, color: "#2D2D4E", lineHeight: 1.3, marginBottom: 2 };
+const CARD_LABEL = { fontSize: 9, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", color: "#9B7EC8", marginBottom: 4, fontFamily: "'Inter', sans-serif" };
+const CARD_TITLE = { fontSize: 14, fontWeight: 700, color: "#2D2D4E", lineHeight: 1.3, marginBottom: 2, fontFamily: "'Playfair Display', serif" };
 const CARD_SUBTITLE = { fontSize: 11, color: "#6B6B8A", lineHeight: 1.4 };
 const CARD_PILL = { fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 20, background: "#F8F6FF", color: "#6B6B8A", border: "1px solid #EDE4F7", whiteSpace: "nowrap" };
 const BADGE = { width: 32, height: 32, flexShrink: 0 };
@@ -87,7 +87,7 @@ const ProductPreview = () => {
         <div style={{ flex: 1, padding: 14, background: "rgba(255,255,255,0.84)", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
           <div>
             <div style={CARD_LABEL}>NOW CRAFTING</div>
-            <div style={{ ...CARD_TITLE, fontSize: 16, fontFamily: T.serif }}>Marina the Manatee</div>
+            <div style={{ ...CARD_TITLE, fontSize: 16 }}>Marina the Manatee</div>
             <div style={CARD_SUBTITLE}>Beth Folchetti (Mama Crochetti)</div>
             <div style={{ ...CARD_SUBTITLE, marginTop: 2 }}>Round 22 of 30 &middot; In progress</div>
           </div>
@@ -132,12 +132,12 @@ const ProductPreview = () => {
         </div>
 
         {/* RIGHT — Stitch-O-Vision */}
-        <div style={{ ...CARD_SHELL, flex: 1, display: "flex", flexDirection: "row", height: 160, borderRadius: 12, overflow: "visible" }}>
+        <div style={{ ...CARD_SHELL, flex: 1, display: "flex", flexDirection: "row", minHeight: 160, height: "auto", borderRadius: 12, overflow: "visible" }}>
           <div style={{ width: 90, flexShrink: 0, position: "relative", overflow: "hidden", alignSelf: "stretch", borderRadius: "11px 0 0 11px" }}>
             <img src="https://vbtsdyxvqqwxjzpuseaf.supabase.co/storage/v1/object/public/pattern-files/stitch-vision/6e1a02d9-c210-4bc4-968e-dde3435565d1/1775515182975.jpg" alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "blur(12px)", transform: "scale(1.15)", opacity: 0.85 }} />
             <img src="https://vbtsdyxvqqwxjzpuseaf.supabase.co/storage/v1/object/public/pattern-files/stitch-vision/6e1a02d9-c210-4bc4-968e-dde3435565d1/1775515182975.jpg" alt="" style={{ position: "relative", width: "100%", height: "100%", objectFit: "contain", zIndex: 1 }} />
           </div>
-          <div style={{ flex: 1, padding: "10px 12px 12px", background: "rgba(255,255,255,0.84)", display: "flex", flexDirection: "column", justifyContent: "space-between", borderRadius: "0 11px 11px 0", minWidth: 0 }}>
+          <div style={{ flex: 1, minHeight: 0, padding: "10px 12px 12px", background: "rgba(255,255,255,0.84)", display: "flex", flexDirection: "column", justifyContent: "space-between", borderRadius: "0 11px 11px 0", minWidth: 0 }}>
             <div>
               <div style={{ ...CARD_LABEL, whiteSpace: "nowrap", fontSize: 8 }}>STITCH-O-VISION</div>
               <div style={CARD_TITLE}>Moss Stitch</div>
