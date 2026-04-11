@@ -62,7 +62,7 @@ const ProductPreview = () => {
 
   return (
     <div style={{ padding: "40px 36px 16px", boxSizing: "border-box" }}>
-      <style>{`@keyframes drawScore{from{stroke-dashoffset:87.96}to{stroke-dashoffset:2.64}}@keyframes bevPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,0.4)}50%{box-shadow:0 0 0 8px rgba(255,255,255,0)}}@keyframes cursorBlink{0%,100%{opacity:1}50%{opacity:0}}`}</style>
+      <style>{`@keyframes drawScore{from{stroke-dashoffset:87.96}to{stroke-dashoffset:2.64}}@keyframes bevPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,0.4)}50%{box-shadow:0 0 0 8px rgba(255,255,255,0)}}@keyframes cursorBlink{0%,100%{opacity:1}50%{opacity:0}}@media(min-width:768px){.pill-desktop-only{display:inline-block!important}}`}</style>
 
       {/* Logo */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
@@ -102,7 +102,7 @@ const ProductPreview = () => {
             <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 8 }}>
               <span style={{ ...CARD_PILL }}>PDF imported</span>
               <span style={{ ...CARD_PILL }}>85 rows</span>
-              <span style={{ ...CARD_PILL }}>Yarn stash</span>
+              <span className="pill-desktop-only" style={{ ...CARD_PILL, display: "none" }}>Yarn stash</span>
             </div>
           </div>
         </div>
@@ -132,19 +132,16 @@ const ProductPreview = () => {
         </div>
 
         {/* RIGHT — Stitch-O-Vision */}
-        <div style={{ ...CARD_SHELL, flex: 1, display: "flex", flexDirection: "row", minHeight: 160, height: "auto", borderRadius: 12, overflow: "visible" }}>
-          <div style={{ width: 90, flexShrink: 0, position: "relative", overflow: "hidden", alignSelf: "stretch", borderRadius: "11px 0 0 11px" }}>
-            <img src="https://vbtsdyxvqqwxjzpuseaf.supabase.co/storage/v1/object/public/pattern-files/stitch-vision/6e1a02d9-c210-4bc4-968e-dde3435565d1/1775515182975.jpg" alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "blur(12px)", transform: "scale(1.15)", opacity: 0.85 }} />
-            <img src="https://vbtsdyxvqqwxjzpuseaf.supabase.co/storage/v1/object/public/pattern-files/stitch-vision/6e1a02d9-c210-4bc4-968e-dde3435565d1/1775515182975.jpg" alt="" style={{ position: "relative", width: "100%", height: "100%", objectFit: "contain", zIndex: 1 }} />
-          </div>
-          <div style={{ flex: 1, minHeight: 0, padding: "10px 12px 12px", background: "rgba(255,255,255,0.84)", display: "flex", flexDirection: "column", justifyContent: "space-between", borderRadius: "0 11px 11px 0", minWidth: 0 }}>
+        <div style={{ background: "rgba(255,255,255,0.84)", border: "1px solid rgba(155,126,200,0.18)", borderRadius: 12, overflow: "hidden", flex: 1, display: "flex", flexDirection: "column", minHeight: 160, height: "auto" }}>
+          <img src="https://vbtsdyxvqqwxjzpuseaf.supabase.co/storage/v1/object/public/pattern-files/stitch-vision/6e1a02d9-c210-4bc4-968e-dde3435565d1/1775515182975.jpg" alt="" style={{ width: "100%", height: 70, objectFit: "cover", borderRadius: "12px 12px 0 0", display: "block" }} />
+          <div style={{ padding: "10px 12px 12px", display: "flex", flexDirection: "column", justifyContent: "space-between", flex: 1, minHeight: 0 }}>
             <div>
               <div style={{ ...CARD_LABEL, whiteSpace: "nowrap", fontSize: 8 }}>STITCH-O-VISION</div>
               <div style={CARD_TITLE}>Moss Stitch</div>
               <div style={CARD_SUBTITLE}>Linen &middot; Granite Stitch</div>
             </div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
-              <span style={CARD_SUBTITLE}>High confidence</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ ...CARD_SUBTITLE, flex: 1 }}>High confidence</span>
               <svg width={BADGE.width} height={BADGE.height} viewBox="0 0 32 32" style={{ flexShrink: BADGE.flexShrink }}>
                 <circle cx="16" cy="16" r="15" fill="#5B9B6B" />
                 <text x="16" y="17" textAnchor="middle" dominantBaseline="middle"
