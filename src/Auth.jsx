@@ -99,10 +99,10 @@ const ProductPreview = () => {
               <span style={CARD_SUBTITLE}>73% complete</span>
               <span style={CARD_SUBTITLE}>85 rows</span>
             </div>
-            <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
-              <span style={CARD_PILL}>PDF imported</span>
-              <span style={CARD_PILL}>85 rows</span>
-              <span style={CARD_PILL}>Yarn stash linked</span>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
+              <span style={{ ...CARD_PILL, maxWidth: "none" }}>PDF imported</span>
+              <span style={{ ...CARD_PILL, maxWidth: "none" }}>85 rows</span>
+              <span style={{ ...CARD_PILL, maxWidth: "none" }}>Yarn stash linked</span>
             </div>
           </div>
         </div>
@@ -139,7 +139,7 @@ const ProductPreview = () => {
           </div>
           <div style={{ flex: 1, padding: "10px 12px 12px", background: "rgba(255,255,255,0.84)", display: "flex", flexDirection: "column", justifyContent: "space-between", borderRadius: "0 11px 11px 0", minWidth: 0 }}>
             <div>
-              <div style={CARD_LABEL}>STITCH-O-VISION</div>
+              <div style={{ ...CARD_LABEL, whiteSpace: "nowrap", fontSize: 8 }}>STITCH-O-VISION</div>
               <div style={CARD_TITLE}>Moss Stitch</div>
               <div style={CARD_SUBTITLE}>Linen &middot; Granite Stitch</div>
             </div>
