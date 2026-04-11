@@ -99,10 +99,10 @@ const ProductPreview = () => {
               <span style={CARD_SUBTITLE}>73% complete</span>
               <span style={CARD_SUBTITLE}>85 rows</span>
             </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
-              <span style={{ ...CARD_PILL, maxWidth: "none" }}>PDF imported</span>
-              <span style={{ ...CARD_PILL, maxWidth: "none" }}>85 rows</span>
-              <span style={{ ...CARD_PILL, maxWidth: "none" }}>Yarn stash linked</span>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 8 }}>
+              <span style={{ ...CARD_PILL }}>PDF imported</span>
+              <span style={{ ...CARD_PILL }}>85 rows</span>
+              <span style={{ ...CARD_PILL }}>Yarn stash</span>
             </div>
           </div>
         </div>
@@ -112,9 +112,9 @@ const ProductPreview = () => {
       <div style={{ display: "flex", flexDirection: "row", gap: 10, marginTop: 12 }}>
 
         {/* LEFT — BevCheck */}
-        <div style={{ background: "rgba(255,255,255,0.84)", border: "1px solid rgba(155,126,200,0.18)", borderRadius: 12, overflow: "hidden", flex: 1, display: "flex", flexDirection: "column", height: 160 }}>
+        <div style={{ background: "rgba(255,255,255,0.84)", border: "1px solid rgba(155,126,200,0.18)", borderRadius: 12, overflow: "hidden", flex: 1, display: "flex", flexDirection: "column", minHeight: 160, height: "auto" }}>
           <img src="/mommy_fiora.png" alt="" style={{ width: "100%", height: 70, objectFit: "cover", borderRadius: "12px 12px 0 0", display: "block" }} />
-          <div style={{ padding: "10px 12px 12px", display: "flex", flexDirection: "column", justifyContent: "space-between", flex: 1 }}>
+          <div style={{ padding: "10px 12px 12px", display: "flex", flexDirection: "column", justifyContent: "space-between", flex: 1, minHeight: 0 }}>
             <div>
               <div style={CARD_LABEL}>BEVCHECK</div>
               <div style={CARD_TITLE}>Mommy Fiora</div>
