@@ -296,31 +296,12 @@ const BEVCHECK_PROMPT = `You are a crochet pattern validator. Analyze this patte
   "summary": "string"
 }
 
-Check for:
-1. Sequential rounds/rows — are all numbers present with no gaps or duplicates? (id: "sequence")
-2. Stitch count math — do totals in parentheses match the instructions mathematically? (id: "stitch_math")
-3. Duplicate round numbers — same number appearing twice with different instructions? (id: "duplicates")
-4. Cross-references — does the pattern reference rounds that don't exist? (id: "cross_refs")
-5. Translation artifacts — does phrasing suggest a translated pattern that may have errors? (id: "translation")
-6. Component structure — are section headers clear and consistent? (id: "structure")
+Check for these 3 items ONLY (sequential rows, stitch math, and duplicate checks are handled separately by code):
+1. Cross-references — does the pattern reference rounds that don't exist? (id: "cross_refs")
+2. Translation artifacts — does phrasing suggest a translated pattern that may have errors? (id: "translation")
+3. Component structure — are section headers clear and consistent? (id: "structure")
 
-CROCHET STITCH MATH RULES — you MUST follow these when verifying stitch counts:
-• "inc" (increase) = 2 stitches worked into 1 stitch. It CONSUMES 1 stitch from the previous round but PRODUCES 2 stitches in the current round.
-• "dec" / "sc2tog" / "inv dec" (decrease) = 1 stitch worked over 2 stitches. It CONSUMES 2 stitches but PRODUCES 1 stitch.
-• "sc", "hdc", "dc", "tr", "sl st" = each is exactly 1 stitch (consumes 1, produces 1).
-• "ch" (chain) inside a round adds 1 stitch to the count but does NOT consume a stitch from the previous round.
-• Magic ring (MR/MC) is the starting point — it has 0 stitches before the first round's instructions.
-• Bracket repeats: "(sc, inc) x 6" means the sequence "sc, inc" is worked 6 times. That's 6 × (1 + 2) = 18 stitches produced, consuming 6 × 2 = 12 stitches from the previous round.
-• When a round says "(sc, inc) x 6 (12)", verify: 6 repeats × 2 stitches produced per repeat = 12. This is CORRECT.
-• When a round says "6 sc, inc (8)" from a starting count of 7: 6 sc (6 stitches) + 1 inc (2 stitches) = 8 total. Consumes 6 + 1 = 7 from previous round. This is CORRECT.
-• Common correct progression: MR 6 → (sc, inc) x 6 = 12 → (2 sc, inc) x 4 = 16 → etc. Each inc adds 1 extra stitch to the total per repeat.
-• Do NOT flag stitch counts as wrong unless you have done the arithmetic yourself and confirmed a mismatch.
-
-UNCERTAINTY RULE:
-If you can confidently verify the math is correct → "pass"
-If you can confidently verify the math is wrong → "fail"
-If you cannot confidently verify due to ambiguous notation, unusual abbreviations, complex construction, or stitch types not listed above → return status "warning" with a brief explanation of what could not be verified.
-Never guess. Never silently pass something you cannot calculate with confidence.
+SCORING: Score is based ONLY on these 3 checks. 100 = all pass, deduct points for warnings/failures proportionally across 3 checks.
 
 SCORING RULES — do NOT penalize for any of the following:
 • PDF formatting artifacts (OCR typos in tip/intro sections, formatting inconsistencies, page headers/footers)
@@ -333,9 +314,187 @@ Be specific in detail fields. Name exact round numbers where issues occur. If ev
 
 const BEVCHECK_SIMPLE_PROMPT = `You are a crochet pattern validator. Analyze this pattern and return ONLY a JSON object — no markdown, no backticks:
 {"overall":"valid or review or issues","score":0-100,"checks":[{"id":"string","label":"string","status":"pass or warning or fail","detail":"string"}],"summary":"string"}
-Check: sequential rounds, stitch count math, duplicate rounds, cross-references, translation artifacts, structure. Be specific. Aim 80-100 for clean patterns.
-CRITICAL stitch math: inc = 2 stitches produced (not 1), dec/sc2tog = 1 stitch produced from 2. "(sc, inc) x 6 (12)" is CORRECT: 6 × 2 = 12. Do NOT flag counts as wrong unless you confirm the arithmetic yourself.
-UNCERTAINTY RULE: confidently correct → "pass", confidently wrong → "fail", cannot verify → "warning" with explanation. Never guess. Never silently pass what you cannot calculate.`;
+Check ONLY these 3 items (sequential rows, stitch math, and duplicates are handled by code separately):
+1. Cross-references — references to rounds that don't exist? (id: "cross_refs")
+2. Translation artifacts — signs of machine translation errors? (id: "translation")
+3. Component structure — are sections clear and consistent? (id: "structure")
+Score based on these 3 checks only. 100 = all pass. Be specific. Aim 80-100 for clean patterns.`;
+
+// ── Deterministic BevCheck helpers ──
+
+function parseSections(text) {
+  // Split pattern text into named sections/components
+  const sections = [];
+  const sectionRegex = /^(?:#{1,3}\s+|[A-Z][A-Za-z\s&'-]*(?:\(.*?\))?[\s]*[:—–-]\s*$)/gm;
+  const headers = [...text.matchAll(sectionRegex)];
+  if (headers.length === 0) {
+    sections.push({ name: "Main", body: text });
+  } else {
+    for (let i = 0; i < headers.length; i++) {
+      const start = headers[i].index + headers[i][0].length;
+      const end = i + 1 < headers.length ? headers[i + 1].index : text.length;
+      sections.push({ name: headers[i][0].trim().replace(/[:—–-]\s*$/, '').trim(), body: text.slice(start, end) });
+    }
+  }
+  return sections;
+}
+
+function extractRows(sectionBody) {
+  // Match rows like "RND 1:", "Rnd 1.", "Row 1:", "R1:", "1.", "1:" etc.
+  const rowRegex = /^[\s]*(?:(?:rnd|round|row|r)[\s.]*)?(\d+)[\s]*[.:)—–-]/gim;
+  const rows = [];
+  let m;
+  while ((m = rowRegex.exec(sectionBody)) !== null) {
+    const num = parseInt(m[1], 10);
+    // grab the rest of the line as the instruction
+    const lineEnd = sectionBody.indexOf('\n', m.index);
+    const instruction = sectionBody.slice(m.index, lineEnd === -1 ? undefined : lineEnd).trim();
+    rows.push({ num, instruction, offset: m.index });
+  }
+  return rows;
+}
+
+function checkSequentialRows(text) {
+  const sections = parseSections(text);
+  const gaps = [];
+  for (const sec of sections) {
+    const rows = extractRows(sec.body);
+    if (rows.length < 2) continue;
+    for (let i = 1; i < rows.length; i++) {
+      const expected = rows[i - 1].num + 1;
+      if (rows[i].num !== expected && rows[i].num > rows[i - 1].num) {
+        gaps.push(`${sec.name}: gap between row ${rows[i - 1].num} and ${rows[i].num}`);
+      } else if (rows[i].num < rows[i - 1].num && rows[i].num !== 1) {
+        // out of order (but row 1 restart = new section, skip)
+        gaps.push(`${sec.name}: row ${rows[i].num} appears after row ${rows[i - 1].num} (out of order)`);
+      }
+    }
+  }
+  return {
+    id: "sequence", label: "Sequential rounds/rows",
+    status: gaps.length ? "fail" : "pass",
+    detail: gaps.length ? gaps.join("; ") : "All rows are sequential with no gaps."
+  };
+}
+
+function checkDuplicateRounds(text) {
+  const sections = parseSections(text);
+  const dupes = [];
+  for (const sec of sections) {
+    const rows = extractRows(sec.body);
+    const seen = new Map();
+    for (const row of rows) {
+      const prev = seen.get(row.num);
+      if (prev && prev !== row.instruction) {
+        dupes.push(`${sec.name}: row ${row.num} appears multiple times with different instructions`);
+      }
+      if (!prev) seen.set(row.num, row.instruction);
+    }
+  }
+  return {
+    id: "duplicates", label: "Duplicate round numbers",
+    status: dupes.length ? "fail" : "pass",
+    detail: dupes.length ? dupes.join("; ") : "No duplicate round numbers found."
+  };
+}
+
+function checkStitchMath(text) {
+  // Parse stitch counts from parenthetical totals at end of row instructions
+  const STITCH_COUNTS = {
+    sc: 1, hdc: 1, dc: 1, tr: 1, slst: 1, 'sl st': 1, 'sl-st': 1,
+    inc: 2, dec: 1, sc2tog: 1, hdc2tog: 1, dc2tog: 1, invdec: 1, 'inv dec': 1,
+  };
+
+  function countStitchesInGroup(groupText) {
+    let total = 0;
+    let confident = true;
+    // Normalize
+    const norm = groupText.toLowerCase().replace(/,/g, ' ').replace(/\s+/g, ' ').trim();
+    // tokenize: match "N stitch" or "stitch" patterns
+    const tokenRegex = /(\d+)?\s*(sc2tog|hdc2tog|dc2tog|inv\s*dec|invdec|sl[\s-]*st|slst|sc|hdc|dc|tr|inc|dec)\b/gi;
+    let t;
+    let matched = false;
+    while ((t = tokenRegex.exec(norm)) !== null) {
+      matched = true;
+      const count = t[1] ? parseInt(t[1], 10) : 1;
+      const stitch = t[2].toLowerCase().replace(/\s+/g, '').replace(/-/g, '');
+      const mapped = stitch === 'slst' ? 1 : (stitch === 'invdec' ? 1 : STITCH_COUNTS[stitch]);
+      if (mapped === undefined) { confident = false; continue; }
+      total += count * mapped;
+    }
+    if (!matched) confident = false;
+    return { total, confident };
+  }
+
+  const flagged = [];
+  const sections = parseSections(text);
+  for (const sec of sections) {
+    const rows = extractRows(sec.body);
+    for (const row of rows) {
+      // Look for stated count in parentheses at end: (40) or (40 sts) or (40 st)
+      const statedMatch = row.instruction.match(/\((\d+)(?:\s*(?:sts?|stitches?))?\)\s*$/i);
+      if (!statedMatch) continue;
+      const stated = parseInt(statedMatch[1], 10);
+
+      // Get the instruction text before the stated count
+      const instrText = row.instruction.slice(0, row.instruction.lastIndexOf(statedMatch[0]));
+
+      // Handle repeat groups: (group) x N or (group) * N
+      const repeatRegex = /\(([^)]+)\)\s*[x×*]\s*(\d+)/gi;
+      let totalCalc = 0;
+      let allConfident = true;
+      let hasRepeats = false;
+      let processedText = instrText;
+
+      let rm;
+      while ((rm = repeatRegex.exec(instrText)) !== null) {
+        hasRepeats = true;
+        const { total: groupTotal, confident } = countStitchesInGroup(rm[1]);
+        if (!confident) { allConfident = false; break; }
+        const repeatCount = parseInt(rm[2], 10);
+        totalCalc += groupTotal * repeatCount;
+        processedText = processedText.replace(rm[0], '');
+      }
+
+      if (!allConfident) continue; // too complex, skip
+
+      // Count remaining stitches outside repeat groups
+      const { total: remainingTotal, confident: remainingConfident } = countStitchesInGroup(processedText);
+      if (!remainingConfident && !hasRepeats) continue; // can't parse at all, skip
+      totalCalc += remainingTotal;
+
+      if (totalCalc > 0 && totalCalc !== stated) {
+        flagged.push(`${sec.name} row ${row.num}: calculated ${totalCalc}, stated (${stated})`);
+      }
+    }
+  }
+  return {
+    id: "stitch_math", label: "Stitch count math",
+    status: flagged.length ? "fail" : "pass",
+    detail: flagged.length ? flagged.join("; ") : "All verifiable stitch counts match."
+  };
+}
+
+function runDeterministicChecks(text) {
+  return [
+    checkSequentialRows(text),
+    checkDuplicateRounds(text),
+    checkStitchMath(text),
+  ];
+}
+
+function mergeChecks(llmResult, codeChecks) {
+  // Combine LLM checks with code-based checks, recalculate overall score
+  const allChecks = [...codeChecks, ...(llmResult.checks || [])];
+  const failCount = allChecks.filter(c => c.status === "fail").length;
+  const warnCount = allChecks.filter(c => c.status === "warning").length;
+  const total = allChecks.length;
+  // Each check is worth equal weight; fails deduct full share, warnings deduct half
+  const score = total > 0 ? Math.round(100 * (1 - (failCount / total) - (warnCount / (2 * total)))) : 100;
+  const clampedScore = Math.max(0, Math.min(100, score));
+  const overall = failCount > 0 ? "issues" : warnCount > 0 ? "review" : "valid";
+  return { overall, score: clampedScore, checks: allChecks, summary: llmResult.summary || "" };
+}
 
 async function handleBevCheck(req, res, _url, _key, _t0) {
   const { patternText } = req.body || {};
@@ -363,7 +522,7 @@ async function handleBevCheck(req, res, _url, _key, _t0) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt + "\n\nPATTERN TEXT:\n" + text }] }],
-            generationConfig: { temperature: 0.1, maxOutputTokens: 65536 },
+            generationConfig: { temperature: 0, maxOutputTokens: 65536 },
           }),
           signal: controller.signal,
         }
@@ -420,13 +579,17 @@ async function handleBevCheck(req, res, _url, _key, _t0) {
     }).catch(() => {});
   };
 
+  // ── Deterministic code-based checks ──
+  const codeChecks = runDeterministicChecks(text);
+
   // Attempt 1: Gemini full prompt
   console.log("[bevcheck] Attempt 1: Gemini full prompt, chars:", text.length);
   try {
     const result = await callGeminiBevCheck(BEVCHECK_PROMPT);
     console.log("[bevcheck] Gemini full success, score:", result.score);
     logToSupabase('info', `POST /api/extract-pattern?mode=bevcheck → 200 gemini (${Date.now() - _t0}ms)`, 200);
-    return res.status(200).json({ ...result, provider: "gemini" });
+    const merged = mergeChecks(result, codeChecks);
+    return res.status(200).json({ ...merged, provider: "gemini" });
   } catch (e) {
     console.error("[bevcheck] Attempt 1 failed:", e.message);
   }
@@ -437,7 +600,8 @@ async function handleBevCheck(req, res, _url, _key, _t0) {
     const result = await callGeminiBevCheck(BEVCHECK_SIMPLE_PROMPT);
     console.log("[bevcheck] Gemini simplified success, score:", result.score);
     logToSupabase('info', `POST /api/extract-pattern?mode=bevcheck → 200 gemini_simplified (${Date.now() - _t0}ms)`, 200);
-    return res.status(200).json({ ...result, provider: "gemini_simplified" });
+    const merged = mergeChecks(result, codeChecks);
+    return res.status(200).json({ ...merged, provider: "gemini_simplified" });
   } catch (e2) {
     console.error("[bevcheck] Attempt 2 failed:", e2.message);
   }
@@ -448,7 +612,8 @@ async function handleBevCheck(req, res, _url, _key, _t0) {
     const result = await callClaudeBevCheck();
     console.log("[bevcheck] Claude success, score:", result.score);
     logToSupabase('info', `POST /api/extract-pattern?mode=bevcheck → 200 claude (${Date.now() - _t0}ms)`, 200);
-    return res.status(200).json({ ...result, provider: "claude" });
+    const merged = mergeChecks(result, codeChecks);
+    return res.status(200).json({ ...merged, provider: "claude" });
   } catch (e3) {
     console.error("[bevcheck] Attempt 3 failed:", e3.message);
     logToSupabase('error', `[bevcheck] all 3 attempts failed (${Date.now() - _t0}ms)`, 500);
