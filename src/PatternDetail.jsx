@@ -268,7 +268,7 @@ const ShareCardModal = ({pattern,onClose,pct,Btn}) => {
   );
 };
 
-const Detail = ({p,onBack,onSave,pct,estYards,estSkeins,pdfThumbUrl,CSS,Bar,Photo,Stars,WireframeViewer,Btn}) => {
+const Detail = ({p,onBack,onSave,pct,estYards,estSkeins,pdfThumbUrl,CSS,Bar,Photo,Stars,WireframeViewer,Btn,scrollToRow:initialScrollToRow}) => {
   const VALID_TABS=["materials","rows","notes"];
   // Auto-hide header on scroll down, show on scroll up (with iOS momentum debounce)
   const scrollRef=useRef(null);
@@ -291,7 +291,16 @@ const Detail = ({p,onBack,onSave,pct,estYards,estSkeins,pdfThumbUrl,CSS,Bar,Phot
   },[]);
   const _initRows=ensureRepeatBrackets(p.rows);
   const _isFreshPattern=_initRows.filter(r=>!r.isHeader).every(r=>!r.done);
-  const [rows,setRows]=useState(_initRows),[tab,setTab]=useState(()=>{if(_isFreshPattern) return "materials";const saved=localStorage.getItem("yh_last_tab");return VALID_TABS.includes(saved)?saved:"materials";}),[editing,setEditing]=useState(false),[draft,setDraft]=useState({...p}),[showScale,setShowScale]=useState(false),[showShare,setShowShare]=useState(false),[milestone,setMilestone]=useState(null);
+  const [rows,setRows]=useState(_initRows),[tab,setTab]=useState(()=>{if(initialScrollToRow!=null) return "rows";if(_isFreshPattern) return "materials";const saved=localStorage.getItem("yh_last_tab");return VALID_TABS.includes(saved)?saved:"materials";}),[editing,setEditing]=useState(false),[draft,setDraft]=useState({...p}),[showScale,setShowScale]=useState(false),[showShare,setShowShare]=useState(false),[milestone,setMilestone]=useState(null);
+  useEffect(()=>{
+    if(initialScrollToRow!=null&&tab==="rows"){
+      setTimeout(()=>{
+        const el=document.getElementById(`row-${initialScrollToRow}`);
+        if(el) el.scrollIntoView({behavior:"smooth",block:"center"});
+        else window.scrollTo({top:0,left:0,behavior:"instant"});
+      },50);
+    }
+  },[]);// eslint-disable-line react-hooks/exhaustive-deps
   const [attachUploading,setAttachUploading]=useState(false);
   const [showYarnTip,setShowYarnTip]=useState(()=>!localStorage.getItem("yh_yarn_summary_tip_seen"));
   const [showPdfViewer,setShowPdfViewer]=useState(false);

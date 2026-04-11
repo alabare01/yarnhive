@@ -29,7 +29,7 @@ export default async function handler(req, res) {
           currency: 'usd',
           product_data: {
             name: 'Wovely Pro',
-            description: 'Unlimited pattern imports, Stitch Check, Row Tracker & more'
+            description: 'Unlimited pattern imports, BevCheck, Row Tracker & more'
           },
           unit_amount: 899,
           recurring: { interval: 'month' }

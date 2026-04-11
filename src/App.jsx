@@ -1417,7 +1417,7 @@ const CHANGELOG_ENTRIES = [
     changes: {
       "New": [
         "🌀 Stitch Vision is now Stitch-O-Vision",
-        "💜 BevCheck replaces Stitch Check in nav",
+        "💜 BevCheck replaces old Stitch Check in nav",
         "📊 Structured API logging to Supabase vercel_logs table",
         "🚨 Client-side error reporting — captures unhandled JS errors and promise rejections",
         "🧠 Stitch-O-Vision prompt now distinguishes stitches from construction techniques",

@@ -2,14 +2,13 @@ import { useState, useRef } from "react";
 import { T, useBreakpoint } from "./theme.jsx";
 import posthog from "posthog-js";
 
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
-
+// VALIDATION_PROMPT kept for export — used by AddPatternModal and ImageImportModal for client-side background validation
 const VALIDATION_PROMPT = `You are a crochet pattern validator. Analyze this pattern and return ONLY a JSON object with this exact structure — no markdown, no backticks, no explanation:
 {
   "overall": "valid" or "review" or "issues",
   "score": number 0-100,
   "checks": [
-    { "id": "string", "label": "string", "status": "pass" or "warn" or "fail", "detail": "string" }
+    { "id": "string", "label": "string", "status": "pass" or "warning" or "fail", "detail": "string" }
   ],
   "summary": "string"
 }
@@ -28,6 +27,21 @@ SCORING RULES — do NOT penalize for any of the following:
 • Non-US decimal conventions (comma instead of period for decimals)
 • Minor grammatical issues that do not affect the crochet instructions
 These may be noted as informational "pass" items at most, never scored as warnings or failures.
+
+CROCHET STITCH MATH RULES — you MUST follow these when verifying stitch counts:
+• "inc" (increase) = 2 stitches worked into 1 stitch. It CONSUMES 1 stitch from the previous round but PRODUCES 2 stitches in the current round.
+• "dec" / "sc2tog" / "inv dec" (decrease) = 1 stitch worked over 2 stitches. It CONSUMES 2 stitches but PRODUCES 1 stitch.
+• "sc", "hdc", "dc", "tr", "sl st" = each is exactly 1 stitch (consumes 1, produces 1).
+• Bracket repeats: "(sc, inc) x 6" means the sequence "sc, inc" is worked 6 times. That's 6 × (1 + 2) = 18 stitches produced, consuming 6 × 2 = 12 stitches from the previous round.
+• When a round says "(sc, inc) x 6 (12)", verify: 6 repeats × 2 stitches produced per repeat = 12. This is CORRECT.
+• Common correct progression: MR 6 → (sc, inc) x 6 = 12 → (2 sc, inc) x 4 = 16 → etc.
+• Do NOT flag stitch counts as wrong unless you have done the arithmetic yourself and confirmed a mismatch.
+
+UNCERTAINTY RULE:
+If you can confidently verify the math is correct → "pass"
+If you can confidently verify the math is wrong → "fail"
+If you cannot confidently verify due to ambiguous notation, unusual abbreviations, complex construction, or stitch types not listed above → return status "warning" with a brief explanation of what could not be verified.
+Never guess. Never silently pass something you cannot calculate with confidence.
 
 Be specific in detail fields. Name exact round numbers where issues occur. If everything looks clean, say so clearly. Aim for scores 80-100 for patterns with no structural issues.`;
 
@@ -64,7 +78,7 @@ const extractTextFromPDF = async (file) => {
 
 const BADGE = { valid: { color: "#5B9B6B", bg: T.sageLt, emoji: "\u2705", label: "Pattern Looks Good" }, review: { color: "#C9A84C", bg: "#FFF8EC", emoji: "\u26A0\uFE0F", label: "Review Suggested" }, issues: { color: "#C0544A", bg: "#FFF0EE", emoji: "\u274C", label: "Issues Found" } };
 const badgeForScore = (score) => score >= 80 ? BADGE.valid : score >= 60 ? BADGE.review : BADGE.issues;
-const CHECK_ICON = { pass: "\u2705", warn: "\u26A0\uFE0F", fail: "\u274C" };
+const CHECK_ICON = { pass: "\u2705", warn: "\u26A0\uFE0F", warning: "\u26A0\uFE0F", fail: "\u274C" };
 const displayScore = (report) => {
   if (!report?.checks?.length) return report?.score || 0;
   const allPass = report.checks.every(c => c.status === "pass");
@@ -74,7 +88,12 @@ const displayScore = (report) => {
 const CARD = {background:"rgba(255,255,255,0.82)",backdropFilter:"blur(16px)",WebkitBackdropFilter:"blur(16px)",borderRadius:20,padding:24,border:"1px solid rgba(255,255,255,0.6)",boxShadow:"0 2px 4px rgba(0,0,0,0.04), 0 8px 32px rgba(155,126,200,0.13)"};
 const LABEL = {fontSize:11,fontWeight:600,color:T.ink2,textTransform:"uppercase",letterSpacing:".05em",marginBottom:6};
 
-const StitchCheck = () => {
+const extractFirstRowNumber = (text) => {
+  const match = text.match(/(?:rnd|row|round)\s+(\d+)/i);
+  return match ? parseInt(match[1], 10) : null;
+};
+
+const StitchCheck = ({ onNavigateToRow } = {}) => {
   const [mode, setMode] = useState(null); // null | "pdf" | "text"
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
@@ -91,34 +110,29 @@ const StitchCheck = () => {
     setLoading(true); setError(null); setReport(null); setProgress(10); setPhase("Preparing pattern text\u2026");
     const intv = setInterval(() => setProgress(p => Math.min(p + 2, 85)), 200);
     try {
-      setPhase("Running Stitch Check\u2026");
+      setPhase("Running BevCheck\u2026");
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 90000);
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+      const res = await fetch("/api/extract-pattern", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: VALIDATION_PROMPT + "\n\nPATTERN TEXT:\n" + patternText }] }],
-          generationConfig: { temperature: 0.1, maxOutputTokens: 65536 },
-        }),
+        body: JSON.stringify({ mode: "bevcheck", patternText }),
         signal: controller.signal,
       });
       clearTimeout(timeout);
       clearInterval(intv); setProgress(90); setPhase("Reading results\u2026");
-      const rawText = await res.text();
-      console.log("[Wovely] Stitch Check response status:", res.status, "body preview:", rawText.substring(0, 500));
-      if (!res.ok) throw new Error("Gemini API error: " + res.status + " — " + rawText.substring(0, 200));
-      let data; try { data = JSON.parse(rawText); } catch (e) { throw new Error("Invalid JSON wrapper: " + rawText.substring(0, 200)); }
-      const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-      console.log("[Wovely] Stitch Check extracted text:", raw.substring(0, 300));
-      const cleaned = raw.replace(/```json/g, "").replace(/```/g, "").trim();
-      const parsed = JSON.parse(cleaned);
+      const data = await res.json();
+      console.log("[Wovely] BevCheck response status:", res.status, "provider:", data.provider);
+      if (!res.ok || data.error) {
+        if (data.message === "bev_tangled") throw new Error("bev_tangled");
+        throw new Error("BevCheck API error: " + res.status);
+      }
       setProgress(100); setPhase("Done");
       await new Promise(r => setTimeout(r, 300));
-      setReport(parsed);
+      setReport(data);
     } catch (e) {
       clearInterval(intv);
-      console.error("[Wovely] Stitch Check error:", e);
+      console.error("[Wovely] BevCheck error:", e);
       setError("Couldn't analyze this pattern. Try again or paste the text directly.");
     }
     setLoading(false);
@@ -146,7 +160,7 @@ const StitchCheck = () => {
     const badge = badgeForScore(score);
     return (
       <div style={{ padding: isDesktop ? "24px 24px 80px" : "0 18px 80px", maxWidth: 960, margin: "0 auto" }}>
-        <div style={{ fontFamily: T.serif, fontSize: 22, color: T.ink, marginBottom: 4, fontWeight: 700 }}>Stitch Check Report</div>
+        <div style={{ fontFamily: T.serif, fontSize: 22, color: T.ink, marginBottom: 4, fontWeight: 700 }}>BevCheck Report</div>
         <div style={{ fontSize: 13, color: T.ink3, marginBottom: 24 }}>Pattern validation results</div>
 
         {/* Overall badge */}
@@ -162,15 +176,23 @@ const StitchCheck = () => {
         {/* Individual checks */}
         <div style={{ marginBottom: 20 }}>
           <div style={{ ...LABEL, marginBottom: 12 }}>checks</div>
-          {(report.checks || []).map(c => (
-            <div key={c.id} style={{ ...CARD, padding: "16px 20px", marginBottom: 10, display: "flex", gap: 12, alignItems: "flex-start" }}>
+          {(report.checks || []).map(c => {
+            const isWarning = c.status === "warning" || c.status === "warn";
+            const isFail = c.status === "fail";
+            const isActionable = onNavigateToRow && (isFail || isWarning);
+            const rowNum = isActionable ? extractFirstRowNumber(c.detail) : null;
+            return (
+            <div key={c.id} onClick={isActionable ? () => onNavigateToRow(rowNum) : undefined} style={{ ...CARD, padding: "16px 20px", marginBottom: 10, display: "flex", gap: 12, alignItems: "flex-start", cursor: isActionable ? "pointer" : "default", transition: "transform .1s" }} onMouseEnter={isActionable ? e => { e.currentTarget.style.transform = "translateY(-1px)"; } : undefined} onMouseLeave={isActionable ? e => { e.currentTarget.style.transform = "none"; } : undefined}>
               <span style={{ fontSize: 18, flexShrink: 0, marginTop: 1 }}>{CHECK_ICON[c.status] || "\u2753"}</span>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 14, fontWeight: 600, color: T.ink, marginBottom: 4 }}>{c.label}</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: isFail ? "#C0544A" : isWarning ? "#C9A84C" : T.ink, marginBottom: 4 }}>{c.label}</div>
                 <div style={{ fontSize: 12, color: T.ink2, lineHeight: 1.7 }}>{c.detail}</div>
+                {isWarning && <div style={{ fontSize: 11, color: "#C9A84C", fontWeight: 600, fontFamily: "'Inter', sans-serif", marginTop: 6 }}>Bev couldn't verify this — review manually</div>}
+                {isActionable && <div style={{ fontSize: 11, color: "#9B7EC8", fontWeight: 600, fontFamily: "'Inter', sans-serif", marginTop: 6 }}>→ View in rows</div>}
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Summary */}
@@ -182,7 +204,7 @@ const StitchCheck = () => {
         )}
 
         <div style={{ padding: "0 8px", textAlign: "center", marginBottom: 20 }}>
-          <p style={{ fontSize: 12, color: T.sage, lineHeight: 1.7, fontStyle: "italic", margin: 0 }}>A lower score doesn't mean your pattern won't work — think of it like adding a handwritten recipe card to your recipe box. Mom's notes, doodles, and shorthand are part of the charm. Wovely can import any pattern regardless of its Stitch Check score.</p>
+          <p style={{ fontSize: 12, color: T.sage, lineHeight: 1.7, fontStyle: "italic", margin: 0 }}>A lower score doesn't mean your pattern won't work — think of it like adding a handwritten recipe card to your recipe box. Mom's notes, doodles, and shorthand are part of the charm. Wovely can import any pattern regardless of its BevCheck score.</p>
         </div>
         <button onClick={reset} style={{ width: "100%", background: "#FFFFFF", color: T.ink2, border: `1.5px solid ${T.terra}`, borderRadius: 9999, padding: "14px", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Check another pattern</button>
       </div>
@@ -232,7 +254,7 @@ const StitchCheck = () => {
           <div style={LABEL}>paste your pattern</div>
           <textarea value={text} onChange={e => setText(e.target.value)} placeholder="Paste your pattern text here — rounds, rows, instructions, everything\u2026" rows={12} style={{ width: "100%", padding: "16px 0", background: "transparent", border: "none", borderBottom: "2px solid transparent", color: T.ink, fontSize: 14, resize: "vertical", lineHeight: 1.7, outline: "none", fontFamily: T.sans, transition: "border-color .2s" }} onFocus={e => e.target.style.borderBottomColor = T.terra} onBlur={e => e.target.style.borderBottomColor = "transparent"} />
           <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
-            <button onClick={handleTextSubmit} disabled={!text.trim()} style={{ flex: 1, background: T.terra, color: "#fff", border: "none", borderRadius: 9999, padding: "12px 24px", fontSize: 14, fontWeight: 600, cursor: text.trim() ? "pointer" : "not-allowed", opacity: text.trim() ? 1 : .5 }}>Run Stitch Check</button>
+            <button onClick={handleTextSubmit} disabled={!text.trim()} style={{ flex: 1, background: T.terra, color: "#fff", border: "none", borderRadius: 9999, padding: "12px 24px", fontSize: 14, fontWeight: 600, cursor: text.trim() ? "pointer" : "not-allowed", opacity: text.trim() ? 1 : .5 }}>Run BevCheck</button>
             <button onClick={reset} style={{ background: "#FFFFFF", color: T.terra, border: `1.5px solid ${T.terra}`, borderRadius: 9999, padding: "12px 24px", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Back</button>
           </div>
         </div>
@@ -241,5 +263,5 @@ const StitchCheck = () => {
   );
 };
 
-export { VALIDATION_PROMPT, BADGE, badgeForScore, CHECK_ICON, displayScore };
+export { VALIDATION_PROMPT, BADGE, badgeForScore, CHECK_ICON, displayScore, extractFirstRowNumber };
 export default StitchCheck;

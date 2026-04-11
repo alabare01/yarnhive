@@ -1,7 +1,10 @@
 // api/extract-pattern.js
 // Vercel serverless function — extracts crochet pattern from PDF text via Gemini
+// Supports mode: "extract" (default) and mode: "bevcheck" (pattern validation)
 
 export const config = { maxDuration: 60 };
+
+const GEMINI_MODEL = 'gemini-2.5-flash';
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -17,6 +20,13 @@ export default async function handler(req, res) {
 
   try {
 
+  const { mode = "extract" } = req.body || {};
+
+  if (mode === "bevcheck") {
+    return handleBevCheck(req, res, _url, _key, _t0);
+  }
+
+  // ── mode: "extract" (default) ──
   const { pdfText: rawText, pageCount } = req.body || {};
   if (!rawText) return res.status(400).json({ error: "pdfText required" });
 
@@ -109,7 +119,7 @@ Extract every row/round as its own entry. Keep instruction text exactly as writt
     let r;
     try {
       r = await fetch(
-        `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`,
+        `https://generativelanguage.googleapis.com/v1/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_KEY}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -271,6 +281,178 @@ ${text}`;
       }).catch(() => {});
     }
     return res.status(500).json({ error: "Internal server error", message: err.message });
+  }
+}
+
+// ── mode: "bevcheck" — pattern validation with Gemini/Claude cascade ──
+
+const BEVCHECK_PROMPT = `You are a crochet pattern validator. Analyze this pattern and return ONLY a JSON object with this exact structure — no markdown, no backticks, no explanation:
+{
+  "overall": "valid" or "review" or "issues",
+  "score": number 0-100,
+  "checks": [
+    { "id": "string", "label": "string", "status": "pass" or "warning" or "fail", "detail": "string" }
+  ],
+  "summary": "string"
+}
+
+Check for:
+1. Sequential rounds/rows — are all numbers present with no gaps or duplicates? (id: "sequence")
+2. Stitch count math — do totals in parentheses match the instructions mathematically? (id: "stitch_math")
+3. Duplicate round numbers — same number appearing twice with different instructions? (id: "duplicates")
+4. Cross-references — does the pattern reference rounds that don't exist? (id: "cross_refs")
+5. Translation artifacts — does phrasing suggest a translated pattern that may have errors? (id: "translation")
+6. Component structure — are section headers clear and consistent? (id: "structure")
+
+CROCHET STITCH MATH RULES — you MUST follow these when verifying stitch counts:
+• "inc" (increase) = 2 stitches worked into 1 stitch. It CONSUMES 1 stitch from the previous round but PRODUCES 2 stitches in the current round.
+• "dec" / "sc2tog" / "inv dec" (decrease) = 1 stitch worked over 2 stitches. It CONSUMES 2 stitches but PRODUCES 1 stitch.
+• "sc", "hdc", "dc", "tr", "sl st" = each is exactly 1 stitch (consumes 1, produces 1).
+• "ch" (chain) inside a round adds 1 stitch to the count but does NOT consume a stitch from the previous round.
+• Magic ring (MR/MC) is the starting point — it has 0 stitches before the first round's instructions.
+• Bracket repeats: "(sc, inc) x 6" means the sequence "sc, inc" is worked 6 times. That's 6 × (1 + 2) = 18 stitches produced, consuming 6 × 2 = 12 stitches from the previous round.
+• When a round says "(sc, inc) x 6 (12)", verify: 6 repeats × 2 stitches produced per repeat = 12. This is CORRECT.
+• When a round says "6 sc, inc (8)" from a starting count of 7: 6 sc (6 stitches) + 1 inc (2 stitches) = 8 total. Consumes 6 + 1 = 7 from previous round. This is CORRECT.
+• Common correct progression: MR 6 → (sc, inc) x 6 = 12 → (2 sc, inc) x 4 = 16 → etc. Each inc adds 1 extra stitch to the total per repeat.
+• Do NOT flag stitch counts as wrong unless you have done the arithmetic yourself and confirmed a mismatch.
+
+UNCERTAINTY RULE:
+If you can confidently verify the math is correct → "pass"
+If you can confidently verify the math is wrong → "fail"
+If you cannot confidently verify due to ambiguous notation, unusual abbreviations, complex construction, or stitch types not listed above → return status "warning" with a brief explanation of what could not be verified.
+Never guess. Never silently pass something you cannot calculate with confidence.
+
+SCORING RULES — do NOT penalize for any of the following:
+• PDF formatting artifacts (OCR typos in tip/intro sections, formatting inconsistencies, page headers/footers)
+• Print-Friendly page duplications — if the pattern appears duplicated at the end under a "Print-Friendly" or similar heading, ignore the duplicate section entirely. This is a common PDF feature, not a pattern error.
+• Non-US decimal conventions (comma instead of period for decimals)
+• Minor grammatical issues that do not affect the crochet instructions
+These may be noted as informational "pass" items at most, never scored as warnings or failures.
+
+Be specific in detail fields. Name exact round numbers where issues occur. If everything looks clean, say so clearly. Aim for scores 80-100 for patterns with no structural issues.`;
+
+const BEVCHECK_SIMPLE_PROMPT = `You are a crochet pattern validator. Analyze this pattern and return ONLY a JSON object — no markdown, no backticks:
+{"overall":"valid or review or issues","score":0-100,"checks":[{"id":"string","label":"string","status":"pass or warning or fail","detail":"string"}],"summary":"string"}
+Check: sequential rounds, stitch count math, duplicate rounds, cross-references, translation artifacts, structure. Be specific. Aim 80-100 for clean patterns.
+CRITICAL stitch math: inc = 2 stitches produced (not 1), dec/sc2tog = 1 stitch produced from 2. "(sc, inc) x 6 (12)" is CORRECT: 6 × 2 = 12. Do NOT flag counts as wrong unless you confirm the arithmetic yourself.
+UNCERTAINTY RULE: confidently correct → "pass", confidently wrong → "fail", cannot verify → "warning" with explanation. Never guess. Never silently pass what you cannot calculate.`;
+
+async function handleBevCheck(req, res, _url, _key, _t0) {
+  const { patternText } = req.body || {};
+  if (!patternText) return res.status(400).json({ error: "patternText required" });
+
+  const GEMINI_KEY = process.env.GEMINI_API_KEY;
+  const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
+  console.log("[bevcheck] ENV:", GEMINI_KEY ? "GEMINI EXISTS" : "GEMINI MISSING", ANTHROPIC_KEY ? "ANTHROPIC EXISTS" : "ANTHROPIC MISSING", "patternText length:", patternText.length);
+  if (!GEMINI_KEY && !ANTHROPIC_KEY) return res.status(500).json({ error: "No API keys configured" });
+
+  const TEXT_LIMIT = 20000;
+  const text = patternText.length > TEXT_LIMIT
+    ? patternText.slice(0, patternText.lastIndexOf("\n", TEXT_LIMIT) || TEXT_LIMIT)
+    : patternText;
+
+  const callGeminiBevCheck = async (prompt) => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 4000);
+    let r;
+    try {
+      r = await fetch(
+        `https://generativelanguage.googleapis.com/v1/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt + "\n\nPATTERN TEXT:\n" + text }] }],
+            generationConfig: { temperature: 0.1, maxOutputTokens: 65536 },
+          }),
+          signal: controller.signal,
+        }
+      );
+    } catch (fetchErr) {
+      clearTimeout(timeout);
+      if (fetchErr.name === "AbortError") throw new Error("Gemini timeout after 4s");
+      throw fetchErr;
+    }
+    clearTimeout(timeout);
+    if (!r.ok) {
+      const errBody = await r.text();
+      throw new Error(`Gemini API error ${r.status}: ${errBody.substring(0, 300)}`);
+    }
+    const data = await r.json();
+    const raw = data.candidates?.[0]?.content?.parts?.filter(p => !p.thought)?.map(p => p.text)?.join("") || "";
+    if (!raw) throw new Error("Gemini returned empty response");
+    const cleaned = raw.replace(/```json/gi, "").replace(/```/g, "").trim();
+    return JSON.parse(cleaned);
+  };
+
+  const callClaudeBevCheck = async () => {
+    if (!ANTHROPIC_KEY) throw new Error("Anthropic API key not configured");
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": ANTHROPIC_KEY,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 4000,
+        messages: [{ role: "user", content: BEVCHECK_PROMPT + "\n\nPATTERN TEXT:\n" + text }],
+      }),
+    });
+    if (!r.ok) {
+      const errBody = await r.text();
+      throw new Error(`Claude API error ${r.status}: ${errBody.substring(0, 200)}`);
+    }
+    const data = await r.json();
+    const raw = data.content?.[0]?.text || "";
+    if (!raw) throw new Error("Claude returned empty response");
+    const cleaned = raw.replace(/```json/gi, "").replace(/```/g, "").trim();
+    return JSON.parse(cleaned);
+  };
+
+  const logToSupabase = (level, message, status) => {
+    if (!_url || !_key) return;
+    fetch(`${_url}/rest/v1/vercel_logs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': _key, 'Authorization': `Bearer ${_key}`, 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ timestamp: new Date().toISOString(), level, message, source: 'serverless', request_path: '/api/extract-pattern?mode=bevcheck', request_method: 'POST', status_code: status, project_id: 'wovely' })
+    }).catch(() => {});
+  };
+
+  // Attempt 1: Gemini full prompt
+  console.log("[bevcheck] Attempt 1: Gemini full prompt, chars:", text.length);
+  try {
+    const result = await callGeminiBevCheck(BEVCHECK_PROMPT);
+    console.log("[bevcheck] Gemini full success, score:", result.score);
+    logToSupabase('info', `POST /api/extract-pattern?mode=bevcheck → 200 gemini (${Date.now() - _t0}ms)`, 200);
+    return res.status(200).json({ ...result, provider: "gemini" });
+  } catch (e) {
+    console.error("[bevcheck] Attempt 1 failed:", e.message);
+  }
+
+  // Attempt 2: Gemini simplified prompt
+  console.log("[bevcheck] Attempt 2: Gemini simplified prompt");
+  try {
+    const result = await callGeminiBevCheck(BEVCHECK_SIMPLE_PROMPT);
+    console.log("[bevcheck] Gemini simplified success, score:", result.score);
+    logToSupabase('info', `POST /api/extract-pattern?mode=bevcheck → 200 gemini_simplified (${Date.now() - _t0}ms)`, 200);
+    return res.status(200).json({ ...result, provider: "gemini_simplified" });
+  } catch (e2) {
+    console.error("[bevcheck] Attempt 2 failed:", e2.message);
+  }
+
+  // Attempt 3: Claude Haiku fallback
+  console.log("[bevcheck] Attempt 3: Claude Haiku fallback");
+  try {
+    const result = await callClaudeBevCheck();
+    console.log("[bevcheck] Claude success, score:", result.score);
+    logToSupabase('info', `POST /api/extract-pattern?mode=bevcheck → 200 claude (${Date.now() - _t0}ms)`, 200);
+    return res.status(200).json({ ...result, provider: "claude" });
+  } catch (e3) {
+    console.error("[bevcheck] Attempt 3 failed:", e3.message);
+    logToSupabase('error', `[bevcheck] all 3 attempts failed (${Date.now() - _t0}ms)`, 500);
+    return res.status(500).json({ error: true, message: "bev_tangled", provider: "failed" });
   }
 }
 

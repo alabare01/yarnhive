@@ -682,7 +682,7 @@ const URLImportForm = ({onSave,Btn,Photo,initialUrl,onMinimize,onExtractionStart
     const estimatedYardage=data.yardage>0?data.yardage:(data.materials||[]).reduce((sum,m)=>{if(m.yardage>0)return sum+m.yardage;const t=((m.name||"")+" "+(m.amount||"")).toLowerCase();const b=t.match(/(\d+)\s*ball/),s=t.match(/(\d+)\s*skein/);if(b)return sum+parseInt(b[1])*200;if(s)return sum+parseInt(s[1])*200;return sum;},0);
     const missing=[];if(!data.hook)missing.push("hook size");if(!data.weight)missing.push("yarn weight");if(!(data.yardage>0)&&!(estimatedYardage>0))missing.push("yardage");if(!(data.materials||[]).length)missing.push("materials list");
     setPreview({title:data.title||"",source:data.source||"",source_url:url.trim(),cat:data.cat||"Uncategorized",hook:data.hook||"",weight:data.weight||"",notes:data.notes||"",materials:data.materials||[],rows,yardage:estimatedYardage||data.yardage||0,photo:data.thumbnail_url||PILL[Math.floor(Math.random()*PILL.length)],cover_image_url:data.thumbnail_url||null,smartNote:rows.length+" steps extracted and ready to track.",qualityNote:missing.length===0?null:"Not found on source page: "+missing.join(", ")+". Pattern quality depends on the source."});
-    setLoading(false);onExtractionEnd?.();    // Run Stitch Check in background — same as PDF import
+    setLoading(false);onExtractionEnd?.();    // Run BevCheck in background — same as PDF import
     const pageText=rows.map(r=>r.text).join("\n");
     if(pageText&&GEMINI_API_KEY){
       setValidating(true);
@@ -699,7 +699,7 @@ const URLImportForm = ({onSave,Btn,Photo,initialUrl,onMinimize,onExtractionStart
           clearTimeout(timeout);
           const rawText=await vr.text();
           if(vr.ok){const d=JSON.parse(rawText);const raw=d.candidates?.[0]?.content?.parts?.[0]?.text||"";const parsed=JSON.parse(raw.replace(/```json/g,"").replace(/```/g,"").trim());setValidationReport(parsed);}
-        }catch(e){console.warn("[Wovely] URL Stitch Check failed:",e);}
+        }catch(e){console.warn("[Wovely] URL BevCheck failed:",e);}
         setValidating(false);
       })();
     }
@@ -734,8 +734,8 @@ const URLImportForm = ({onSave,Btn,Photo,initialUrl,onMinimize,onExtractionStart
             <div style={{fontSize:12,color:T.ink3,marginBottom:8}}>{[preview.hook&&"Hook "+preview.hook,preview.weight,preview.yardage>0&&"~"+preview.yardage+" yds"].filter(Boolean).join(" · ")}</div>
             {preview.smartNote&&<div style={{background:T.sageLt,borderRadius:8,padding:"8px 12px",marginBottom:10,display:"flex",gap:8}}><span>✨</span><span style={{fontSize:12,color:T.sage}}>{preview.smartNote}</span></div>}
             {preview.qualityNote&&<div style={{background:"#FFF8EC",borderRadius:8,padding:"8px 12px",marginBottom:12,border:"1px solid #F0D9A8",display:"flex",gap:8,alignItems:"flex-start"}}><span style={{fontSize:13,flexShrink:0}}>⚠️</span><span style={{fontSize:11,color:"#8B6914",lineHeight:1.6}}>{preview.qualityNote}</span></div>}
-            {validating&&<div style={{background:T.card,borderRadius:10,padding:"12px",marginBottom:12,display:"flex",alignItems:"center",gap:10}}><div className="spinner" style={{width:16,height:16,border:`2px solid ${T.border}`,borderTopColor:T.terra,borderRadius:"50%",flexShrink:0}}/><span style={{fontSize:12,color:T.ink2}}>Running Stitch Check...</span></div>}
-            {validationReport&&<div style={{background:T.sageLt,borderRadius:10,padding:"10px 12px",marginBottom:12,display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:14}}>{(validationReport.checks||[]).every(c=>c.status==="pass")?"✅":"⚠️"}</span><span style={{fontSize:12,fontWeight:600,color:T.sage}}>Stitch Check: {displayScore(validationReport)}%</span></div>}
+            {validating&&<div style={{background:T.card,borderRadius:10,padding:"12px",marginBottom:12,display:"flex",alignItems:"center",gap:10}}><div className="spinner" style={{width:16,height:16,border:`2px solid ${T.border}`,borderTopColor:T.terra,borderRadius:"50%",flexShrink:0}}/><span style={{fontSize:12,color:T.ink2}}>Running BevCheck...</span></div>}
+            {validationReport&&<div style={{background:T.sageLt,borderRadius:10,padding:"10px 12px",marginBottom:12,display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:14}}>{(validationReport.checks||[]).every(c=>c.status==="pass")?"✅":"⚠️"}</span><span style={{fontSize:12,fontWeight:600,color:T.sage}}>BevCheck:{displayScore(validationReport)}%</span></div>}
             {preview.rows?.length>0&&<div style={{background:T.surface,borderRadius:10,padding:"10px 12px",marginBottom:12,maxHeight:160,overflowY:"auto",border:`1px solid ${T.border}`}}><div style={{fontSize:10,color:T.ink3,textTransform:"uppercase",letterSpacing:".07em",marginBottom:8,fontWeight:600}}>Preview — {preview.rows.length} steps</div>{preview.rows.slice(0,5).map((r,i)=><div key={i} style={{fontSize:12,color:T.ink2,padding:"4px 0",borderBottom:i<4?`1px solid ${T.border}`:"none",lineHeight:1.5}}>{r.text}</div>)}{preview.rows.length>5&&<div style={{fontSize:11,color:T.ink3,marginTop:6}}>+{preview.rows.length-5} more steps…</div>}</div>}
             <Btn onClick={()=>onSave({id:Date.now(),rating:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:50,height:60},...preview,validation_report:validationReport||null})}>Save to My Wovely</Btn>
             <div style={{marginTop:8}}><Btn variant="ghost" onClick={()=>{setPreview(null);setUrl("");setValidationReport(null);}}>Try different URL</Btn></div>
@@ -769,7 +769,7 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade,onMinimize,onExtractionStart,
   const [complexityStats,setComplexityStats]=useState(null); // {pages, textLen}
   const [validationFlags,setValidationFlags]=useState([]);
   const [flagsDismissed,setFlagsDismissed]=useState(false);
-  const [validationReport,setValidationReport]=useState(null); // Stitch Check result
+  const [validationReport,setValidationReport]=useState(null); // BevCheck result
   const [validating,setValidating]=useState(false);
   const [proUpgradeBanner,setProUpgradeBanner]=useState(false);
   const [showFullReport,setShowFullReport]=useState(false);
@@ -910,7 +910,7 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade,onMinimize,onExtractionStart,
       for(let i=1;i<rndNums.length;i++){if(rndNums[i]-rndNums[i-1]>2) flags.push("Gap detected between round "+rndNums[i-1]+" and "+rndNums[i]);}
       if(complexityStats&&complexityStats.pages>=5&&allRows.length<10) flags.push("Only "+allRows.length+" rows from a "+complexityStats.pages+"-page pattern");
       setValidationFlags(flags);
-      // Run Stitch Check in background (non-blocking) — requires client-side Gemini key
+      // Run BevCheck in background (non-blocking) — requires client-side Gemini key
       if(extractedText&&GEMINI_API_KEY){
         setValidating(true);
         const valText=extractedText.length>20000?extractedText.slice(0,extractedText.lastIndexOf("\n",20000)||20000):extractedText;
@@ -925,9 +925,9 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade,onMinimize,onExtractionStart,
             });
             clearTimeout(timeout);
             const rawText=await vr.text();
-            if(!vr.ok){console.warn("[Wovely] Stitch Check API error:",vr.status,rawText.substring(0,200));setValidating(false);return;}
+            if(!vr.ok){console.warn("[Wovely] BevCheck API error:",vr.status,rawText.substring(0,200));setValidating(false);return;}
             const d=JSON.parse(rawText);const raw=d.candidates?.[0]?.content?.parts?.[0]?.text||"";const parsed=JSON.parse(raw.replace(/```json/g,"").replace(/```/g,"").trim());setValidationReport(parsed);
-          }catch(e){console.warn("[Wovely] Stitch Check background validation failed:",e);}
+          }catch(e){console.warn("[Wovely] BevCheck background validation failed:",e);}
           setValidating(false);
         })();
       }
@@ -1071,7 +1071,7 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade,onMinimize,onExtractionStart,
             );})}
           </div>}
         </div>
-        {/* RIGHT 42% — Stitch Check */}
+        {/* RIGHT 42% — BevCheck */}
         <div style={{flex:"0 0 42%",minWidth:0}}>
           {validating?(
             <div style={{background:T.card,borderRadius:16,padding:"36px 20px",boxShadow:T.shadowLg,display:"flex",flexDirection:"column",alignItems:"center",gap:16,animation:"scCardPulse 2s ease-in-out infinite"}}>
@@ -1091,7 +1091,7 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade,onMinimize,onExtractionStart,
               <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:12}}>
                 <div>
                   <div style={{fontSize:12,fontWeight:700,color:scBadge.color,marginBottom:2}}>{scBadge.label}</div>
-                  <div style={{fontSize:10,color:T.ink3}}>Stitch Check</div>
+                  <div style={{fontSize:10,color:T.ink3}}>BevCheck</div>
                 </div>
                 <div style={{width:56,height:56,borderRadius:"50%",border:`3px solid ${scBadge.color}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"border-color .6s ease"}}>
                   <span style={{fontSize:18,fontWeight:700,fontFamily:T.serif,color:scBadge.color,transition:"color .6s ease"}}>{scScore}%</span>
@@ -1110,7 +1110,7 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade,onMinimize,onExtractionStart,
               <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:12}}>
                 <div>
                   <div style={{fontSize:12,fontWeight:700,color:scBadge.color,marginBottom:2}}>{scBadge.label}</div>
-                  <div style={{fontSize:10,color:T.ink3}}>Stitch Check</div>
+                  <div style={{fontSize:10,color:T.ink3}}>BevCheck</div>
                 </div>
                 <div style={{width:56,height:56,borderRadius:"50%",border:`3px solid ${scBadge.color}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"border-color .6s ease"}}>
                   <span style={{fontSize:18,fontWeight:700,fontFamily:T.serif,color:scBadge.color,filter:"blur(8px)",WebkitFilter:"blur(8px)",userSelect:"none",transition:"color .6s ease"}}>{scScore}%</span>
@@ -1129,13 +1129,13 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade,onMinimize,onExtractionStart,
               </div>
             </div>
           );})():(
-            <div style={{background:T.surface,borderRadius:16,padding:20,boxShadow:"0 4px 20px rgba(155,126,200,.08)",border:`1px solid ${T.border}`,display:"flex",alignItems:"center",justifyContent:"center",minHeight:120,fontSize:11,color:T.ink3}}>Stitch Check unavailable</div>
+            <div style={{background:T.surface,borderRadius:16,padding:20,boxShadow:"0 4px 20px rgba(155,126,200,.08)",border:`1px solid ${T.border}`,display:"flex",alignItems:"center",justifyContent:"center",minHeight:120,fontSize:11,color:T.ink3}}>BevCheck unavailable</div>
           )}
         </div>
       </div>
       {proUpgradeBanner&&(
         <div style={{background:T.terraLt,border:`1px solid ${T.terra}33`,borderRadius:12,padding:"12px 14px",marginTop:10,display:"flex",alignItems:"center",gap:10}}>
-          <div style={{flex:1}}><div style={{fontSize:12,fontWeight:600,color:T.terra,marginBottom:2}}>Upgrade to Pro to unlock Stitch Check</div><div style={{fontSize:11,color:T.ink2,lineHeight:1.5}}>Your pattern is still importing — finish saving first, then upgrade anytime from Settings.</div></div>
+          <div style={{flex:1}}><div style={{fontSize:12,fontWeight:600,color:T.terra,marginBottom:2}}>Upgrade to Pro to unlock BevCheck</div><div style={{fontSize:11,color:T.ink2,lineHeight:1.5}}>Your pattern is still importing — finish saving first, then upgrade anytime from Settings.</div></div>
           <button onClick={()=>setProUpgradeBanner(false)} style={{background:"none",border:"none",fontSize:16,color:T.ink3,cursor:"pointer",padding:4,flexShrink:0}}>×</button>
         </div>
       )}
@@ -1145,7 +1145,7 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade,onMinimize,onExtractionStart,
           <div onClick={()=>setShowFullReport(false)} style={{position:"absolute",inset:0,background:"rgba(0,0,0,.6)",backdropFilter:"blur(4px)"}}/>
           <div style={{position:"relative",zIndex:1,background:"#FFFFFF",borderRadius:20,width:"100%",maxWidth:480,maxHeight:"85vh",overflow:"auto",padding:"24px 22px 32px"}}>
             <button onClick={()=>setShowFullReport(false)} style={{position:"absolute",top:14,right:16,background:T.linen,border:"none",borderRadius:99,width:30,height:30,cursor:"pointer",fontSize:16,color:T.ink3,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
-            <div style={{fontFamily:T.serif,fontSize:18,color:T.ink,marginBottom:16}}>Stitch Check Report</div>
+            <div style={{fontFamily:T.serif,fontSize:18,color:T.ink,marginBottom:16}}>BevCheck Report</div>
             {(()=>{const frScore=displayScore(validationReport);const frBadge=badgeForScore(frScore);return(
             <div style={{background:frBadge.bg,border:`2px solid ${frBadge.color}`,borderRadius:14,padding:"16px",marginBottom:14,textAlign:"center"}}>
               <div style={{fontSize:28,marginBottom:4}}>{frBadge.emoji}</div>

@@ -6,6 +6,11 @@ import App from './App.jsx'
 import ScrollToTop from './components/ScrollToTop.jsx'
 import './index.css'
 
+// Prevent browser from restoring scroll position on back/forward (iOS bfcache)
+if ('scrollRestoration' in history) {
+  history.scrollRestoration = 'manual';
+}
+
 posthog.init('phc_CgK3ydJGk6XRtRPLQ8cnXxkqSroQBsuYrV9VsWk2r76Y', {
   api_host: 'https://us.i.posthog.com',
   person_profiles: 'identified_only',
