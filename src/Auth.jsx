@@ -44,6 +44,11 @@ const TAG = (bg, color) => ({
 });
 const LBL = { fontSize: 9, textTransform: "uppercase", letterSpacing: "0.8px", color: "#9B7EC8", fontWeight: 600, fontFamily: "Inter,sans-serif" };
 const CARD_SHELL = { background: "rgba(255,255,255,0.84)", border: "1px solid rgba(155,126,200,0.18)", borderRadius: 14, overflow: "hidden" };
+const CARD_LABEL = { fontSize: 9, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", color: "#9B7EC8", marginBottom: 4 };
+const CARD_TITLE = { fontSize: 14, fontWeight: 700, color: "#2D2D4E", lineHeight: 1.3, marginBottom: 2 };
+const CARD_SUBTITLE = { fontSize: 11, color: "#6B6B8A", lineHeight: 1.4 };
+const CARD_PILL = { fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 20, background: "#F8F6FF", color: "#6B6B8A", border: "1px solid #EDE4F7", whiteSpace: "nowrap" };
+const BADGE = { width: 32, height: 32, flexShrink: 0 };
 const INPUT_STYLE = {
   width: "100%", height: 41, padding: "0 14px", background: "#F8F6FF",
   border: "1px solid #EDE4F7", borderRadius: 10, fontSize: 13,
@@ -79,25 +84,25 @@ const ProductPreview = () => {
           <img src="/manatee_hero.png" alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "blur(12px)", transform: "scale(1.15)", opacity: 0.85 }} />
           <img src="/manatee_hero.png" alt="" style={{ position: "relative", width: "100%", height: "100%", objectFit: "contain", zIndex: 1 }} />
         </div>
-        <div style={{ flex: 1, padding: "16px 18px", background: "rgba(255,255,255,0.84)", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+        <div style={{ flex: 1, padding: 14, background: "rgba(255,255,255,0.84)", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
           <div>
-            <div style={LBL}>NOW CRAFTING</div>
-            <div style={{ fontSize: 15, fontWeight: 600, color: "#2D2D4E", fontFamily: T.serif, marginTop: 4 }}>Marina the Manatee</div>
-            <div style={{ fontSize: 11, color: "#6B6B8A", marginTop: 2 }}>Beth Folchetti (Mama Crochetti)</div>
-            <div style={{ fontSize: 11, color: "#6B6B8A", marginTop: 2 }}>Round 22 of 30 &middot; In progress</div>
+            <div style={CARD_LABEL}>NOW CRAFTING</div>
+            <div style={{ ...CARD_TITLE, fontSize: 16, fontFamily: T.serif }}>Marina the Manatee</div>
+            <div style={CARD_SUBTITLE}>Beth Folchetti (Mama Crochetti)</div>
+            <div style={{ ...CARD_SUBTITLE, marginTop: 2 }}>Round 22 of 30 &middot; In progress</div>
           </div>
           <div>
             <div style={{ height: 4, borderRadius: 2, background: "#EDE4F7" }}>
               <div style={{ width: "73%", height: "100%", borderRadius: 2, background: "#9B7EC8" }} />
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
-              <span style={{ fontSize: 10, fontWeight: 500, color: "#9B7EC8" }}>73% complete</span>
-              <span style={{ fontSize: 10, color: "#6B6B8A" }}>85 rows</span>
+              <span style={CARD_SUBTITLE}>73% complete</span>
+              <span style={CARD_SUBTITLE}>85 rows</span>
             </div>
             <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
-              <span style={TAG("rgba(91,155,107,0.12)", "#5B9B6B")}>PDF imported</span>
-              <span style={TAG("rgba(155,126,200,0.12)", "#9B7EC8")}>85 rows</span>
-              <span style={TAG("rgba(201,168,76,0.12)", "#C9A84C")}>Yarn stash linked</span>
+              <span style={CARD_PILL}>PDF imported</span>
+              <span style={CARD_PILL}>85 rows</span>
+              <span style={CARD_PILL}>Yarn stash linked</span>
             </div>
           </div>
         </div>
@@ -111,15 +116,15 @@ const ProductPreview = () => {
           <img src="/mommy_fiora.png" alt="" style={{ width: "100%", height: 70, objectFit: "cover", borderRadius: "12px 12px 0 0", display: "block" }} />
           <div style={{ padding: "10px 12px 12px", display: "flex", flexDirection: "column", justifyContent: "space-between", flex: 1 }}>
             <div>
-              <div style={{ fontSize: 9, fontWeight: 700, color: "#9B7EC8", letterSpacing: "0.5px", textTransform: "uppercase", fontFamily: "Inter,sans-serif" }}>BEVCHECK</div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: "#2D2D4E", marginTop: 1 }}>Mommy Fiora</div>
-              <div style={{ fontSize: 12, color: "#6B6B8A" }}>Pattern reviewed</div>
+              <div style={CARD_LABEL}>BEVCHECK</div>
+              <div style={CARD_TITLE}>Mommy Fiora</div>
+              <div style={CARD_SUBTITLE}>Pattern reviewed</div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: 10, fontWeight: 500, color: "#5B9B6B", flex: 1 }}>Clean result</span>
-              <svg width="28" height="28" viewBox="0 0 28 28" style={{ flexShrink: 0 }}>
-                <circle cx="14" cy="14" r="13" fill="#5B9B6B" />
-                <text x="14" y="15" textAnchor="middle" dominantBaseline="middle"
+              <span style={{ ...CARD_SUBTITLE, flex: 1 }}>Clean result</span>
+              <svg width={BADGE.width} height={BADGE.height} viewBox="0 0 32 32" style={{ flexShrink: BADGE.flexShrink }}>
+                <circle cx="16" cy="16" r="15" fill="#5B9B6B" />
+                <text x="16" y="17" textAnchor="middle" dominantBaseline="middle"
                   style={{ fontSize: 11, fontWeight: 700, fill: "#fff" }}>97%</text>
               </svg>
             </div>
@@ -127,20 +132,24 @@ const ProductPreview = () => {
         </div>
 
         {/* RIGHT — Stitch-O-Vision */}
-        <div style={{ ...CARD_SHELL, flex: 1, display: "flex", flexDirection: "row", height: 160, overflow: "visible" }}>
-          <div style={{ width: 90, flexShrink: 0, position: "relative", overflow: "hidden", alignSelf: "stretch", borderRadius: "13px 0 0 13px" }}>
+        <div style={{ ...CARD_SHELL, flex: 1, display: "flex", flexDirection: "row", height: 160, borderRadius: 12, overflow: "visible" }}>
+          <div style={{ width: 90, flexShrink: 0, position: "relative", overflow: "hidden", alignSelf: "stretch", borderRadius: "11px 0 0 11px" }}>
             <img src="https://vbtsdyxvqqwxjzpuseaf.supabase.co/storage/v1/object/public/pattern-files/stitch-vision/6e1a02d9-c210-4bc4-968e-dde3435565d1/1775515182975.jpg" alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "blur(12px)", transform: "scale(1.15)", opacity: 0.85 }} />
             <img src="https://vbtsdyxvqqwxjzpuseaf.supabase.co/storage/v1/object/public/pattern-files/stitch-vision/6e1a02d9-c210-4bc4-968e-dde3435565d1/1775515182975.jpg" alt="" style={{ position: "relative", width: "100%", height: "100%", objectFit: "contain", zIndex: 1 }} />
           </div>
-          <div style={{ flex: 1, padding: "10px 14px", background: "rgba(255,255,255,0.84)", display: "flex", flexDirection: "column", justifyContent: "space-between", borderRadius: "0 13px 13px 0", minWidth: 0 }}>
+          <div style={{ flex: 1, padding: "10px 12px 12px", background: "rgba(255,255,255,0.84)", display: "flex", flexDirection: "column", justifyContent: "space-between", borderRadius: "0 11px 11px 0", minWidth: 0 }}>
             <div>
-              <div style={LBL}>STITCH-O-VISION</div>
-              <div style={{ fontSize: 12, fontWeight: 500, color: "#2D2D4E", marginTop: 2 }}>Moss Stitch</div>
-              <div style={{ fontSize: 10, fontStyle: "italic", color: "#6B6B8A", marginTop: 1 }}>Linen &middot; Granite Stitch</div>
+              <div style={CARD_LABEL}>STITCH-O-VISION</div>
+              <div style={CARD_TITLE}>Moss Stitch</div>
+              <div style={CARD_SUBTITLE}>Linen &middot; Granite Stitch</div>
             </div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
-              <span style={TAG("rgba(91,155,107,0.12)", "#5B9B6B")}><span style={{ fontSize: 9 }}>High confidence</span></span>
-              <span style={{ fontSize: 11, fontWeight: 600, color: "#5B9B6B", flexShrink: 0 }}>91%</span>
+              <span style={CARD_SUBTITLE}>High confidence</span>
+              <svg width={BADGE.width} height={BADGE.height} viewBox="0 0 32 32" style={{ flexShrink: BADGE.flexShrink }}>
+                <circle cx="16" cy="16" r="15" fill="#5B9B6B" />
+                <text x="16" y="17" textAnchor="middle" dominantBaseline="middle"
+                  style={{ fontSize: 11, fontWeight: 700, fill: "#fff" }}>91%</text>
+              </svg>
             </div>
           </div>
         </div>
