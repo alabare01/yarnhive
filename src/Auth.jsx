@@ -113,7 +113,7 @@ const ProductPreview = () => {
 
         {/* LEFT — BevCheck */}
         <div style={{ background: "rgba(255,255,255,0.84)", border: "1px solid rgba(155,126,200,0.18)", borderRadius: 12, overflow: "hidden", flex: 1, display: "flex", flexDirection: "column", minHeight: 160, height: "auto" }}>
-          <img src="/mommy_fiora.png" alt="" style={{ width: "100%", height: 70, objectFit: "cover", borderRadius: "12px 12px 0 0", display: "block" }} />
+          <img src="/mommy_fiora.png" alt="" style={{ width: "100%", height: 70, objectFit: "cover", objectPosition: "50% 20%", borderRadius: "12px 12px 0 0", display: "block" }} />
           <div style={{ padding: "10px 12px 12px", display: "flex", flexDirection: "column", justifyContent: "space-between", flex: 1, minHeight: 0 }}>
             <div>
               <div style={CARD_LABEL}>BEVCHECK</div>
