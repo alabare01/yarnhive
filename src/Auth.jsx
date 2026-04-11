@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { T, useBreakpoint } from "./theme.jsx";
 import { supabaseAuth, getSession, SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase.js";
 
@@ -60,9 +60,9 @@ const ProductPreview = () => {
       <style>{`@keyframes drawScore{from{stroke-dashoffset:87.96}to{stroke-dashoffset:2.64}}@keyframes bevPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,0.4)}50%{box-shadow:0 0 0 8px rgba(255,255,255,0)}}@keyframes cursorBlink{0%,100%{opacity:1}50%{opacity:0}}`}</style>
 
       {/* Logo */}
-      <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 20 }}>
-        <img src="/bev_neutral.png" alt="Bev" style={{ height: 36, width: "auto", objectFit: "contain" }} />
-        <div style={{ fontFamily: "'Playfair Display',Georgia,serif", fontSize: 26, fontWeight: 700, color: "#2D3A7C" }}>Wovely</div>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
+        <img src="/bev_neutral.png" alt="Bev" style={{ height: 48, width: "auto", objectFit: "contain" }} />
+        <div style={{ fontFamily: "'Playfair Display',Georgia,serif", fontSize: 28, fontWeight: 700, color: "#2D3A7C" }}>Wovely</div>
       </div>
 
       {/* Headline */}
@@ -133,20 +133,20 @@ const ProductPreview = () => {
         </div>
 
         {/* RIGHT — Stitch-O-Vision */}
-        <div style={{ ...CARD_SHELL, flex: 1, display: "flex", flexDirection: "row", height: 160 }}>
+        <div style={{ ...CARD_SHELL, flex: 1, display: "flex", flexDirection: "row", height: 160, overflow: "visible" }}>
           <div style={{ width: 90, flexShrink: 0, position: "relative", overflow: "hidden", alignSelf: "stretch", borderRadius: "13px 0 0 13px" }}>
             <img src="https://vbtsdyxvqqwxjzpuseaf.supabase.co/storage/v1/object/public/pattern-files/stitch-vision/6e1a02d9-c210-4bc4-968e-dde3435565d1/1775515182975.jpg" alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "blur(12px)", transform: "scale(1.15)", opacity: 0.85 }} />
             <img src="https://vbtsdyxvqqwxjzpuseaf.supabase.co/storage/v1/object/public/pattern-files/stitch-vision/6e1a02d9-c210-4bc4-968e-dde3435565d1/1775515182975.jpg" alt="" style={{ position: "relative", width: "100%", height: "100%", objectFit: "contain", zIndex: 1 }} />
           </div>
-          <div style={{ flex: 1, padding: "10px 12px", background: "rgba(255,255,255,0.84)", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+          <div style={{ flex: 1, padding: "10px 14px", background: "rgba(255,255,255,0.84)", display: "flex", flexDirection: "column", justifyContent: "space-between", borderRadius: "0 13px 13px 0", minWidth: 0 }}>
             <div>
               <div style={LBL}>STITCH-O-VISION</div>
               <div style={{ fontSize: 12, fontWeight: 500, color: "#2D2D4E", marginTop: 2 }}>Moss Stitch</div>
               <div style={{ fontSize: 10, fontStyle: "italic", color: "#6B6B8A", marginTop: 1 }}>Linen &middot; Granite Stitch</div>
             </div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
               <span style={TAG("rgba(91,155,107,0.12)", "#5B9B6B")}><span style={{ fontSize: 9 }}>High confidence</span></span>
-              <span style={{ fontSize: 11, fontWeight: 600, color: "#5B9B6B" }}>91%</span>
+              <span style={{ fontSize: 11, fontWeight: 600, color: "#5B9B6B", flexShrink: 0 }}>91%</span>
             </div>
           </div>
         </div>
@@ -330,18 +330,29 @@ const SignupForm = ({ onEnter, onEnterAsNew }) => {
 };
 
 /* ── Floating Mobile CTA ── */
-const MobileCTA = () => {
-  const [visible, setVisible] = useState(false);
+const MobileCTA = ({ signupRef }) => {
+  const [scrolled, setScrolled] = useState(false);
+  const [formVisible, setFormVisible] = useState(false);
   const [dismissed, setDismissed] = useState(() => localStorage.getItem("wovely_landing_cta_dismissed") === "true");
 
   useEffect(() => {
     if (dismissed) return;
-    const onScroll = () => setVisible(window.scrollY > 200);
+    const onScroll = () => setScrolled(window.scrollY > 200);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, [dismissed]);
 
-  if (dismissed || !visible) return null;
+  useEffect(() => {
+    if (dismissed || !signupRef?.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setFormVisible(entry.isIntersecting),
+      { threshold: 0.1 }
+    );
+    observer.observe(signupRef.current);
+    return () => observer.disconnect();
+  }, [dismissed, signupRef]);
+
+  const show = !dismissed && scrolled && !formVisible;
 
   return (
     <div style={{
@@ -349,7 +360,9 @@ const MobileCTA = () => {
       background: "rgba(155,126,200,0.96)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
       padding: "16px 20px", borderTop: "1px solid rgba(255,255,255,0.3)", borderRadius: "16px 16px 0 0",
       display: "flex", alignItems: "center", gap: 12,
-      transform: "translateY(0)", transition: "transform 300ms ease",
+      transform: show ? "translateY(0)" : "translateY(100%)",
+      transition: "transform 300ms ease",
+      pointerEvents: show ? "auto" : "none",
     }}>
       <button onClick={() => { setDismissed(true); localStorage.setItem("wovely_landing_cta_dismissed", "true"); }} style={{ position: "absolute", top: 10, right: 12, background: "none", border: "none", color: "rgba(255,255,255,0.7)", fontSize: 18, cursor: "pointer", lineHeight: 1 }}>×</button>
       <img src="/bev_neutral.png" alt="Bev" style={{ height: 40, width: "auto", objectFit: "contain", flexShrink: 0 }} />
@@ -357,7 +370,7 @@ const MobileCTA = () => {
         <div style={{ fontFamily: "Inter,sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", lineHeight: 1.3 }}>Your patterns deserve a home.</div>
         <div style={{ fontFamily: "Inter,sans-serif", fontSize: 12, color: "rgba(255,255,255,0.8)", lineHeight: 1.3, marginTop: 2 }}>Free to start. No credit card.</div>
       </div>
-      <a href="/signup" style={{ background: "#fff", color: "#9B7EC8", fontSize: 13, fontWeight: 600, borderRadius: 20, padding: "8px 16px", textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0 }}>Join free →</a>
+      <button onClick={() => signupRef?.current?.scrollIntoView({ behavior: "smooth" })} style={{ background: "#fff", color: "#9B7EC8", fontSize: 13, fontWeight: 600, borderRadius: 20, padding: "8px 16px", border: "none", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>Join free →</button>
     </div>
   );
 };
@@ -365,10 +378,15 @@ const MobileCTA = () => {
 /* ── Main Auth Component ── */
 const Auth = ({ onEnter, onEnterAsNew }) => {
   const { isDesktop, isMobile } = useBreakpoint();
+  const signupRef = useRef(null);
 
   return (
     <div style={{ minHeight: "100vh", width: "100%", display: "flex", alignItems: "stretch", fontFamily: T.sans }}>
-    <style>{`@media(min-width:768px){.wovely-mobile-cta{display:none!important;}}`}</style>
+    <style>{`
+      @media(min-width:768px){.wovely-mobile-cta{display:none!important;}}
+      /* Hide third-party floating widgets (PostHog toolbar, surveys, etc.) on landing page */
+      #__ph_survey_widget,div[class*="PostHog"],div[id*="posthog"],.__ph-toolbar{display:none!important;}
+    `}</style>
     <div style={{ maxWidth: 1280, width: "100%", margin: "0 auto", display: "flex", flexDirection: isMobile ? "column" : "row", minHeight: "100vh" }}>
       {/* Left — Product Preview */}
       <div style={{
@@ -383,7 +401,7 @@ const Auth = ({ onEnter, onEnterAsNew }) => {
       </div>
 
       {/* Right — Signup Form */}
-      <div style={{
+      <div ref={signupRef} style={{
         flex: isMobile ? "none" : 0.85,
         background: "rgba(255,255,255,0.96)",
         borderLeft: isMobile ? "none" : "1px solid #EDE4F7",
@@ -393,7 +411,7 @@ const Auth = ({ onEnter, onEnterAsNew }) => {
         <SignupForm onEnter={onEnter} onEnterAsNew={onEnterAsNew} />
       </div>
     </div>
-    <div className="wovely-mobile-cta"><MobileCTA /></div>
+    <div className="wovely-mobile-cta"><MobileCTA signupRef={signupRef} /></div>
     </div>
   );
 };
