@@ -56,7 +56,7 @@ const ProductPreview = () => {
   const bevText = useTypewriter(BEV_LINES);
 
   return (
-    <div style={{ padding: "40px 36px", boxSizing: "border-box" }}>
+    <div style={{ padding: "40px 36px 16px", boxSizing: "border-box" }}>
       <style>{`@keyframes drawScore{from{stroke-dashoffset:87.96}to{stroke-dashoffset:2.64}}@keyframes bevPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,0.4)}50%{box-shadow:0 0 0 8px rgba(255,255,255,0)}}@keyframes cursorBlink{0%,100%{opacity:1}50%{opacity:0}}`}</style>
 
       {/* Logo */}
@@ -107,26 +107,26 @@ const ProductPreview = () => {
       <div style={{ display: "flex", flexDirection: "row", gap: 10, marginTop: 12 }}>
 
         {/* LEFT — BevCheck */}
-        <div style={{ ...CARD_SHELL, overflow: "visible", flex: 1, display: "flex", flexDirection: "row", height: 160 }}>
+        <div style={{ ...CARD_SHELL, flex: 1, display: "flex", flexDirection: "row", height: 160 }}>
           <div style={{ width: 90, flexShrink: 0, position: "relative", overflow: "hidden", alignSelf: "stretch", borderRadius: "13px 0 0 13px" }}>
             <img src="/mommy_fiora.png" alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "blur(12px)", transform: "scale(1.15)", opacity: 0.85 }} />
             <img src="/mommy_fiora.png" alt="" style={{ position: "relative", width: "100%", height: "100%", objectFit: "contain", zIndex: 1 }} />
           </div>
-          <div style={{ flex: 1, padding: "10px 10px", background: "rgba(255,255,255,0.84)", borderRadius: "0 13px 13px 0", display: "flex", flexDirection: "column", justifyContent: "space-between", overflow: "visible", minWidth: 0 }}>
-            <div style={{ overflow: "visible" }}>
-              <div style={{ ...LBL, whiteSpace: "nowrap", overflow: "visible" }}>BEVCHECK</div>
-              <div style={{ fontSize: 12, fontWeight: 500, color: "#2D2D4E", marginTop: 2 }}>Mommy Fiora</div>
+          <div style={{ flex: 1, padding: "10px 8px", background: "rgba(255,255,255,0.84)", borderRadius: "0 13px 13px 0", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+            <div>
+              <div style={{ fontSize: 8, textTransform: "uppercase", letterSpacing: "0.3px", color: "#9B7EC8", fontWeight: 700, fontFamily: "Inter,sans-serif", whiteSpace: "nowrap" }}>BEVCHECK</div>
+              <div style={{ fontSize: 11, fontWeight: 500, color: "#2D2D4E", marginTop: 2 }}>Mommy Fiora</div>
               <div style={{ fontSize: 10, color: "#6B6B8A", marginTop: 1 }}>Pattern reviewed</div>
             </div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <span style={{ fontSize: 10, fontWeight: 500, color: "#5B9B6B" }}>Clean result</span>
+              <span style={{ fontSize: 9, fontWeight: 500, color: "#5B9B6B" }}>Clean result</span>
               <svg width="40" height="40" viewBox="0 0 40 40" style={{ flexShrink: 0 }}>
                 <circle cx="20" cy="20" r="14" fill="none" stroke="#EDE4F7" strokeWidth="3" />
                 <circle cx="20" cy="20" r="14" fill="none" stroke="#5B9B6B" strokeWidth="3"
                   strokeLinecap="round" strokeDasharray="87.96 87.96"
                   style={{ animation: "drawScore 0.8s ease-out forwards", transformOrigin: "center", transform: "rotate(-90deg)" }} />
                 <text x="20" y="21" textAnchor="middle" dominantBaseline="middle"
-                  style={{ fontSize: 10, fontWeight: 700, fill: "#2D2D4E" }}>97%</text>
+                  style={{ fontSize: 12, fontWeight: 700, fill: "#fff" }}>97%</text>
               </svg>
             </div>
           </div>
@@ -390,15 +390,15 @@ const Auth = ({ onEnter, onEnterAsNew }) => {
       </div>
 
       {/* Right — Signup Form */}
-      <div ref={signupRef} style={{
+      <div style={{
         flex: isMobile ? "none" : 0.85,
         background: "transparent",
         borderLeft: isMobile ? "none" : "1px solid rgba(255,255,255,0.45)",
         display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-        padding: isMobile ? "32px 16px 80px" : 0,
+        padding: isMobile ? "20px 16px 80px" : 0,
         ...(isMobile ? { minHeight: "auto" } : { minHeight: "100vh" }),
       }}>
-        <div style={{
+        <div ref={signupRef} style={{
           background: "rgba(255,255,255,0.82)",
           backdropFilter: "blur(16px)",
           WebkitBackdropFilter: "blur(16px)",
