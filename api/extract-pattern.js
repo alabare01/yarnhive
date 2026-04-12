@@ -163,12 +163,15 @@ Extract every row/round as its own entry. Keep instruction text exactly as writt
   const callClaude = async (text) => {
     if (!ANTHROPIC_KEY) throw new Error("Anthropic API key not configured");
     // Truncate oversized text to prevent exhausting time budget
-    const CLAUDE_TEXT_LIMIT = 30000;
+    const CLAUDE_TEXT_LIMIT = 20000;
     let truncatedText = text;
+    console.log("[extract-pattern] Claude: input text length:", text.length, "limit:", CLAUDE_TEXT_LIMIT);
     if (text.length > CLAUDE_TEXT_LIMIT) {
       const lastNl = text.lastIndexOf("\n", CLAUDE_TEXT_LIMIT);
       truncatedText = text.slice(0, lastNl > 0 ? lastNl : CLAUDE_TEXT_LIMIT);
-      console.log("[extract-pattern] Claude: truncated text from", text.length, "to", truncatedText.length, "chars");
+      console.log("[extract-pattern] Claude: truncated from", text.length, "to", truncatedText.length, "chars");
+    } else {
+      console.log("[extract-pattern] Claude: no truncation needed, using full text");
     }
     const claudePrompt = `You are a crochet pattern extraction specialist. Extract the pattern below into structured JSON.
 
@@ -294,7 +297,8 @@ ${truncatedText}`;
 
   // Attempt 3: Claude Haiku fallback — silent, user never sees this happen
   const t3 = Date.now();
-  console.log("[extract-pattern] Attempt 3: Claude Haiku fallback, ANTHROPIC_KEY:", ANTHROPIC_KEY ? "EXISTS" : "MISSING", "textLen:", pdfText.length);
+  const elapsed = t3 - _t0;
+  console.log("[extract-pattern] Attempt 3: Claude Haiku fallback, ANTHROPIC_KEY:", ANTHROPIC_KEY ? "EXISTS" : "MISSING", "textLen:", pdfText.length, "elapsed:", elapsed + "ms", "budget remaining:", (60000 - elapsed) + "ms");
   try {
     const result = await callClaude(pdfText);
     console.log("[extract-pattern] Claude fallback success:", result.title, `(${Date.now()-t3}ms)`);
