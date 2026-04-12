@@ -428,7 +428,7 @@ async function handleBevCheck(req, res, _url, _key, _t0) {
   const callClaudeBevCheck = async () => {
     if (!ANTHROPIC_KEY) throw new Error("Anthropic API key not configured");
     const controller = new AbortController();
-    const claudeTimeout = setTimeout(() => controller.abort(), 45000);
+    const claudeTimeout = setTimeout(() => controller.abort(), 55000);
     let r;
     try {
       r = await fetch("https://api.anthropic.com/v1/messages", {
