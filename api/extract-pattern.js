@@ -190,7 +190,7 @@ PATTERN TEXT:
 ${truncatedText}`;
 
     const controller = new AbortController();
-    const claudeTimeout = setTimeout(() => controller.abort(), 45000);
+    const claudeTimeout = setTimeout(() => controller.abort(), 55000);
     let r;
     try {
       r = await fetch("https://api.anthropic.com/v1/messages", {
@@ -202,7 +202,7 @@ ${truncatedText}`;
         },
         body: JSON.stringify({
           model: "claude-haiku-4-5-20251001",
-          max_tokens: 16000,
+          max_tokens: 32000,
           messages: [{ role: "user", content: claudePrompt }],
         }),
         signal: controller.signal,
@@ -261,8 +261,8 @@ ${truncatedText}`;
     }
   };
 
-  // Attempt 1: full structured prompt
-  console.log("[extract-pattern] Attempt 1: full prompt, pages:", pageCount || "unknown", "chars:", pdfText.length);
+  // Attempt 1: Gemini opportunistic fast attempt (4s timeout)
+  console.log("[extract-pattern] Attempt 1: Gemini full prompt, pages:", pageCount || "unknown", "chars:", pdfText.length);
   try {
     const result = await callGemini(fullPrompt, 65536);
     console.log("[extract-pattern] Success:", result.title, "—", (result.components || []).length, "components");
@@ -270,7 +270,7 @@ ${truncatedText}`;
       await fetch(`${_url}/rest/v1/vercel_logs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'apikey': _key, 'Authorization': `Bearer ${_key}`, 'Prefer': 'return=minimal' },
-        body: JSON.stringify({ timestamp: new Date().toISOString(), level: 'info', message: `POST /api/extract-pattern → 200 (${Date.now() - _t0}ms)`, source: 'serverless', request_path: '/api/extract-pattern', request_method: 'POST', status_code: 200, project_id: 'wovely' })
+        body: JSON.stringify({ timestamp: new Date().toISOString(), level: 'info', message: `POST /api/extract-pattern → 200 gemini (${Date.now() - _t0}ms)`, source: 'serverless', request_path: '/api/extract-pattern', request_method: 'POST', status_code: 200, project_id: 'wovely' })
       }).catch(() => {});
     }
     return res.status(200).json(result);
@@ -278,48 +278,42 @@ ${truncatedText}`;
     console.error("[extract-pattern] Attempt 1 failed:", e.message);
   }
 
-  // Attempt 2: simplified prompt — flat rows, faster response
-  console.log("[extract-pattern] Attempt 2: simplified prompt");
-  try {
-    const result = await callGemini(simplePrompt, 32768);
-    console.log("[extract-pattern] Simplified success:", result.title);
+  // Attempt 2: Claude Haiku primary fallback
+  const t2 = Date.now();
+  const elapsed = t2 - _t0;
+  if (elapsed > 40000) {
+    console.error("[extract-pattern] Skipping Claude fallback — insufficient time budget, elapsed:", elapsed);
     if (_url && _key) {
       await fetch(`${_url}/rest/v1/vercel_logs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'apikey': _key, 'Authorization': `Bearer ${_key}`, 'Prefer': 'return=minimal' },
-        body: JSON.stringify({ timestamp: new Date().toISOString(), level: 'info', message: `POST /api/extract-pattern → 200 simplified (${Date.now() - _t0}ms)`, source: 'serverless', request_path: '/api/extract-pattern', request_method: 'POST', status_code: 200, project_id: 'wovely' })
+        body: JSON.stringify({ timestamp: new Date().toISOString(), level: 'error', message: `[extract-pattern] budget exceeded (${elapsed}ms)`, source: 'serverless', request_path: '/api/extract-pattern', request_method: 'POST', status_code: 500, project_id: 'wovely' })
+      }).catch(() => {});
+    }
+    return res.status(500).json({ error: "Pattern extraction failed — time budget exceeded" });
+  }
+  console.log("[extract-pattern] Attempt 2: Claude Haiku fallback, ANTHROPIC_KEY:", ANTHROPIC_KEY ? "EXISTS" : "MISSING", "textLen:", pdfText.length, "elapsed:", elapsed + "ms", "budget remaining:", (60000 - elapsed) + "ms");
+  try {
+    const result = await callClaude(pdfText);
+    console.log("[extract-pattern] Claude success:", result.title, `(${Date.now()-t2}ms)`);
+    if (_url && _key) {
+      await fetch(`${_url}/rest/v1/vercel_logs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': _key, 'Authorization': `Bearer ${_key}`, 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ timestamp: new Date().toISOString(), level: 'info', message: `POST /api/extract-pattern → 200 claude (${Date.now() - _t0}ms)`, source: 'serverless', request_path: '/api/extract-pattern', request_method: 'POST', status_code: 200, project_id: 'wovely' })
       }).catch(() => {});
     }
     return res.status(200).json(result);
   } catch (e2) {
-    console.error("[extract-pattern] Attempt 2 also failed:", e2.message);
-  }
-
-  // Attempt 3: Claude Haiku fallback — silent, user never sees this happen
-  const t3 = Date.now();
-  const elapsed = t3 - _t0;
-  console.log("[extract-pattern] Attempt 3: Claude Haiku fallback, ANTHROPIC_KEY:", ANTHROPIC_KEY ? "EXISTS" : "MISSING", "textLen:", pdfText.length, "elapsed:", elapsed + "ms", "budget remaining:", (60000 - elapsed) + "ms");
-  try {
-    const result = await callClaude(pdfText);
-    console.log("[extract-pattern] Claude fallback success:", result.title, `(${Date.now()-t3}ms)`);
+    console.error("[extract-pattern] Claude fallback also failed:", e2.message, e2.stack?.substring(0, 500), `(${Date.now()-t2}ms)`);
     if (_url && _key) {
       await fetch(`${_url}/rest/v1/vercel_logs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'apikey': _key, 'Authorization': `Bearer ${_key}`, 'Prefer': 'return=minimal' },
-        body: JSON.stringify({ timestamp: new Date().toISOString(), level: 'info', message: `POST /api/extract-pattern → 200 claude-fallback (${Date.now() - _t0}ms)`, source: 'serverless', request_path: '/api/extract-pattern', request_method: 'POST', status_code: 200, project_id: 'wovely' })
+        body: JSON.stringify({ timestamp: new Date().toISOString(), level: 'error', message: `[extract-pattern] ALL 2 FAILED (${Date.now() - _t0}ms) | attempt2: ${e2.message}`, source: 'serverless', request_path: '/api/extract-pattern', request_method: 'POST', status_code: 500, project_id: 'wovely' })
       }).catch(() => {});
     }
-    return res.status(200).json(result);
-  } catch (e3) {
-    console.error("[extract-pattern] Claude fallback also failed:", e3.message, e3.stack?.substring(0, 500), `(${Date.now()-t3}ms)`);
-    if (_url && _key) {
-      await fetch(`${_url}/rest/v1/vercel_logs`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'apikey': _key, 'Authorization': `Bearer ${_key}`, 'Prefer': 'return=minimal' },
-        body: JSON.stringify({ timestamp: new Date().toISOString(), level: 'error', message: `[extract-pattern] ALL 3 FAILED (${Date.now() - _t0}ms) | attempt3: ${e3.message}`, source: 'serverless', request_path: '/api/extract-pattern', request_method: 'POST', status_code: 500, project_id: 'wovely' })
-      }).catch(() => {});
-    }
-    return res.status(500).json({ error: "Pattern extraction failed after 3 attempts" });
+    return res.status(500).json({ error: "Pattern extraction failed after 2 attempts" });
   }
 
   } catch (err) {
@@ -477,7 +471,7 @@ async function handleBevCheck(req, res, _url, _key, _t0) {
     }).catch(() => {});
   };
 
-  // Attempt 1: Gemini full prompt
+  // Attempt 1: Gemini opportunistic fast attempt (8s timeout)
   const t1 = Date.now();
   console.log("[bevcheck] → Attempt 1: Gemini full prompt, chars:", text.length);
   try {
@@ -489,34 +483,22 @@ async function handleBevCheck(req, res, _url, _key, _t0) {
     console.error("[bevcheck] ✗ Attempt 1 failed:", e.message, `(${Date.now()-t1}ms)`);
   }
 
-  // Attempt 2: Gemini simplified prompt
+  // Attempt 2: Claude Haiku primary fallback
   const t2 = Date.now();
-  console.log("[bevcheck] → Attempt 2: Gemini simplified prompt");
-  try {
-    const result = await callGeminiBevCheck(BEVCHECK_SIMPLE_PROMPT);
-    console.log("[bevcheck] ✓ Attempt 2 success, state:", result.state, "checks:", (result.checks||[]).length, `(${Date.now()-t2}ms)`);
-    logToSupabase('info', `POST /api/extract-pattern?mode=bevcheck → 200 gemini_simplified (${Date.now() - _t0}ms)`, 200);
-    return res.status(200).json({ ...result, provider: "gemini_simplified" });
-  } catch (e2) {
-    console.error("[bevcheck] ✗ Attempt 2 failed:", e2.message, `(${Date.now()-t2}ms)`);
-  }
-
-  // Attempt 3: Claude Haiku fallback
-  const t3 = Date.now();
   const elapsed = Date.now() - _t0;
-  if (elapsed > 50000) {
+  if (elapsed > 40000) {
     console.error("[bevcheck] Skipping Claude fallback — insufficient time budget, elapsed:", elapsed);
     return res.status(500).json({ error: true, message: "bev_tangled", provider: "failed" });
   }
-  console.log("[bevcheck] → Attempt 3: Claude Haiku fallback, ANTHROPIC_KEY:", ANTHROPIC_KEY ? "EXISTS" : "MISSING");
+  console.log("[bevcheck] → Attempt 2: Claude Haiku fallback, ANTHROPIC_KEY:", ANTHROPIC_KEY ? "EXISTS" : "MISSING");
   try {
     const result = await callClaudeBevCheck();
-    console.log("[bevcheck] ✓ Attempt 3 success, state:", result.state, "checks:", (result.checks||[]).length, `(${Date.now()-t3}ms)`);
+    console.log("[bevcheck] ✓ Attempt 2 success, state:", result.state, "checks:", (result.checks||[]).length, `(${Date.now()-t2}ms)`);
     logToSupabase('info', `POST /api/extract-pattern?mode=bevcheck → 200 claude (${Date.now() - _t0}ms)`, 200);
     return res.status(200).json({ ...result, provider: "claude" });
-  } catch (e3) {
-    console.error("[bevcheck] ✗ Attempt 3 failed:", e3.message, e3.stack?.substring(0, 300), `(${Date.now()-t3}ms)`);
-    logToSupabase('error', `[bevcheck] all 3 attempts failed (${Date.now() - _t0}ms)`, 500);
+  } catch (e2) {
+    console.error("[bevcheck] ✗ Attempt 2 failed:", e2.message, e2.stack?.substring(0, 300), `(${Date.now()-t2}ms)`);
+    logToSupabase('error', `[bevcheck] all 2 attempts failed (${Date.now() - _t0}ms)`, 500);
     return res.status(500).json({ error: true, message: "bev_tangled", provider: "failed" });
   }
 }
