@@ -115,7 +115,7 @@ Extract every row/round as its own entry. Keep instruction text exactly as writt
 
   const callGemini = async (prompt, maxTokens) => {
     const controller = new AbortController();
-    const geminiTimeout = setTimeout(() => controller.abort(), 45000);
+    const geminiTimeout = setTimeout(() => controller.abort(), 4000);
     let r;
     try {
       r = await fetch(
