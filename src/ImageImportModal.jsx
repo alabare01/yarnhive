@@ -2,7 +2,8 @@ import { useState, useRef, useCallback } from "react";
 import { T, useBreakpoint } from "./theme.jsx";
 import { PILL } from "./constants.js";
 import { buildRowsFromComponents } from "./AddPatternModal.jsx";
-import { VALIDATION_PROMPT, CHECK_ICON, displayScore, badgeForScore } from "./StitchCheck.jsx";
+import { VALIDATION_PROMPT, CHECK_ICON } from "./StitchCheck.jsx";
+import BevGauge, { deriveState } from "./components/BevGauge.jsx";
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
 
@@ -437,19 +438,11 @@ const ImageImportModal = ({ onClose, onPatternSaved, userId, isPro, minimized, o
               <div style={{fontSize:15,fontWeight:600,color:T.ink}}>Analyzing your pattern</div>
               <div style={{fontSize:12,color:T.sage,textAlign:"center",maxWidth:200,lineHeight:1.5}}>Checking stitch counts, round sequence and math errors before you start crocheting.</div>
             </div>
-          ):validationReport?(()=>{const scScore=displayScore(validationReport);const scBadge=badgeForScore(scScore);return isPro?(
+          ):validationReport?(()=>{const scState=deriveState(validationReport);return isPro?(
             <div style={{background:T.surface,borderRadius:16,padding:20,boxShadow:"0 4px 20px rgba(155,126,200,.08)",border:`1px solid ${T.border}`}}>
-              <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:12}}>
-                <div>
-                  <div style={{fontSize:12,fontWeight:700,color:scBadge.color,marginBottom:2}}>{scBadge.label}</div>
-                  <div style={{fontSize:10,color:T.ink3}}>BevCheck</div>
-                </div>
-                <div style={{width:56,height:56,borderRadius:"50%",border:`3px solid ${scBadge.color}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"border-color .6s ease"}}>
-                  <span style={{fontSize:18,fontWeight:700,fontFamily:T.serif,color:scBadge.color,transition:"color .6s ease"}}>{scScore}%</span>
-                </div>
-              </div>
+              <BevGauge state={scState} />
               {(validationReport.checks||[]).slice(0,3).map(c=>(
-                <div key={c.id} style={{display:"flex",gap:6,alignItems:"center",marginBottom:4}}>
+                <div key={c.id} style={{display:"flex",gap:6,alignItems:"center",marginBottom:4,marginTop:4}}>
                   <span style={{fontSize:11}}>{CHECK_ICON[c.status]||"\u2753"}</span>
                   <span style={{fontSize:11,color:T.ink2}}>{c.label}</span>
                 </div>
@@ -458,15 +451,7 @@ const ImageImportModal = ({ onClose, onPatternSaved, userId, isPro, minimized, o
             </div>
           ):(
             <div style={{background:T.surface,borderRadius:16,padding:20,boxShadow:"0 4px 20px rgba(155,126,200,.08)",border:`1px solid ${T.border}`}}>
-              <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:12}}>
-                <div>
-                  <div style={{fontSize:12,fontWeight:700,color:scBadge.color,marginBottom:2}}>{scBadge.label}</div>
-                  <div style={{fontSize:10,color:T.ink3}}>BevCheck</div>
-                </div>
-                <div style={{width:56,height:56,borderRadius:"50%",border:`3px solid ${scBadge.color}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"border-color .6s ease"}}>
-                  <span style={{fontSize:18,fontWeight:700,fontFamily:T.serif,color:scBadge.color,filter:"blur(8px)",WebkitFilter:"blur(8px)",userSelect:"none",transition:"color .6s ease"}}>{scScore}%</span>
-                </div>
-              </div>
+              <div style={{filter:"blur(6px)",WebkitFilter:"blur(6px)",userSelect:"none",pointerEvents:"none"}}><BevGauge state={scState} /></div>
               {validationReport.checks?.slice(0,2).map((c,i)=>(
                 <div key={c.id||i} style={{display:"flex",gap:6,alignItems:"center",marginBottom:4}}>
                   <span style={{fontSize:11}}>{CHECK_ICON[c.status]||"\u2753"}</span>
@@ -497,12 +482,7 @@ const ImageImportModal = ({ onClose, onPatternSaved, userId, isPro, minimized, o
           <div style={{position:"relative",zIndex:1,background:"#FFFFFF",borderRadius:20,width:"100%",maxWidth:480,maxHeight:"85vh",overflow:"auto",padding:"24px 22px 32px"}}>
             <button onClick={()=>setShowFullReport(false)} style={{position:"absolute",top:14,right:16,background:T.linen,border:"none",borderRadius:99,width:30,height:30,cursor:"pointer",fontSize:16,color:T.ink3,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
             <div style={{fontFamily:T.serif,fontSize:18,color:T.ink,marginBottom:16}}>BevCheck Report</div>
-            {(()=>{const frScore=displayScore(validationReport);const frBadge=badgeForScore(frScore);return(
-            <div style={{background:frBadge.bg,border:`2px solid ${frBadge.color}`,borderRadius:14,padding:"16px",marginBottom:14,textAlign:"center"}}>
-              <div style={{fontSize:28,marginBottom:4}}>{frBadge.emoji}</div>
-              <div style={{fontFamily:T.serif,fontSize:18,fontWeight:700,color:frBadge.color}}>{frBadge.label}</div>
-              <div style={{fontFamily:T.serif,fontSize:36,fontWeight:700,color:frBadge.color,lineHeight:1}}>{frScore}%</div>
-            </div>);})()}
+            <div style={{marginBottom:14}}><BevGauge state={deriveState(validationReport)} /></div>
             {(validationReport.checks||[]).map(c=>(
               <div key={c.id} style={{background:T.surface,border:`1px solid ${T.border}`,borderRadius:10,padding:"10px 12px",marginBottom:6,display:"flex",gap:8,alignItems:"flex-start"}}>
                 <span style={{fontSize:14,flexShrink:0}}>{CHECK_ICON[c.status]||"\u2753"}</span>

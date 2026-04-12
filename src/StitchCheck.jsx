@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { T, useBreakpoint } from "./theme.jsx";
 import posthog from "posthog-js";
+import BevGauge, { deriveState } from "./components/BevGauge.jsx";
 
 // VALIDATION_PROMPT kept for export — used by AddPatternModal and ImageImportModal for client-side background validation
 const VALIDATION_PROMPT = `You are a crochet pattern validator. Analyze this pattern and return ONLY a JSON object with this exact structure — no markdown, no backticks, no explanation:
@@ -85,13 +86,6 @@ const displayScore = (report) => {
   return allPass ? 100 : report.score;
 };
 
-const STATE_CONFIG = {
-  pass: { color: "#5B9B6B", label: "Looks Good", icon: "\u2713" },
-  warning: { color: "#C9A84C", label: "Heads Up", icon: "\u26A0" },
-  issues: { color: "#C0544A", label: "Issues Found", icon: "\u2717" },
-};
-const stateFromResult = (result) => STATE_CONFIG[result?.state] || STATE_CONFIG.warning;
-
 const CARD = {background:"rgba(255,255,255,0.82)",backdropFilter:"blur(16px)",WebkitBackdropFilter:"blur(16px)",borderRadius:20,padding:24,border:"1px solid rgba(255,255,255,0.6)",boxShadow:"0 2px 4px rgba(0,0,0,0.04), 0 8px 32px rgba(155,126,200,0.13)"};
 const LABEL = {fontSize:11,fontWeight:600,color:T.ink2,textTransform:"uppercase",letterSpacing:".05em",marginBottom:6};
 
@@ -163,7 +157,7 @@ const StitchCheck = ({ onNavigateToRow } = {}) => {
 
   // Report card view
   if (report) {
-    const cfg = stateFromResult(report);
+    const resolvedState = deriveState(report);
     const coreChecks = (report.checks || []).filter(c => c.tier === "core");
     const advisoryChecks = (report.checks || []).filter(c => c.tier === "advisory");
 
@@ -191,34 +185,8 @@ const StitchCheck = ({ onNavigateToRow } = {}) => {
         <div style={{ fontSize: 13, color: T.ink3, marginBottom: 24 }}>Pattern validation results</div>
 
         {/* Semicircle gauge */}
-        <div style={{ ...CARD, textAlign: "center", marginBottom: 20, padding: "32px 32px 20px" }}>
-          <svg viewBox="0 0 200 110" style={{ width: "100%", maxWidth: 280, display: "block", margin: "0 auto" }}>
-            <defs>
-              <linearGradient id="gaugeGrad" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="#5B9B6B" />
-                <stop offset="50%" stopColor="#C9A84C" />
-                <stop offset="100%" stopColor="#C0544A" />
-              </linearGradient>
-              <clipPath id="bevClip"><circle cx="100" cy="82" r="22" /></clipPath>
-            </defs>
-            {/* Background arc */}
-            <path d="M 16 100 A 84 84 0 0 1 184 100" fill="none" stroke="#EDE4F7" strokeWidth="14" strokeLinecap="round" />
-            {/* Colored arc */}
-            <path d="M 16 100 A 84 84 0 0 1 184 100" fill="none" stroke="url(#gaugeGrad)" strokeWidth="14" strokeLinecap="round" />
-            {/* Bev image */}
-            <image href="/bev_neutral.png" x="78" y="60" width="44" height="44" clipPath="url(#bevClip)" />
-            {/* Needle */}
-            <g style={{ transform: `rotate(${report.state === "pass" ? -130 : report.state === "issues" ? -50 : -90}deg)`, transformOrigin: "100px 100px", transition: "transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)" }}>
-              <line x1="100" y1="100" x2="100" y2="28" stroke={cfg.color} strokeWidth="2.5" strokeLinecap="round" />
-            </g>
-            {/* Pivot dot */}
-            <circle cx="100" cy="100" r="6" fill={cfg.color} />
-            {/* Zone labels */}
-            <text x="18" y="108" fontSize="9" fontWeight="600" fontFamily="Inter, sans-serif" fill="#5B9B6B">Looks Good</text>
-            <text x="82" y="22" fontSize="9" fontWeight="600" fontFamily="Inter, sans-serif" fill="#C9A84C">Heads Up</text>
-            <text x="148" y="108" fontSize="9" fontWeight="600" fontFamily="Inter, sans-serif" fill="#C0544A">Issues Found</text>
-          </svg>
-          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 700, color: cfg.color, marginTop: 4 }}>{cfg.label}</div>
+        <div style={{ ...CARD, marginBottom: 20, padding: "32px 32px 20px" }}>
+          <BevGauge state={resolvedState} />
         </div>
 
         {/* Core checks */}
