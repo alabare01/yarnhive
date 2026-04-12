@@ -54,19 +54,20 @@ const BevGauge = ({ state = "warning" }) => {
         {/* Bev image */}
         <image href="/bev_neutral.png" x="82" y="60" width="36" height="36" clipPath="url(#bevGaugeClip)" />
         {/* Needle */}
-        <g style={{ transform: `rotate(${deg}deg)`, transformOrigin: "100px 100px", transition: "transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)" }}>
+        <g transform={`rotate(${deg} 100 100)`}>
           <line x1="100" y1="100" x2="100" y2="42" stroke={LAVENDER} strokeWidth="3" strokeLinecap="round" />
         </g>
         {/* Pivot white backing */}
         <circle cx="100" cy="100" r="8" fill="#fff" />
         {/* Pivot dot */}
         <circle cx="100" cy="100" r="6" fill={LAVENDER} />
+        {/* Heads Up label inside arc */}
+        <text x="100" y="16" textAnchor="middle" fontSize="9" fontWeight="600" fill={LAVENDER} opacity={state === "warning" ? 1 : 0.5} fontFamily="Inter, sans-serif">Heads Up</text>
       </svg>
       {/* Zone labels row */}
       <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: 280, margin: "4px auto 0" }}>
-        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 10, fontWeight: state === "pass" ? 700 : 600, letterSpacing: 0.5, color: LAVENDER, opacity: state === "pass" ? 1 : 0.5 }}>Looks Good</span>
-        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 10, fontWeight: state === "warning" ? 700 : 600, letterSpacing: 0.5, color: LAVENDER, opacity: state === "warning" ? 1 : 0.5 }}>Heads Up</span>
-        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 10, fontWeight: state === "issues" ? 700 : 600, letterSpacing: 0.5, color: LAVENDER, opacity: state === "issues" ? 1 : 0.5 }}>Issues Found</span>
+        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 10, fontWeight: state === "pass" ? 700 : 600, color: LAVENDER, opacity: state === "pass" ? 1 : 0.5 }}>Looks Good</span>
+        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 10, fontWeight: state === "issues" ? 700 : 600, color: LAVENDER, opacity: state === "issues" ? 1 : 0.5 }}>Issues Found</span>
       </div>
       {/* State label */}
       <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 700, color: "#2D3A7C", marginTop: 4 }}>{label}</div>
