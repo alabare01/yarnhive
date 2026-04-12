@@ -162,6 +162,17 @@ Extract every row/round as its own entry. Keep instruction text exactly as writt
 
   const callClaude = async (text) => {
     if (!ANTHROPIC_KEY) throw new Error("Anthropic API key not configured");
+    // Truncate oversized text to prevent exhausting time budget
+    const CLAUDE_TEXT_LIMIT = 20000;
+    let truncatedText = text;
+    console.log("[extract-pattern] Claude: input text length:", text.length, "limit:", CLAUDE_TEXT_LIMIT);
+    if (text.length > CLAUDE_TEXT_LIMIT) {
+      const lastNl = text.lastIndexOf("\n", CLAUDE_TEXT_LIMIT);
+      truncatedText = text.slice(0, lastNl > 0 ? lastNl : CLAUDE_TEXT_LIMIT);
+      console.log("[extract-pattern] Claude: truncated from", text.length, "to", truncatedText.length, "chars");
+    } else {
+      console.log("[extract-pattern] Claude: no truncation needed, using full text");
+    }
     const claudePrompt = `You are a crochet pattern extraction specialist. Extract the pattern below into structured JSON.
 
 Return ONLY valid JSON with no markdown, no backticks, no explanation. Use this exact structure:
@@ -176,21 +187,35 @@ Rules:
 - Extract all materials, hook size, yarn weight
 
 PATTERN TEXT:
-${text}`;
+${truncatedText}`;
 
-    const r = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": ANTHROPIC_KEY,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5",
-        max_tokens: 8000,
-        messages: [{ role: "user", content: claudePrompt }],
-      }),
-    });
+    const controller = new AbortController();
+    const claudeTimeout = setTimeout(() => controller.abort(), 45000);
+    let r;
+    try {
+      r = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": ANTHROPIC_KEY,
+          "anthropic-version": "2023-06-01",
+        },
+        body: JSON.stringify({
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 16000,
+          messages: [{ role: "user", content: claudePrompt }],
+        }),
+        signal: controller.signal,
+      });
+    } catch (fetchErr) {
+      clearTimeout(claudeTimeout);
+      if (fetchErr.name === "AbortError") {
+        console.error("[extract-pattern] Claude aborted after 45s timeout");
+        throw new Error("Claude timeout after 45s");
+      }
+      throw fetchErr;
+    }
+    clearTimeout(claudeTimeout);
 
     if (!r.ok) {
       const errBody = await r.text();
@@ -199,15 +224,39 @@ ${text}`;
     }
 
     const data = await r.json();
+    console.log("[extract-pattern] Claude response: stop_reason=", data.stop_reason, "usage=", JSON.stringify(data.usage), "content_blocks=", (data.content||[]).length);
     const rawText = data.content?.[0]?.text || "";
-    if (!rawText) throw new Error("Claude returned empty response");
+    console.log("[extract-pattern] Claude rawText length:", rawText.length, "truncated:", data.stop_reason === "max_tokens");
+    if (!rawText) throw new Error("Claude returned empty response, stop_reason=" + data.stop_reason);
 
-    const cleaned = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
-    const toParse = cleaned.startsWith("{") ? cleaned : rawText.trim();
+    const jsonStart = rawText.indexOf("{");
+    let toParse = jsonStart >= 0 ? rawText.slice(jsonStart) : rawText.trim();
+
+    // If response was truncated by max_tokens, repair the JSON
+    if (data.stop_reason === "max_tokens") {
+      console.log("[extract-pattern] Claude output truncated — attempting JSON repair");
+      // Close any open strings, arrays, and objects to make it parseable
+      // Strip trailing incomplete value (after last comma or colon)
+      toParse = toParse.replace(/,\s*"[^"]*$/, "").replace(/,\s*$/, "").replace(/:\s*"[^"]*$/, ': ""');
+      // Count unclosed brackets and braces
+      let openBraces = 0, openBrackets = 0;
+      for (const ch of toParse) {
+        if (ch === "{") openBraces++;
+        else if (ch === "}") openBraces--;
+        else if (ch === "[") openBrackets++;
+        else if (ch === "]") openBrackets--;
+      }
+      toParse += "]".repeat(Math.max(0, openBrackets)) + "}".repeat(Math.max(0, openBraces));
+    } else {
+      // Normal path: find matching last brace
+      const jsonEnd = toParse.lastIndexOf("}");
+      toParse = jsonEnd >= 0 ? toParse.slice(0, jsonEnd + 1) : toParse;
+    }
+
     try {
       return JSON.parse(toParse);
     } catch (parseErr) {
-      console.error("[extract-pattern] Claude JSON parse failed, text starts:", toParse.substring(0, 300));
+      console.error("[extract-pattern] Claude JSON parse failed, text starts:", toParse.substring(0, 300), "ends:", toParse.substring(toParse.length - 200));
       throw new Error("Claude JSON parse failed: " + parseErr.message);
     }
   };
@@ -247,10 +296,12 @@ ${text}`;
   }
 
   // Attempt 3: Claude Haiku fallback — silent, user never sees this happen
-  console.log("[extract-pattern] Attempt 3: Claude Haiku fallback");
+  const t3 = Date.now();
+  const elapsed = t3 - _t0;
+  console.log("[extract-pattern] Attempt 3: Claude Haiku fallback, ANTHROPIC_KEY:", ANTHROPIC_KEY ? "EXISTS" : "MISSING", "textLen:", pdfText.length, "elapsed:", elapsed + "ms", "budget remaining:", (60000 - elapsed) + "ms");
   try {
     const result = await callClaude(pdfText);
-    console.log("[extract-pattern] Claude fallback success:", result.title);
+    console.log("[extract-pattern] Claude fallback success:", result.title, `(${Date.now()-t3}ms)`);
     if (_url && _key) {
       await fetch(`${_url}/rest/v1/vercel_logs`, {
         method: 'POST',
@@ -260,12 +311,12 @@ ${text}`;
     }
     return res.status(200).json(result);
   } catch (e3) {
-    console.error("[extract-pattern] Claude fallback also failed:", e3.message);
+    console.error("[extract-pattern] Claude fallback also failed:", e3.message, e3.stack?.substring(0, 500), `(${Date.now()-t3}ms)`);
     if (_url && _key) {
       await fetch(`${_url}/rest/v1/vercel_logs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'apikey': _key, 'Authorization': `Bearer ${_key}`, 'Prefer': 'return=minimal' },
-        body: JSON.stringify({ timestamp: new Date().toISOString(), level: 'error', message: `[extract-pattern] error: all 3 attempts failed (${Date.now() - _t0}ms)`, source: 'serverless', request_path: '/api/extract-pattern', request_method: 'POST', status_code: 500, project_id: 'wovely' })
+        body: JSON.stringify({ timestamp: new Date().toISOString(), level: 'error', message: `[extract-pattern] ALL 3 FAILED (${Date.now() - _t0}ms) | attempt3: ${e3.message}`, source: 'serverless', request_path: '/api/extract-pattern', request_method: 'POST', status_code: 500, project_id: 'wovely' })
       }).catch(() => {});
     }
     return res.status(500).json({ error: "Pattern extraction failed after 3 attempts" });

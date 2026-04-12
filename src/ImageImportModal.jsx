@@ -126,16 +126,27 @@ const ImageImportModal = ({ onClose, onPatternSaved, userId, isPro, minimized, o
     }, 3000);
 
     try {
-      const res = await fetch("/api/extract-pattern-vision", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          images: items.map(it => it.base64),
-          pageCount: items.length,
-          fileName: items[0].file.name,
-        }),
-      });
-
+      const extractController = new AbortController();
+      const extractTimeout = setTimeout(() => extractController.abort(), 55000);
+      let res;
+      try {
+        res = await fetch("/api/extract-pattern-vision", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            images: items.map(it => it.base64),
+            pageCount: items.length,
+            fileName: items[0].file.name,
+          }),
+          signal: extractController.signal,
+        });
+      } catch (fetchErr) {
+        clearTimeout(extractTimeout);
+        clearInterval(msgInterval);
+        if (fetchErr.name === "AbortError") throw new Error("Server extraction failed: timeout");
+        throw fetchErr;
+      }
+      clearTimeout(extractTimeout);
       clearInterval(msgInterval);
 
       if (!res.ok) {

@@ -885,11 +885,22 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade,onMinimize,onExtractionStart,
           setComplexity(lvl);setComplexityStats({pages:pageMatches,textLen});
           // Server-side extraction — truncation + Gemini call handled by /api/extract-pattern
           console.log("[Wovely] Sending to /api/extract-pattern, chars:",pdfText.length,"pages:",pageMatches);
-          const extractRes=await fetch("/api/extract-pattern",{
-            method:"POST",
-            headers:{"Content-Type":"application/json"},
-            body:JSON.stringify({pdfText,pageCount:pageMatches}),
-          });
+          const extractController=new AbortController();
+          const extractTimeout=setTimeout(()=>extractController.abort(),55000);
+          let extractRes;
+          try{
+            extractRes=await fetch("/api/extract-pattern",{
+              method:"POST",
+              headers:{"Content-Type":"application/json"},
+              body:JSON.stringify({pdfText,pageCount:pageMatches}),
+              signal:extractController.signal,
+            });
+          }catch(fetchErr){
+            clearTimeout(extractTimeout);
+            if(fetchErr.name==="AbortError"){const err=new Error("Server extraction failed: timeout");err.httpStatus=504;throw err;}
+            throw fetchErr;
+          }
+          clearTimeout(extractTimeout);
           if(!extractRes.ok){const errBody=await extractRes.json().catch(()=>({}));const err=new Error(errBody.error||"Server extraction failed: "+extractRes.status);err.httpStatus=extractRes.status;throw err;}
           result=await extractRes.json();
           }
