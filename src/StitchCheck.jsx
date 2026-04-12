@@ -190,17 +190,35 @@ const StitchCheck = ({ onNavigateToRow } = {}) => {
         <div style={{ fontFamily: T.serif, fontSize: 22, color: T.ink, marginBottom: 4, fontWeight: 700 }}>BevCheck Report</div>
         <div style={{ fontSize: 13, color: T.ink3, marginBottom: 24 }}>Pattern validation results</div>
 
-        {/* State circle */}
-        <div style={{ ...CARD, textAlign: "center", marginBottom: 20, padding: 32 }}>
-          <div style={{ position: "relative", width: 96, height: 96, margin: "0 auto 16px" }}>
-            <div style={{ width: 96, height: 96, borderRadius: "50%", background: cfg.color, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <img src="/bev_neutral.png" alt="Bev" style={{ width: 56, height: 56, objectFit: "cover", borderRadius: "50%" }} />
-            </div>
-            <div style={{ position: "absolute", bottom: 0, right: 0, width: 24, height: 24, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.15)" }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: cfg.color, lineHeight: 1 }}>{cfg.icon}</span>
-            </div>
-          </div>
-          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 700, color: cfg.color }}>{cfg.label}</div>
+        {/* Semicircle gauge */}
+        <div style={{ ...CARD, textAlign: "center", marginBottom: 20, padding: "32px 32px 20px" }}>
+          <svg viewBox="0 0 200 110" style={{ width: "100%", maxWidth: 280, display: "block", margin: "0 auto" }}>
+            <defs>
+              <linearGradient id="gaugeGrad" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#5B9B6B" />
+                <stop offset="50%" stopColor="#C9A84C" />
+                <stop offset="100%" stopColor="#C0544A" />
+              </linearGradient>
+              <clipPath id="bevClip"><circle cx="100" cy="82" r="22" /></clipPath>
+            </defs>
+            {/* Background arc */}
+            <path d="M 16 100 A 84 84 0 0 1 184 100" fill="none" stroke="#EDE4F7" strokeWidth="14" strokeLinecap="round" />
+            {/* Colored arc */}
+            <path d="M 16 100 A 84 84 0 0 1 184 100" fill="none" stroke="url(#gaugeGrad)" strokeWidth="14" strokeLinecap="round" />
+            {/* Bev image */}
+            <image href="/bev_neutral.png" x="78" y="60" width="44" height="44" clipPath="url(#bevClip)" />
+            {/* Needle */}
+            <g style={{ transform: `rotate(${report.state === "pass" ? -130 : report.state === "issues" ? -50 : -90}deg)`, transformOrigin: "100px 100px", transition: "transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)" }}>
+              <line x1="100" y1="100" x2="100" y2="28" stroke={cfg.color} strokeWidth="2.5" strokeLinecap="round" />
+            </g>
+            {/* Pivot dot */}
+            <circle cx="100" cy="100" r="6" fill={cfg.color} />
+            {/* Zone labels */}
+            <text x="18" y="108" fontSize="9" fontWeight="600" fontFamily="Inter, sans-serif" fill="#5B9B6B">Looks Good</text>
+            <text x="82" y="22" fontSize="9" fontWeight="600" fontFamily="Inter, sans-serif" fill="#C9A84C">Heads Up</text>
+            <text x="148" y="108" fontSize="9" fontWeight="600" fontFamily="Inter, sans-serif" fill="#C0544A">Issues Found</text>
+          </svg>
+          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 700, color: cfg.color, marginTop: 4 }}>{cfg.label}</div>
         </div>
 
         {/* Core checks */}
