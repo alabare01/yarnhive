@@ -348,7 +348,7 @@ async function handleBevCheck(req, res, _url, _key, _t0) {
 
   const callGeminiBevCheck = async (prompt) => {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 4000);
+    const timeout = setTimeout(() => controller.abort(), 45000);
     let r;
     try {
       r = await fetch(
@@ -365,7 +365,7 @@ async function handleBevCheck(req, res, _url, _key, _t0) {
       );
     } catch (fetchErr) {
       clearTimeout(timeout);
-      if (fetchErr.name === "AbortError") throw new Error("Gemini timeout after 4s");
+      if (fetchErr.name === "AbortError") throw new Error("Gemini timeout after 45s");
       throw fetchErr;
     }
     clearTimeout(timeout);
