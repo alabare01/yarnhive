@@ -3,7 +3,7 @@ import { T, useBreakpoint } from "./theme.jsx";
 import { PILL } from "./constants.js";
 import { buildRowsFromComponents } from "./AddPatternModal.jsx";
 import { VALIDATION_PROMPT, CHECK_ICON } from "./StitchCheck.jsx";
-import BevGauge, { deriveState, sentenceCase, checkTier } from "./components/BevGauge.jsx";
+import BevGauge, { deriveState, sentenceCase, checkTier, NEEDLE_END } from "./components/BevGauge.jsx";
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
 
@@ -438,22 +438,30 @@ const ImageImportModal = ({ onClose, onPatternSaved, userId, isPro, minimized, o
               <div style={{fontSize:15,fontWeight:600,color:T.ink}}>Analyzing your pattern</div>
               <div style={{fontSize:12,color:T.sage,textAlign:"center",maxWidth:200,lineHeight:1.5}}>Checking stitch counts, round sequence and math errors before you start crocheting.</div>
             </div>
-          ):validationReport?(()=>{const scState=deriveState(validationReport);const scLabel=scState==="pass"?"Looks good":scState==="issues"?"Issues found":"Heads up";const checks=Array.isArray(validationReport.checks)?validationReport.checks:[];const failedChecks=checks.filter(c=>c&&(c.status==="fail"||c.status==="warning"||c.status==="warn")).slice(0,3);return isPro?(
-            <div style={{background:T.surface,borderRadius:16,padding:20,boxShadow:"0 4px 20px rgba(155,126,200,.08)",border:`1px solid ${T.border}`}}>
-              <span style={{display:"inline-block",background:"#F8F6FF",border:"1px solid #9B7EC8",color:"#2D3A7C",fontSize:12,fontWeight:700,borderRadius:20,padding:"4px 12px"}}>{scLabel}</span>
-              {failedChecks.length>0&&<div style={{marginTop:10}}>{failedChecks.map((c,i)=>(<div key={c.id||i} style={{display:"flex",gap:6,alignItems:"center",marginBottom:4}}><span style={{fontSize:11,color:"#C0544A"}}>✕</span><span style={{fontSize:11,color:"#6B6B8A"}}>{sentenceCase(c.label||"Check")}</span></div>))}</div>}
-              <button onClick={()=>setShowFullReport(true)} style={{background:"none",border:"none",color:T.terra,cursor:"pointer",fontSize:11,fontWeight:600,padding:0,marginTop:8,textDecoration:"underline"}}>Full Report →</button>
+          ):validationReport?(()=>{const scState=deriveState(validationReport);const scLabel=scState==="pass"?"Looks good":scState==="issues"?"Issues found":"Heads up";const scNeedle=NEEDLE_END[scState]||NEEDLE_END.warning;return isPro?(
+            <div style={{background:T.surface,borderRadius:16,padding:20,boxShadow:"0 4px 20px rgba(155,126,200,.08)",border:`1px solid ${T.border}`,textAlign:"center"}}>
+              <svg viewBox="0 0 200 120" style={{width:120,height:70,display:"block",margin:"0 auto"}}>
+                <defs><linearGradient id="miniGaugeGradI" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#EDE4F7"/><stop offset="100%" stopColor="#9B7EC8"/></linearGradient></defs>
+                <path d="M 16 100 A 84 84 0 0 1 184 100" fill="none" stroke="#EDE4F7" strokeWidth="18" strokeLinecap="round"/>
+                <path d="M 16 100 A 84 84 0 0 1 184 100" fill="none" stroke="url(#miniGaugeGradI)" strokeWidth="18" strokeLinecap="round"/>
+                <path d={`M 100 100 L ${scNeedle}`} stroke="#9B7EC8" strokeWidth="3" strokeLinecap="round" fill="none"/>
+                <circle cx="100" cy="100" r="5" fill="#fff"/><circle cx="100" cy="100" r="3" fill="#9B7EC8"/>
+              </svg>
+              <div style={{fontSize:11,fontWeight:700,color:"#2D3A7C",fontFamily:"'Inter',sans-serif",marginTop:4}}>{scLabel}</div>
+              <button onClick={()=>setShowFullReport(true)} style={{background:"none",border:"none",color:T.terra,cursor:"pointer",fontSize:11,fontWeight:600,padding:0,marginTop:6,textDecoration:"underline"}}>Full Report →</button>
             </div>
           ):(
-            <div style={{background:T.surface,borderRadius:16,padding:20,boxShadow:"0 4px 20px rgba(155,126,200,.08)",border:`1px solid ${T.border}`}}>
-              <span style={{display:"inline-block",background:"#F8F6FF",border:"1px solid #9B7EC8",color:"#2D3A7C",fontSize:12,fontWeight:700,borderRadius:20,padding:"4px 12px",filter:"blur(6px)",WebkitFilter:"blur(6px)",userSelect:"none"}}>{scLabel}</span>
-              {checks.length>0&&checks.slice(0,2).map((c,i)=>c?(
-                <div key={c.id||i} style={{display:"flex",gap:6,alignItems:"center",marginBottom:4,marginTop:i===0?10:0}}>
-                  <span style={{fontSize:11}}>{CHECK_ICON[c.status]||"\u2753"}</span>
-                  <span style={{fontSize:11,color:T.ink2}}>{sentenceCase(c.label||"Check")}</span>
-                  <div style={{flex:1,height:12,background:`linear-gradient(to right,${T.ink3}22,transparent)`,borderRadius:4}}/>
-                </div>
-              ):null)}
+            <div style={{background:T.surface,borderRadius:16,padding:20,boxShadow:"0 4px 20px rgba(155,126,200,.08)",border:`1px solid ${T.border}`,textAlign:"center"}}>
+              <div style={{filter:"blur(6px)",WebkitFilter:"blur(6px)",userSelect:"none",pointerEvents:"none"}}>
+                <svg viewBox="0 0 200 120" style={{width:120,height:70,display:"block",margin:"0 auto"}}>
+                  <defs><linearGradient id="miniGaugeGradIb" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#EDE4F7"/><stop offset="100%" stopColor="#9B7EC8"/></linearGradient></defs>
+                  <path d="M 16 100 A 84 84 0 0 1 184 100" fill="none" stroke="#EDE4F7" strokeWidth="18" strokeLinecap="round"/>
+                  <path d="M 16 100 A 84 84 0 0 1 184 100" fill="none" stroke="url(#miniGaugeGradIb)" strokeWidth="18" strokeLinecap="round"/>
+                  <path d={`M 100 100 L ${scNeedle}`} stroke="#9B7EC8" strokeWidth="3" strokeLinecap="round" fill="none"/>
+                  <circle cx="100" cy="100" r="5" fill="#fff"/><circle cx="100" cy="100" r="3" fill="#9B7EC8"/>
+                </svg>
+                <div style={{fontSize:11,fontWeight:700,color:"#2D3A7C",fontFamily:"'Inter',sans-serif",marginTop:4}}>{scLabel}</div>
+              </div>
               <div style={{borderTop:`1px solid ${T.border}`,marginTop:8,paddingTop:8}}>
                 <div style={{fontSize:10,color:T.ink3,marginBottom:6}}>🔒 Unlock full report</div>
                 <button onClick={()=>setProUpgradeBanner(true)} style={{background:T.terra,color:"#fff",border:"none",borderRadius:99,padding:"6px 16px",fontSize:10,fontWeight:600,cursor:"pointer"}}>Upgrade to Pro</button>

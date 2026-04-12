@@ -4,7 +4,7 @@ import { T } from "../theme.jsx";
 // pass: 218deg → (100 + 58*cos(218°*π/180), 100 + 58*sin(218°*π/180)) ≈ (54, 64)
 // warning: 270deg → (100, 42)
 // issues: 322deg → (100 + 58*cos(322°*π/180), 100 + 58*sin(322°*π/180)) ≈ (146, 64)
-const NEEDLE_END = { pass: "54 64", warning: "100 42", issues: "146 64" };
+export const NEEDLE_END = { pass: "54 64", warning: "100 42", issues: "146 64" };
 const STATE_LABEL = { pass: "Looks Good", warning: "Heads Up", issues: "Issues Found" };
 const LAVENDER = "#9B7EC8";
 const ADVISORY_IDS = new Set(["translation", "structure"]);
@@ -55,16 +55,16 @@ const BevGauge = ({ state = "warning" }) => {
         <path d="M 16 100 A 84 84 0 0 1 184 100" fill="none" stroke="#EDE4F7" strokeWidth="18" strokeLinecap="round" />
         {/* Colored arc */}
         <path d="M 16 100 A 84 84 0 0 1 184 100" fill="none" stroke="url(#bevGaugeGrad)" strokeWidth="18" strokeLinecap="round" />
-        {/* Bev image */}
-        <image href="/bev_neutral.png" x="82" y="60" width="36" height="36" clipPath="url(#bevGaugeClip)" />
         {/* Needle */}
         <path d={`M 100 100 L ${needleEnd}`} stroke={LAVENDER} strokeWidth="3" strokeLinecap="round" fill="none" />
         {/* Pivot white backing */}
         <circle cx="100" cy="100" r="8" fill="#fff" />
+        {/* Bev image */}
+        <image href="/bev_neutral.png" x="82" y="60" width="36" height="36" clipPath="url(#bevGaugeClip)" />
         {/* Pivot dot */}
         <circle cx="100" cy="100" r="6" fill={LAVENDER} />
         {/* Heads Up label inside arc */}
-        <text x="100" y="16" textAnchor="middle" fontSize="9" fontWeight="600" fill={LAVENDER} opacity={state === "warning" ? 1 : 0.5} fontFamily="Inter, sans-serif">Heads Up</text>
+        <text x="100" y="52" textAnchor="middle" fontSize="9" fontWeight="600" fill={LAVENDER} opacity={state === "warning" ? 1 : 0.5} fontFamily="Inter, sans-serif">Heads Up</text>
       </svg>
       {/* Zone labels row */}
       <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: 280, margin: "4px auto 0" }}>
