@@ -438,22 +438,17 @@ const ImageImportModal = ({ onClose, onPatternSaved, userId, isPro, minimized, o
               <div style={{fontSize:15,fontWeight:600,color:T.ink}}>Analyzing your pattern</div>
               <div style={{fontSize:12,color:T.sage,textAlign:"center",maxWidth:200,lineHeight:1.5}}>Checking stitch counts, round sequence and math errors before you start crocheting.</div>
             </div>
-          ):validationReport?(()=>{const scState=deriveState(validationReport);return isPro?(
+          ):validationReport?(()=>{const scState=deriveState(validationReport);const scLabel=scState==="pass"?"Looks good":scState==="issues"?"Issues found":"Heads up";const failedChecks=(validationReport.checks||[]).filter(c=>c.status==="fail"||c.status==="warning"||c.status==="warn").slice(0,3);return isPro?(
             <div style={{background:T.surface,borderRadius:16,padding:20,boxShadow:"0 4px 20px rgba(155,126,200,.08)",border:`1px solid ${T.border}`}}>
-              <BevGauge state={scState} size="small" />
-              {(validationReport.checks||[]).slice(0,3).map(c=>(
-                <div key={c.id} style={{display:"flex",gap:6,alignItems:"center",marginBottom:4,marginTop:4}}>
-                  <span style={{fontSize:11}}>{CHECK_ICON[c.status]||"\u2753"}</span>
-                  <span style={{fontSize:11,color:T.ink2}}>{sentenceCase(c.label)}</span>
-                </div>
-              ))}
+              <span style={{display:"inline-block",background:"#F8F6FF",border:"1px solid #9B7EC8",color:"#2D3A7C",fontSize:12,fontWeight:700,borderRadius:20,padding:"4px 12px"}}>{scLabel}</span>
+              {failedChecks.length>0&&<div style={{marginTop:10}}>{failedChecks.map(c=>(<div key={c.id} style={{display:"flex",gap:6,alignItems:"center",marginBottom:4}}><span style={{fontSize:11,color:"#C0544A"}}>✕</span><span style={{fontSize:11,color:"#6B6B8A"}}>{sentenceCase(c.label)}</span></div>))}</div>}
               <button onClick={()=>setShowFullReport(true)} style={{background:"none",border:"none",color:T.terra,cursor:"pointer",fontSize:11,fontWeight:600,padding:0,marginTop:8,textDecoration:"underline"}}>Full Report →</button>
             </div>
           ):(
             <div style={{background:T.surface,borderRadius:16,padding:20,boxShadow:"0 4px 20px rgba(155,126,200,.08)",border:`1px solid ${T.border}`}}>
-              <div style={{filter:"blur(6px)",WebkitFilter:"blur(6px)",userSelect:"none",pointerEvents:"none"}}><BevGauge state={scState} size="small" /></div>
+              <span style={{display:"inline-block",background:"#F8F6FF",border:"1px solid #9B7EC8",color:"#2D3A7C",fontSize:12,fontWeight:700,borderRadius:20,padding:"4px 12px",filter:"blur(6px)",WebkitFilter:"blur(6px)",userSelect:"none"}}>{scLabel}</span>
               {validationReport.checks?.slice(0,2).map((c,i)=>(
-                <div key={c.id||i} style={{display:"flex",gap:6,alignItems:"center",marginBottom:4}}>
+                <div key={c.id||i} style={{display:"flex",gap:6,alignItems:"center",marginBottom:4,marginTop:i===0?10:0}}>
                   <span style={{fontSize:11}}>{CHECK_ICON[c.status]||"\u2753"}</span>
                   <span style={{fontSize:11,color:T.ink2}}>{sentenceCase(c.label)}</span>
                   <div style={{flex:1,height:12,background:`linear-gradient(to right,${T.ink3}22,transparent)`,borderRadius:4}}/>

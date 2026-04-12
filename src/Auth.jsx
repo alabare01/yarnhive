@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { T, useBreakpoint } from "./theme.jsx";
 import { supabaseAuth, getSession, SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase.js";
+import BevGauge from "./components/BevGauge.jsx";
 
 /* ── Typewriter hook ── */
 const BEV_LINES = [
@@ -118,12 +119,8 @@ const ProductPreview = () => {
             <div>
               <div style={CARD_LABEL}>BEVCHECK</div>
               <div style={CARD_TITLE}>Mommy Fiora</div>
-              <div style={CARD_SUBTITLE}>Pattern reviewed</div>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ ...CARD_SUBTITLE, flex: 1 }}>&nbsp;</span>
-              <span style={{ fontSize: 10, fontWeight: 700, color: "#fff", background: "#C0544A", borderRadius: 20, padding: "3px 10px", whiteSpace: "nowrap" }}>Issues Found</span>
-            </div>
+            <BevGauge state="issues" />
           </div>
         </div>
 

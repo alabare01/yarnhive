@@ -1,6 +1,6 @@
 import { T } from "../theme.jsx";
 
-const NEEDLE_DEG = { pass: -130, warning: -90, issues: -50 };
+const NEEDLE_DEG = { pass: -142, warning: -90, issues: -38 };
 const STATE_LABEL = { pass: "Looks Good", warning: "Heads Up", issues: "Issues Found" };
 const LAVENDER = "#9B7EC8";
 const ADVISORY_IDS = new Set(["translation", "structure"]);
@@ -30,16 +30,13 @@ export const sentenceCase = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1).to
 /** Determine tier with fallback to id-based lookup */
 export const checkTier = (c) => c.tier || (ADVISORY_IDS.has(c.id) ? "advisory" : "core");
 
-const BevGauge = ({ state = "warning", size }) => {
+const BevGauge = ({ state = "warning" }) => {
   const deg = NEEDLE_DEG[state] ?? -90;
   const label = STATE_LABEL[state] ?? "Heads Up";
-  const isSmall = size === "small";
-  const maxW = isSmall ? 160 : 280;
-  const fontAdj = isSmall ? -1 : 0;
 
   return (
     <div style={{ textAlign: "center", background: "#F8F6FF", borderRadius: 12, padding: 20 }}>
-      <svg viewBox="0 0 200 120" style={{ width: "100%", maxWidth: maxW, display: "block", margin: "0 auto" }}>
+      <svg viewBox="0 0 200 110" style={{ width: "100%", maxWidth: 280, display: "block", margin: "0 auto" }}>
         <defs>
           <linearGradient id="bevGaugeGrad" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stopColor="#EDE4F7" />
@@ -64,13 +61,15 @@ const BevGauge = ({ state = "warning", size }) => {
         <circle cx="100" cy="100" r="8" fill="#fff" />
         {/* Pivot dot */}
         <circle cx="100" cy="100" r="6" fill={LAVENDER} />
-        {/* Zone labels */}
-        <text x="26" y="106" fontSize={9 + fontAdj} fontWeight="600" fontFamily="Inter, sans-serif" fill={LAVENDER} opacity="0.5">Looks Good</text>
-        <text x="72" y="14" fontSize={9 + fontAdj} fontWeight="600" fontFamily="Inter, sans-serif" fill={LAVENDER} opacity="0.75">Heads Up</text>
-        <text x="134" y="106" fontSize={9 + fontAdj} fontWeight="600" fontFamily="Inter, sans-serif" fill={LAVENDER} opacity="1">Issues</text>
-        <text x="134" y="116" fontSize={9 + fontAdj} fontWeight="600" fontFamily="Inter, sans-serif" fill={LAVENDER} opacity="1">Found</text>
       </svg>
-      <div style={{ fontFamily: "'Playfair Display', serif", fontSize: isSmall ? 14 : 18, fontWeight: 700, color: "#2D3A7C", marginTop: 4 }}>{label}</div>
+      {/* Zone labels row */}
+      <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: 280, margin: "4px auto 0" }}>
+        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 10, fontWeight: state === "pass" ? 700 : 600, letterSpacing: 0.5, color: LAVENDER, opacity: state === "pass" ? 1 : 0.5 }}>Looks Good</span>
+        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 10, fontWeight: state === "warning" ? 700 : 600, letterSpacing: 0.5, color: LAVENDER, opacity: state === "warning" ? 1 : 0.5 }}>Heads Up</span>
+        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 10, fontWeight: state === "issues" ? 700 : 600, letterSpacing: 0.5, color: LAVENDER, opacity: state === "issues" ? 1 : 0.5 }}>Issues Found</span>
+      </div>
+      {/* State label */}
+      <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 700, color: "#2D3A7C", marginTop: 4 }}>{label}</div>
     </div>
   );
 };
