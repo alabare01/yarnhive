@@ -662,10 +662,11 @@ const ManualEntryForm = ({onSave,Btn}) => {
   );
 };
 
-const URLImportForm = ({onSave,Btn,Photo,initialUrl,onMinimize,onExtractionStart,onExtractionEnd}) => {
+const URLImportForm = ({onSave,Btn,Photo,initialUrl,onMinimize,onExtractionStart,onExtractionEnd,onBevCheckActive}) => {
   const [url,setUrl]=useState(initialUrl||""),[loading,setLoading]=useState(false),[stageText,setStageText]=useState(""),[preview,setPreview]=useState(null),[error,setError]=useState(null);
   const [validating,setValidating]=useState(false),[validationReport,setValidationReport]=useState(null);
   const [bevCheckFailed,setBevCheckFailed]=useState(false);
+  useEffect(()=>{onBevCheckActive?.(!!validationReport||bevCheckFailed);},[validationReport,bevCheckFailed]);
   const autoTriggered=useRef(false);
   const doImport=async()=>{
     if(!url.trim()) return;
@@ -745,7 +746,7 @@ const URLImportForm = ({onSave,Btn,Photo,initialUrl,onMinimize,onExtractionStart
   );
 };
 
-const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade,onMinimize,onExtractionStart,onExtractionEnd}) => {
+const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade,onMinimize,onExtractionStart,onExtractionEnd,onBevCheckActive}) => {
   const [stage,setStage]=useState("pick");
   const [progress,setProgress]=useState(0);
   const [stageText,setStageText]=useState("");
@@ -771,6 +772,7 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade,onMinimize,onExtractionStart,
   const [validating,setValidating]=useState(false);
   const [bevCheckFailed,setBevCheckFailed]=useState(false);
   const bevCheckTextRef=useRef(null);
+  useEffect(()=>{onBevCheckActive?.(!!validationReport||bevCheckFailed);},[validationReport,bevCheckFailed]);
   const [proUpgradeBanner,setProUpgradeBanner]=useState(false);
   const [showFullReport,setShowFullReport]=useState(false);
   const [matExpanded,setMatExpanded]=useState(false);
@@ -1096,6 +1098,7 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade,onMinimize,onExtractionStart,
                 <path d={`M 100 100 L ${scNeedle}`} stroke="#9B7EC8" strokeWidth="3" strokeLinecap="round" fill="none"/>
                 <circle cx="100" cy="100" r="5" fill="#fff"/><circle cx="100" cy="100" r="3" fill="#9B7EC8"/>
               </svg>
+              <div style={{display:"flex",justifyContent:"space-between",width:"100%",margin:"2px auto 0"}}><span style={{fontFamily:"'Inter',sans-serif",fontSize:9,fontWeight:scState==="pass"?700:600,color:"#9B7EC8",opacity:scState==="pass"?1:0.5}}>Looks Good</span><span style={{fontFamily:"'Inter',sans-serif",fontSize:9,fontWeight:scState==="warning"?700:600,color:"#9B7EC8",opacity:scState==="warning"?1:0.5}}>Heads Up</span><span style={{fontFamily:"'Inter',sans-serif",fontSize:9,fontWeight:scState==="issues"?700:600,color:"#9B7EC8",opacity:scState==="issues"?1:0.5}}>Issues Found</span></div>
               <div style={{fontSize:11,fontWeight:700,color:"#2D3A7C",fontFamily:"'Inter',sans-serif",marginTop:4}}>{scLabel}</div>
               {scFailed.length>0&&<div style={{textAlign:"left",marginTop:8}}>{scFailed.map((c,i)=>(<div key={c.id||i} style={{display:"flex",gap:6,alignItems:"flex-start",marginBottom:4}}><span style={{fontSize:11,color:c.status==="fail"?"#C0544A":"#C9A84C",flexShrink:0}}>{c.status==="fail"?"✕":"⚠"}</span><span style={{fontSize:11,color:"#6B6B8A"}}>{sentenceCase(c.label||"Check")}</span></div>))}</div>}
               <button onClick={()=>setShowFullReport(true)} style={{background:"none",border:"none",color:T.terra,cursor:"pointer",fontSize:11,fontWeight:600,padding:0,marginTop:6,textDecoration:"underline"}}>Full Report →</button>
@@ -1110,6 +1113,7 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade,onMinimize,onExtractionStart,
                   <path d={`M 100 100 L ${scNeedle}`} stroke="#9B7EC8" strokeWidth="3" strokeLinecap="round" fill="none"/>
                   <circle cx="100" cy="100" r="5" fill="#fff"/><circle cx="100" cy="100" r="3" fill="#9B7EC8"/>
                 </svg>
+                <div style={{display:"flex",justifyContent:"space-between",width:"100%",margin:"2px auto 0"}}><span style={{fontFamily:"'Inter',sans-serif",fontSize:9,fontWeight:600,color:"#9B7EC8",opacity:0.5}}>Looks Good</span><span style={{fontFamily:"'Inter',sans-serif",fontSize:9,fontWeight:600,color:"#9B7EC8",opacity:0.5}}>Heads Up</span><span style={{fontFamily:"'Inter',sans-serif",fontSize:9,fontWeight:600,color:"#9B7EC8",opacity:0.5}}>Issues Found</span></div>
                 <div style={{fontSize:11,fontWeight:700,color:"#2D3A7C",fontFamily:"'Inter',sans-serif",marginTop:4}}>{scLabel}</div>
               </div>
               <div style={{borderTop:`1px solid ${T.border}`,marginTop:8,paddingTop:8}}>
@@ -1195,9 +1199,10 @@ const BrowserImport = ({onSave,Btn,Photo}) => {
 const AddPatternModal = ({onClose,onSave,isPro,patternCount,Btn,Photo,Bar,WireframeViewer,onUpgrade,initialMethod,initialUrl,minimized,onMinimize,onExpand}) => {
   const [method,setMethod]=useState(initialMethod||null),[closing,setClosing]=useState(false);
   const extractingRef=useRef(false);
+  const bevCheckActiveRef=useRef(false);
   const{isDesktop}=useBreakpoint();
   const dismiss=()=>{setClosing(true);setTimeout(()=>{setClosing(false);onClose();},220);};
-  const backdropClick=()=>{if(extractingRef.current&&onMinimize){onMinimize();}else{dismiss();}};
+  const backdropClick=()=>{if(bevCheckActiveRef.current)return;if(extractingRef.current&&onMinimize){onMinimize();}else{dismiss();}};
   const handleSave=(p)=>{onSave(p);dismiss();};
   const METHODS=[
     {key:"manual",icon:"✏️",label:"Manual Entry",sub:"Type it in yourself"},
@@ -1270,8 +1275,8 @@ const AddPatternModal = ({onClose,onSave,isPro,patternCount,Btn,Photo,Bar,Wirefr
     <div style={{flex:1,overflowY:"auto",padding:pad}}>
       {!method&&<MethodList/>}
       {method==="manual"&&<ManualEntryForm onSave={handleSave} Btn={Btn}/>}
-      {method==="url"&&<URLImportForm onSave={handleSave} Btn={Btn} Photo={Photo} initialUrl={initialUrl} onMinimize={minimized?undefined:onMinimize} onExtractionStart={()=>{extractingRef.current=true;}} onExtractionEnd={()=>{extractingRef.current=false;}}/>}
-      {method==="pdf"&&<PDFUploadForm onSave={handleSave} Btn={Btn} isPro={isPro} onUpgrade={()=>{if(onUpgrade){dismiss();onUpgrade();}}} onMinimize={minimized?undefined:onMinimize} onExtractionStart={()=>{extractingRef.current=true;}} onExtractionEnd={()=>{extractingRef.current=false;}}/>}
+      {method==="url"&&<URLImportForm onSave={handleSave} Btn={Btn} Photo={Photo} initialUrl={initialUrl} onMinimize={minimized?undefined:onMinimize} onExtractionStart={()=>{extractingRef.current=true;}} onExtractionEnd={()=>{extractingRef.current=false;}} onBevCheckActive={(v)=>{bevCheckActiveRef.current=v;}}/>}
+      {method==="pdf"&&<PDFUploadForm onSave={handleSave} Btn={Btn} isPro={isPro} onUpgrade={()=>{if(onUpgrade){dismiss();onUpgrade();}}} onMinimize={minimized?undefined:onMinimize} onExtractionStart={()=>{extractingRef.current=true;}} onExtractionEnd={()=>{extractingRef.current=false;}} onBevCheckActive={(v)=>{bevCheckActiveRef.current=v;}}/>}
       {method==="browser"&&<BrowserImport onSave={handleSave} Btn={Btn} Photo={Photo}/>}
       {method==="snap"&&<HiveVisionForm onSave={handleSave} Btn={Btn} Bar={Bar} WireframeViewer={WireframeViewer}/>}
     </div>

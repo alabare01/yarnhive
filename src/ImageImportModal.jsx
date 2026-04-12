@@ -65,6 +65,7 @@ const ImageImportModal = ({ onClose, onPatternSaved, userId, isPro, minimized, o
   const { isDesktop } = useBreakpoint();
 
   const dismiss = () => { setClosing(true); setTimeout(() => { setClosing(false); onClose(); }, 220); };
+  const backdropDismiss = () => { if (!validationReport && !bevCheckFailed) dismiss(); };
 
   const handleFiles = async (fileList) => {
     const arr = Array.from(fileList).filter(f => f.type.startsWith("image/"));
@@ -449,6 +450,7 @@ const ImageImportModal = ({ onClose, onPatternSaved, userId, isPro, minimized, o
                 <path d={`M 100 100 L ${scNeedle}`} stroke="#9B7EC8" strokeWidth="3" strokeLinecap="round" fill="none"/>
                 <circle cx="100" cy="100" r="5" fill="#fff"/><circle cx="100" cy="100" r="3" fill="#9B7EC8"/>
               </svg>
+              <div style={{display:"flex",justifyContent:"space-between",width:"100%",margin:"2px auto 0"}}><span style={{fontFamily:"'Inter',sans-serif",fontSize:9,fontWeight:scState==="pass"?700:600,color:"#9B7EC8",opacity:scState==="pass"?1:0.5}}>Looks Good</span><span style={{fontFamily:"'Inter',sans-serif",fontSize:9,fontWeight:scState==="warning"?700:600,color:"#9B7EC8",opacity:scState==="warning"?1:0.5}}>Heads Up</span><span style={{fontFamily:"'Inter',sans-serif",fontSize:9,fontWeight:scState==="issues"?700:600,color:"#9B7EC8",opacity:scState==="issues"?1:0.5}}>Issues Found</span></div>
               <div style={{fontSize:11,fontWeight:700,color:"#2D3A7C",fontFamily:"'Inter',sans-serif",marginTop:4}}>{scLabel}</div>
               {scFailed.length>0&&<div style={{textAlign:"left",marginTop:8}}>{scFailed.map((c,i)=>(<div key={c.id||i} style={{display:"flex",gap:6,alignItems:"flex-start",marginBottom:4}}><span style={{fontSize:11,color:c.status==="fail"?"#C0544A":"#C9A84C",flexShrink:0}}>{c.status==="fail"?"✕":"⚠"}</span><span style={{fontSize:11,color:"#6B6B8A"}}>{sentenceCase(c.label||"Check")}</span></div>))}</div>}
               <button onClick={()=>setShowFullReport(true)} style={{background:"none",border:"none",color:T.terra,cursor:"pointer",fontSize:11,fontWeight:600,padding:0,marginTop:6,textDecoration:"underline"}}>Full Report →</button>
@@ -463,6 +465,7 @@ const ImageImportModal = ({ onClose, onPatternSaved, userId, isPro, minimized, o
                   <path d={`M 100 100 L ${scNeedle}`} stroke="#9B7EC8" strokeWidth="3" strokeLinecap="round" fill="none"/>
                   <circle cx="100" cy="100" r="5" fill="#fff"/><circle cx="100" cy="100" r="3" fill="#9B7EC8"/>
                 </svg>
+                <div style={{display:"flex",justifyContent:"space-between",width:"100%",margin:"2px auto 0"}}><span style={{fontFamily:"'Inter',sans-serif",fontSize:9,fontWeight:600,color:"#9B7EC8",opacity:0.5}}>Looks Good</span><span style={{fontFamily:"'Inter',sans-serif",fontSize:9,fontWeight:600,color:"#9B7EC8",opacity:0.5}}>Heads Up</span><span style={{fontFamily:"'Inter',sans-serif",fontSize:9,fontWeight:600,color:"#9B7EC8",opacity:0.5}}>Issues Found</span></div>
                 <div style={{fontSize:11,fontWeight:700,color:"#2D3A7C",fontFamily:"'Inter',sans-serif",marginTop:4}}>{scLabel}</div>
               </div>
               <div style={{borderTop:`1px solid ${T.border}`,marginTop:8,paddingTop:8}}>
@@ -524,7 +527,7 @@ const ImageImportModal = ({ onClose, onPatternSaved, userId, isPro, minimized, o
   // ── MODAL SHELL ──
   if (isDesktop) return (
     <div style={{ position: "fixed", inset: 0, zIndex: 400, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div className={closing ? "dim-out" : "dim-in"} onClick={dismiss} style={{ position: "absolute", inset: 0, background: "rgba(28,23,20,.6)", backdropFilter: "blur(4px)" }} />
+      <div className={closing ? "dim-out" : "dim-in"} onClick={backdropDismiss} style={{ position: "absolute", inset: 0, background: "rgba(28,23,20,.6)", backdropFilter: "blur(4px)" }} />
       <div className={closing ? "" : "fu"} style={{
         position: "relative", background: "#FFFFFF", borderRadius: 20, width: "100%", maxWidth: 520,
         maxHeight: "85vh", display: "flex", flexDirection: "column", zIndex: 1,
@@ -545,7 +548,7 @@ const ImageImportModal = ({ onClose, onPatternSaved, userId, isPro, minimized, o
 
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 400, display: "flex", alignItems: "flex-end" }}>
-      <div className={closing ? "dim-out" : "dim-in"} onClick={dismiss} style={{ position: "absolute", inset: 0, background: "rgba(28,23,20,.6)", backdropFilter: "blur(4px)" }} />
+      <div className={closing ? "dim-out" : "dim-in"} onClick={backdropDismiss} style={{ position: "absolute", inset: 0, background: "rgba(28,23,20,.6)", backdropFilter: "blur(4px)" }} />
       <div className={closing ? "" : "su"} style={{
         position: "relative", background: "#FFFFFF", borderRadius: "24px 24px 0 0", width: "100%",
         maxHeight: "92vh", display: "flex", flexDirection: "column", zIndex: 1,
