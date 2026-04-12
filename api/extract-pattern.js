@@ -224,12 +224,14 @@ ${truncatedText}`;
     const rawText = data.content?.[0]?.text || "";
     if (!rawText) throw new Error("Claude returned empty response");
 
-    const cleaned = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
-    const toParse = cleaned.startsWith("{") ? cleaned : rawText.trim();
+    const jsonStart = rawText.indexOf("{");
+    const sliced = jsonStart >= 0 ? rawText.slice(jsonStart) : rawText.trim();
+    const jsonEnd = sliced.lastIndexOf("}");
+    const cleaned = jsonEnd >= 0 ? sliced.slice(0, jsonEnd + 1) : sliced;
     try {
-      return JSON.parse(toParse);
+      return JSON.parse(cleaned);
     } catch (parseErr) {
-      console.error("[extract-pattern] Claude JSON parse failed, text starts:", toParse.substring(0, 300));
+      console.error("[extract-pattern] Claude JSON parse failed, text starts:", cleaned.substring(0, 300), "ends:", cleaned.substring(cleaned.length - 200));
       throw new Error("Claude JSON parse failed: " + parseErr.message);
     }
   };
