@@ -2,6 +2,8 @@
 // Vercel serverless function — extracts crochet pattern from PDF text via Gemini
 // Supports mode: "extract" (default) and mode: "bevcheck" (pattern validation)
 
+import { getPreferredProvider } from './_providerRouter.js';
+
 export const config = { maxDuration: 60 };
 
 const GEMINI_MODEL = 'gemini-2.5-flash';
@@ -261,21 +263,29 @@ ${truncatedText}`;
     }
   };
 
-  // Attempt 1: Gemini opportunistic fast attempt (4s timeout)
-  console.log("[extract-pattern] Attempt 1: Gemini full prompt, pages:", pageCount || "unknown", "chars:", pdfText.length);
-  try {
-    const result = await callGemini(fullPrompt, 65536);
-    console.log("[extract-pattern] Success:", result.title, "—", (result.components || []).length, "components");
-    if (_url && _key) {
-      await fetch(`${_url}/rest/v1/vercel_logs`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'apikey': _key, 'Authorization': `Bearer ${_key}`, 'Prefer': 'return=minimal' },
-        body: JSON.stringify({ timestamp: new Date().toISOString(), level: 'info', message: `POST /api/extract-pattern → 200 gemini (${Date.now() - _t0}ms)`, source: 'serverless', request_path: '/api/extract-pattern', request_method: 'POST', status_code: 200, project_id: 'wovely' })
-      }).catch(() => {});
+  // Provider router: check Gemini health before attempting
+  const preferredProvider = await getPreferredProvider(GEMINI_KEY);
+  console.log("[extract-pattern] Router selected provider:", preferredProvider);
+
+  if (preferredProvider === 'gemini') {
+    // Attempt 1: Gemini opportunistic fast attempt (4s timeout)
+    console.log("[extract-pattern] Attempt 1: Gemini full prompt, pages:", pageCount || "unknown", "chars:", pdfText.length);
+    try {
+      const result = await callGemini(fullPrompt, 65536);
+      console.log("[extract-pattern] Success:", result.title, "—", (result.components || []).length, "components");
+      if (_url && _key) {
+        await fetch(`${_url}/rest/v1/vercel_logs`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': _key, 'Authorization': `Bearer ${_key}`, 'Prefer': 'return=minimal' },
+          body: JSON.stringify({ timestamp: new Date().toISOString(), level: 'info', message: `POST /api/extract-pattern → 200 gemini (${Date.now() - _t0}ms)`, source: 'serverless', request_path: '/api/extract-pattern', request_method: 'POST', status_code: 200, project_id: 'wovely' })
+        }).catch(() => {});
+      }
+      return res.status(200).json(result);
+    } catch (e) {
+      console.error("[extract-pattern] Attempt 1 failed:", e.message);
     }
-    return res.status(200).json(result);
-  } catch (e) {
-    console.error("[extract-pattern] Attempt 1 failed:", e.message);
+  } else {
+    console.log("[extract-pattern] Router: Gemini degraded — skipping to Haiku");
   }
 
   // Attempt 2: Claude Haiku primary fallback
@@ -471,16 +481,24 @@ async function handleBevCheck(req, res, _url, _key, _t0) {
     }).catch(() => {});
   };
 
-  // Attempt 1: Gemini opportunistic fast attempt (8s timeout)
-  const t1 = Date.now();
-  console.log("[bevcheck] → Attempt 1: Gemini full prompt, chars:", text.length);
-  try {
-    const result = await callGeminiBevCheck(BEVCHECK_PROMPT);
-    console.log("[bevcheck] ✓ Attempt 1 success, state:", result.state, "checks:", (result.checks||[]).length, `(${Date.now()-t1}ms)`);
-    logToSupabase('info', `POST /api/extract-pattern?mode=bevcheck → 200 gemini (${Date.now() - _t0}ms)`, 200);
-    return res.status(200).json({ ...result, provider: "gemini" });
-  } catch (e) {
-    console.error("[bevcheck] ✗ Attempt 1 failed:", e.message, `(${Date.now()-t1}ms)`);
+  // Provider router: check Gemini health before attempting
+  const preferredProvider = await getPreferredProvider(GEMINI_KEY);
+  console.log("[bevcheck] Router selected provider:", preferredProvider);
+
+  if (preferredProvider === 'gemini') {
+    // Attempt 1: Gemini opportunistic fast attempt (8s timeout)
+    const t1 = Date.now();
+    console.log("[bevcheck] → Attempt 1: Gemini full prompt, chars:", text.length);
+    try {
+      const result = await callGeminiBevCheck(BEVCHECK_PROMPT);
+      console.log("[bevcheck] ✓ Attempt 1 success, state:", result.state, "checks:", (result.checks||[]).length, `(${Date.now()-t1}ms)`);
+      logToSupabase('info', `POST /api/extract-pattern?mode=bevcheck → 200 gemini (${Date.now() - _t0}ms)`, 200);
+      return res.status(200).json({ ...result, provider: "gemini" });
+    } catch (e) {
+      console.error("[bevcheck] ✗ Attempt 1 failed:", e.message, `(${Date.now()-t1}ms)`);
+    }
+  } else {
+    console.log("[bevcheck] Router: Gemini degraded — skipping to Haiku");
   }
 
   // Attempt 2: Claude Haiku primary fallback
