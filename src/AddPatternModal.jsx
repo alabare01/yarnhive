@@ -722,7 +722,14 @@ const URLImportForm = ({onSave,Btn,Photo,initialUrl,onMinimize,onExtractionStart
       setStageText("Structuring your pattern...");
       let pdfData;
       try {
-        pdfData = await extractPatternFromPDF(extractedText, 'pattern.pdf', 'application/pdf', true);
+        const extractRes = await fetch('/api/extract-pattern', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pdfText: extractedText, pageCount: 4 })
+        });
+        if (!extractRes.ok) throw new Error('Server extraction failed');
+        pdfData = await extractRes.json();
+        if (pdfData.error) throw new Error(pdfData.error);
       } catch (err) {
         clearInterval(msgIntv);
         onExtractionEnd?.();
