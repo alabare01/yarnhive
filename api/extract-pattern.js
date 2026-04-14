@@ -450,7 +450,7 @@ async function handleBevCheck(req, res, _url, _key, _t0) {
         },
         body: JSON.stringify({
           model: "claude-haiku-4-5-20251001",
-          max_tokens: 4000,
+          max_tokens: 800,
           messages: [{ role: "user", content: BEVCHECK_PROMPT + "\n\nPATTERN TEXT:\n" + text }],
         }),
         signal: controller.signal,
