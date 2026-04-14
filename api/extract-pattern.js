@@ -25,7 +25,7 @@ export default async function handler(req, res) {
   const { mode = "extract" } = req.body || {};
 
   if (mode === "bevcheck") {
-    return handleBevCheck(req, res, _url, _key, _t0);
+    return await handleBevCheck(req, res, _url, _key, _t0);
   }
 
   // ── mode: "extract" (default) ──
