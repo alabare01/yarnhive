@@ -2,7 +2,7 @@
 // Shared utility — NOT a Vercel route (underscore prefix)
 // Returns 'gemini' or 'haiku' based on Gemini health cache
 
-const GEMINI_MODEL = 'gemini-2.5-flash';
+const GEMINI_MODEL = 'gemini-1.5-flash';
 const PROBE_TIMEOUT_MS = 2000;
 const CACHE_HEALTHY_MS = 60000;
 const CACHE_DEGRADED_MS = 30000;
@@ -18,7 +18,7 @@ async function probeGemini(geminiKey) {
   const timeout = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
   try {
     const r = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/${GEMINI_MODEL}:generateContent?key=${geminiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${geminiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
