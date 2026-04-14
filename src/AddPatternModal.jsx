@@ -690,17 +690,15 @@ const URLImportForm = ({onSave,Btn,Photo,initialUrl,onMinimize,onExtractionStart
     if(pageText){
       setValidating(true);
       const valText=pageText.length>20000?pageText.slice(0,pageText.lastIndexOf("\n",20000)||20000):pageText;
-      (async()=>{
-        try{
-          const controller=new AbortController();
-          const timeout=setTimeout(()=>controller.abort(),90000);
-          const vr=await fetch("/api/extract-pattern",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({mode:"bevcheck",patternText:valText}),signal:controller.signal});
-          clearTimeout(timeout);
-          const data=await vr.json();
-          if(vr.ok&&!data.error){setValidationReport(data);}else{console.warn("[Wovely] URL BevCheck API error:",vr.status,data.message);setBevCheckFailed(true);}
-        }catch(e){console.warn("[Wovely] URL BevCheck failed:",e);setBevCheckFailed(true);}
-        setValidating(false);
-      })();
+      try{
+        const controller=new AbortController();
+        const timeout=setTimeout(()=>controller.abort(),90000);
+        const vr=await fetch("/api/extract-pattern",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({mode:"bevcheck",patternText:valText}),signal:controller.signal});
+        clearTimeout(timeout);
+        const data=await vr.json();
+        if(vr.ok&&!data.error){setValidationReport(data);}else{console.warn("[Wovely] URL BevCheck API error:",vr.status,data.message);setBevCheckFailed(true);}
+      }catch(e){console.warn("[Wovely] URL BevCheck failed:",e);setBevCheckFailed(true);}
+      setValidating(false);
     }
   };
   useEffect(()=>{if(initialUrl&&!autoTriggered.current){autoTriggered.current=true;doImport();}},[]);
@@ -928,17 +926,15 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade,onMinimize,onExtractionStart,
         setValidating(true);
         const valText=extractedText.length>20000?extractedText.slice(0,extractedText.lastIndexOf("\n",20000)||20000):extractedText;
         bevCheckTextRef.current=valText;
-        (async()=>{
-          try{
-            const controller=new AbortController();
-            const timeout=setTimeout(()=>controller.abort(),90000);
-            const vr=await fetch("/api/extract-pattern",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({mode:"bevcheck",patternText:valText}),signal:controller.signal});
-            clearTimeout(timeout);
-            const data=await vr.json();
-            if(vr.ok&&!data.error){setValidationReport(data);}else{console.warn("[Wovely] BevCheck API error:",vr.status,data.message);setBevCheckFailed(true);}
-          }catch(e){console.warn("[Wovely] BevCheck background validation failed:",e);setBevCheckFailed(true);}
-          setValidating(false);
-        })();
+        try{
+          const controller=new AbortController();
+          const timeout=setTimeout(()=>controller.abort(),90000);
+          const vr=await fetch("/api/extract-pattern",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({mode:"bevcheck",patternText:valText}),signal:controller.signal});
+          clearTimeout(timeout);
+          const data=await vr.json();
+          if(vr.ok&&!data.error){setValidationReport(data);}else{console.warn("[Wovely] BevCheck API error:",vr.status,data.message);setBevCheckFailed(true);}
+        }catch(e){console.warn("[Wovely] BevCheck failed:",e);setBevCheckFailed(true);}
+        setValidating(false);
       }
       await new Promise(r=>setTimeout(r,400));setStage("review");onExtractionEnd?.();    }catch(ex){console.error("[Wovely] PDF import error:",ex);onExtractionEnd?.();const isHiccup=(ex.httpStatus&&(ex.httpStatus>=500))||ex.message?.includes("UNAVAILABLE")||ex.message?.includes("Server extraction failed");setErrorType(isHiccup?"server_hiccup":"extraction_failed");setStage("error");setErrorMsg(isHiccup?"server_hiccup":"Something went wrong. Try again or use manual entry.");}
   };
