@@ -190,7 +190,6 @@ const BevCorner = ({ patterns, isMobile }) => {
     else if (hr < 9) msgs.push("Morning craft session? Bev is impressed and slightly jealous of your dedication. ☀️");
     else if (hr >= 17 && hr < 21) msgs.push("Evening crafting hour. Best hour of the day, according to Bev. 🌙");
     if (blankPatterns.length > 0) msgs.push(`${blankPatterns.length} pattern${blankPatterns.length > 1 ? "s" : ""} saved but never opened. Bev's curious what you're saving them for. 🤔`);
-    msgs.push("Big shoutout to turttlesong — our most active beta tester. Bev sees you. 💜");
     if (msgs.length === 0) msgs.push("Your craft room is ready. What are we making today? 🧶");
     return msgs;
   };

@@ -94,29 +94,16 @@ const StitchVision = ({ isPro, onUpgrade }) => {
       const filePath = `stitch-vision/${user.id}/${Date.now()}.jpg`;
       const uploadUrl = `${SUPABASE_URL}/storage/v1/object/pattern-files/${filePath}`;
       console.log("[StitchVision] Step 2: Upload URL:", uploadUrl);
-      let uploadRes;
-      try {
-        uploadRes = await fetch(uploadUrl, {
-          method: "POST",
-          headers: { "Authorization": `Bearer ${session.access_token}`, "Content-Type": "image/jpeg" },
-          body: blob,
-        });
-      } catch (uploadErr) {
-        console.error("[StitchVision] Step 2 FAILED: network error during upload:", uploadErr.message);
-        throw new Error("Could not upload image. Please try again.");
-      }
+      const uploadRes = await fetch(uploadUrl, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${session.access_token}`, "Content-Type": "image/jpeg" },
+        body: blob,
+      });
       const uploadBody = await uploadRes.text();
       console.log("[StitchVision] Step 2 done: upload status:", uploadRes.status, "body:", uploadBody.substring(0, 200));
-      if (!uploadRes.ok) {
-        console.error("[StitchVision] Step 2 FAILED: upload returned", uploadRes.status, uploadBody.substring(0, 200));
-        throw new Error("Could not upload image. Please try again.");
-      }
+      if (!uploadRes.ok) throw new Error("Image upload failed: " + uploadRes.status + " — " + uploadBody.substring(0, 100));
       const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/pattern-files/${filePath}`;
-      if (!publicUrl) {
-        console.error("[StitchVision] Step 2 FAILED: publicUrl is falsy after upload");
-        throw new Error("Could not upload image. Please try again.");
-      }
-      console.log("[StitchVision] Step 3: Calling /api/stitch-vision with imageUrl:", publicUrl);
+      console.log("[StitchVision] Step 3: Calling API — imageUrl:", publicUrl);
 
       const res = await fetch("/api/stitch-vision", {
         method: "POST",
