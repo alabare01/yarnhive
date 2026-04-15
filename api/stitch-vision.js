@@ -168,6 +168,7 @@ export default async function handler(req, res) {
     console.log("[STITCH-STEP-4] Gemini response — status:", geminiRes.status);
   } catch (err) {
     console.error("[STITCH-STEP-4] FAILED — Gemini network error:", err);
+    console.error("[STITCH-STEP-4] Network error:", err.message);
     console.error("[STITCH-STEP-4] Stack:", err.stack);
     return res.status(200).json({ error: true, message: "Could not reach the stitch identification service. Please try again in a moment." });
   }
@@ -179,7 +180,7 @@ export default async function handler(req, res) {
     if (geminiRes.status === 429) {
       return res.status(200).json({ error: true, message: "Our stitch identifier is busy right now. Please wait a moment and try again." });
     }
-    return res.status(200).json({ error: true, message: "Stitch identification failed. Please try again with a different photo." });
+    return res.status(200).json({ error: true, message: "Stitch identification failed. Please try again with a different photo.", debug_status: geminiRes.status });
   }
 
   // ── STEP 5: Parse Gemini response ──
