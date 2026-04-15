@@ -22,6 +22,46 @@ import FeedbackWidget from "./FeedbackWidget.jsx";
 import WhatsNewModal, { triggerWhatsNew, useWovelySuperTap } from "./WhatsNewModal.jsx";
 import Founders from "./Founders.jsx";
 
+const AnnouncementBanner = () => {
+  const [visible, setVisible] = React.useState(() => !localStorage.getItem("wovely_announcement_v1"));
+  if (!visible) return null;
+  return (
+    <div style={{
+      background: "linear-gradient(135deg, #9B7EC8, #2D3A7C)",
+      padding: "10px 20px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 12,
+      width: "100%",
+      boxSizing: "border-box",
+      zIndex: 9999,
+      position: "relative",
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <img src="/bev_neutral.png" alt="Bev" style={{ width: 24, height: 24, objectFit: "contain", flexShrink: 0 }} />
+        <span style={{ fontSize: 13, color: "#fff", fontFamily: "Inter, sans-serif", lineHeight: 1.5 }}>
+          <strong>Big love to turttlesong</strong> — our most active beta tester. Your feedback is shaping Wovely every single day. 💜
+        </span>
+      </div>
+      <button onClick={() => { setVisible(false); localStorage.setItem("wovely_announcement_v1", "1"); }} style={{
+        background: "rgba(255,255,255,0.2)",
+        border: "none",
+        borderRadius: 99,
+        width: 24,
+        height: 24,
+        cursor: "pointer",
+        color: "#fff",
+        fontSize: 14,
+        flexShrink: 0,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}>×</button>
+    </div>
+  );
+};
+
 if (typeof document !== "undefined" && !document.getElementById("sb-font")) {
   const l = document.createElement("link");
   l.id = "sb-font"; l.rel = "stylesheet";
@@ -2171,7 +2211,8 @@ export default function Wovely() {
   const inProgress=allPatterns.filter(p=>{const v=pct(p);return !p.isStarter&&p.status!=="deleted"&&p.status!=="parked"&&((p.status==="in_progress"&&v<100)||(p.started&&v<100)||(v>0&&v<100));});
   const TITLE_MAP={collection:null,wip:"On the Hook",browse:"Find Patterns",stash:"Stash & Notions",calculator:"The Workbench",shopping:"Supply Run",profile:"Profile & Settings",privacy:"Privacy Policy",terms:"Terms of Service"};
 
-  if(isDesktop) return (
+  if(isDesktop) return (<>
+    <AnnouncementBanner/>
     <div style={{display:"flex",minHeight:"100vh",width:"100%",background:"transparent",fontFamily:T.sans,position:"relative"}}>
       <CSS/>
       <WhatsNewModal/>
@@ -2216,9 +2257,10 @@ export default function Wovely() {
         </div>
       </div>
     </div>
-  );
+  </>);
 
-  return (
+  return (<>
+    <AnnouncementBanner/>
     <div style={{fontFamily:T.sans,background:"transparent",minHeight:"100vh",maxWidth:isTablet?680:430,margin:"0 auto",display:"flex",flexDirection:"column",position:"relative"}}>
       <CSS/>
       <WhatsNewModal/>
@@ -2261,5 +2303,5 @@ export default function Wovely() {
       </div>
       {!addOpen&&!imageImportOpen&&!addMinimized&&!imageMinimized&&!addMenuOpen&&<button onClick={()=>{if(tier.atCap){setShowPaywall(true);return;}setAddMenuOpen(v=>!v);}} style={{position:"fixed",right:0,top:"50%",transform:"translateY(-50%)",zIndex:40,display:"flex",alignItems:"center",justifyContent:"center",writingMode:"vertical-rl",textOrientation:"mixed",background:"#9B7EC8",color:"#fff",fontFamily:"'Inter',sans-serif",fontSize:13,fontWeight:600,letterSpacing:"0.05em",padding:"16px 10px",borderRadius:"12px 0 0 12px",cursor:"pointer",boxShadow:"-3px 0 16px rgba(155,126,200,0.25)",userSelect:"none",border:"none",outline:"none"}}>+ Add Pattern</button>}
     </div>
-  );
+  </>);
 }
