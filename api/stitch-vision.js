@@ -3,7 +3,6 @@
 
 export const config = { maxDuration: 60, api: { bodyParser: { sizeLimit: "10mb" } } };
 
-import sharp from "sharp";
 
 // Global error catchers — log full details for any unhandled errors in this function
 process.on("unhandledRejection", (reason) => {
@@ -54,10 +53,6 @@ Return ONLY a valid JSON object with no markdown, no backticks, no explanation b
   "not_crochet": false
 }`;
 
-const NEEDS_CONVERSION = new Set([
-  "image/heic", "image/heif", "image/heic-sequence", "image/heif-sequence",
-  "image/avif", "image/tiff", "image/bmp", "image/x-ms-bmp",
-]);
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -117,34 +112,13 @@ export default async function handler(req, res) {
     return res.status(200).json({ error: true, message: "Could not load the uploaded image. Please try again." });
   }
 
-  // ── STEP 3: Sharp conversion/resize ──
-  console.log("[STITCH-STEP-3] Processing image — mime:", mimeType, "size:", imgBuffer.byteLength, "needs conversion:", NEEDS_CONVERSION.has(mimeType) || !mimeType.startsWith("image/"));
-  try {
-    // Normalize non-standard MIME types to JPEG
-    if (NEEDS_CONVERSION.has(mimeType) || !mimeType.startsWith("image/")) {
-      console.log("[STITCH-STEP-3] Converting", mimeType, "to JPEG via sharp");
-      imgBuffer = await sharp(imgBuffer).jpeg({ quality: 85 }).toBuffer();
-      mimeType = "image/jpeg";
-      console.log("[STITCH-STEP-3] Converted — new size:", imgBuffer.byteLength, "bytes");
-    }
-
-    // Resize if over 4MB
-    if (imgBuffer.byteLength > 4 * 1024 * 1024) {
-      console.log("[STITCH-STEP-3] Resizing — image is", imgBuffer.byteLength, "bytes (over 4MB)");
-      imgBuffer = await sharp(imgBuffer)
-        .resize({ width: 1500, height: 1500, fit: "inside", withoutEnlargement: true })
-        .jpeg({ quality: 80 })
-        .toBuffer();
-      mimeType = "image/jpeg";
-      console.log("[STITCH-STEP-3] Resized — new size:", imgBuffer.byteLength, "bytes");
-    }
-
-    console.log("[STITCH-STEP-3] Success — final size:", imgBuffer.byteLength, "bytes, mime:", mimeType);
-  } catch (err) {
-    console.error("[STITCH-STEP-3] FAILED — sharp processing error:", err);
-    console.error("[STITCH-STEP-3] Stack:", err.stack);
-    return res.status(200).json({ error: true, message: "Could not process this image. Try taking a screenshot and uploading that instead." });
+  // ── STEP 3: Size check (Gemini 1.5 Flash accepts up to 20MB inline) ──
+  console.log("[STITCH-STEP-3] Size check — mime:", mimeType, "size:", imgBuffer.byteLength, "bytes");
+  if (imgBuffer.byteLength > 20 * 1024 * 1024) {
+    console.error("[STITCH-STEP-3] FAILED — image too large:", imgBuffer.byteLength, "bytes");
+    return res.status(200).json({ error: true, message: "This image is too large. Please try a photo under 20MB." });
   }
+  console.log("[STITCH-STEP-3] Success — size OK:", imgBuffer.byteLength, "bytes, mime:", mimeType);
 
   // ── STEP 4: Call Gemini API ──
   const imgBase64 = imgBuffer.toString("base64");
