@@ -148,48 +148,6 @@ const InfoTooltip = ({ text, alignRight }) => {
   );
 };
 
-const AnnouncementBanner = () => {
-  const [visible, setVisible] = useState(() => !localStorage.getItem("wovely_announcement_v1"));
-  if (!visible) return null;
-  return (
-    <div style={{
-      position: "fixed",
-      top: 0,
-      left: 0,
-      right: 0,
-      background: "linear-gradient(135deg, #9B7EC8, #2D3A7C)",
-      padding: "10px 20px",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      gap: 12,
-      zIndex: 9999,
-      boxSizing: "border-box",
-    }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <img src="/bev_neutral.png" alt="Bev" style={{ width: 24, height: 24, objectFit: "contain", flexShrink: 0 }} />
-        <span style={{ fontSize: 13, color: "#fff", fontFamily: "Inter, sans-serif", lineHeight: 1.5 }}>
-          <strong>Big love to turttlesong</strong> — our most active beta tester. Your feedback is shaping Wovely every single day. 💜
-        </span>
-      </div>
-      <button onClick={() => { setVisible(false); localStorage.setItem("wovely_announcement_v1", "1"); }} style={{
-        background: "rgba(255,255,255,0.2)",
-        border: "none",
-        borderRadius: 99,
-        width: 24,
-        height: 24,
-        cursor: "pointer",
-        color: "#fff",
-        fontSize: 14,
-        flexShrink: 0,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}>×</button>
-    </div>
-  );
-};
-
 // ─── BEV CORNER (glass card, JS typewriter, personalized messages) ──────────
 const BevCorner = ({ patterns, isMobile }) => {
   const [msgIndex, setMsgIndex] = useState(0);
@@ -479,7 +437,6 @@ const CollectionView = ({userPatterns,starterPatterns,cat,setCat,search,setSearc
 
   return (
     <div style={{ minHeight: "100vh", background: "transparent" }}>
-      <AnnouncementBanner />
       <div style={{ maxWidth: 1280, margin: "0 auto", padding: isMobile ? "16px 16px 160px" : "24px 32px 80px", boxSizing: "border-box", width: "100%" }}>
         {/* Two-column grid on desktop, single column on mobile */}
         <div style={isMobile ? { display: "flex", flexDirection: "column", gap: 16 } : {
