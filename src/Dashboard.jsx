@@ -148,6 +148,45 @@ const InfoTooltip = ({ text, alignRight }) => {
   );
 };
 
+const AnnouncementBanner = () => {
+  const [visible, setVisible] = useState(() => !localStorage.getItem("wovely_announcement_v1"));
+  if (!visible) return null;
+  return (
+    <div style={{
+      background: "linear-gradient(135deg, #9B7EC8, #2D3A7C)",
+      borderRadius: 12,
+      padding: "12px 16px",
+      marginBottom: 20,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 12,
+      gridColumn: "1 / -1",
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <img src="/bev_neutral.png" alt="Bev" style={{ width: 28, height: 28, objectFit: "contain", flexShrink: 0 }} />
+        <span style={{ fontSize: 13, color: "#fff", fontFamily: "Inter, sans-serif", lineHeight: 1.5 }}>
+          <strong>Big love to turttlesong</strong> — our most active beta tester. Your feedback is shaping Wovely every single day. 💜
+        </span>
+      </div>
+      <button onClick={() => { setVisible(false); localStorage.setItem("wovely_announcement_v1", "1"); }} style={{
+        background: "rgba(255,255,255,0.2)",
+        border: "none",
+        borderRadius: 99,
+        width: 24,
+        height: 24,
+        cursor: "pointer",
+        color: "#fff",
+        fontSize: 14,
+        flexShrink: 0,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}>×</button>
+    </div>
+  );
+};
+
 // ─── BEV CORNER (glass card, JS typewriter, personalized messages) ──────────
 const BevCorner = ({ patterns, isMobile }) => {
   const [msgIndex, setMsgIndex] = useState(0);
@@ -190,6 +229,7 @@ const BevCorner = ({ patterns, isMobile }) => {
     else if (hr < 9) msgs.push("Morning craft session? Bev is impressed and slightly jealous of your dedication. ☀️");
     else if (hr >= 17 && hr < 21) msgs.push("Evening crafting hour. Best hour of the day, according to Bev. 🌙");
     if (blankPatterns.length > 0) msgs.push(`${blankPatterns.length} pattern${blankPatterns.length > 1 ? "s" : ""} saved but never opened. Bev's curious what you're saving them for. 🤔`);
+    msgs.push("Big shoutout to turttlesong — our most active beta tester. Bev sees you. 💜");
     if (msgs.length === 0) msgs.push("Your craft room is ready. What are we making today? 🧶");
     return msgs;
   };
@@ -448,6 +488,7 @@ const CollectionView = ({userPatterns,starterPatterns,cat,setCat,search,setSearc
             </p>
           </div>
 
+          <AnnouncementBanner />
           <BevCorner patterns={visible} isMobile={isMobile} />
 
           <OnTheHook inProgress={inProgress} openDetail={openDetail} onAddPattern={onAddPattern} pct={pct} catFallbackPhoto={catFallbackPhoto} Photo={Photo} isMobile={isMobile} />
