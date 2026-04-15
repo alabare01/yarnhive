@@ -170,41 +170,23 @@ export default async function handler(req, res) {
     console.error("[STITCH-STEP-4] FAILED — Gemini network error:", err);
     console.error("[STITCH-STEP-4] Network error:", err.message);
     console.error("[STITCH-STEP-4] Stack:", err.stack);
-    return res.status(200).json({ error: true, message: "Could not reach the stitch identification service. Please try again in a moment." });
+    geminiRes = null;
   }
 
-  if (!geminiRes.ok) {
+  let geminiFailed = !geminiRes || !geminiRes.ok;
+  if (geminiRes && !geminiRes.ok) {
     let errBody = "";
     try { errBody = await geminiRes.text(); } catch {}
     console.error("[STITCH-STEP-4] Gemini non-ok — status:", geminiRes.status, "body:", errBody.substring(0, 500));
-    if (geminiRes.status === 429) {
-      return res.status(200).json({ error: true, message: "Our stitch identifier is busy right now. Please wait a moment and try again." });
-    }
-    return res.status(200).json({ error: true, message: "Stitch identification failed. Please try again with a different photo.", debug_status: geminiRes.status });
+    console.log("[STITCH-STEP-4] Gemini failed with status", geminiRes.status, "— trying Haiku fallback");
+  }
+  if (!geminiRes) {
+    console.log("[STITCH-STEP-4] Gemini failed with network error — trying Haiku fallback");
   }
 
-  // ── STEP 5: Parse Gemini response ──
-  console.log("[STITCH-STEP-5] Parsing Gemini response");
-  try {
-    const data = await geminiRes.json();
-    const finishReason = data.candidates?.[0]?.finishReason;
-    const parts = data.candidates?.[0]?.content?.parts || [];
-    console.log("[STITCH-STEP-5] Parts count:", parts.length, "finish reason:", finishReason);
-    let text = "";
-    for (const part of parts) {
-      const t = part.text || "";
-      console.log("[STITCH-STEP-5] Part type:", part.thought ? "thinking" : "output", "length:", t.length, "preview:", t.substring(0, 100));
-      if (!part.thought && t.trim().length > 0) { text = t; break; }
-    }
-    if (!text && parts.length > 0) text = parts[parts.length - 1]?.text || "";
-    console.log("[STITCH-STEP-5] Selected text:", text.substring(0, 500));
-
-    if (!text) {
-      console.error("[STITCH-STEP-5] Empty text — finishReason:", finishReason, "full response:", JSON.stringify(data).substring(0, 500));
-      return res.status(200).json({ error: true, message: "The stitch identifier couldn't analyze this image. Try a clearer, well-lit photo." });
-    }
-
-    // Sanitize JSON
+  // Helper: parse raw text into stitch result
+  const parseStitchText = (text, tag) => {
+    if (!text) return null;
     let toParse = text.trim();
     toParse = toParse.replace(/^```[\w]*\s*/i, "").replace(/\s*```\s*$/i, "").trim();
     if (!toParse.startsWith("{")) {
@@ -212,13 +194,10 @@ export default async function handler(req, res) {
       toParse = match ? match[0] : toParse;
     }
     toParse = toParse.replace(/,\s*([\]}])/g, "$1").trim();
-
-    let result;
     try {
-      result = JSON.parse(toParse);
+      return JSON.parse(toParse);
     } catch (parseErr) {
-      console.error("[STITCH-STEP-5] JSON.parse failed, attempting regex extraction. Raw text:", toParse.substring(0, 500));
-      // Try to extract stitch_name at minimum from raw text
+      console.error(`[${tag}] JSON.parse failed, attempting regex extraction. Raw text:`, toParse.substring(0, 500));
       const nameMatch = toParse.match(/"stitch_name"\s*:\s*"([^"]+)"/);
       const diffMatch = toParse.match(/"difficulty"\s*:\s*"([^"]+)"/);
       const descMatch = toParse.match(/"description"\s*:\s*"([^"]+)"/);
@@ -226,8 +205,8 @@ export default async function handler(req, res) {
       const usesMatch = toParse.match(/"common_uses"\s*:\s*"([^"]+)"/);
       const tutMatch  = toParse.match(/"tutorial_search"\s*:\s*"([^"]+)"/);
       if (nameMatch) {
-        console.log("[STITCH-STEP-5] Regex extraction succeeded — stitch_name:", nameMatch[1]);
-        result = {
+        console.log(`[${tag}] Regex extraction succeeded — stitch_name:`, nameMatch[1]);
+        return {
           stitch_name: nameMatch[1],
           difficulty: diffMatch?.[1] || "Intermediate",
           description: descMatch?.[1] || "",
@@ -237,41 +216,119 @@ export default async function handler(req, res) {
           also_known_as: [],
           not_crochet: false,
         };
-      } else {
-        console.error("[STITCH-STEP-5] Regex extraction also failed. Giving up. Raw:", toParse.substring(0, 500));
-        return res.status(200).json({ error: true, message: "Could not interpret the stitch analysis. Please try a clearer photo." });
       }
+      console.error(`[${tag}] Regex extraction also failed.`);
+      return null;
     }
-    console.log("[STITCH-STEP-5] Success — identified:", result.stitch_name, "confidence:", result.confidence);
+  };
 
-    // inline log — direct, no utility dependency
-    if (_url && _key) {
-      await fetch(`${_url}/rest/v1/vercel_logs`, {
-        method: 'POST',
+  // ── STEP 5: Parse response (Gemini or Haiku fallback) ──
+  let result;
+
+  if (!geminiFailed) {
+    console.log("[STITCH-STEP-5] Parsing Gemini response");
+    try {
+      const data = await geminiRes.json();
+      const finishReason = data.candidates?.[0]?.finishReason;
+      const parts = data.candidates?.[0]?.content?.parts || [];
+      console.log("[STITCH-STEP-5] Parts count:", parts.length, "finish reason:", finishReason);
+      let text = "";
+      for (const part of parts) {
+        const t = part.text || "";
+        console.log("[STITCH-STEP-5] Part type:", part.thought ? "thinking" : "output", "length:", t.length, "preview:", t.substring(0, 100));
+        if (!part.thought && t.trim().length > 0) { text = t; break; }
+      }
+      if (!text && parts.length > 0) text = parts[parts.length - 1]?.text || "";
+      console.log("[STITCH-STEP-5] Selected text:", text.substring(0, 500));
+
+      if (!text) {
+        console.error("[STITCH-STEP-5] Empty text — finishReason:", finishReason, "full response:", JSON.stringify(data).substring(0, 500));
+      } else {
+        result = parseStitchText(text, "STITCH-STEP-5");
+      }
+    } catch (err) {
+      console.error("[STITCH-STEP-5] FAILED — parse error:", err);
+      console.error("[STITCH-STEP-5] Stack:", err.stack);
+    }
+  }
+
+  // ── STEP 5b: Haiku fallback if Gemini failed or returned no result ──
+  if (!result) {
+    const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
+    if (!ANTHROPIC_KEY) {
+      console.error("[STITCH-STEP-4-HAIKU] ANTHROPIC_API_KEY not configured — cannot fall back");
+      return res.status(200).json({ error: true, message: "Stitch identification failed. Please try again with a different photo." });
+    }
+    console.log("[STITCH-STEP-4-HAIKU] Calling Haiku fallback — base64 length:", imgBase64.length, "mime:", mimeType);
+    try {
+      const haikuRes = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'apikey': _key,
-          'Authorization': `Bearer ${_key}`,
-          'Prefer': 'return=minimal'
+          "x-api-key": ANTHROPIC_KEY,
+          "anthropic-version": "2023-06-01",
+          "content-type": "application/json",
         },
         body: JSON.stringify({
-          timestamp: new Date().toISOString(),
-          level: 'info',
-          message: `POST /api/stitch-vision → 200 (${Date.now() - _t0}ms)`,
-          source: 'serverless',
-          request_path: '/api/stitch-vision',
-          request_method: 'POST',
-          status_code: 200,
-          project_id: 'wovely'
-        })
-      }).catch(() => {});
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 1024,
+          messages: [{ role: "user", content: [
+            { type: "image", source: { type: "base64", media_type: mimeType, data: imgBase64 } },
+            { type: "text", text: PROMPT },
+          ] }],
+        }),
+      });
+      console.log("[STITCH-STEP-4-HAIKU] Haiku response status:", haikuRes.status);
+      if (!haikuRes.ok) {
+        let haikuErr = "";
+        try { haikuErr = await haikuRes.text(); } catch {}
+        console.error("[STITCH-STEP-4-HAIKU] Haiku non-ok — status:", haikuRes.status, "body:", haikuErr.substring(0, 500));
+        return res.status(200).json({ error: true, message: "Stitch identification failed. Please try again with a different photo." });
+      }
+      const haikuData = await haikuRes.json();
+      const haikuText = haikuData.content?.[0]?.text || "";
+      console.log("[STITCH-STEP-4-HAIKU] Haiku text:", haikuText.substring(0, 500));
+      if (!haikuText) {
+        console.error("[STITCH-STEP-4-HAIKU] Empty response from Haiku");
+        return res.status(200).json({ error: true, message: "Stitch identification failed. Please try again with a different photo." });
+      }
+      result = parseStitchText(haikuText, "STITCH-STEP-4-HAIKU");
+      if (!result) {
+        return res.status(200).json({ error: true, message: "Could not interpret the stitch analysis. Please try a clearer photo." });
+      }
+    } catch (haikuErr) {
+      console.error("[STITCH-STEP-4-HAIKU] FAILED — network error:", haikuErr.message);
+      return res.status(200).json({ error: true, message: "Stitch identification failed. Please try again with a different photo." });
     }
+  }
 
-    return res.status(200).json(result);
-  } catch (err) {
-    console.error("[STITCH-STEP-5] FAILED — parse error:", err);
-    console.error("[STITCH-STEP-5] Stack:", err.stack);
+  if (!result) {
     return res.status(200).json({ error: true, message: "Could not interpret the stitch analysis. Please try a clearer photo." });
   }
+  console.log("[STITCH-STEP-5] Success — identified:", result.stitch_name, "confidence:", result.confidence);
+
+  // inline log — direct, no utility dependency
+  if (_url && _key) {
+    await fetch(`${_url}/rest/v1/vercel_logs`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': _key,
+        'Authorization': `Bearer ${_key}`,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({
+        timestamp: new Date().toISOString(),
+        level: 'info',
+        message: `POST /api/stitch-vision → 200 (${Date.now() - _t0}ms)`,
+        source: 'serverless',
+        request_path: '/api/stitch-vision',
+        request_method: 'POST',
+        status_code: 200,
+        project_id: 'wovely'
+      })
+    }).catch(() => {});
+  }
+
+  return res.status(200).json(result);
 }
 
