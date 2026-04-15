@@ -835,7 +835,7 @@ const URLImportForm = ({onSave,Btn,Photo,initialUrl,onMinimize,onExtractionStart
   );
 };
 
-const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade,onMinimize,onExtractionStart,onExtractionEnd,onBevCheckActive,initialExtracted}) => {
+const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade,onMinimize,onExtractionStart,onExtractionEnd,onBevCheckActive,initialExtracted,onBack}) => {
   const [stage,setStage]=useState(initialExtracted?"review":"pick");
   const [progress,setProgress]=useState(initialExtracted?100:0);
   const [stageText,setStageText]=useState("");
@@ -862,6 +862,24 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade,onMinimize,onExtractionStart,
   const [bevCheckFailed,setBevCheckFailed]=useState(false);
   const bevCheckTextRef=useRef(null);
   useEffect(()=>{onBevCheckActive?.(!!validationReport||bevCheckFailed);},[validationReport,bevCheckFailed]);
+  useEffect(()=>{
+    if(onBack){
+      onBack(()=>{
+        setExtracted(null);
+        setEditTitle("");
+        setEditDesigner("");
+        setEditHook("");
+        setEditWeight("");
+        setStage("pick");
+        setFileInfo(null);
+        setValidationReport(null);
+        setBevCheckFailed(false);
+        setValidating(false);
+        setErrorMsg("");
+        setErrorType("");
+      });
+    }
+  },[onBack]);
   const [proUpgradeBanner,setProUpgradeBanner]=useState(false);
   const [showFullReport,setShowFullReport]=useState(false);
   const [matExpanded,setMatExpanded]=useState(false);
@@ -1312,6 +1330,7 @@ const BrowserImport = ({onSave,Btn,Photo}) => {
 const AddPatternModal = ({onClose,onSave,isPro,patternCount,Btn,Photo,Bar,WireframeViewer,onUpgrade,initialMethod,initialUrl,minimized,onMinimize,onExpand}) => {
   const [method,setMethod]=useState(initialMethod||null),[closing,setClosing]=useState(false);
   const [pdfHandoff,setPdfHandoff]=useState(null);
+  const pdfBackRef=useRef(null);
   const extractingRef=useRef(false);
   const bevCheckActiveRef=useRef(false);
   const{isDesktop}=useBreakpoint();
@@ -1368,7 +1387,7 @@ const AddPatternModal = ({onClose,onSave,isPro,patternCount,Btn,Photo,Bar,Wirefr
   const deskHeader = (
     <div style={{flexShrink:0,padding:"24px 28px 0"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-        {method?<button onClick={()=>{setPdfHandoff(null);setMethod(null);}} style={{background:"none",border:"none",color:T.terra,cursor:"pointer",fontSize:14,fontWeight:600,padding:0}}>← Back</button>:<div style={{fontFamily:T.serif,fontSize:22,color:T.ink}}>What are you adding to your Wovely?</div>}
+        {method?<button onClick={()=>{pdfBackRef.current?.();setPdfHandoff(null);setMethod(null);}} style={{background:"none",border:"none",color:"#9B7EC8",cursor:"pointer",fontSize:14,fontWeight:600,padding:0}}>← Back</button>:<div style={{fontFamily:T.serif,fontSize:22,color:T.ink}}>What are you adding to your Wovely?</div>}
       </div>
       {method&&<div style={{fontSize:12,color:T.ink3,marginBottom:14,fontWeight:500}}>{METHODS.find(m=>m.key===method)?.icon} {METHODS.find(m=>m.key===method)?.label}</div>}
     </div>
@@ -1377,7 +1396,7 @@ const AddPatternModal = ({onClose,onSave,isPro,patternCount,Btn,Photo,Bar,Wirefr
     <div style={{flexShrink:0,padding:"16px 22px 0"}}>
       <div style={{width:36,height:3,background:T.border,borderRadius:99,margin:"0 auto 18px"}}/>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-        {method?<button onClick={()=>{setPdfHandoff(null);setMethod(null);}} style={{background:"none",border:"none",color:T.terra,cursor:"pointer",fontSize:14,fontWeight:600,padding:0}}>← Back</button>:<div style={{fontFamily:T.serif,fontSize:22,color:T.ink}}>Add Pattern</div>}
+        {method?<button onClick={()=>{pdfBackRef.current?.();setPdfHandoff(null);setMethod(null);}} style={{background:"none",border:"none",color:"#9B7EC8",cursor:"pointer",fontSize:14,fontWeight:600,padding:0}}>← Back</button>:<div style={{fontFamily:T.serif,fontSize:22,color:T.ink}}>Add Pattern</div>}
       </div>
       {method&&<div style={{fontSize:12,color:T.ink3,marginBottom:12,fontWeight:500}}>{METHODS.find(m=>m.key===method)?.icon} {METHODS.find(m=>m.key===method)?.label}</div>}
     </div>
@@ -1390,7 +1409,7 @@ const AddPatternModal = ({onClose,onSave,isPro,patternCount,Btn,Photo,Bar,Wirefr
       {!method&&<MethodList/>}
       {method==="manual"&&<ManualEntryForm onSave={handleSave} Btn={Btn}/>}
       {method==="url"&&<URLImportForm onSave={handleSave} Btn={Btn} Photo={Photo} initialUrl={initialUrl} onMinimize={minimized?undefined:onMinimize} onExtractionStart={()=>{extractingRef.current=true;}} onExtractionEnd={()=>{extractingRef.current=false;}} onBevCheckActive={(v)=>{bevCheckActiveRef.current=v;}} onPdfHandoff={(handoffData)=>{setPdfHandoff(handoffData);setMethod('pdf');}}/>}
-      {method==="pdf"&&<PDFUploadForm onSave={handleSave} Btn={Btn} isPro={isPro} onUpgrade={()=>{if(onUpgrade){dismiss();onUpgrade();}}} onMinimize={minimized?undefined:onMinimize} onExtractionStart={()=>{extractingRef.current=true;}} onExtractionEnd={()=>{extractingRef.current=false;}} onBevCheckActive={(v)=>{bevCheckActiveRef.current=v;}} initialExtracted={pdfHandoff}/>}
+      {method==="pdf"&&<PDFUploadForm onSave={handleSave} Btn={Btn} isPro={isPro} onUpgrade={()=>{if(onUpgrade){dismiss();onUpgrade();}}} onMinimize={minimized?undefined:onMinimize} onExtractionStart={()=>{extractingRef.current=true;}} onExtractionEnd={()=>{extractingRef.current=false;}} onBevCheckActive={(v)=>{bevCheckActiveRef.current=v;}} initialExtracted={pdfHandoff} onBack={(fn)=>{pdfBackRef.current=fn;}}/>}
       {method==="browser"&&<BrowserImport onSave={handleSave} Btn={Btn} Photo={Photo}/>}
       {method==="snap"&&<HiveVisionForm onSave={handleSave} Btn={Btn} Bar={Bar} WireframeViewer={WireframeViewer}/>}
     </div>
