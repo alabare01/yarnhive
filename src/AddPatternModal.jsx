@@ -835,7 +835,7 @@ const URLImportForm = ({onSave,Btn,Photo,initialUrl,onMinimize,onExtractionStart
   );
 };
 
-const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade,onMinimize,onExtractionStart,onExtractionEnd,onBevCheckActive,initialExtracted,onBack}) => {
+const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade,onMinimize,onExtractionStart,onExtractionEnd,onBevCheckActive,initialExtracted}) => {
   const [stage,setStage]=useState(initialExtracted?"review":"pick");
   const [progress,setProgress]=useState(initialExtracted?100:0);
   const [stageText,setStageText]=useState("");
@@ -862,24 +862,6 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade,onMinimize,onExtractionStart,
   const [bevCheckFailed,setBevCheckFailed]=useState(false);
   const bevCheckTextRef=useRef(null);
   useEffect(()=>{onBevCheckActive?.(!!validationReport||bevCheckFailed);},[validationReport,bevCheckFailed]);
-  useEffect(()=>{
-    if(onBack){
-      onBack(()=>{
-        setExtracted(null);
-        setEditTitle("");
-        setEditDesigner("");
-        setEditHook("");
-        setEditWeight("");
-        setStage("pick");
-        setFileInfo(null);
-        setValidationReport(null);
-        setBevCheckFailed(false);
-        setValidating(false);
-        setErrorMsg("");
-        setErrorType("");
-      });
-    }
-  },[onBack]);
   const [proUpgradeBanner,setProUpgradeBanner]=useState(false);
   const [showFullReport,setShowFullReport]=useState(false);
   const [matExpanded,setMatExpanded]=useState(false);
@@ -960,11 +942,25 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade,onMinimize,onExtractionStart,
           // Detect complexity from page count + text density
           const pageMatches=(pdfText.match(/--- PAGE \d+ ---/g)||[]).length;
           const textLen=pdfText.replace(/--- PAGE \d+ ---/g,"").replace(/\s+/g," ").trim().length;
-          if(textLen<200){
-            // Image-based PDF detected (scanned/photo) — route to vision extraction
-            console.log("[Wovely] Image-based PDF detected, routing to vision extraction, textLen:",textLen,"pages:",pageMatches);
-            setComplexity("complex");setComplexityStats({pages:pageMatches,textLen});
-            // PRIMARY: URL-based approach (server-side, no mobile memory risk)
+          const avgTextPerPage=pageMatches>0?textLen/pageMatches:textLen;
+
+          // Classify PDF by text density
+          // < 300 avg chars/page = image-heavy (scanned, chart-based, photo PDFs) → vision path
+          // 300-1200 avg chars/page = mixed (some text, some images) → vision path (Gemini sees everything)
+          // > 1200 avg chars/page = text-rich → text/chunked path
+          const isImageHeavy = avgTextPerPage < 300;
+          const isMixed = avgTextPerPage >= 300 && avgTextPerPage < 1200;
+          const useVision = isImageHeavy || isMixed;
+
+          let lvl="simple";
+          if(pageMatches>=20||avgTextPerPage<300) lvl="complex";
+          else if(pageMatches>=8||avgTextPerPage<800) lvl="detailed";
+          console.log("[Wovely] Complexity:",lvl,"pages:",pageMatches,"avgText/page:",Math.round(avgTextPerPage),"routing:",useVision?"VISION":"TEXT");
+          setComplexity(lvl);setComplexityStats({pages:pageMatches,textLen});
+
+          if(useVision){
+            // Vision path — send PDF directly to Gemini via server (handles image-heavy AND mixed PDFs)
+            console.log("[Wovely] Vision path:",isImageHeavy?"image-heavy":"mixed","avgText/page:",Math.round(avgTextPerPage));
             let usedUrlApproach=false;
             if(uploaded?.url){
               console.log("[Wovely] Vision: trying URL-based approach for:",f.name);
@@ -974,7 +970,7 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade,onMinimize,onExtractionStart,
                 else{console.warn("[Wovely] Vision: URL approach returned",urlRes.status,"— falling back");}
               }catch(urlErr){console.warn("[Wovely] Vision: URL approach failed, using canvas fallback:",urlErr);}
             }
-            // FALLBACK: client-side canvas rendering
+            // FALLBACK: client-side canvas rendering (mobile/upload-failed cases)
             if(!usedUrlApproach){
               console.log("[Wovely] Vision: URL approach failed, using canvas fallback");
               const pageImages=[];
@@ -999,32 +995,26 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade,onMinimize,onExtractionStart,
               result=await extractRes.json();
             }
           } else {
-          const avgTextPerPage=pageMatches>0?textLen/pageMatches:textLen;
-          let lvl="simple";
-          if(pageMatches>=20||avgTextPerPage<200) lvl="complex";
-          else if(pageMatches>=8||avgTextPerPage<500) lvl="detailed";
-          console.log("[Wovely] Complexity:",lvl,"pages:",pageMatches,"avgText/page:",Math.round(avgTextPerPage));
-          setComplexity(lvl);setComplexityStats({pages:pageMatches,textLen});
-          // Server-side extraction — truncation + Gemini call handled by /api/extract-pattern
-          console.log("[Wovely] Sending to /api/extract-pattern, chars:",pdfText.length,"pages:",pageMatches);
-          const extractController=new AbortController();
-          const extractTimeout=setTimeout(()=>extractController.abort(),55000);
-          let extractRes;
-          try{
-            extractRes=await fetch("/api/extract-pattern",{
-              method:"POST",
-              headers:{"Content-Type":"application/json"},
-              body:JSON.stringify({pdfText,pageCount:pageMatches}),
-              signal:extractController.signal,
-            });
-          }catch(fetchErr){
+            // Text path — rich text PDF, use chunked extraction
+            console.log("[Wovely] Text path: text-rich PDF, chars:",pdfText.length,"pages:",pageMatches);
+            const extractController=new AbortController();
+            const extractTimeout=setTimeout(()=>extractController.abort(),270000);
+            let extractRes;
+            try{
+              extractRes=await fetch("/api/extract-pattern",{
+                method:"POST",
+                headers:{"Content-Type":"application/json"},
+                body:JSON.stringify({pdfText,pageCount:pageMatches}),
+                signal:extractController.signal,
+              });
+            }catch(fetchErr){
+              clearTimeout(extractTimeout);
+              if(fetchErr.name==="AbortError"){const err=new Error("Server extraction failed: timeout");err.httpStatus=504;throw err;}
+              throw fetchErr;
+            }
             clearTimeout(extractTimeout);
-            if(fetchErr.name==="AbortError"){const err=new Error("Server extraction failed: timeout");err.httpStatus=504;throw err;}
-            throw fetchErr;
-          }
-          clearTimeout(extractTimeout);
-          if(!extractRes.ok){const errBody=await extractRes.json().catch(()=>({}));const err=new Error(errBody.error||"Server extraction failed: "+extractRes.status);err.httpStatus=extractRes.status;throw err;}
-          result=await extractRes.json();
+            if(!extractRes.ok){const errBody=await extractRes.json().catch(()=>({}));const err=new Error(errBody.error||"Server extraction failed: "+extractRes.status);err.httpStatus=extractRes.status;throw err;}
+            result=await extractRes.json();
           }
         } else {
           console.log("[Wovely] Using base64 extraction for image...");
@@ -1330,7 +1320,6 @@ const BrowserImport = ({onSave,Btn,Photo}) => {
 const AddPatternModal = ({onClose,onSave,isPro,patternCount,Btn,Photo,Bar,WireframeViewer,onUpgrade,initialMethod,initialUrl,minimized,onMinimize,onExpand}) => {
   const [method,setMethod]=useState(initialMethod||null),[closing,setClosing]=useState(false);
   const [pdfHandoff,setPdfHandoff]=useState(null);
-  const pdfBackRef=useRef(null);
   const extractingRef=useRef(false);
   const bevCheckActiveRef=useRef(false);
   const{isDesktop}=useBreakpoint();
@@ -1387,7 +1376,7 @@ const AddPatternModal = ({onClose,onSave,isPro,patternCount,Btn,Photo,Bar,Wirefr
   const deskHeader = (
     <div style={{flexShrink:0,padding:"24px 28px 0"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-        {method?<button onClick={()=>{pdfBackRef.current?.();setPdfHandoff(null);setMethod(null);}} style={{background:"none",border:"none",color:"#9B7EC8",cursor:"pointer",fontSize:14,fontWeight:600,padding:0}}>← Back</button>:<div style={{fontFamily:T.serif,fontSize:22,color:T.ink}}>What are you adding to your Wovely?</div>}
+        {method?<button onClick={()=>{setPdfHandoff(null);setMethod(null);}} style={{background:"none",border:"none",color:T.terra,cursor:"pointer",fontSize:14,fontWeight:600,padding:0}}>← Back</button>:<div style={{fontFamily:T.serif,fontSize:22,color:T.ink}}>What are you adding to your Wovely?</div>}
       </div>
       {method&&<div style={{fontSize:12,color:T.ink3,marginBottom:14,fontWeight:500}}>{METHODS.find(m=>m.key===method)?.icon} {METHODS.find(m=>m.key===method)?.label}</div>}
     </div>
@@ -1396,7 +1385,7 @@ const AddPatternModal = ({onClose,onSave,isPro,patternCount,Btn,Photo,Bar,Wirefr
     <div style={{flexShrink:0,padding:"16px 22px 0"}}>
       <div style={{width:36,height:3,background:T.border,borderRadius:99,margin:"0 auto 18px"}}/>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-        {method?<button onClick={()=>{pdfBackRef.current?.();setPdfHandoff(null);setMethod(null);}} style={{background:"none",border:"none",color:"#9B7EC8",cursor:"pointer",fontSize:14,fontWeight:600,padding:0}}>← Back</button>:<div style={{fontFamily:T.serif,fontSize:22,color:T.ink}}>Add Pattern</div>}
+        {method?<button onClick={()=>{setPdfHandoff(null);setMethod(null);}} style={{background:"none",border:"none",color:T.terra,cursor:"pointer",fontSize:14,fontWeight:600,padding:0}}>← Back</button>:<div style={{fontFamily:T.serif,fontSize:22,color:T.ink}}>Add Pattern</div>}
       </div>
       {method&&<div style={{fontSize:12,color:T.ink3,marginBottom:12,fontWeight:500}}>{METHODS.find(m=>m.key===method)?.icon} {METHODS.find(m=>m.key===method)?.label}</div>}
     </div>
@@ -1409,7 +1398,7 @@ const AddPatternModal = ({onClose,onSave,isPro,patternCount,Btn,Photo,Bar,Wirefr
       {!method&&<MethodList/>}
       {method==="manual"&&<ManualEntryForm onSave={handleSave} Btn={Btn}/>}
       {method==="url"&&<URLImportForm onSave={handleSave} Btn={Btn} Photo={Photo} initialUrl={initialUrl} onMinimize={minimized?undefined:onMinimize} onExtractionStart={()=>{extractingRef.current=true;}} onExtractionEnd={()=>{extractingRef.current=false;}} onBevCheckActive={(v)=>{bevCheckActiveRef.current=v;}} onPdfHandoff={(handoffData)=>{setPdfHandoff(handoffData);setMethod('pdf');}}/>}
-      {method==="pdf"&&<PDFUploadForm onSave={handleSave} Btn={Btn} isPro={isPro} onUpgrade={()=>{if(onUpgrade){dismiss();onUpgrade();}}} onMinimize={minimized?undefined:onMinimize} onExtractionStart={()=>{extractingRef.current=true;}} onExtractionEnd={()=>{extractingRef.current=false;}} onBevCheckActive={(v)=>{bevCheckActiveRef.current=v;}} initialExtracted={pdfHandoff} onBack={(fn)=>{pdfBackRef.current=fn;}}/>}
+      {method==="pdf"&&<PDFUploadForm onSave={handleSave} Btn={Btn} isPro={isPro} onUpgrade={()=>{if(onUpgrade){dismiss();onUpgrade();}}} onMinimize={minimized?undefined:onMinimize} onExtractionStart={()=>{extractingRef.current=true;}} onExtractionEnd={()=>{extractingRef.current=false;}} onBevCheckActive={(v)=>{bevCheckActiveRef.current=v;}} initialExtracted={pdfHandoff}/>}
       {method==="browser"&&<BrowserImport onSave={handleSave} Btn={Btn} Photo={Photo}/>}
       {method==="snap"&&<HiveVisionForm onSave={handleSave} Btn={Btn} Bar={Bar} WireframeViewer={WireframeViewer}/>}
     </div>
