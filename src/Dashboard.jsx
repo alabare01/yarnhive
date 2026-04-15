@@ -149,63 +149,105 @@ const InfoTooltip = ({ text, alignRight }) => {
 };
 
 // ─── BEV CORNER (glass card, JS typewriter, personalized messages) ──────────
-const BevCorner = ({ patterns, isMobile }) => {
+const BevCorner = ({ patterns, isMobile, isPro }) => {
+  const CACHE_KEY = 'wovely_bev_ai_msg';
+  const CACHE_TTL = 24 * 60 * 60 * 1000;
+  const getCachedAiMsg = () => { try { const raw = localStorage.getItem(CACHE_KEY); if (!raw) return null; const { msg, ts } = JSON.parse(raw); if (Date.now() - ts > CACHE_TTL) return null; return msg; } catch { return null; } };
+  const setCachedAiMsg = (msg) => { try { localStorage.setItem(CACHE_KEY, JSON.stringify({ msg, ts: Date.now() })); } catch {} };
+
   const [msgIndex, setMsgIndex] = useState(0);
   const [displayText, setDisplayText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
 
-  // Build personalized messages from pattern data
-  const getBevMessages = () => {
-    const msgs = [];
-    const inProg = patterns.filter(p => !p.isStarter && (p.status === "in_progress" || p.started));
-    const totalRowsDone = patterns.filter(p => !p.isStarter).reduce((sum, p) => {
-      if (!Array.isArray(p.rows)) return sum;
-      return sum + p.rows.filter(r => r && r.done).length;
-    }, 0);
-    const mostRows = [...inProg].sort((a, b) => {
-      const ad = Array.isArray(a.rows) ? a.rows.filter(r => r && r.done).length : 0;
-      const bd = Array.isArray(b.rows) ? b.rows.filter(r => r && r.done).length : 0;
-      return bd - ad;
-    })[0];
-    const mostRowsDone = mostRows && Array.isArray(mostRows.rows) ? mostRows.rows.filter(r => r && r.done).length : 0;
-    const blankPatterns = inProg.filter(p => !p.rows || p.rows.length === 0);
-    const mostRecent = [...inProg].sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0))[0];
+  const buildMsgs = () => {
     const hr = new Date().getHours();
+    const pool = [];
 
-    if (mostRecent) {
-      const days = Math.floor(hoursSince(mostRecent.updated_at) / 24);
-      const dayStr = days === 0 ? "today" : days === 1 ? "yesterday" : `${days} days ago`;
-      if (days === 0) msgs.push(`You touched ${mostRecent.title} today. Bev noticed. Keep going. 💜`);
-      else if (days === 1) msgs.push(`${mostRecent.title} was just yesterday. Pick it back up? 🧶`);
-      else msgs.push(`${mostRecent.title} has been waiting ${days} days. No judgment from Bev. (Okay, a little judgment.) 👀`);
-    }
-    if (mostRows && mostRowsDone > 0) {
-      msgs.push(`Your furthest along: ${mostRows.title} with ${mostRowsDone} rows done. That's real progress. 🎉`);
-    } else if (totalRowsDone === 0 && inProg.length > 0) {
-      msgs.push(`${inProg.length} patterns saved, zero rows tracked. Bev thinks you might be a collector. No shame in that. 🐍`);
-    }
-    if (inProg.length >= 10) msgs.push(`${inProg.length} patterns in progress. Bev admires your ambition and also your optimism. 💜`);
-    else if (inProg.length > 0) msgs.push(`${inProg.length} things on the hook. Bev's keeping track so you don't have to. 🧶`);
-    if (hr >= 21) msgs.push("Late night crafting? Bev approves. Just don't lose count. 🌙");
-    else if (hr < 9) msgs.push("Morning craft session? Bev is impressed and slightly jealous of your dedication. ☀️");
-    else if (hr >= 17 && hr < 21) msgs.push("Evening crafting hour. Best hour of the day, according to Bev. 🌙");
-    if (blankPatterns.length > 0) msgs.push(`${blankPatterns.length} pattern${blankPatterns.length > 1 ? "s" : ""} saved but never opened. Bev's curious what you're saving them for. 🤔`);
-    if (msgs.length === 0) msgs.push("Your craft room is ready. What are we making today? 🧶");
-    return msgs;
+    // TIME BASED
+    if (hr >= 0 && hr < 6) pool.push(...["Bev doesn't sleep either. What are we making at this hour? 🌙", "Late night crafting. Bev respects the dedication deeply.", "The rest of the world is asleep. It's just you, Bev, and the yarn. 🧶", "Midnight crafting hours. Bev has no notes, only respect."]);
+    else if (hr < 9) pool.push(...["Morning! Bev's already been up for hours. She's very serious about yarn. ☀️", "Early crafter energy detected. Bev approves. ☀️", "Starting the day with crochet. Bev says this is the correct way to live."]);
+    else if (hr < 12) pool.push(...["Morning craft session. Bev has her coffee. She's ready. ☕", "Peak productivity hours. Bev suggests we use them wisely. 🧶", "Good morning. Bev has opinions about your WIP and she's ready to share them."]);
+    else if (hr < 14) pool.push(...["Lunch break crafting. Bev calls this efficient. 🍵", "Midday check-in. Bev wants to know how the stitch count is going.", "You opened Wovely at lunch. Bev is not surprised. She would do the same."]);
+    else if (hr < 17) pool.push(...["Afternoon slump? Bev recommends yarn as a cure. 🧶", "Mid-afternoon. Prime time for a few rows, according to Bev.", "Bev's afternoon energy is high. She thinks you should cast on something new."]);
+    else if (hr < 21) pool.push(...["Evening crafting hour. Best hour of the day, according to Bev. 🌙", "Post-work crochet. Bev calls this the correct way to decompress.", "Evening mode activated. Bev has been waiting for this. 🧶"]);
+    else pool.push(...["Night owl crafter. Bev respects this lifestyle entirely.", "Late evening yarn time. Bev says just one more row. (She always says this.)", "Crafting before bed. Bev thinks this is the secret to a good night's sleep. 🌙"]);
+
+    // PATTERN COUNT
+    const count = patterns.length;
+    if (count === 0) pool.push(...["Your pattern library is empty. Bev is ready to help fix that. 🧶", "No patterns yet. Bev has a few ideas about where to start."]);
+    else if (count <= 3) pool.push(...["A small but mighty collection. Bev sees potential here. 🧶", "Just getting started. Bev was here from day one and she remembers."]);
+    else if (count <= 9) pool.push(...["Your collection is growing. Bev has been keeping track. 🧶", "A solid library forming. Bev approves of the direction."]);
+    else if (count <= 19) pool.push(...["Double digits. Bev is genuinely impressed.", "Ten plus patterns. You're not a beginner anymore. Bev noticed. 🧶"]);
+    else pool.push(...["Bev has lost count. In the best possible way. 🧶", "This collection is getting serious. Bev is here for it entirely."]);
+
+    // UNSTARTED PATTERNS
+    const blankPatterns = patterns.filter(p => !p.last_opened_at);
+    if (blankPatterns.length > 0) pool.push(...[
+      `${blankPatterns.length} pattern${blankPatterns.length > 1 ? 's' : ''} waiting to be started. Bev is not judging. She is simply aware. 👀`,
+      "Some patterns in your library have never been opened. Bev finds this deeply relatable. 🧶",
+      "You saved patterns you haven't touched yet. Bev calls this 'aspirational crafting.' She does it too."
+    ]);
+
+    // PRO
+    if (isPro) pool.push(...["Pro crafter. Bev has high expectations and full confidence you'll meet them. 💜", "Full access unlocked. Bev thinks you made an excellent decision. 💜", "Wovely Pro. Bev's favorite tier, not that she plays favorites. (She does.) 💜"]);
+
+    // GENERAL POOL
+    pool.push(...[
+      "Your craft room is ready. What are we making today? 🧶",
+      "Bev has reviewed your library and has thoughts. They are mostly positive. 🧶",
+      "Every great project starts with opening the app. Bev respects this first step.",
+      "Bev believes in you and also in the power of a well-placed stitch marker.",
+      "No wrong answers in crochet. Bev said this. Bev stands by it.",
+      "The yarn doesn't work up itself. Bev is a firm believer in showing up. 🧶",
+      "Bev has been thinking about your WIP. She has questions.",
+      "Progress is progress, even if it's just swatching. Bev counted it.",
+      "Bev's philosophy: one more row before bed. Every night. No exceptions.",
+      "You came back. Bev noticed. She always notices. 🧶",
+      "Crochet is just math you can wear. Bev majored in math. (She didn't. But she acts like it.)",
+      "Bev has no notes on your yarn choices. High praise from Bev.",
+      "Every stitch counts. Bev has the data to prove it.",
+      "Bev is rooting for you, your WIP, and your stitch count. In that order.",
+      "Your patterns are safe. Your progress is saved. Bev is vigilant. 🧶",
+      "Bev has been here all day. She was just waiting for you to show up.",
+      "Not all heroes carry hooks. But the best ones do. 💜",
+      "Bev has opinions about gauge swatching. She will share them when the time is right.",
+      "Whatever you're making, Bev thinks it's going to be incredible. She has a feeling.",
+      "Big shoutout to turttlesong — our most active beta tester. Bev sees you. 💜"
+    ]);
+
+    if (pool.length === 0) pool.push("Your craft room is ready. What are we making today? 🧶");
+    return pool;
   };
 
-  const bevMessages = getBevMessages();
+  const [msgs, setMsgs] = useState(() => buildMsgs());
+
+  useEffect(() => {
+    if (Math.random() > 0.2) return;
+    const cached = getCachedAiMsg();
+    if (cached) { setMsgs(prev => [cached, ...prev]); return; }
+    const patternNames = patterns.slice(0, 5).map(p => p.title).filter(Boolean);
+    const hr = new Date().getHours();
+    const timeOfDay = hr < 12 ? 'morning' : hr < 17 ? 'afternoon' : 'evening';
+    fetch('/api/bev-message', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ patternCount: patterns.length, patternNames, timeOfDay, isPro })
+    })
+    .then(r => r.ok ? r.json() : null)
+    .then(data => { if (data?.message) { setCachedAiMsg(data.message); setMsgs(prev => [data.message, ...prev]); } })
+    .catch(() => {});
+  }, []);
 
   // Rotate messages
   useEffect(() => {
-    if (bevMessages.length <= 1) return;
-    const t = setInterval(() => setMsgIndex(i => (i + 1) % bevMessages.length), 8000);
+    if (msgs.length <= 1) return;
+    const t = setInterval(() => setMsgIndex(i => (i + 1) % msgs.length), 8000);
     return () => clearInterval(t);
-  }, [bevMessages.length]);
+  }, [msgs.length]);
 
   // JS typewriter — character by character, wraps naturally
   useEffect(() => {
-    const msg = bevMessages[msgIndex % bevMessages.length];
+    const msg = msgs[msgIndex % msgs.length];
     if (!msg) return;
     setDisplayText("");
     setIsTyping(true);
@@ -448,7 +490,7 @@ const CollectionView = ({userPatterns,starterPatterns,cat,setCat,search,setSearc
             </p>
           </div>
 
-          <BevCorner patterns={visible} isMobile={isMobile} />
+          <BevCorner patterns={visible} isMobile={isMobile} isPro={isPro} />
 
           <OnTheHook inProgress={inProgress} openDetail={openDetail} onAddPattern={onAddPattern} pct={pct} catFallbackPhoto={catFallbackPhoto} Photo={Photo} isMobile={isMobile} />
 
