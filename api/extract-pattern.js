@@ -6,7 +6,7 @@ import { getPreferredProvider } from './_providerRouter.js';
 
 export const config = { maxDuration: 300 };
 
-const GEMINI_MODEL = 'gemini-1.5-flash';
+const GEMINI_MODEL = 'gemini-2.5-flash';
 
 function splitIntoChunks(text, maxChunkSize = 14000, overlapSize = 500) {
   // Split on --- PAGE N --- markers inserted by pdf.js
