@@ -6,29 +6,27 @@ Last migrated from master doc API: 2026-04-16
 
 ---
 
-# WOVELY MASTER DOC v92
+# WOVELY MASTER DOC v93
 
 ## CURRENT PRODUCTION STATE
-Live on wovely.app — Session 49 shipped. Gemini 2.5 Flash restored across all API files. Rollback tag: pre-gemini-25. Supabase still on free tier (upgrade pending). DKIM still missing (fix pending).
+Live on wovely.app — Session 52 shipped. DKIM authentication live and verified. Gmail inbox delivery confirmed with DKIM PASS in headers. Supabase upgraded to Pro tier with spend cap enabled. WEBHOOK_SECRET still pending.
 
 ## FIRST THING NEXT SESSION
-1. Fix Google Workspace DKIM — still not done. GoDaddy DNS + Google Workspace Admin. 15 minutes.
-2. Upgrade Supabase Free -> Pro ($25/mo) — org is GoGno.me, upgrade via supabase.com/dashboard
-3. Set WEBHOOK_SECRET in Vercel + verify Stripe signatures in webhook handler — FINANCIAL INTEGRITY GAP
+1. Set WEBHOOK_SECRET in Vercel + verify Stripe signatures in webhook handler — FINANCIAL INTEGRITY GAP
+2. CORS audit on all serverless functions
+3. RLS full table audit
 4. Background functions + queue system build (see spec below)
 
-## SESSION 50 PRIORITY ORDER
-1. DKIM email fix
-2. Supabase Pro upgrade
-3. WEBHOOK_SECRET + Stripe signature verification (security — financial integrity)
+## SESSION 53 PRIORITY ORDER
+1. WEBHOOK_SECRET + Stripe signature verification (security — financial integrity)
+2. CORS audit — all serverless functions
+3. RLS full table audit
 4. Background functions + import queue system (with RLS on import_jobs from day one)
-5. CORS audit — all serverless functions
-6. RLS full table audit
-7. Collections build — naturally extends queue system
-8. BevCheck UI polish — needs Danielle written feedback first
-9. notify-signup.js wiring
-10. Yearly pricing ($9.99)
-11. Pattern Share / Trophy Case
+5. Collections build — naturally extends queue system
+6. BevCheck UI polish — needs Danielle written feedback first
+7. notify-signup.js wiring
+8. Yearly pricing ($9.99)
+9. Pattern Share / Trophy Case
 
 ## SECURITY AUDIT (from Reddit AI codebase review — Session 50)
 Source: Solo founder built SaaS in 6 months with AI. Code review revealed systemic invisible-layer gaps.
@@ -53,6 +51,11 @@ Wovely findings mapped:
 - Rollback tag pre-gemini-25 created on main
 - Tested: Marina the Manatee (text path, Haiku), Beehive (vision path, Gemini 2.5 Flash), Stitch-O-Vision Waffle Stitch — all passed
 - Octopus 87-page timeout is a known client-side issue, server completes but client gives up — separate bug
+
+## WHAT SHIPPED SESSION 52
+- DKIM authentication configured end-to-end for wovely.app
+- Google Workspace DKIM record generated (2048-bit, selector: google)
+- TXT record published via GoDaddy DNS
 
 ## KEY LEARNINGS SESSION 49
 - Gemini 2.5 Flash 503s were free tier problem, not model problem — paid tier held up clean
@@ -163,7 +166,7 @@ Vercel: prj_SZYwLGH5V7kCZYryr4MSy3US3bfz / team_mRQaDsQzhF6HFGU5Ka7hi5OM — PRO
 Stripe: acct_1TDQ1WGbX5hxxc0T (LIVE) $8.99/mo Pro
 Cloudinary: dmaupzhcx
 PostHog: Project 363175 — 157 unique visitors since Jan 1 2026
-Current session: 51
+Current session: 52
 
 ## EMAIL STACK
 Google Workspace: adam@wovely.app, support@wovely.app
@@ -295,7 +298,7 @@ Master doc status:
 
 ## CLAUDE RULES
 Fetch master doc first, no exceptions
-Next session = 52
+Next session = 53
 Danielle feedback overrides everything
 ONE complete Claude Code prompt per task
 Never push direct to main
