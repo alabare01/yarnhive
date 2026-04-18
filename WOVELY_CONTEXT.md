@@ -6,27 +6,26 @@ Last migrated from master doc API: 2026-04-16
 
 ---
 
-# WOVELY MASTER DOC v94
+# WOVELY MASTER DOC v95
 
 ## CURRENT PRODUCTION STATE
-Live on wovely.app — Session 52 shipped. DKIM authentication live and verified. Gmail inbox delivery confirmed with DKIM PASS in headers. Supabase upgraded to Pro tier with spend cap enabled. WEBHOOK_SECRET still pending.
+Live on wovely.app — Session 53 shipped AND merged to main. BevCheck gauge redesigned end-to-end with Danielle in the design loop via Claude Design. Architecture cleanup: 4 hand-rolled inline SVG gauges consolidated into single BevGauge component with hero + compact variants. Bundle shrank 6kb. WEBHOOK_SECRET still pending.
 
 ## FIRST THING NEXT SESSION
-1. Set WEBHOOK_SECRET in Vercel + verify Stripe signatures in webhook handler — FINANCIAL INTEGRITY GAP
-2. CORS audit on all serverless functions
-3. RLS full table audit
-4. Background functions + queue system build (see spec below)
+1. Set WEBHOOK_SECRET in Vercel + verify Stripe signatures in webhook handler — FINANCIAL INTEGRITY GAP (carried over)
+2. CORS audit on all serverless functions (carried over)
+3. RLS full table audit (carried over)
+4. Background functions + queue system build — UI can now leverage the Claude Design system for mockups
 
-## SESSION 53 PRIORITY ORDER
+## SESSION 54 PRIORITY ORDER
 1. WEBHOOK_SECRET + Stripe signature verification (security — financial integrity)
 2. CORS audit — all serverless functions
 3. RLS full table audit
 4. Background functions + import queue system (with RLS on import_jobs from day one)
 5. Collections build — naturally extends queue system
-6. BevCheck UI polish — needs Danielle written feedback first
-7. notify-signup.js wiring
-8. Yearly pricing ($9.99)
-9. Pattern Share / Trophy Case
+6. notify-signup.js wiring
+7. Yearly pricing ($9.99)
+8. Pattern Share / Trophy Case
 
 ## SECURITY AUDIT (from Reddit AI codebase review — Session 50)
 Source: Solo founder built SaaS in 6 months with AI. Code review revealed systemic invisible-layer gaps.
@@ -60,12 +59,48 @@ Wovely findings mapped:
 - Supabase upgraded from Free to Pro tier with spend cap enabled
 - Trial retention email sent to turttlesong@yahoo.com ahead of May 3 expiry
 
+## WHAT SHIPPED SESSION 53
+- Claude Design system for Wovely created and published (v1.0) with Danielle's direct involvement
+- Source of truth wired: github.com/alabare01/wovely repo + style guide + bev_neutral.png
+- All design system cards approved: Core palette, Typography, Semantic/Stitch Check, Forbidden colors, Spacing, Components, Bev components, Voice examples, BevCheck gauge
+- NEW PASTEL SEMANTIC PALETTE (replaced saturated sage/gold/rust):
+  - Pass: dusty teal #A4C2C3
+  - Heads-Up: soft buttercup #E2D985
+  - Issues: dusty rose #CEA0A4
+- BevCheck gauge REDESIGNED AND SHIPPED to production (merge commit 6053b87 on main):
+  - Hero variant on StitchCheck full report page and Full Report overlay modals
+  - Compact variant on inline mini gauges in AddPatternModal + ImageImportModal
+  - Glass instrument treatment (specular hotspot, inner rim, outer rim light) on hero
+  - Zone-anchored labels outside arc (PASS left, HEADS UP top, ISSUES right)
+  - Hero score below arc in Playfair navy
+  - Dynamic "Bev spotted {count} {thing|things}" sentence with correct pluralization
+  - Bev integrated into arc interior on hero, clipped to small circle on compact
+  - Gold needle on hero (#B8944A), lavender needle on compact for small-scale legibility
+  - BEVCHECK pill + "Bev's Read" heading absorbed into hero card chrome
+- ARCHITECTURE CLEANUP: 4 hand-rolled inline SVG gauges consolidated into single BevGauge component with variant prop
+  - Bundle shrank 465k to 459k
+  - Single source of truth for palette, angle math, state derivation
+  - Future gauge updates are one-line changes
+- Danielle approved every design decision via live mockup review in Claude Design (no guessing, no translation layer)
+- Production code fully shipped, not mockup-only
+
 ## KEY LEARNINGS SESSION 49
 - Gemini 2.5 Flash 503s were free tier problem, not model problem — paid tier held up clean
 - Vision path (avgText/page <1200) uses Gemini. Text path (>1200) uses Haiku chunking. These are separate pipelines.
 - Client timeout fires before server finishes on large chunked jobs — client needs better waiting UX
 - Supabase API calls are unlimited on all plans — upgrading Supabase is about uptime/reliability not rate limits
 - Vercel Pro already active — background functions available, just need to be built
+
+## KEY LEARNINGS SESSION 53
+- Claude Design handoff to Claude Code is a real workflow unlock — mockup → Danielle feedback → Code, not mockup → Code → Danielle feedback
+- Danielle's design instinct in the loop DURING design (not after) collapsed iteration cycles from hours to minutes
+- Internal shorthand ("AI-first infrastructure") must not leak into brand positioning inputs — "AI" is banned in all user-facing surfaces AND brand descriptions
+- Pastel semantic palette (washed, cool-toned, sidewalk-chalk) feels more Wovely than saturated traffic-light colors
+- When scoping component refactors, grep the ACTUAL RENDER PATH (SVG paths, CSS classes, distinctive strings) not just import statements — hand-rolled inline duplicates hide from import-based searches
+- When absorbing card chrome into a component, check every callsite for existing chrome that might duplicate — and for surfaces that render the component in a different context (modal vs page)
+- "The same component in different contexts is often not the same component" — compact summary vs hero hero-treatment need different visual weights even when they share an underlying component
+- Variant prop pattern is cleaner than two separate components when shared palette/math/state logic outweighs divergence
+- Claude Design preview canvas colors are not production colors — system-level surface decisions must be made against live site, not preview renders
 
 ## BACKGROUND FUNCTIONS + QUEUE SYSTEM SPEC (build Session 50+)
 Problem: Large PDFs (87+ pages, text path) take 150s+ of Haiku chunking. Client times out. User sees failure even when server succeeds.
@@ -137,12 +172,22 @@ RLS REQUIRED FROM DAY ONE on collections and collection_patterns tables.
 - [SHIPPED S40] Nav guard modal removed
 - [SHIPPED S40] Email capture popup removed
 - [SHIPPED S40] iPad scroll bounce fix — needs Danielle confirmation
-- [NEEDS DISCUSSION] BevCheck full report UI — unfinished feel, get her written feedback
-- [NEEDS DISCUSSION] Stitch Check — link to error location in pattern
 - [NEEDS DISCUSSION] Floating import banner covers side nav while processing
 - [NEEDS DISCUSSION] No warning when user refreshes during import
 - [NEEDS DISCUSSION] Stash + button should add yarn not upload pattern
 - [NEEDS DISCUSSION] Color palette — Danielle finds pure white cold
+- [SHIPPED S53] BevCheck gauge redesign — pastel palette, zone-anchored labels, hero score below arc, glass instrument treatment, Bev integrated into arc, dynamic pluralization. Full approval from Danielle via Claude Design mockup review.
+- [NEEDS DISCUSSION] Wovely surface color — Danielle flagged the lavender canvas in Claude Design preview. Decision deferred: evaluate on live site on her phone before any style guide change.
+- [QUEUED] Compact BevGauge variant could benefit from subtle glass treatment to unify visually with hero. Session 55+ refinement.
+- [QUEUED] State label on compact gauge — consider dusty rose color for "issues" state to amplify signal (blocked: #CEA0A4 fails AA contrast against #F8F6FF at 18px bold, ratio 2.13:1). Try darker rose like #B8837A that passes AA.
+
+## SESSION 53 INSIGHT — BEVCHECK METER COLOR LOGIC (SHIPPED)
+Surfaced during Claude Design setup. Previous BevCheck gauge rendered lavender regardless of result band — aesthetically pleasant but semantically inert. Redesigned with pastel semantic palette:
+- 80%+ PASS → dusty teal #A4C2C3
+- 60-79% HEADS-UP → soft buttercup #E2D985
+- <60% ISSUES → dusty rose #CEA0A4
+Zone-anchored labels (PASS left, HEADS UP top, ISSUES right) outside the arc on hero. Score in large navy below arc. Glass instrument treatment. Bev integrated into arc interior, needle on foreground layer. Dynamic "Bev spotted {count} {thing|things}" copy template.
+Status: SHIPPED to production Session 53 (merge commit 6053b87 on main).
 
 ## ACTIVE USERS (9)
 danielle2673@me.com — Pro — 17 patterns — Active (north star)
@@ -169,7 +214,7 @@ Vercel: prj_SZYwLGH5V7kCZYryr4MSy3US3bfz / team_mRQaDsQzhF6HFGU5Ka7hi5OM — PRO
 Stripe: acct_1TDQ1WGbX5hxxc0T (LIVE) $8.99/mo Pro
 Cloudinary: dmaupzhcx
 PostHog: Project 363175 — 157 unique visitors since Jan 1 2026
-Current session: 53
+Current session:
 
 ## EMAIL STACK
 Google Workspace: adam@wovely.app, support@wovely.app
@@ -217,8 +262,9 @@ FeedbackWidget: 60, Add Pattern tab: 40, Mobile header: 20, Tooltips: 100, Modal
 7. File annual report Wovely LLC at sunbiz.org (L26000181882) Jan 1 to May 1 2027
 8. Try Recraft.ai for Bev vector logo
 9. Create bev_happy.png, bev_warning.png, bev_concerned.png
-10. Get Danielle written feedback on BevCheck full report UI
-11. Delete feature/turttlesong-shoutout: git push origin --delete feature/turttlesong-shoutout
+10. Delete feature/turttlesong-shoutout: git push origin --delete feature/turttlesong-shoutout
+11. Migrate Claude account from adam@terrainnovations.com to adam@wovely.app at a natural breakpoint (requires cancel + rebuild, estimated 2-4 hours, not urgent)
+12. Upload licensed Playfair Display + Inter WOFF2 files to Claude Design to resolve "substitute web fonts" warning
 
 ## TECHNICAL GOTCHAS
 supabaseAuth.getUser() is SYNCHRONOUS — never await
