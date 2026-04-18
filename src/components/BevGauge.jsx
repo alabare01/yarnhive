@@ -1,27 +1,6 @@
 // BevGauge — Wovely "Bev Aesthetic v1.0" (Session 54 redesign)
-// Semicircular score gauge for BevCheck results.
-// Semantics (unchanged from prior version): HIGH score = LEFT (pass), LOW score = RIGHT (issues).
-
-// --- Palette (Bev Aesthetic v1.0 — do not substitute) ---
-const ZONE = {
-  pass: "#A4C2C3",     // dusty teal — high score (80+)
-  warning: "#E2D985",  // soft buttercup — heads-up (60–79)
-  issues: "#CEA0A4",   // dusty rose — low score (<60)
-};
-const NAVY = "#2D3A7C";
-const INK_SECONDARY = "#6B6B8A";
-const LAVENDER = "#9B7EC8";
-const LAVENDER_TINT = "rgba(155,126,200,0.14)";
-const PALE_LAV = "#EDE4F7";
-const GOLD = "#B8944A";          // muted antique gold (replaces retired #C9A84C)
-const RIM_LIGHT = "rgba(255,255,255,0.92)";
-const RIM_GLOW = "rgba(237,228,247,0.85)";
-
-const STATE_LABEL = {
-  pass: "Looks Good",
-  warning: "Heads Up",
-  issues: "Issues Found",
-};
+// Structure mirrors the approved Claude Design artifact (bev_gauge_approved.html) 1:1.
+// Only the needle angle math is app-driven (HIGH score = LEFT, LOW score = RIGHT).
 
 const ADVISORY_IDS = new Set(["translation", "structure"]);
 
@@ -58,24 +37,23 @@ export const checkTier = (c) => c.tier || (ADVISORY_IDS.has(c.id) ? "advisory" :
 
 // --- Internal helpers ---
 
-const scoreToState = (score) => (score >= 80 ? "pass" : score >= 60 ? "warning" : "issues");
+const scoreToState = (s) => (s >= 80 ? "pass" : s >= 60 ? "warning" : "issues");
+const STATE_LABEL = { pass: "Looks Good", warning: "Heads Up", issues: "Issues Found" };
 
-// Preserves existing semantics: HIGH score = LEFT, LOW score = RIGHT.
+// App semantics: HIGH score = LEFT (pass), LOW score = RIGHT (issues).
 // 100% → 180° (leftmost), 0% → 360° (rightmost), 68% → 237.6° (upper-left of top).
-const scoreToAngle = (score) => 360 - Math.max(0, Math.min(100, score)) * 1.8;
+const scoreToAngle = (s) => 360 - Math.max(0, Math.min(100, s)) * 1.8;
 
-const polar = (cx, cy, r, deg) => {
-  const rad = (deg * Math.PI) / 180;
-  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
-};
+// Discrete legacy-state angles (match existing three zones)
+const LEGACY_ANGLE = { pass: 218, warning: 270, issues: 322 };
 
 /**
  * BevGauge
  * Props:
- *   score       number [0..100] — when provided, drives needle position and hero number.
- *                                 Also derives `state` internally (overrides any state prop).
+ *   score       number [0..100] — drives needle position and hero "XX%".
+ *                                 Derives state internally (wins over state prop).
  *   state       "pass"|"warning"|"issues" — legacy fallback when score is absent.
- *   issueCount  number — count for the supporting sentence. Omit or 0 to hide.
+ *   issueCount  number — count for the supporting caption. Omit or 0 to hide.
  */
 const BevGauge = ({ state: stateProp, score, issueCount = 0 }) => {
   const hasScore = typeof score === "number" && !Number.isNaN(score);
@@ -87,232 +65,256 @@ const BevGauge = ({ state: stateProp, score, issueCount = 0 }) => {
 
   const state = hasScore ? scoreToState(score) : (stateProp || "warning");
   const label = STATE_LABEL[state] ?? "Heads Up";
-  const scoreText = hasScore ? `${Math.round(score)}%` : null;
-  const supportText = issueCount > 0
-    ? `Bev spotted ${issueCount} ${issueCount === 1 ? "thing" : "things"} worth a second look.`
-    : null;
 
-  // Gauge geometry
-  const CX = 100, CY = 100, ARC_R = 84, NEEDLE_LEN = 62;
-  const legacyAngle = { pass: 218, warning: 270, issues: 322 }[state] ?? 270;
-  const angle = hasScore ? scoreToAngle(score) : legacyAngle;
-  const needle = polar(CX, CY, NEEDLE_LEN, angle);
+  // Needle geometry (viewBox 480x240, pivot 240,180, shaft 128, tail 18)
+  const CX = 240, CY = 180, SHAFT = 128, TAIL = 18;
+  const angleDeg = hasScore ? scoreToAngle(score) : (LEGACY_ANGLE[state] ?? 270);
+  const rad = (angleDeg * Math.PI) / 180;
+  const cos = Math.cos(rad), sin = Math.sin(rad);
+  const tipX = (CX + SHAFT * cos).toFixed(2);
+  const tipY = (CY + SHAFT * sin).toFixed(2);
+  const tailX = (CX - TAIL * cos).toFixed(2);
+  const tailY = (CY - TAIL * sin).toFixed(2);
 
-  const a11yLabel = [
-    "BevCheck score",
-    hasScore ? `${Math.round(score)} percent` : null,
-    label.toLowerCase(),
-    supportText,
-  ].filter(Boolean).join(", ");
+  const scoreText = hasScore ? Math.round(score) : null;
+  const issueNoun = issueCount === 1 ? "thing" : "things";
+  const showCaption = issueCount > 0;
 
-  const ZoneTag = ({ color, text }) => (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-      <span aria-hidden="true" style={{ width: 7, height: 7, borderRadius: "50%", background: color, display: "inline-block" }} />
-      <span>{text}</span>
-    </span>
-  );
+  const a11yLabel = hasScore
+    ? `Bev's read, ${Math.round(score)} out of 100${showCaption ? `. Bev spotted ${issueCount} ${issueNoun} worth a second look.` : ""}`
+    : `Bev's read, ${label.toLowerCase()}${showCaption ? `. Bev spotted ${issueCount} ${issueNoun} worth a second look.` : ""}`;
 
   return (
     <div
-      role="img"
-      aria-label={a11yLabel}
       style={{
-        background: "rgba(255,255,255,0.82)",
-        backdropFilter: "blur(16px)",
-        WebkitBackdropFilter: "blur(16px)",
-        border: "1px solid rgba(255,255,255,0.45)",
-        borderRadius: 16,
-        boxShadow: "0 4px 24px rgba(45,58,124,0.08)",
-        padding: "26px 22px 24px",
-        textAlign: "center",
+        position: "relative",
+        background: "rgba(255,255,255,0.86)",
+        backdropFilter: "blur(18px)",
+        WebkitBackdropFilter: "blur(18px)",
+        border: "1px solid rgba(255,255,255,0.75)",
+        borderRadius: 24,
+        boxShadow:
+          "0 1px 0 rgba(255,255,255,0.95) inset, 0 2px 4px rgba(0,0,0,0.04), 0 18px 44px rgba(45,58,124,0.12), 0 36px 80px rgba(155,126,200,0.18)",
+        padding: "28px 36px 32px",
+        maxWidth: 440,
+        width: "100%",
+        margin: "0 auto",
       }}
     >
-      {/* BEVCHECK pill */}
-      <div style={{
-        display: "inline-block",
-        background: LAVENDER_TINT,
-        color: LAVENDER,
-        fontFamily: "'Inter', sans-serif",
-        fontSize: 10,
-        fontWeight: 700,
-        letterSpacing: 1.4,
-        padding: "5px 12px",
-        borderRadius: 9999,
-        marginBottom: 10,
-      }}>BEVCHECK</div>
+      {/* Row 1: BevCheck pill — left-aligned, dot + text */}
+      <span
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 6,
+          fontFamily: "'Inter', sans-serif",
+          fontSize: 10,
+          fontWeight: 700,
+          letterSpacing: "0.16em",
+          textTransform: "uppercase",
+          color: "#9B7EC8",
+          padding: "3px 10px 3px 8px",
+          borderRadius: 99,
+          background: "rgba(155,126,200,0.12)",
+          marginBottom: 8,
+        }}
+      >
+        <span
+          aria-hidden="true"
+          style={{
+            width: 6,
+            height: 6,
+            borderRadius: "50%",
+            background: "#9B7EC8",
+            boxShadow: "0 0 0 3px rgba(155,126,200,0.18)",
+          }}
+        />
+        BevCheck
+      </span>
 
-      {/* "Bev's Read" heading */}
-      <div style={{
-        fontFamily: "'Playfair Display', serif",
-        fontSize: 22,
-        fontWeight: 700,
-        color: NAVY,
-        marginBottom: 18,
-        letterSpacing: -0.2,
-      }}>Bev's Read</div>
+      {/* Row 2: Title */}
+      <h3
+        style={{
+          fontFamily: "'Playfair Display', Georgia, serif",
+          fontWeight: 700,
+          fontSize: 26,
+          letterSpacing: "-0.015em",
+          color: "#2D3A7C",
+          lineHeight: 1,
+          margin: "0 0 22px",
+        }}
+      >
+        Bev's Read
+      </h3>
 
-      {/* Gauge SVG */}
+      {/* Row 3: Gauge SVG */}
       <svg
-        viewBox="0 0 200 124"
-        aria-hidden="true"
-        focusable="false"
-        style={{ width: "100%", maxWidth: 300, display: "block", margin: "0 auto" }}
+        viewBox="0 0 480 240"
+        role="img"
+        aria-label={a11yLabel}
+        style={{ display: "block", width: "100%", overflow: "visible" }}
       >
         <defs>
-          <linearGradient id="bevArcGrad" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor={ZONE.pass} />
-            <stop offset="50%" stopColor={ZONE.warning} />
-            <stop offset="100%" stopColor={ZONE.issues} />
+          <linearGradient id="bevGSem" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#A4C2C3" />
+            <stop offset="50%" stopColor="#E2D985" />
+            <stop offset="100%" stopColor="#CEA0A4" />
           </linearGradient>
-          <linearGradient id="bevSpecular" x1="0" y1="0.1" x2="1" y2="0.6">
+          <radialGradient id="bevGSpec" cx="151.8" cy="58.65" r="42" gradientUnits="userSpaceOnUse">
             <stop offset="0%" stopColor="rgba(255,255,255,0.95)" />
-            <stop offset="55%" stopColor="rgba(255,255,255,0.35)" />
+            <stop offset="35%" stopColor="rgba(255,255,255,0.45)" />
+            <stop offset="70%" stopColor="rgba(255,255,255,0.08)" />
             <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+          </radialGradient>
+          <linearGradient id="bevGRimLight" x1="0.15" y1="0.05" x2="0.75" y2="0.4">
+            <stop offset="0%" stopColor="rgba(255,255,255,0.85)" />
+            <stop offset="30%" stopColor="rgba(255,255,255,0.35)" />
+            <stop offset="70%" stopColor="rgba(255,255,255,0)" />
           </linearGradient>
-          <clipPath id="bevFaceClip"><circle cx="100" cy="78" r="24" /></clipPath>
-          <filter id="bevLift" x="-20%" y="-20%" width="140%" height="170%">
-            <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#2D3A7C" floodOpacity="0.1" />
+          <filter id="bevArcLift" x="-20%" y="-30%" width="140%" height="220%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="4" />
+            <feOffset dy="5" />
+            <feComponentTransfer>
+              <feFuncA type="linear" slope="0.28" />
+            </feComponentTransfer>
+            <feMerge>
+              <feMergeNode />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
           </filter>
           <filter id="bevNeedleShadow" x="-50%" y="-50%" width="200%" height="200%">
-            <feDropShadow dx="0" dy="1.4" stdDeviation="1.1" floodColor="#2D3A7C" floodOpacity="0.28" />
+            <feGaussianBlur in="SourceAlpha" stdDeviation="2.5" />
+            <feOffset dx="1" dy="3" />
+            <feComponentTransfer>
+              <feFuncA type="linear" slope="0.45" />
+            </feComponentTransfer>
+            <feMerge>
+              <feMergeNode />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
           </filter>
+          <clipPath id="bevGaugeInterior">
+            <path d="M 90 180 A 150 150 0 0 1 390 180 L 390 192 L 90 192 Z" />
+          </clipPath>
+          <clipPath id="bevClip">
+            <circle cx="240" cy="132" r="36" />
+          </clipPath>
+          <radialGradient id="bevFade" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="rgba(155,126,200,0.22)" />
+            <stop offset="70%" stopColor="rgba(155,126,200,0.06)" />
+            <stop offset="100%" stopColor="rgba(155,126,200,0)" />
+          </radialGradient>
         </defs>
 
-        {/* Soft lift shadow + background track */}
-        <path
-          d="M 16 100 A 84 84 0 0 1 184 100"
-          fill="none"
-          stroke={PALE_LAV}
-          strokeWidth="22"
-          strokeLinecap="round"
-          opacity="0.75"
-          filter="url(#bevLift)"
-        />
-
-        {/* Colored gradient arc (translucent glass) */}
-        <path
-          d="M 16 100 A 84 84 0 0 1 184 100"
-          fill="none"
-          stroke="url(#bevArcGrad)"
-          strokeWidth="18"
-          strokeLinecap="round"
-          opacity="0.85"
-        />
-
-        {/* Upper-left specular highlight */}
-        <path
-          d="M 16 100 A 84 84 0 0 1 100 16"
-          fill="none"
-          stroke="url(#bevSpecular)"
-          strokeWidth="5"
-          strokeLinecap="round"
-          opacity="0.9"
-        />
-
-        {/* Inner rim pale-lavender glow */}
-        <path
-          d="M 26 100 A 74 74 0 0 1 174 100"
-          fill="none"
-          stroke={RIM_GLOW}
-          strokeWidth="1.25"
-          opacity="0.75"
-        />
-
-        {/* Outer rim bright line (upper-left concentrated) */}
-        <path
-          d="M 16 100 A 84 84 0 0 1 80 22"
-          fill="none"
-          stroke={RIM_LIGHT}
-          strokeWidth="1"
-          strokeLinecap="round"
-          opacity="0.85"
-        />
-
-        {/* Bev (background — no disc, clipped to arc interior, behind needle) */}
-        <image
-          href="/bev_neutral.png"
-          x="76"
-          y="54"
-          width="48"
-          height="48"
-          clipPath="url(#bevFaceClip)"
-          preserveAspectRatio="xMidYMid slice"
-        />
-
-        {/* Needle (above Bev) */}
-        <g filter="url(#bevNeedleShadow)">
-          <line
-            x1={CX}
-            y1={CY}
-            x2={needle.x}
-            y2={needle.y}
-            stroke={GOLD}
-            strokeWidth="3"
-            strokeLinecap="round"
-          />
-          <circle cx={CX} cy={CY} r="6.5" fill={GOLD} />
-          <circle cx={CX} cy={CY} r="2" fill="#fff" opacity="0.55" />
+        {/* Interior wash + Bev on background layer */}
+        <g clipPath="url(#bevGaugeInterior)">
+          <rect x="90" y="30" width="300" height="160" fill="rgba(248,246,255,0.85)" />
+          <circle cx="240" cy="140" r="95" fill="url(#bevFade)" />
+          <g clipPath="url(#bevClip)" opacity="0.8">
+            <image href="/bev_neutral.png" x="204" y="96" width="72" height="72" preserveAspectRatio="xMidYMid slice" />
+          </g>
         </g>
 
-        {/* Endpoint % labels */}
-        <text x="16" y="118" textAnchor="middle" fontFamily="'Inter', sans-serif" fontSize="8" fontWeight="600" fill={NAVY} opacity="0.75">0%</text>
-        <text x="184" y="118" textAnchor="middle" fontFamily="'Inter', sans-serif" fontSize="8" fontWeight="600" fill={NAVY} opacity="0.75">100%</text>
+        {/* Track */}
+        <path d="M 90 180 A 150 150 0 0 1 390 180" fill="none" stroke="rgba(237,228,247,0.95)" strokeWidth="24" strokeLinecap="round" />
+
+        {/* Colored arc (glass transmission) */}
+        <g filter="url(#bevArcLift)">
+          <path d="M 90 180 A 150 150 0 0 1 390 180" fill="none" stroke="url(#bevGSem)" strokeWidth="24" strokeLinecap="round" opacity="0.84" />
+        </g>
+
+        {/* Inner rim lavender glow — offset DOWN to sit on inside edge */}
+        <path d="M 90 180 A 150 150 0 0 1 390 180" fill="none" stroke="rgba(201,184,232,0.55)" strokeWidth="1.8" strokeLinecap="round" transform="translate(0,10.5)" />
+
+        {/* Specular highlight — localized hotspot upper-left */}
+        <path d="M 90 180 A 150 150 0 0 1 390 180" fill="none" stroke="url(#bevGSpec)" strokeWidth="24" strokeLinecap="round" />
+
+        {/* Outer rim light — thin bright line on top-outer edge */}
+        <path d="M 90 180 A 150 150 0 0 1 390 180" fill="none" stroke="url(#bevGRimLight)" strokeWidth="1.2" strokeLinecap="round" transform="translate(0,-10.5)" />
+
+        {/* Ticks — flush inside the 24px stroke band */}
+        <g stroke="#2D2D4E" strokeLinecap="round">
+          {/* MAJOR 0/25/50/75/100 */}
+          <line x1="94" y1="180" x2="102" y2="180" strokeWidth="2" />
+          <line x1="136.76" y1="76.76" x2="142.42" y2="82.42" strokeWidth="2" />
+          <line x1="240" y1="34" x2="240" y2="42" strokeWidth="2" />
+          <line x1="343.24" y1="76.76" x2="337.58" y2="82.42" strokeWidth="2" />
+          <line x1="386" y1="180" x2="378" y2="180" strokeWidth="2" />
+          {/* MINOR 12.5/37.5/62.5/87.5 */}
+          <g strokeWidth="1.2" opacity="0.45">
+            <line x1="107.04" y1="124.88" x2="110.74" y2="126.41" />
+            <line x1="184.88" y1="52.96" x2="186.41" y2="56.66" />
+            <line x1="295.12" y1="52.96" x2="293.59" y2="56.66" />
+            <line x1="372.96" y1="124.88" x2="369.26" y2="126.41" />
+          </g>
+        </g>
+
+        {/* Zone labels — navy text with colored dots */}
+        <g fontFamily="Inter,sans-serif" fontSize="11" fontWeight="700" letterSpacing="0.14em" fill="#2D3A7C">
+          <circle cx="26" cy="180" r="4" fill="#A4C2C3" />
+          <text x="54" y="184" textAnchor="middle">PASS</text>
+          <circle cx="240" cy="6" r="4" fill="#E2D985" />
+          <text x="240" y="20" textAnchor="middle">HEADS UP</text>
+          <circle cx="454" cy="180" r="4" fill="#CEA0A4" />
+          <text x="426" y="184" textAnchor="middle">ISSUES</text>
+        </g>
+
+        {/* Endpoint labels */}
+        <g fontFamily="Inter,sans-serif" fontSize="10" fontWeight="600" fill="#6B6B8A">
+          <text x="94" y="208" textAnchor="middle">0%</text>
+          <text x="386" y="208" textAnchor="middle">100%</text>
+        </g>
+
+        {/* Needle — shaft, tail, three-ring hub */}
+        <g filter="url(#bevNeedleShadow)">
+          <path d={`M ${CX} ${CY} L ${tipX} ${tipY}`} stroke="#C9A84C" strokeWidth="3" strokeLinecap="round" fill="none" />
+          <path d={`M ${CX} ${CY} L ${tailX} ${tailY}`} stroke="#C9A84C" strokeWidth="3" strokeLinecap="round" fill="none" opacity="0.7" />
+          <circle cx={CX} cy={CY} r="11" fill="#fff" stroke="#2D3A7C" strokeWidth="1.5" />
+          <circle cx={CX} cy={CY} r="5.5" fill="#C9A84C" />
+          <circle cx={CX} cy={CY} r="2.2" fill="#2D3A7C" />
+        </g>
       </svg>
 
-      {/* Zone labels (outside arc — navy text + colored dot) */}
-      <div style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        maxWidth: 300,
-        margin: "8px auto 0",
-        padding: "0 2px",
-        fontFamily: "'Inter', sans-serif",
-        fontSize: 10,
-        fontWeight: 700,
-        letterSpacing: 1,
-        color: NAVY,
-      }}>
-        <ZoneTag color={ZONE.pass} text="PASS" />
-        <ZoneTag color={ZONE.warning} text="HEADS UP" />
-        <ZoneTag color={ZONE.issues} text="ISSUES" />
-      </div>
-
-      {/* Hero score number */}
-      {scoreText && (
-        <div style={{
-          fontFamily: "'Playfair Display', serif",
-          fontSize: 56,
-          fontWeight: 700,
-          color: NAVY,
-          lineHeight: 1,
-          marginTop: 22,
-          letterSpacing: -1.5,
-        }}>{scoreText}</div>
+      {/* Row 4: Hero % */}
+      {scoreText != null && (
+        <div
+          style={{
+            textAlign: "center",
+            marginTop: 14,
+            fontFamily: "'Playfair Display', serif",
+            fontWeight: 700,
+            color: "#2D3A7C",
+            fontSize: 64,
+            lineHeight: 1,
+            letterSpacing: "-0.03em",
+          }}
+        >
+          {scoreText}
+          <small style={{ fontSize: 28, color: "#6B6B8A", fontWeight: 400, marginLeft: 2 }}>%</small>
+        </div>
       )}
 
-      {/* State label */}
-      <div style={{
-        fontFamily: "'Playfair Display', serif",
-        fontSize: scoreText ? 16 : 18,
-        fontWeight: 600,
-        color: NAVY,
-        marginTop: scoreText ? 4 : 14,
-      }}>{label}</div>
-
-      {/* Supporting italic copy */}
-      {supportText && (
-        <div style={{
-          fontFamily: "'Playfair Display', serif",
-          fontStyle: "italic",
-          fontSize: 13,
-          color: INK_SECONDARY,
-          marginTop: 10,
-          lineHeight: 1.55,
-          maxWidth: 300,
-          marginLeft: "auto",
-          marginRight: "auto",
-        }}>{supportText}</div>
+      {/* Row 5: Supporting caption */}
+      {showCaption && (
+        <div
+          style={{
+            marginTop: 14,
+            paddingTop: 14,
+            borderTop: "1px solid rgba(237,228,247,0.8)",
+            textAlign: "center",
+            fontFamily: "'Playfair Display', serif",
+            fontStyle: "italic",
+            fontSize: 17,
+            lineHeight: 1.4,
+            color: "#6B6B8A",
+          }}
+        >
+          Bev spotted{" "}
+          <em style={{ fontStyle: "normal", color: "#2D3A7C", fontWeight: 600 }}>
+            {issueCount} {issueNoun}
+          </em>{" "}
+          worth a second look.
+        </div>
       )}
     </div>
   );
