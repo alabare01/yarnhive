@@ -99,7 +99,7 @@ const CompactGauge = ({ state, label, angleDeg }) => {
   const tipY = (100 + 58 * Math.sin(rad)).toFixed(2);
 
   return (
-    <div style={{ textAlign: "center", background: "#F8F6FF", borderRadius: 12, padding: 20 }}>
+    <div style={{ textAlign: "center" }}>
       <svg viewBox="0 0 200 110" style={{ width: "100%", maxWidth: 280, display: "block", margin: "0 auto" }}>
         <defs>
           <linearGradient id="bevCompactGrad" x1="0" y1="0" x2="1" y2="0">

@@ -3,7 +3,7 @@ import { T, useBreakpoint, Field } from "./theme.jsx";
 import { PILL } from "./constants.js";
 import { SUPABASE_URL, SUPABASE_ANON_KEY, supabaseAuth, getSession } from "./supabase.js";
 import { CHECK_ICON, extractFirstRowNumber } from "./StitchCheck.jsx";
-import BevGauge, { deriveState, sentenceCase, checkTier, NEEDLE_END } from "./components/BevGauge.jsx";
+import BevGauge, { deriveState, sentenceCase, checkTier } from "./components/BevGauge.jsx";
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
 
@@ -1210,32 +1210,16 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade,onMinimize,onExtractionStart,
               <div style={{fontSize:11,color:"#6B6B8A",marginBottom:10}}>Bev couldn't check this one — try again</div>
               <button onClick={()=>{setBevCheckFailed(false);setValidating(true);const valText=bevCheckTextRef.current;if(!valText){setBevCheckFailed(true);setValidating(false);return;}(async()=>{try{const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),90000);const vr=await fetch("/api/extract-pattern",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({mode:"bevcheck",patternText:valText}),signal:controller.signal});clearTimeout(timeout);const data=await vr.json();if(vr.ok&&!data.error){setValidationReport(data);}else{setBevCheckFailed(true);}}catch(e){console.warn("[Wovely] BevCheck retry failed:",e);setBevCheckFailed(true);}setValidating(false);})();}} style={{background:T.terra,color:"#fff",border:"none",borderRadius:99,padding:"6px 16px",fontSize:11,fontWeight:600,cursor:"pointer"}}>Retry BevCheck</button>
             </div>
-          ):validationReport?(()=>{console.log("[Wovely] BevCheck compact card validationReport:",JSON.stringify(validationReport).substring(0,500));const scState=deriveState(validationReport);const scLabel=scState==="pass"?"Looks good":scState==="issues"?"Issues found":"Heads up";const scNeedle=NEEDLE_END[scState]||NEEDLE_END.warning;const allChecks=Array.isArray(validationReport.checks)?validationReport.checks:[];const scFailed=allChecks.filter(c=>c&&c.status&&c.status!=="pass").slice(0,3);console.log("[Wovely] BevCheck compact checks:",allChecks.length,"total,",scFailed.length,"failed, statuses:",allChecks.map(c=>c?.status));return isPro?(
+          ):validationReport?(()=>{const scState=deriveState(validationReport);const allChecks=Array.isArray(validationReport.checks)?validationReport.checks:[];const scFailed=allChecks.filter(c=>c&&c.status&&c.status!=="pass").slice(0,3);return isPro?(
             <div style={{background:T.surface,borderRadius:16,padding:20,boxShadow:"0 4px 20px rgba(155,126,200,.08)",border:`1px solid ${T.border}`,textAlign:"center"}}>
-              <svg viewBox="0 0 200 120" style={{width:120,height:70,display:"block",margin:"0 auto"}}>
-                <defs><linearGradient id="miniGaugeGradA" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#EDE4F7"/><stop offset="100%" stopColor="#9B7EC8"/></linearGradient></defs>
-                <path d="M 16 100 A 84 84 0 0 1 184 100" fill="none" stroke="#EDE4F7" strokeWidth="18" strokeLinecap="round"/>
-                <path d="M 16 100 A 84 84 0 0 1 184 100" fill="none" stroke="url(#miniGaugeGradA)" strokeWidth="18" strokeLinecap="round"/>
-                <path d={`M 100 100 L ${scNeedle}`} stroke="#9B7EC8" strokeWidth="3" strokeLinecap="round" fill="none"/>
-                <circle cx="100" cy="100" r="5" fill="#fff"/><circle cx="100" cy="100" r="3" fill="#9B7EC8"/>
-              </svg>
-              <div style={{display:"flex",justifyContent:"space-between",width:"100%",margin:"2px auto 0"}}><span style={{fontFamily:"'Inter',sans-serif",fontSize:9,fontWeight:scState==="pass"?700:600,color:"#9B7EC8",opacity:scState==="pass"?1:0.5}}>Looks Good</span><span style={{fontFamily:"'Inter',sans-serif",fontSize:9,fontWeight:scState==="warning"?700:600,color:"#9B7EC8",opacity:scState==="warning"?1:0.5}}>Heads Up</span><span style={{fontFamily:"'Inter',sans-serif",fontSize:9,fontWeight:scState==="issues"?700:600,color:"#9B7EC8",opacity:scState==="issues"?1:0.5}}>Issues Found</span></div>
-              <div style={{fontSize:11,fontWeight:700,color:"#2D3A7C",fontFamily:"'Inter',sans-serif",marginTop:4}}>{scLabel}</div>
+              <BevGauge variant="compact" state={scState} />
               {scFailed.length>0&&<div style={{textAlign:"left",marginTop:8}}>{scFailed.map((c,i)=>(<div key={c.id||i} style={{display:"flex",gap:6,alignItems:"flex-start",marginBottom:4}}><span style={{fontSize:11,color:c.status==="fail"?"#C0544A":"#C9A84C",flexShrink:0}}>{c.status==="fail"?"✕":"⚠"}</span><span style={{fontSize:11,color:"#6B6B8A"}}>{sentenceCase(c.label||"Check")}</span></div>))}</div>}
               <button onClick={()=>setShowFullReport(true)} style={{background:"none",border:"none",color:T.terra,cursor:"pointer",fontSize:11,fontWeight:600,padding:0,marginTop:6,textDecoration:"underline"}}>Full Report →</button>
             </div>
           ):(
             <div style={{background:T.surface,borderRadius:16,padding:20,boxShadow:"0 4px 20px rgba(155,126,200,.08)",border:`1px solid ${T.border}`,textAlign:"center"}}>
               <div style={{filter:"blur(6px)",WebkitFilter:"blur(6px)",userSelect:"none",pointerEvents:"none"}}>
-                <svg viewBox="0 0 200 120" style={{width:120,height:70,display:"block",margin:"0 auto"}}>
-                  <defs><linearGradient id="miniGaugeGradAb" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#EDE4F7"/><stop offset="100%" stopColor="#9B7EC8"/></linearGradient></defs>
-                  <path d="M 16 100 A 84 84 0 0 1 184 100" fill="none" stroke="#EDE4F7" strokeWidth="18" strokeLinecap="round"/>
-                  <path d="M 16 100 A 84 84 0 0 1 184 100" fill="none" stroke="url(#miniGaugeGradAb)" strokeWidth="18" strokeLinecap="round"/>
-                  <path d={`M 100 100 L ${scNeedle}`} stroke="#9B7EC8" strokeWidth="3" strokeLinecap="round" fill="none"/>
-                  <circle cx="100" cy="100" r="5" fill="#fff"/><circle cx="100" cy="100" r="3" fill="#9B7EC8"/>
-                </svg>
-                <div style={{display:"flex",justifyContent:"space-between",width:"100%",margin:"2px auto 0"}}><span style={{fontFamily:"'Inter',sans-serif",fontSize:9,fontWeight:600,color:"#9B7EC8",opacity:0.5}}>Looks Good</span><span style={{fontFamily:"'Inter',sans-serif",fontSize:9,fontWeight:600,color:"#9B7EC8",opacity:0.5}}>Heads Up</span><span style={{fontFamily:"'Inter',sans-serif",fontSize:9,fontWeight:600,color:"#9B7EC8",opacity:0.5}}>Issues Found</span></div>
-                <div style={{fontSize:11,fontWeight:700,color:"#2D3A7C",fontFamily:"'Inter',sans-serif",marginTop:4}}>{scLabel}</div>
+                <BevGauge variant="compact" state={scState} />
               </div>
               <div style={{borderTop:`1px solid ${T.border}`,marginTop:8,paddingTop:8}}>
                 <div style={{fontSize:10,color:T.ink3,marginBottom:6}}>🔒 Unlock full report</div>
@@ -1259,8 +1243,12 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade,onMinimize,onExtractionStart,
           <div onClick={()=>setShowFullReport(false)} style={{position:"absolute",inset:0,background:"rgba(0,0,0,.6)",backdropFilter:"blur(4px)"}}/>
           <div style={{position:"relative",zIndex:1,background:"#FFFFFF",borderRadius:20,width:"100%",maxWidth:480,maxHeight:"85vh",overflow:"auto",padding:"24px 22px 32px"}}>
             <button onClick={()=>setShowFullReport(false)} style={{position:"absolute",top:14,right:16,background:T.linen,border:"none",borderRadius:99,width:30,height:30,cursor:"pointer",fontSize:16,color:T.ink3,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
-            <div style={{fontFamily:T.serif,fontSize:18,color:T.ink,marginBottom:16}}>BevCheck Report</div>
-            <div style={{marginBottom:14}}><BevGauge variant="compact" state={deriveState(validationReport)} /></div>
+            <div style={{marginBottom:14}}><BevGauge
+              variant="hero"
+              score={typeof validationReport.score === "number" ? validationReport.score : undefined}
+              state={typeof validationReport.score === "number" ? undefined : deriveState(validationReport)}
+              issueCount={(validationReport.checks || []).filter(c => c.status === "fail" || c.status === "warning" || c.status === "warn").length}
+            /></div>
             {(()=>{const allChecks=validationReport.checks||[];const coreC=allChecks.filter(c=>checkTier(c)==="core");const advC=allChecks.filter(c=>checkTier(c)==="advisory");const renderC=(c,op)=>{const isIssue=c.status==="fail"||c.status==="warning"||c.status==="warn";const checkRowNum=isIssue?extractFirstRowNumber(c.detail):null;return(
               <div key={c.id} onClick={isIssue?()=>{setShowFullReport(false);const rows=buildRowsFromComponents(extracted.components);const mats=(extracted.materials||[]).map((m,i)=>({id:i+1,name:m.name||"",amount:m.amount||"",yardage:0,notes:m.notes||""}));const finalCover=coverUrl||fileInfo?.coverUrl||null;onSave({id:Date.now(),title:editTitle||"Imported Pattern",source:editDesigner||"PDF Import",cat:"Uncategorized",hook:editHook||"",weight:editWeight||"",notes:extracted.pattern_notes||"",yardage:0,rating:0,skeins:0,skeinYards:200,gauge:{stitches:12,rows:16,size:4},dimensions:{width:50,height:60},materials:mats,rows,photo:finalCover||PILL[Math.floor(Math.random()*PILL.length)],cover_image_url:finalCover,source_file_url:fileInfo?.url||"",source_file_name:fileInfo?.name||"",source_file_type:fileInfo?.type||"",extracted_by_ai:true,components:extracted.components||[],assembly_notes:extracted.assembly_notes||"",difficulty:extracted.difficulty||"",abbreviations_map:extracted.abbreviations_map||{},suggested_resources:extracted.suggested_resources||[],validation_flags:validationFlags.length>0?validationFlags:null,validation_report:isPro&&validationReport?{...validationReport,flaggedRows:(validationReport.checks||[]).filter(ch=>ch.status==="fail"||ch.status==="warning"||ch.status==="warn").map(ch=>({rowNumber:extractFirstRowNumber(ch.detail),status:ch.status==="warn"?"warning":ch.status})).filter(f=>f.rowNumber!=null).filter((f,idx,arr)=>arr.findIndex(x=>x.rowNumber===f.rowNumber)===idx)}:null,_reviewRowNumber:checkRowNum});}:undefined} style={{background:T.surface,border:`1px solid ${T.border}`,borderRadius:10,padding:"10px 12px",marginBottom:6,display:"flex",gap:8,alignItems:"flex-start",cursor:isIssue?"pointer":"default",transition:"transform .1s",opacity:op||1}} onMouseEnter={isIssue?e=>{e.currentTarget.style.transform="translateY(-1px)";}:undefined} onMouseLeave={isIssue?e=>{e.currentTarget.style.transform="none";}:undefined}>
                 <span style={{fontSize:14,flexShrink:0}}>{CHECK_ICON[c.status]||"❓"}</span>
