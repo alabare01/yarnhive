@@ -1,6 +1,11 @@
 // BevGauge — Wovely "Bev Aesthetic v1.0" (Session 54 redesign)
-// Structure mirrors the approved Claude Design artifact (bev_gauge_approved.html) 1:1.
-// Only the needle angle math is app-driven (HIGH score = LEFT, LOW score = RIGHT).
+// Two variants:
+//   variant="hero"     — full-page report. Structure mirrors approved Claude
+//                        Design artifact (bev_gauge_approved.html) 1:1.
+//   variant="compact"  — summary gauge for crowded modals. Matches pre-S54
+//                        geometry exactly; only the arc palette is new.
+// Needle angle math is app-driven in both variants:
+//   HIGH score = LEFT, LOW score = RIGHT.
 
 const ADVISORY_IDS = new Set(["translation", "structure"]);
 
@@ -35,6 +40,12 @@ export const sentenceCase = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1).to
 /** Determine tier with fallback to id-based lookup */
 export const checkTier = (c) => c.tier || (ADVISORY_IDS.has(c.id) ? "advisory" : "core");
 
+// --- Shared palette ---
+
+const ZONE = { pass: "#A4C2C3", warning: "#E2D985", issues: "#CEA0A4" };
+const NAVY = "#2D3A7C";
+const LAVENDER = "#9B7EC8";
+
 // --- Internal helpers ---
 
 const scoreToState = (s) => (s >= 80 ? "pass" : s >= 60 ? "warning" : "issues");
@@ -50,12 +61,14 @@ const LEGACY_ANGLE = { pass: 218, warning: 270, issues: 322 };
 /**
  * BevGauge
  * Props:
- *   score       number [0..100] — drives needle position and hero "XX%".
- *                                 Derives state internally (wins over state prop).
- *   state       "pass"|"warning"|"issues" — legacy fallback when score is absent.
- *   issueCount  number — count for the supporting caption. Omit or 0 to hide.
+ *   variant     "hero" (default) | "compact"
+ *   score       number [0..100] — drives needle position (both variants) and
+ *                                 hero "XX%" readout (hero only). Derives
+ *                                 state internally, wins over `state` prop.
+ *   state       "pass"|"warning"|"issues" — fallback when score is absent.
+ *   issueCount  number — hero-only caption pluralization. Ignored in compact.
  */
-const BevGauge = ({ state: stateProp, score, issueCount = 0 }) => {
+const BevGauge = ({ variant = "hero", state: stateProp, score, issueCount = 0 }) => {
   const hasScore = typeof score === "number" && !Number.isNaN(score);
 
   if (hasScore && stateProp != null && import.meta.env?.DEV) {
@@ -65,10 +78,69 @@ const BevGauge = ({ state: stateProp, score, issueCount = 0 }) => {
 
   const state = hasScore ? scoreToState(score) : (stateProp || "warning");
   const label = STATE_LABEL[state] ?? "Heads Up";
-
-  // Needle geometry (viewBox 480x240, pivot 240,180, shaft 128, tail 18)
-  const CX = 240, CY = 180, SHAFT = 128, TAIL = 18;
   const angleDeg = hasScore ? scoreToAngle(score) : (LEGACY_ANGLE[state] ?? 270);
+
+  if (variant === "compact") {
+    return <CompactGauge state={state} label={label} angleDeg={angleDeg} />;
+  }
+
+  return <HeroGauge state={state} label={label} angleDeg={angleDeg} hasScore={hasScore} score={score} issueCount={issueCount} />;
+};
+
+export default BevGauge;
+
+// =============================================================
+//  Compact variant — pre-S54 geometry, new pastel arc palette.
+//  Used inside crowded import-validation modals.
+// =============================================================
+const CompactGauge = ({ state, label, angleDeg }) => {
+  const rad = (angleDeg * Math.PI) / 180;
+  const tipX = (100 + 58 * Math.cos(rad)).toFixed(2);
+  const tipY = (100 + 58 * Math.sin(rad)).toFixed(2);
+
+  return (
+    <div style={{ textAlign: "center", background: "#F8F6FF", borderRadius: 12, padding: 20 }}>
+      <svg viewBox="0 0 200 110" style={{ width: "100%", maxWidth: 280, display: "block", margin: "0 auto" }}>
+        <defs>
+          <linearGradient id="bevCompactGrad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor={ZONE.pass} />
+            <stop offset="50%" stopColor={ZONE.warning} />
+            <stop offset="100%" stopColor={ZONE.issues} />
+          </linearGradient>
+          <clipPath id="bevCompactClip"><circle cx="100" cy="78" r="18" /></clipPath>
+        </defs>
+        {/* White edge arc */}
+        <path d="M 16 100 A 84 84 0 0 1 184 100" fill="none" stroke="#fff" strokeWidth="22" strokeLinecap="round" />
+        {/* Background arc */}
+        <path d="M 16 100 A 84 84 0 0 1 184 100" fill="none" stroke="#EDE4F7" strokeWidth="18" strokeLinecap="round" />
+        {/* Colored arc (new pastel palette) */}
+        <path d="M 16 100 A 84 84 0 0 1 184 100" fill="none" stroke="url(#bevCompactGrad)" strokeWidth="18" strokeLinecap="round" />
+        {/* Needle */}
+        <path d={`M 100 100 L ${tipX} ${tipY}`} stroke={LAVENDER} strokeWidth="3" strokeLinecap="round" fill="none" />
+        {/* Pivot white backing */}
+        <circle cx="100" cy="100" r="8" fill="#fff" />
+        {/* Bev image */}
+        <image href="/bev_neutral.png" x="82" y="60" width="36" height="36" clipPath="url(#bevCompactClip)" preserveAspectRatio="xMidYMid slice" />
+        {/* Pivot dot */}
+        <circle cx="100" cy="100" r="6" fill={LAVENDER} />
+      </svg>
+      {/* Zone labels row */}
+      <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: 280, margin: "4px auto 0" }}>
+        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 10, fontWeight: state === "pass" ? 700 : 600, color: LAVENDER, opacity: state === "pass" ? 1 : 0.5 }}>PASS</span>
+        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 10, fontWeight: state === "issues" ? 700 : 600, color: LAVENDER, opacity: state === "issues" ? 1 : 0.5 }}>ISSUES</span>
+      </div>
+      {/* State label — navy for all states (rose #CEA0A4 fails AA at 18px on #F8F6FF; revisit later) */}
+      <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 700, color: NAVY, marginTop: 4 }}>{label}</div>
+    </div>
+  );
+};
+
+// =============================================================
+//  Hero variant — full-page report, approved Claude Design 1:1.
+// =============================================================
+const HeroGauge = ({ state, label, angleDeg, hasScore, score, issueCount }) => {
+  // Needle geometry (viewBox 480×240, pivot 240,180, shaft 128, tail 18)
+  const CX = 240, CY = 180, SHAFT = 128, TAIL = 18;
   const rad = (angleDeg * Math.PI) / 180;
   const cos = Math.cos(rad), sin = Math.sin(rad);
   const tipX = (CX + SHAFT * cos).toFixed(2);
@@ -112,7 +184,7 @@ const BevGauge = ({ state: stateProp, score, issueCount = 0 }) => {
           fontWeight: 700,
           letterSpacing: "0.16em",
           textTransform: "uppercase",
-          color: "#9B7EC8",
+          color: LAVENDER,
           padding: "3px 10px 3px 8px",
           borderRadius: 99,
           background: "rgba(155,126,200,0.12)",
@@ -125,7 +197,7 @@ const BevGauge = ({ state: stateProp, score, issueCount = 0 }) => {
             width: 6,
             height: 6,
             borderRadius: "50%",
-            background: "#9B7EC8",
+            background: LAVENDER,
             boxShadow: "0 0 0 3px rgba(155,126,200,0.18)",
           }}
         />
@@ -139,7 +211,7 @@ const BevGauge = ({ state: stateProp, score, issueCount = 0 }) => {
           fontWeight: 700,
           fontSize: 26,
           letterSpacing: "-0.015em",
-          color: "#2D3A7C",
+          color: NAVY,
           lineHeight: 1,
           margin: "0 0 22px",
         }}
@@ -156,9 +228,9 @@ const BevGauge = ({ state: stateProp, score, issueCount = 0 }) => {
       >
         <defs>
           <linearGradient id="bevGSem" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#A4C2C3" />
-            <stop offset="50%" stopColor="#E2D985" />
-            <stop offset="100%" stopColor="#CEA0A4" />
+            <stop offset="0%" stopColor={ZONE.pass} />
+            <stop offset="50%" stopColor={ZONE.warning} />
+            <stop offset="100%" stopColor={ZONE.issues} />
           </linearGradient>
           <radialGradient id="bevGSpec" cx="151.8" cy="58.65" r="42" gradientUnits="userSpaceOnUse">
             <stop offset="0%" stopColor="rgba(255,255,255,0.95)" />
@@ -250,12 +322,12 @@ const BevGauge = ({ state: stateProp, score, issueCount = 0 }) => {
         </g>
 
         {/* Zone labels — navy text with colored dots */}
-        <g fontFamily="Inter,sans-serif" fontSize="11" fontWeight="700" letterSpacing="0.14em" fill="#2D3A7C">
-          <circle cx="26" cy="180" r="4" fill="#A4C2C3" />
+        <g fontFamily="Inter,sans-serif" fontSize="11" fontWeight="700" letterSpacing="0.14em" fill={NAVY}>
+          <circle cx="26" cy="180" r="4" fill={ZONE.pass} />
           <text x="54" y="184" textAnchor="middle">PASS</text>
-          <circle cx="240" cy="6" r="4" fill="#E2D985" />
+          <circle cx="240" cy="6" r="4" fill={ZONE.warning} />
           <text x="240" y="20" textAnchor="middle">HEADS UP</text>
-          <circle cx="454" cy="180" r="4" fill="#CEA0A4" />
+          <circle cx="454" cy="180" r="4" fill={ZONE.issues} />
           <text x="426" y="184" textAnchor="middle">ISSUES</text>
         </g>
 
@@ -269,9 +341,9 @@ const BevGauge = ({ state: stateProp, score, issueCount = 0 }) => {
         <g filter="url(#bevNeedleShadow)">
           <path d={`M ${CX} ${CY} L ${tipX} ${tipY}`} stroke="#C9A84C" strokeWidth="3" strokeLinecap="round" fill="none" />
           <path d={`M ${CX} ${CY} L ${tailX} ${tailY}`} stroke="#C9A84C" strokeWidth="3" strokeLinecap="round" fill="none" opacity="0.7" />
-          <circle cx={CX} cy={CY} r="11" fill="#fff" stroke="#2D3A7C" strokeWidth="1.5" />
+          <circle cx={CX} cy={CY} r="11" fill="#fff" stroke={NAVY} strokeWidth="1.5" />
           <circle cx={CX} cy={CY} r="5.5" fill="#C9A84C" />
-          <circle cx={CX} cy={CY} r="2.2" fill="#2D3A7C" />
+          <circle cx={CX} cy={CY} r="2.2" fill={NAVY} />
         </g>
       </svg>
 
@@ -283,7 +355,7 @@ const BevGauge = ({ state: stateProp, score, issueCount = 0 }) => {
             marginTop: 14,
             fontFamily: "'Playfair Display', serif",
             fontWeight: 700,
-            color: "#2D3A7C",
+            color: NAVY,
             fontSize: 64,
             lineHeight: 1,
             letterSpacing: "-0.03em",
@@ -310,7 +382,7 @@ const BevGauge = ({ state: stateProp, score, issueCount = 0 }) => {
           }}
         >
           Bev spotted{" "}
-          <em style={{ fontStyle: "normal", color: "#2D3A7C", fontWeight: 600 }}>
+          <em style={{ fontStyle: "normal", color: NAVY, fontWeight: 600 }}>
             {issueCount} {issueNoun}
           </em>{" "}
           worth a second look.
@@ -319,5 +391,3 @@ const BevGauge = ({ state: stateProp, score, issueCount = 0 }) => {
     </div>
   );
 };
-
-export default BevGauge;
