@@ -862,7 +862,6 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade,onMinimize,onExtractionStart,
   const [bevCheckFailed,setBevCheckFailed]=useState(false);
   const bevCheckTextRef=useRef(null);
   useEffect(()=>{onBevCheckActive?.(!!validationReport||bevCheckFailed);},[validationReport,bevCheckFailed]);
-  const [proUpgradeBanner,setProUpgradeBanner]=useState(false);
   const [showFullReport,setShowFullReport]=useState(false);
   const [matExpanded,setMatExpanded]=useState(false);
   const [compExpanded,setCompExpanded]=useState({});
@@ -1223,7 +1222,7 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade,onMinimize,onExtractionStart,
               </div>
               <div style={{borderTop:`1px solid ${T.border}`,marginTop:8,paddingTop:8}}>
                 <div style={{fontSize:10,color:T.ink3,marginBottom:6}}>🔒 Unlock full report</div>
-                <button onClick={()=>setProUpgradeBanner(true)} style={{background:T.terra,color:"#fff",border:"none",borderRadius:99,padding:"6px 16px",fontSize:10,fontWeight:600,cursor:"pointer"}}>Upgrade to Pro</button>
+                <button onClick={()=>onUpgrade&&onUpgrade()} style={{background:T.terra,color:"#fff",border:"none",borderRadius:99,padding:"6px 16px",fontSize:10,fontWeight:600,cursor:"pointer"}}>Upgrade to Pro</button>
               </div>
             </div>
           );})():(
@@ -1231,12 +1230,6 @@ const PDFUploadForm = ({onSave,Btn,isPro,onUpgrade,onMinimize,onExtractionStart,
           )}
         </div>
       </div>
-      {proUpgradeBanner&&(
-        <div style={{background:T.terraLt,border:`1px solid ${T.terra}33`,borderRadius:12,padding:"12px 14px",marginTop:10,display:"flex",alignItems:"center",gap:10}}>
-          <div style={{flex:1}}><div style={{fontSize:12,fontWeight:600,color:T.terra,marginBottom:2}}>Upgrade to Pro to unlock BevCheck</div><div style={{fontSize:11,color:T.ink2,lineHeight:1.5}}>Your pattern is still importing — finish saving first, then upgrade anytime from Settings.</div></div>
-          <button onClick={()=>setProUpgradeBanner(false)} style={{background:"none",border:"none",fontSize:16,color:T.ink3,cursor:"pointer",padding:4,flexShrink:0}}>×</button>
-        </div>
-      )}
       {/* Full report overlay */}
       {showFullReport&&validationReport&&(
         <div style={{position:"fixed",inset:0,zIndex:10001,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>

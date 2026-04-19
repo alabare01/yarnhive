@@ -3,15 +3,16 @@ import posthog from "posthog-js";
 import { supabaseAuth, getSession } from "./supabase.js";
 
 // Wait for the session and user to be readable from localStorage after signUp/signIn.
-// Supabase writes synchronously, but we keep a short retry in case a slow JWT parse or
-// serialization delay leaves one of them briefly null. Resolves to the user object, or null
-// if hydration never completes (rare — signup succeeded but something wrote a bad session).
+// Supabase writes synchronously, but slower browsers/devices occasionally leave one of them
+// briefly null. Three attempts at 0ms / 200ms / 400ms (total ~600ms) cover the long tail
+// without flashing a false-positive error on fast machines.
 const waitForSession = async () => {
-  for (let attempt = 0; attempt < 2; attempt++) {
+  const delays = [0, 200, 400];
+  for (const delay of delays) {
+    if (delay) await new Promise(r => setTimeout(r, delay));
     const user = supabaseAuth.getUser();
     const session = getSession();
     if (user && session?.access_token) return user;
-    if (attempt === 0) await new Promise(r => setTimeout(r, 100));
   }
   return null;
 };
@@ -60,6 +61,7 @@ const AuthWallModal = ({
         if (err) { setError(err.msg || err.error_description || err.message || "Sign-up failed."); setLoading(false); return; }
         const user = await waitForSession();
         if (!user) { setError("Signup succeeded but session setup failed. Please sign in manually."); setLoading(false); return; }
+        setError(null);
         try {
           posthog.capture("user_signed_up", { intent: intent || "unknown", source: "auth_wall_modal" });
           posthog.capture("signed_up_from_wall", { intent: intent || "unknown" });
@@ -71,6 +73,7 @@ const AuthWallModal = ({
         if (err) { setError(err.error_description || err.msg || err.message || "Invalid email or password."); setLoading(false); return; }
         const user = await waitForSession();
         if (!user) { setError("Sign-in succeeded but session setup failed. Please try again."); setLoading(false); return; }
+        setError(null);
         try { posthog.capture("user_logged_in", { intent: intent || "unknown", source: "auth_wall_modal" }); } catch {}
         if (onSuccess) await onSuccess(user);
         onClose();
