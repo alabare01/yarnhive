@@ -55,7 +55,7 @@ export default async function handler(req, res) {
     let userCount = '?';
     try {
       const { count, error: countError } = await supabase
-        .from('users')
+        .from('user_profiles')
         .select('id', { count: 'exact', head: true })
         .abortSignal(AbortSignal.timeout(5000));
 
@@ -92,19 +92,6 @@ export default async function handler(req, res) {
     if (!emailRes.ok) {
       const errBody = await emailRes.text();
       console.error('[notify-signup] Resend error:', emailRes.status, errBody);
-    }
-
-    // Mark user as notified in signup_notifications table
-    try {
-      const { error: updateError } = await supabase
-        .from('signup_notifications')
-        .upsert({ user_id: id, notified: true, notified_at: new Date().toISOString() });
-
-      if (updateError) {
-        console.error('[notify-signup] signup_notifications update error:', updateError.message, updateError.code);
-      }
-    } catch (updateErr) {
-      console.error('[notify-signup] signup_notifications exception:', updateErr.message);
     }
 
     console.log('[notify-signup] Notification sent for:', email);
