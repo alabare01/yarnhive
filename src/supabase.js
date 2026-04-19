@@ -15,9 +15,19 @@ export const supabaseAuth = {
       body: JSON.stringify({email, password, options:{emailRedirectTo:APP_ORIGIN}}),
     });
     const data = await res.json();
-    console.log("[Wovely] Signup response:", {status:res.status, hasSession:!!data.session, confirmationSentAt:data.confirmation_sent_at||"none"});
+    console.log("[Wovely] Signup response:", {status:res.status, hasSession:!!data.session, hasAccessToken:!!data.access_token, confirmationSentAt:data.confirmation_sent_at||"none"});
     if(!res.ok) return {error: data};
-    if(data.session) saveSession(data.session);
+    // Supabase signup response can return session nested OR flat (depends on email confirmation settings).
+    // With confirmation OFF, the response is flat; with confirmation ON, session is nested. Normalize.
+    const session = data.session || (data.access_token ? {
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+      expires_at: data.expires_at,
+      expires_in: data.expires_in,
+      token_type: data.token_type || "bearer",
+      user: data.user,
+    } : null);
+    if (session) saveSession(session);
     return {data};
   },
   signIn: async (email, password) => {
