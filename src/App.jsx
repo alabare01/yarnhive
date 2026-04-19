@@ -556,24 +556,6 @@ const NavPanel = ({open,onClose,view,onNavigate,count,isPro,isAnonymous,onSignOu
 };
 
 
-const EmailConfirmBanner = ({onDismiss,onResend}) => {
-  const [resending,setResending]=useState(false);
-  const handleResend = async () => {
-    setResending(true);
-    if (onResend) await onResend();
-    setResending(false);
-  };
-  return (
-    <div style={{background:"#2D3A7C",padding:"10px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
-      <span style={{fontSize:13,color:"#fff",fontWeight:500,lineHeight:1.4}}>Confirm your email to unlock sharing features — check your inbox.</span>
-      <div style={{display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
-        <button onClick={handleResend} disabled={resending} style={{background:"none",border:"none",color:"#fff",fontSize:12,fontWeight:600,cursor:"pointer",textDecoration:"underline",opacity:resending?.5:1}}>{resending?"Sending…":"Resend email"}</button>
-        <button onClick={onDismiss} style={{background:"none",border:"none",cursor:"pointer",color:"#fff",fontSize:18,lineHeight:1,padding:"0 2px",opacity:.75}}>×</button>
-      </div>
-    </div>
-  );
-};
-
 const PRO_FEATURES = [
   {label:"Unlimited patterns",sub:"No cap. Save every pattern you'll ever make"},
   {label:"Unlimited Snap & Stitch",sub:"Scan as many finished objects as you want"},
@@ -651,7 +633,7 @@ const ProInfoModal = ({onClose,onUpgrade}) => {
   );
 };
 
-const ProfileSettingsView = ({isPro,authed,gateAction,onOpenProModal,onGoHome,onEmailConfirmed}) => {
+const ProfileSettingsView = ({isPro,authed,gateAction,onOpenProModal,onGoHome}) => {
   const profileNav=useNavigate();
   const [username,setUsername]=useState(""),[displayName,setDisplayName]=useState(""),[bio,setBio]=useState("");
   const [socialInstagram,setSocialInstagram]=useState(""),[socialPinterest,setSocialPinterest]=useState(""),[socialRavelry,setSocialRavelry]=useState("");
@@ -659,39 +641,9 @@ const ProfileSettingsView = ({isPro,authed,gateAction,onOpenProModal,onGoHome,on
   const [saveBtnText,setSaveBtnText]=useState("Save Profile");
   const [welcomeDismissed,setWelcomeDismissed]=useState(()=>localStorage.getItem("yh_welcome_dismissed")==="true");
   const [curPass,setCurPass]=useState(""),[newPass,setNewPass]=useState(""),[passSaving,setPassSaving]=useState(false),[passMsg,setPassMsg]=useState(null);
-  const [resending,setResending]=useState(false),[resendMsg,setResendMsg]=useState(null);
-  const [emailConfirmed,setEmailConfirmed]=useState(false);
   const{isDesktop}=useBreakpoint();
   const user = supabaseAuth.getUser();
   const session = getSession();
-
-  // Initial check + poll every 10s for email confirmation (GET only — no token refresh)
-  useEffect(()=>{
-    const checkConfirmed = async () => {
-      const s = getSession();
-      if (!s?.access_token) return false;
-      try {
-        const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-          headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${s.access_token}`},
-        });
-        if (res.ok) {
-          const u = await res.json();
-          if (u.email_confirmed_at) {
-            setEmailConfirmed(true);
-            if (onEmailConfirmed) onEmailConfirmed();
-            return true;
-          }
-        }
-      } catch {}
-      return false;
-    };
-    checkConfirmed();
-    const interval = setInterval(async ()=>{
-      const confirmed = await checkConfirmed();
-      if (confirmed) clearInterval(interval);
-    }, 10000);
-    return ()=>clearInterval(interval);
-  },[]);
 
   const profilePct = Math.round((displayName.trim()?33:0)+(username.trim()?33:0)+(bio.trim()?34:0));
 
@@ -746,27 +698,6 @@ const ProfileSettingsView = ({isPro,authed,gateAction,onOpenProModal,onGoHome,on
       setPassMsg({type:"ok",text:"Password updated."}); setCurPass(""); setNewPass("");
     } catch { setPassMsg({type:"error",text:"Network error."}); }
     setPassSaving(false);
-  };
-
-  const handleResendConfirm = async () => {
-    setResending(true); setResendMsg(null);
-    try {
-      const payload = {type:"signup",email:user.email,options:{emailRedirectTo:APP_ORIGIN}};
-      console.log("[Wovely] Resend confirmation request:", {url:`${SUPABASE_URL}/auth/v1/resend`, payload, supabaseUrl:SUPABASE_URL});
-      const res = await fetch(`${SUPABASE_URL}/auth/v1/resend`, {
-        method:"POST",
-        headers:{"apikey":SUPABASE_ANON_KEY,"Content-Type":"application/json"},
-        body:JSON.stringify(payload),
-      });
-      const body = await res.text();
-      console.log("[Wovely] Resend confirmation response:", {status:res.status, ok:res.ok, body});
-      if (res.ok) {
-        setResendMsg({type:"ok",text:"Confirmation email sent. Check spam if you don't see it."});
-      } else {
-        setResendMsg({type:"error",text:`Failed to send (${res.status}). SMTP may not be configured in Supabase dashboard.`});
-      }
-    } catch (e) { console.error("[Wovely] Resend confirmation error:", e); setResendMsg({type:"error",text:"Network error."}); }
-    setResending(false);
   };
 
   const SECTION = {background:T.card,borderRadius:16,padding:isDesktop?"28px 32px":"24px 20px",boxShadow:T.shadowLg};
@@ -836,16 +767,6 @@ const ProfileSettingsView = ({isPro,authed,gateAction,onOpenProModal,onGoHome,on
         <div style={{marginBottom:14}}>
           <div style={{fontSize:10,fontVariant:"small-caps",color:T.ink3,textTransform:"lowercase",letterSpacing:".14em",marginBottom:6,fontWeight:500}}>email</div>
           <div style={{padding:"13px 0",borderBottom:`1.5px solid ${T.border}`,color:T.ink2,fontSize:15}}>{user?.email||"—"}</div>
-        </div>
-        <div style={{marginBottom:16}}>
-          {emailConfirmed
-            ? <div style={{display:"inline-flex",alignItems:"center",gap:6,background:"rgba(92,122,94,.1)",borderRadius:99,padding:"5px 12px",fontSize:11,fontWeight:600,color:T.sage}}>Email confirmed</div>
-            : <div>
-                <div style={{display:"inline-flex",alignItems:"center",gap:6,background:T.terraLt,borderRadius:99,padding:"5px 12px",fontSize:11,fontWeight:600,color:T.terra,marginBottom:8}}>Email not confirmed</div>
-                <div><button onClick={handleResendConfirm} disabled={resending} style={{background:T.linen,border:`1px solid ${T.border}`,borderRadius:12,padding:"8px 16px",fontSize:13,fontWeight:600,color:T.ink,cursor:"pointer",opacity:resending?.6:1}}>{resending?"Sending…":"Resend confirmation email"}</button></div>
-                {resendMsg&&<Msg msg={resendMsg}/>}
-              </div>
-          }
         </div>
         <div style={{borderTop:`1px solid ${T.border}`,paddingTop:20}}>
           <div style={{fontSize:10,fontVariant:"small-caps",color:T.ink3,textTransform:"lowercase",letterSpacing:".14em",fontWeight:500,marginBottom:14}}>change password</div>
@@ -1640,7 +1561,6 @@ export default function Wovely() {
   // Derive view from URL path instead of state
   const view = viewFromPath(location.pathname);
   const [selected,setSelected]=useState(null),[navOpen,setNavOpen]=useState(false),[addOpen,setAddOpen]=useState(false),[imageImportOpen,setImageImportOpen]=useState(false),[addMenuOpen,setAddMenuOpen]=useState(false),[menuAnchor,setMenuAnchor]=useState(null),[showPaywall,setShowPaywall]=useState(false),[cat,setCat]=useState("All"),[search,setSearch]=useState("");
-  const [showEmailBanner,setShowEmailBanner]=useState(false);
   const [showWelcomeBanner,setShowWelcomeBanner]=useState(false);
   const [showWelcomeToast,setShowWelcomeToast]=useState(false);
   const [showProModal,setShowProModal]=useState(false);
@@ -1906,55 +1826,6 @@ export default function Wovely() {
     }
   },[view,authed]);
 
-  const isEmailConfirmed = () => {
-    const s = getSession(); if(!s?.access_token) return false;
-    try { const p=JSON.parse(atob(s.access_token.split(".")[1])); return !!p.email_confirmed_at; } catch { return false; }
-  };
-
-  // Poll for email confirmation when banner is visible — auto-dismiss when confirmed (GET only)
-  useEffect(()=>{
-    if (!showEmailBanner || !authed) return;
-    const poll = setInterval(async ()=>{
-      const s = getSession();
-      if (!s?.access_token) return;
-      try {
-        const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-          headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${s.access_token}`},
-        });
-        if (res.ok) {
-          const u = await res.json();
-          if (u.email_confirmed_at) {
-            setShowEmailBanner(false);
-            clearInterval(poll);
-          }
-        }
-      } catch {}
-    }, 10000);
-    return ()=>clearInterval(poll);
-  },[showEmailBanner,authed]);
-
-  const showEmailBannerIfNeeded = () => {
-    if (!isEmailConfirmed() && !sessionStorage.getItem("yh_banner_dismissed")) setShowEmailBanner(true);
-  };
-
-  const handleResendEmail = async () => {
-    const user = supabaseAuth.getUser();
-    const s = getSession();
-    if (!user || !s) return;
-    try {
-      await fetch(`${SUPABASE_URL}/auth/v1/resend`, {
-        method:"POST",
-        headers:{"apikey":SUPABASE_ANON_KEY,"Content-Type":"application/json"},
-        body:JSON.stringify({type:"signup",email:user.email,options:{emailRedirectTo:APP_ORIGIN}}),
-      });
-    } catch {}
-  };
-
-  const handleDismissEmailBanner = () => {
-    setShowEmailBanner(false);
-    sessionStorage.setItem("yh_banner_dismissed","1");
-  };
-
   const checkUpgradeIntent=async()=>{
     if(localStorage.getItem("yh_upgrade_intent")!=="true") return;
     localStorage.removeItem("yh_upgrade_intent");
@@ -1977,10 +1848,7 @@ export default function Wovely() {
     // Profile onboarding redirect removed — new signups land directly on My Wovely.
     setShowWelcomeBanner(true);
     checkUpgradeIntent();
-    setTimeout(()=>{
-      setShowWelcomeBanner(false);
-      showEmailBannerIfNeeded();
-    },4000);
+    setTimeout(()=>setShowWelcomeBanner(false),4000);
   };
 
   const handleSignIn = async () => {
@@ -2025,7 +1893,6 @@ export default function Wovely() {
     navigate(postLoginPath);
     setShowWelcomeToast(true);
     setTimeout(()=>setShowWelcomeToast(false),3000);
-    showEmailBannerIfNeeded();
     checkUpgradeIntent();
   };
 
@@ -2274,7 +2141,6 @@ export default function Wovely() {
       <SidebarNav view={view} onNavigate={navigateToView} count={userPatterns.length} isPro={isPro} isAnonymous={!authed} onAddPattern={(e)=>{if(tier.atCap){setShowPaywall(true);return;}if(addMenuOpen){setAddMenuOpen(false);setMenuAnchor(null);return;}const r=e?.currentTarget?.getBoundingClientRect();if(r)setMenuAnchor({top:r.bottom+8,left:r.left});setAddMenuOpen(true);}} onSignOut={handleSignOut} onUpgrade={()=>openProGate("locked_nav")} onOpenAuthWall={()=>gateAction({ intent: "nav_sign_in", title: "Create a free account", subtitle: "Takes 10 seconds. No credit card." }, ()=>{})} userPatterns={userPatterns} allPatterns={allPatterns}/>
       <div style={{flex:1,minWidth:0,overflowY:"auto",display:"flex",flexDirection:"column",background:"transparent"}}>
         <WelcomeBanner visible={showWelcomeBanner}/>
-        {showEmailBanner&&!showWelcomeBanner&&<EmailConfirmBanner onDismiss={handleDismissEmailBanner} onResend={handleResendEmail}/>}
         <div style={{background:"#FFFFFF",borderBottom:"1px solid #EDE4F7",padding:"0 32px",height:64,display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:20,flexShrink:0}}>
           <div onClick={isAdam?handleLogoTap:undefined} style={{fontFamily:T.serif,fontSize:28,fontWeight:700,color:T.ink,cursor:isAdam?"pointer":"default"}}>{TITLE_MAP[view]!==null?TITLE_MAP[view]:""}</div>
           <div style={{display:"flex",alignItems:"center",gap:12,position:"relative"}}>
@@ -2293,7 +2159,7 @@ export default function Wovely() {
           {view==="stitch-check"&&<div style={{paddingTop:24}}><StitchCheck gateAction={gateAction}/></div>}
           {view==="stitch-vision"&&<div style={{paddingTop:24}}><StitchVision isPro={isPro} isAnon={!authed} onUpgrade={()=>openProGate("stitch_vision")} onRequireAccount={(limitReached)=>gateAction({ intent: limitReached?"stitch_vision_limit":"stitch_vision", title: limitReached?"You've used your free scan":"Create a free account", subtitle: limitReached?"Sign up for unlimited Stitch-O-Vision — free forever with a Wovely account.":"Takes 10 seconds. No credit card." }, ()=>{})}/></div>}
           {view==="shopping"&&<div style={{paddingTop:24}}><ShoppingList gateAction={gateAction}/></div>}
-          {view==="profile"&&<ProfileSettingsView isPro={isPro} authed={authed} gateAction={gateAction} onOpenProModal={()=>openProGate("profile_upgrade_pill")} onGoHome={()=>navigate("/")} onEmailConfirmed={()=>setShowEmailBanner(false)}/>}
+          {view==="profile"&&<ProfileSettingsView isPro={isPro} authed={authed} gateAction={gateAction} onOpenProModal={()=>openProGate("profile_upgrade_pill")} onGoHome={()=>navigate("/")}/>}
           {view==="privacy"&&<PrivacyPolicy/>}
           {view==="terms"&&<TermsOfService/>}
           {location.pathname.startsWith("/stitch/")&&<div style={{paddingTop:24}}><StitchResultPage/></div>}
@@ -2318,7 +2184,6 @@ export default function Wovely() {
       {createdPattern&&<PatternCreatedOverlay pattern={createdPattern} onStartBuilding={()=>{const p=createdPattern;setCreatedPattern(null);startAndOpenPattern(p);}} onGoToHive={()=>{setCreatedPattern(null);navigateToView("collection");}}/>}
       {readyPromptPattern&&<ReadyToBuildPrompt pattern={readyPromptPattern} onStartBuilding={()=>{const p=readyPromptPattern;setReadyPromptPattern(null);startAndOpenPattern(p);}} onViewDetails={()=>{const p=readyPromptPattern;setReadyPromptPattern(null);setSelected(p);navigateToView("detail",p._supabaseId||p.id);}} onDismiss={()=>setReadyPromptPattern(null)}/>}
       {deleteTarget&&<DeleteConfirmModal pattern={deleteTarget} isPro={isPro} onCancel={()=>setDeleteTarget(null)} onDelete={confirmDelete} onPark={parkInsteadOfDelete} onGoPro={()=>{setDeleteTarget(null);setShowProModal(true);}}/>}
-      {showEmailBanner&&<EmailConfirmBanner onDismiss={handleDismissEmailBanner} onResend={handleResendEmail}/>}
       {showWelcomeBanner&&<WelcomeBanner onDismiss={()=>setShowWelcomeBanner(false)}/>}
       <div style={{background:"#FFFFFF",borderBottom:"1px solid #EDE4F7",padding:"0 18px",height:56,display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:20,flexShrink:0}}>
         <button onClick={()=>setNavOpen(true)} style={{background:"none",border:"none",cursor:"pointer",padding:"8px 8px 8px 0",display:"flex",flexDirection:"column",gap:5}}><div style={{width:22,height:1.5,background:T.ink,borderRadius:99}}/><div style={{width:15,height:1.5,background:T.ink,borderRadius:99}}/><div style={{width:22,height:1.5,background:T.ink,borderRadius:99}}/></button>
@@ -2339,7 +2204,7 @@ export default function Wovely() {
         {view==="stitch-check"&&<div style={{paddingTop:18}}><StitchCheck gateAction={gateAction}/></div>}
         {view==="stitch-vision"&&<div style={{paddingTop:18}}><StitchVision isPro={isPro} isAnon={!authed} onUpgrade={()=>openProGate("stitch_vision")} onRequireAccount={(limitReached)=>gateAction({ intent: limitReached?"stitch_vision_limit":"stitch_vision", title: limitReached?"You've used your free scan":"Create a free account", subtitle: limitReached?"Sign up for unlimited Stitch-O-Vision — free forever with a Wovely account.":"Takes 10 seconds. No credit card." }, ()=>{})}/></div>}
         {view==="shopping"&&<div style={{paddingTop:18}}><ShoppingList gateAction={gateAction}/></div>}
-        {view==="profile"&&<ProfileSettingsView isPro={isPro} authed={authed} gateAction={gateAction} onOpenProModal={()=>openProGate("profile_upgrade_pill")} onGoHome={()=>navigate("/")} onEmailConfirmed={()=>setShowEmailBanner(false)}/>}
+        {view==="profile"&&<ProfileSettingsView isPro={isPro} authed={authed} gateAction={gateAction} onOpenProModal={()=>openProGate("profile_upgrade_pill")} onGoHome={()=>navigate("/")}/>}
         {view==="privacy"&&<PrivacyPolicy/>}
         {view==="terms"&&<TermsOfService/>}
         {location.pathname.startsWith("/stitch/")&&<div style={{paddingTop:18}}><StitchResultPage/></div>}

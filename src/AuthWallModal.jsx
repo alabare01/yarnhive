@@ -20,12 +20,13 @@ const AuthWallModal = ({
   const [mode, setMode] = useState("signup");
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
+  const [confirmPass, setConfirmPass] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     if (!isOpen) {
-      setMode("signup"); setEmail(""); setPass(""); setError(null); setLoading(false);
+      setMode("signup"); setEmail(""); setPass(""); setConfirmPass(""); setError(null); setLoading(false);
     }
   }, [isOpen]);
 
@@ -34,6 +35,10 @@ const AuthWallModal = ({
   const handleSubmit = async () => {
     setError(null);
     if (!email.trim() || !pass) { setError("Please fill in all fields."); return; }
+    if (mode === "signup") {
+      if (pass.length < 6) { setError("Password must be at least 6 characters."); return; }
+      if (pass !== confirmPass) { setError("Passwords don\u2019t match."); return; }
+    }
     setLoading(true);
     try {
       if (mode === "signup") {
@@ -147,6 +152,18 @@ const AuthWallModal = ({
             onFocus={focusBorder}
             onBlur={blurBorder}
           />
+          {mode === "signup" && (
+            <input
+              value={confirmPass}
+              onChange={e => setConfirmPass(e.target.value)}
+              placeholder="Confirm password"
+              type="password"
+              autoComplete="new-password"
+              style={INPUT_STYLE}
+              onFocus={focusBorder}
+              onBlur={blurBorder}
+            />
+          )}
         </div>
 
         {error && (
@@ -174,7 +191,7 @@ const AuthWallModal = ({
             <>
               <span style={{ color: "#6B6B8A" }}>Already have an account? </span>
               <span
-                onClick={() => { setMode("signin"); setError(null); }}
+                onClick={() => { setMode("signin"); setError(null); setPass(""); setConfirmPass(""); }}
                 style={{ color: "#9B7EC8", cursor: "pointer", fontWeight: 600 }}
               >Sign in</span>
             </>
@@ -182,7 +199,7 @@ const AuthWallModal = ({
             <>
               <span style={{ color: "#6B6B8A" }}>New to Wovely? </span>
               <span
-                onClick={() => { setMode("signup"); setError(null); }}
+                onClick={() => { setMode("signup"); setError(null); setPass(""); setConfirmPass(""); }}
                 style={{ color: "#9B7EC8", cursor: "pointer", fontWeight: 600 }}
               >Create account</span>
             </>
