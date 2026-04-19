@@ -94,7 +94,7 @@ const extractFirstRowNumber = (text) => {
   return match ? parseInt(match[1], 10) : null;
 };
 
-const StitchCheck = ({ onNavigateToRow } = {}) => {
+const StitchCheck = ({ onNavigateToRow, gateAction } = {}) => {
   const [mode, setMode] = useState(null); // null | "pdf" | "text"
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
@@ -249,12 +249,12 @@ const StitchCheck = ({ onNavigateToRow } = {}) => {
 
       {!loading && !mode && (
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-          <div onClick={() => fileRef.current?.click()} style={{ ...CARD, cursor: "pointer", textAlign: "center", transition: "all .15s" }} onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = T.shadowLg; }} onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = T.shadow; }}>
+          <div onClick={() => { const go=()=>fileRef.current?.click(); if(gateAction) gateAction({ intent:"bevcheck", title:"Create a free account to run BevCheck", subtitle:"Wovely checks your pattern for errors and saves the report." }, go); else go(); }} style={{ ...CARD, cursor: "pointer", textAlign: "center", transition: "all .15s" }} onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = T.shadowLg; }} onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = T.shadow; }}>
             <div style={{ fontSize: 36, marginBottom: 12 }}>{"\uD83D\uDCC4"}</div>
             <div style={{ fontSize: 15, fontWeight: 600, color: T.ink, marginBottom: 4 }}>Upload PDF</div>
             <div style={{ fontSize: 12, color: T.ink3, lineHeight: 1.5 }}>We'll extract and validate</div>
           </div>
-          <div onClick={() => setMode("text")} style={{ ...CARD, cursor: "pointer", textAlign: "center", transition: "all .15s" }} onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = T.shadowLg; }} onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = T.shadow; }}>
+          <div onClick={() => { const go=()=>setMode("text"); if(gateAction) gateAction({ intent:"bevcheck", title:"Create a free account to run BevCheck", subtitle:"Wovely checks your pattern for errors and saves the report." }, go); else go(); }} style={{ ...CARD, cursor: "pointer", textAlign: "center", transition: "all .15s" }} onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = T.shadowLg; }} onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = T.shadow; }}>
             <div style={{ fontSize: 36, marginBottom: 12 }}>{"\u270F\uFE0F"}</div>
             <div style={{ fontSize: 15, fontWeight: 600, color: T.ink, marginBottom: 4 }}>Paste Text</div>
             <div style={{ fontSize: 12, color: T.ink3, lineHeight: 1.5 }}>Paste your pattern directly</div>

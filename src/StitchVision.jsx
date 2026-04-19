@@ -60,7 +60,11 @@ const canUse = (isPro) => {
   return u.month !== m || u.count < 3;
 };
 
-const StitchVision = ({ isPro, onUpgrade }) => {
+const ANON_SCAN_FLAG = "wovely_sov_anon_scan_used";
+const anonScanUsed = () => { try { return sessionStorage.getItem(ANON_SCAN_FLAG) === "true"; } catch { return false; } };
+const markAnonScanUsed = () => { try { sessionStorage.setItem(ANON_SCAN_FLAG, "true"); } catch {} };
+
+const StitchVision = ({ isPro, isAnon, onUpgrade, onRequireAccount }) => {
   const [stage, setStage] = useState("pick"); // pick | loading | result | limit
   const [result, setResult] = useState(null);
   const [thumb, setThumb] = useState(null);
@@ -73,7 +77,20 @@ const StitchVision = ({ isPro, onUpgrade }) => {
   const handleFile = async (e) => {
     const f = e.target.files?.[0];
     if (!f) return;
-    if (!canUse(isPro)) { setStage("limit"); return; }
+    // Anonymous users hit the AuthWall — the scan pipeline requires a Supabase session for the
+    // image upload, so we can't truly "allow 1 scan anonymously" without backend changes.
+    // The sessionStorage flag is kept so the wall copy can evolve to "used your free scan" later.
+    if (isAnon) {
+      if (e.target) e.target.value = "";
+      const wasUsed = anonScanUsed();
+      markAnonScanUsed();
+      onRequireAccount && onRequireAccount(wasUsed);
+      return;
+    }
+    if (!canUse(isPro)) {
+      setStage("limit");
+      return;
+    }
 
     setStage("loading");
     setLoadingMsg(MSGS[0]);
@@ -299,7 +316,8 @@ const StitchVision = ({ isPro, onUpgrade }) => {
       </label>
 
       <div style={{ fontSize: 11, color: T.ink3, marginTop: 14, lineHeight: 1.6 }}>Works with photos, screenshots, and images from social media</div>
-      {!isPro && <div style={{ fontSize: 11, color: T.terra, marginTop: 8, fontWeight: 500 }}>{usesLeft} free identification{usesLeft !== 1 ? "s" : ""} left this month</div>}
+      {!isPro && !isAnon && <div style={{ fontSize: 11, color: T.terra, marginTop: 8, fontWeight: 500 }}>{usesLeft} free identification{usesLeft !== 1 ? "s" : ""} left this month</div>}
+      {isAnon && <div style={{ fontSize: 11, color: T.terra, marginTop: 8, fontWeight: 500 }}>Sign up free for Stitch-O-Vision</div>}
     </div>
   );
 };

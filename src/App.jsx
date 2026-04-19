@@ -640,7 +640,7 @@ const ProInfoModal = ({onClose,onUpgrade}) => {
   );
 };
 
-const ProfileSettingsView = ({isPro,onOpenProModal,onGoHome,onEmailConfirmed}) => {
+const ProfileSettingsView = ({isPro,authed,gateAction,onOpenProModal,onGoHome,onEmailConfirmed}) => {
   const profileNav=useNavigate();
   const [username,setUsername]=useState(""),[displayName,setDisplayName]=useState(""),[bio,setBio]=useState("");
   const [socialInstagram,setSocialInstagram]=useState(""),[socialPinterest,setSocialPinterest]=useState(""),[socialRavelry,setSocialRavelry]=useState("");
@@ -815,7 +815,7 @@ const ProfileSettingsView = ({isPro,onOpenProModal,onGoHome,onEmailConfirmed}) =
           <Field label="Ravelry username" placeholder="yourhandle" value={socialRavelry} onChange={e=>setSocialRavelry(e.target.value)}/>
         </div>
         <Msg msg={profileMsg}/>
-        <button onClick={handleProfileSave} disabled={profileSaving} style={{background:T.terra,color:"#fff",border:"none",borderRadius:99,padding:"12px 28px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(155,126,200,.3)",opacity:profileSaving?.6:1}}>{profileSaving?"Saving…":saveBtnText}</button>
+        <button onClick={()=>gateAction?.({ intent: "profile_edit", title: "Create a free account to save your profile", subtitle: "Your name, handle, and socials stay with you across devices." }, handleProfileSave)} disabled={profileSaving} style={{background:T.terra,color:"#fff",border:"none",borderRadius:99,padding:"12px 28px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(155,126,200,.3)",opacity:profileSaving?.6:1}}>{profileSaving?"Saving…":saveBtnText}</button>
       </div>
 
       {DIVIDER}
@@ -841,7 +841,7 @@ const ProfileSettingsView = ({isPro,onOpenProModal,onGoHome,onEmailConfirmed}) =
           <Field label="Current password" placeholder="••••••••" value={curPass} onChange={e=>setCurPass(e.target.value)} type="password"/>
           <Field label="New password" placeholder="••••••••" value={newPass} onChange={e=>setNewPass(e.target.value)} type="password"/>
           <Msg msg={passMsg}/>
-          <button onClick={handleChangePassword} disabled={passSaving} style={{background:T.terra,color:"#fff",border:"none",borderRadius:99,padding:"10px 24px",fontSize:13,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(155,126,200,.3)",opacity:passSaving?.6:1}}>{passSaving?"Saving…":"Update Password"}</button>
+          <button onClick={()=>gateAction?.({ intent: "change_password", title: "Create a free account first", subtitle: "Sign up to set a password." }, handleChangePassword)} disabled={passSaving} style={{background:T.terra,color:"#fff",border:"none",borderRadius:99,padding:"10px 24px",fontSize:13,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(155,126,200,.3)",opacity:passSaving?.6:1}}>{passSaving?"Saving…":"Update Password"}</button>
         </div>
       </div>
 
@@ -976,10 +976,12 @@ const SEED_STASH=[
   {id:2,brand:"Red Heart",name:"Super Saver",weight:"Worsted",color:"Cherry Red",colorCode:"#8B1A1A",yardage:364,skeins:1,used:0},
   {id:3,brand:"Caron",name:"Simply Soft",weight:"DK",color:"Ocean",colorCode:"#3A7D8C",yardage:315,skeins:1,used:0},
 ];
-const YarnStash = () => {
+const YarnStash = ({gateAction}) => {
   const [stash,setStash]=useState(SEED_STASH),[adding,setAdding]=useState(false),[brand,setBrand]=useState(""),[name,setName]=useState(""),[weight,setWeight]=useState("Worsted"),[color,setColor]=useState(""),[yardage,setYardage]=useState(""),[skeins,setSkeins]=useState("1");
   const totalYards=stash.reduce((a,y)=>a+y.yardage*y.skeins,0);
   const addYarn=()=>{if(!brand||!name)return;setStash(p=>[...p,{id:Date.now(),brand,name,weight,color,colorCode:"#8A8278",yardage:parseInt(yardage)||0,skeins:parseInt(skeins)||1,used:0}]);setBrand("");setName("");setColor("");setYardage("");setSkeins("1");setAdding(false);};
+  const gateOpenAdd=()=>gateAction?gateAction({ intent: "add_stash", title: "Create a free account to save your stash", subtitle: "Track every skein, on every device." },()=>setAdding(true)):setAdding(true);
+  const gateAddYarn=()=>gateAction?gateAction({ intent: "add_stash", title: "Create a free account to save your stash", subtitle: "Track every skein, on every device." },addYarn):addYarn();
   const{isDesktop:isD}=useBreakpoint();
   const SC_LABEL = {fontSize:10,fontVariant:"small-caps",color:T.ink3,textTransform:"lowercase",letterSpacing:".14em",fontWeight:500};
   const CARD = {background:"rgba(255,255,255,0.82)",backdropFilter:"blur(16px)",WebkitBackdropFilter:"blur(16px)",borderRadius:20,border:"1px solid rgba(255,255,255,0.6)",padding:24,boxShadow:"0 2px 4px rgba(0,0,0,0.04), 0 8px 32px rgba(155,126,200,0.13)"};
@@ -990,7 +992,7 @@ const YarnStash = () => {
         <div style={{fontSize:48,marginBottom:16}}>🧶</div>
         <div style={{fontFamily:T.serif,fontSize:22,fontWeight:700,color:T.ink,marginBottom:8}}>Your stash is empty</div>
         <div style={{fontSize:14,color:T.ink3,lineHeight:1.6,marginBottom:24,maxWidth:320,margin:"0 auto 24px"}}>Track every skein you own so you always know what you have before you buy.</div>
-        <button onClick={()=>setAdding(true)} style={{background:T.terra,color:"#fff",border:"none",borderRadius:99,padding:"14px 32px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(155,126,200,.3)"}}>+ Add Your First Yarn</button>
+        <button onClick={gateOpenAdd} style={{background:T.terra,color:"#fff",border:"none",borderRadius:99,padding:"14px 32px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(155,126,200,.3)"}}>+ Add Your First Yarn</button>
       </div>
     </div>
   );
@@ -1006,7 +1008,7 @@ const YarnStash = () => {
           </div>
         ))}
       </div>
-      <button onClick={()=>setAdding(!adding)} style={{width:"100%",background:adding?"transparent":T.terra,color:adding?T.ink3:"#fff",border:adding?`1.5px solid ${T.border}`:"none",borderRadius:99,padding:"14px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:adding?"none":"0 4px 16px rgba(155,126,200,.3)",marginBottom:20}}>{adding?"Cancel":"+ Add Yarn to Stash"}</button>
+      <button onClick={()=>{ if(adding){setAdding(false);return;} gateOpenAdd(); }} style={{width:"100%",background:adding?"transparent":T.terra,color:adding?T.ink3:"#fff",border:adding?`1.5px solid ${T.border}`:"none",borderRadius:99,padding:"14px",fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:adding?"none":"0 4px 16px rgba(155,126,200,.3)",marginBottom:20}}>{adding?"Cancel":"+ Add Yarn to Stash"}</button>
       {adding&&(
         <div className="fu" style={{...CARD,marginBottom:20}}>
           <Field label="Brand" placeholder="e.g. Lion Brand" value={brand} onChange={e=>setBrand(e.target.value)}/>
@@ -1019,7 +1021,7 @@ const YarnStash = () => {
             <div style={{flex:1}}><Field label="Yds per Skein" placeholder="315" value={yardage} onChange={e=>setYardage(e.target.value)}/></div>
             <div style={{flex:1}}><Field label="# of Skeins" placeholder="2" value={skeins} onChange={e=>setSkeins(e.target.value)}/></div>
           </div>
-          <button onClick={addYarn} disabled={!brand||!name} style={{width:"100%",background:T.terra,color:"#fff",border:"none",borderRadius:99,padding:"14px",fontSize:15,fontWeight:600,cursor:(!brand||!name)?"not-allowed":"pointer",opacity:(!brand||!name)?.5:1,boxShadow:"0 4px 16px rgba(155,126,200,.3)"}}>Add to Stash</button>
+          <button onClick={gateAddYarn} disabled={!brand||!name} style={{width:"100%",background:T.terra,color:"#fff",border:"none",borderRadius:99,padding:"14px",fontSize:15,fontWeight:600,cursor:(!brand||!name)?"not-allowed":"pointer",opacity:(!brand||!name)?.5:1,boxShadow:"0 4px 16px rgba(155,126,200,.3)"}}>Add to Stash</button>
         </div>
       )}
       {stash.map(y=>(
@@ -1048,7 +1050,7 @@ const SEED_SHOPPING=[
   {id:4,name:"Stitch Markers (locking) — pack of 50",qty:1,unit:"pack",checked:false},
   {id:5,name:"Yarn needle set — tapestry needles",qty:1,unit:"set",checked:false},
 ];
-const ShoppingList = () => {
+const ShoppingList = ({gateAction}) => {
   const [items,setItems]=useState(SEED_SHOPPING);
   const [newItem,setNewItem]=useState("");
   const{isDesktop:isDsl}=useBreakpoint();
@@ -1056,6 +1058,7 @@ const ShoppingList = () => {
   const remove=id=>setItems(p=>p.filter(i=>i.id!==id));
   const adjust=(id,d)=>setItems(p=>p.map(i=>i.id===id?{...i,qty:Math.max(1,i.qty+d)}:i));
   const addItem=()=>{if(!newItem.trim())return;setItems(p=>[...p,{id:Date.now(),name:newItem.trim(),qty:1,unit:"",checked:false}]);setNewItem("");};
+  const gateAddItem=()=>gateAction?gateAction({ intent: "add_shopping", title: "Create a free account to save your list", subtitle: "Your supply run syncs across every device." },addItem):addItem();
   const unchecked=items.filter(i=>!i.checked),checked=items.filter(i=>i.checked);
   const SC_LABEL = {fontSize:10,fontVariant:"small-caps",color:T.ink3,textTransform:"lowercase",letterSpacing:".14em",fontWeight:500};
   const CARD = {background:"rgba(255,255,255,0.82)",backdropFilter:"blur(16px)",WebkitBackdropFilter:"blur(16px)",borderRadius:20,border:"1px solid rgba(255,255,255,0.6)",padding:24,boxShadow:"0 2px 4px rgba(0,0,0,0.04), 0 8px 32px rgba(155,126,200,0.13)"};
@@ -1069,8 +1072,8 @@ const ShoppingList = () => {
         <div style={{fontFamily:T.serif,fontSize:22,fontWeight:700,color:T.ink,marginBottom:8}}>Nothing on your list yet</div>
         <div style={{fontSize:14,color:T.ink3,lineHeight:1.6,maxWidth:320,margin:"0 auto 24px"}}>Add yarn, hooks, and supplies you need for your current projects.</div>
         <div style={{display:"flex",gap:8,maxWidth:380,margin:"0 auto"}}>
-          <input value={newItem} onChange={e=>setNewItem(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addItem()} placeholder="Add an item..." style={{flex:1,padding:"13px 16px",background:"transparent",border:"none",borderBottom:`1.5px solid ${T.border}`,color:T.ink,fontSize:14,outline:"none",transition:"border-color .2s"}} onFocus={e=>e.target.style.borderBottomColor=T.terra} onBlur={e=>e.target.style.borderBottomColor=T.border}/>
-          <button onClick={addItem} style={{background:T.terra,color:"#fff",border:"none",borderRadius:99,padding:"12px 24px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(155,126,200,.3)"}}>Add</button>
+          <input value={newItem} onChange={e=>setNewItem(e.target.value)} onKeyDown={e=>e.key==="Enter"&&gateAddItem()} placeholder="Add an item..." style={{flex:1,padding:"13px 16px",background:"transparent",border:"none",borderBottom:`1.5px solid ${T.border}`,color:T.ink,fontSize:14,outline:"none",transition:"border-color .2s"}} onFocus={e=>e.target.style.borderBottomColor=T.terra} onBlur={e=>e.target.style.borderBottomColor=T.border}/>
+          <button onClick={gateAddItem} style={{background:T.terra,color:"#fff",border:"none",borderRadius:99,padding:"12px 24px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(155,126,200,.3)"}}>Add</button>
         </div>
       </div>
     </div>
@@ -1106,8 +1109,8 @@ const ShoppingList = () => {
       ))}
 
       <div style={{display:"flex",gap:10,marginTop:20}}>
-        <input value={newItem} onChange={e=>setNewItem(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addItem()} placeholder="Add an item..." style={{flex:1,padding:"13px 16px",background:"transparent",border:"none",borderBottom:`1.5px solid ${T.border}`,color:T.ink,fontSize:14,outline:"none",transition:"border-color .2s"}} onFocus={e=>e.target.style.borderBottomColor=T.terra} onBlur={e=>e.target.style.borderBottomColor=T.border}/>
-        <button onClick={addItem} style={{background:T.terra,color:"#fff",border:"none",borderRadius:99,padding:"12px 24px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(155,126,200,.3)"}}>Add</button>
+        <input value={newItem} onChange={e=>setNewItem(e.target.value)} onKeyDown={e=>e.key==="Enter"&&gateAddItem()} placeholder="Add an item..." style={{flex:1,padding:"13px 16px",background:"transparent",border:"none",borderBottom:`1.5px solid ${T.border}`,color:T.ink,fontSize:14,outline:"none",transition:"border-color .2s"}} onFocus={e=>e.target.style.borderBottomColor=T.terra} onBlur={e=>e.target.style.borderBottomColor=T.border}/>
+        <button onClick={gateAddItem} style={{background:T.terra,color:"#fff",border:"none",borderRadius:99,padding:"12px 24px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(155,126,200,.3)"}}>Add</button>
       </div>
     </div>
   );
@@ -1646,15 +1649,10 @@ export default function Wovely() {
   // refresh/nav within the tab keeps them in the app shell instead of bouncing to the landing.
   const [anonymousMode,setAnonymousMode]=useState(()=>{try{return sessionStorage.getItem("wovely_anonymous_mode")==="1";}catch{return false;}});
   const enterAnonymousMode=useCallback(()=>{try{sessionStorage.setItem("wovely_anonymous_mode","1");}catch{}setAnonymousMode(true);try{posthog.capture("anonymous_mode_entered");}catch{}},[]);
-  // AuthWallModal global state — wired here so any action can call requireAuth(). Gating individual
-  // actions is out of scope for this prompt; this wiring is the foundation for that work.
+  // AuthWallModal global state — the gateAction helper (below) routes anonymous users here
+  // before any Pro paywall. Critical invariant: never show the Pro paywall to an unauthed user.
   const [authWallOpen,setAuthWallOpen]=useState(false);
   const [authWallContext,setAuthWallContext]=useState(null);
-  const requireAuth=useCallback((context,successCallback)=>{
-    if(supabaseAuth.getUser()){successCallback&&successCallback();return;}
-    setAuthWallContext({...(context||{}),onSuccess:successCallback});
-    setAuthWallOpen(true);
-  },[]);
   const{isTablet,isDesktop}=useBreakpoint();
   const allPatterns = [...userPatterns,...starterPatterns];
   const userStarterCount=userPatterns.filter(p=>p.isStarter).length;
@@ -1663,6 +1661,34 @@ export default function Wovely() {
   // 5-tap Wovely logo easter egg (adam only)
   const handleLogoTap = useWovelySuperTap(triggerWhatsNew);
   const isAdam = supabaseAuth.getUser()?.email === "alabare@gmail.com";
+
+  // Central gate — hierarchy: anonymous → AuthWall, authed-non-Pro on Pro action → ProInfoModal, else proceed.
+  // proceedCallback is re-invoked after successful signup/signin so the action the user intended can resume.
+  const gateAction = (options, proceedCallback) => {
+    const { requiresPro=false, title, subtitle, intent } = options || {};
+    const cb = typeof proceedCallback === "function" ? proceedCallback : () => {};
+    if (!authed) {
+      try { posthog.capture("auth_wall_shown", { intent: intent || "unknown", requires_pro: !!requiresPro }); } catch {}
+      setAuthWallContext({
+        title: title || "Create a free account",
+        subtitle: subtitle || "Takes 10 seconds. No credit card.",
+        intent,
+        requiresPro,
+        // Best-effort resume: after signup, re-evaluate the gate. New users are authed but not Pro,
+        // so Pro-gated actions correctly fall through to the Pro paywall; free-gated actions proceed.
+        // Delay one tick so the new session (written by supabaseAuth.signUp) is visible.
+        onSuccess: () => { setTimeout(() => { if (requiresPro) { setShowProModal(true); return; } cb(); }, 100); },
+      });
+      setAuthWallOpen(true);
+      return;
+    }
+    if (requiresPro && !isPro) {
+      try { posthog.capture("pro_paywall_shown", { intent: intent || "unknown" }); } catch {}
+      setShowProModal(true);
+      return;
+    }
+    cb();
+  };
 
   // Initialize client-side error reporting once on mount
   useEffect(() => {
@@ -2141,8 +2167,30 @@ export default function Wovely() {
       }catch(e){console.error("[Wovely] Pattern save error:",e);}
     }
   };
-  const openAddModal=(method)=>{if(tier.atCap){setShowPaywall(true);return;}setPendingImportUrl(null);setPendingMethod(method||null);setAddOpen(true);};
-  const handleImportUrl=(u)=>{if(tier.atCap){setShowPaywall(true);return;}setPendingImportUrl(u);setPendingMethod("url");setAddOpen(true);};
+  const openAddModal=(method)=>{
+    gateAction(
+      { intent: "import_pattern", title: "Create a free account to save patterns", subtitle: "Your imports and progress stay with you across devices." },
+      () => { if(tier.atCap){setShowPaywall(true);return;} setPendingImportUrl(null); setPendingMethod(method||null); setAddOpen(true); }
+    );
+  };
+  const handleImportUrl=(u)=>{
+    gateAction(
+      { intent: "import_pattern_url", title: "Create a free account to save patterns", subtitle: "Your imports and progress stay with you across devices." },
+      () => { if(tier.atCap){setShowPaywall(true);return;} setPendingImportUrl(u); setPendingMethod("url"); setAddOpen(true); }
+    );
+  };
+  const openImageImport=()=>{
+    gateAction(
+      { intent: "import_pattern_image", title: "Create a free account to save patterns", subtitle: "Your imports and progress stay with you across devices." },
+      () => { if(tier.atCap){setShowPaywall(true);return;} setImageImportOpen(true); }
+    );
+  };
+  // Generic "see Pro features" entry: routes anonymous users through AuthWall first.
+  // Use for locked nav items, BevCheck-style Pro triggers, and any CTA that previously called setShowProModal directly.
+  const openProGate=(intent)=>gateAction(
+    { requiresPro: true, intent: intent || "unlock_pro", title: "Create a free account to unlock Pro", subtitle: "Sign up free, then upgrade to Pro anytime." },
+    () => {}
+  );
   const updatePatternStatus=(p,status)=>{
     const updated={...p,status};
     setUserPatterns(prev=>prev.map(x=>x.id===p.id?updated:x));
@@ -2205,14 +2253,14 @@ export default function Wovely() {
       {showProModal&&<ProInfoModal onClose={()=>setShowProModal(false)}/>}
       {(addOpen||addMinimized)&&<AddPatternModal onClose={()=>{setAddOpen(false);setAddMinimized(false);setPendingImportUrl(null);setPendingMethod(null);}} onSave={handleAddPattern} isPro={isPro} patternCount={userPatterns.length} Btn={Btn} Photo={Photo} Bar={Bar} WireframeViewer={WireframeViewer} onUpgrade={()=>setShowProModal(true)} initialMethod={pendingImportUrl?"url":pendingMethod||undefined} initialUrl={pendingImportUrl||undefined} minimized={addMinimized} onMinimize={()=>{setAddOpen(false);setAddMinimized(true);}} onExpand={()=>{setAddMinimized(false);setAddOpen(true);}}/>}
       {(imageImportOpen||imageMinimized)&&<ImageImportModal onClose={()=>{setImageImportOpen(false);setImageMinimized(false);}} onPatternSaved={handleAddPattern} userId={supabaseAuth.getUser()?.id} isPro={isPro} minimized={imageMinimized} onMinimize={()=>{setImageImportOpen(false);setImageMinimized(true);}} onExpand={()=>{setImageMinimized(false);setImageImportOpen(true);}}/>}
-      {addMenuOpen&&menuAnchor&&<><div onClick={()=>{setAddMenuOpen(false);setMenuAnchor(null);}} style={{position:"fixed",inset:0,zIndex:49}}/><div style={{position:"fixed",top:menuAnchor.top,left:menuAnchor.left,zIndex:50,background:"#fff",border:`1px solid ${T.border}`,borderRadius:14,boxShadow:"0 8px 32px rgba(45,45,78,.12)",minWidth:220,padding:"6px 0",fontFamily:"Inter,sans-serif"}}>{[{icon:"📄",label:"Add PDF",action:()=>{setAddMenuOpen(false);setMenuAnchor(null);openAddModal("pdf");}},{icon:"📸",label:"Add from photos",action:()=>{setAddMenuOpen(false);setMenuAnchor(null);setImageImportOpen(true);}},{icon:"🔗",label:"Paste a URL",action:()=>{setAddMenuOpen(false);setMenuAnchor(null);openAddModal("url");}},{icon:"🌐",label:"Explore free patterns",action:()=>{setAddMenuOpen(false);setMenuAnchor(null);navigateToView("browse");}},{icon:"🔍",label:"Identify a Stitch",action:()=>{setAddMenuOpen(false);setMenuAnchor(null);navigateToView("stitch-vision");}}].map(item=>(<div key={item.label} onClick={item.action} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 16px",cursor:"pointer",fontSize:13,fontWeight:500,color:T.ink,transition:"background .12s"}} onMouseEnter={e=>e.currentTarget.style.background=T.linen} onMouseLeave={e=>e.currentTarget.style.background="transparent"}><span style={{fontSize:16,width:22,textAlign:"center"}}>{item.icon}</span>{item.label}</div>))}</div></>}
+      {addMenuOpen&&menuAnchor&&<><div onClick={()=>{setAddMenuOpen(false);setMenuAnchor(null);}} style={{position:"fixed",inset:0,zIndex:49}}/><div style={{position:"fixed",top:menuAnchor.top,left:menuAnchor.left,zIndex:50,background:"#fff",border:`1px solid ${T.border}`,borderRadius:14,boxShadow:"0 8px 32px rgba(45,45,78,.12)",minWidth:220,padding:"6px 0",fontFamily:"Inter,sans-serif"}}>{[{icon:"📄",label:"Add PDF",action:()=>{setAddMenuOpen(false);setMenuAnchor(null);openAddModal("pdf");}},{icon:"📸",label:"Add from photos",action:()=>{setAddMenuOpen(false);setMenuAnchor(null);openImageImport();}},{icon:"🔗",label:"Paste a URL",action:()=>{setAddMenuOpen(false);setMenuAnchor(null);openAddModal("url");}},{icon:"🌐",label:"Explore free patterns",action:()=>{setAddMenuOpen(false);setMenuAnchor(null);navigateToView("browse");}},{icon:"🔍",label:"Identify a Stitch",action:()=>{setAddMenuOpen(false);setMenuAnchor(null);navigateToView("stitch-vision");}}].map(item=>(<div key={item.label} onClick={item.action} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 16px",cursor:"pointer",fontSize:13,fontWeight:500,color:T.ink,transition:"background .12s"}} onMouseEnter={e=>e.currentTarget.style.background=T.linen} onMouseLeave={e=>e.currentTarget.style.background="transparent"}><span style={{fontSize:16,width:22,textAlign:"center"}}>{item.icon}</span>{item.label}</div>))}</div></>}
       {createdPattern&&<PatternCreatedOverlay pattern={createdPattern} onStartBuilding={()=>{const p=createdPattern;setCreatedPattern(null);startAndOpenPattern(p);}} onGoToHive={()=>{setCreatedPattern(null);navigateToView("collection");}}/>}
       {readyPromptPattern&&<ReadyToBuildPrompt pattern={readyPromptPattern} onStartBuilding={()=>{const p=readyPromptPattern;setReadyPromptPattern(null);startAndOpenPattern(p);}} onViewDetails={()=>{const p=readyPromptPattern;setReadyPromptPattern(null);setSelected(p);navigateToView("detail",p._supabaseId||p.id);}} onDismiss={()=>setReadyPromptPattern(null)}/>}
       {deleteTarget&&<DeleteConfirmModal pattern={deleteTarget} isPro={isPro} onCancel={()=>setDeleteTarget(null)} onDelete={confirmDelete} onPark={parkInsteadOfDelete} onGoPro={()=>{setDeleteTarget(null);setShowProModal(true);}}/>}
       {coverPickerTarget&&<CoverImagePicker pattern={coverPickerTarget} onConfirm={handleCoverConfirm} onClose={()=>setCoverPickerTarget(null)} pdfThumbUrl={pdfThumbUrl} CAT_IMG={CAT_IMG} ALL_CAT_ENTRIES={ALL_CAT_ENTRIES}/>}
       <WelcomeToast visible={showWelcomeToast}/>
       {upgradeToast&&<div style={{position:"fixed",top:16,left:"50%",transform:"translateX(-50%)",zIndex:999,background:upgradeToast==="success"?"#5B9B6B":"#6B6B8A",color:"#fff",borderRadius:14,padding:"12px 24px",fontSize:14,fontWeight:600,boxShadow:"0 8px 32px rgba(0,0,0,.2)",animation:"modalPop .3s ease both",textAlign:"center"}}>{upgradeToast==="success"?"Welcome to Wovely Pro!":"No worries — you can upgrade anytime"}</div>}
-      <SidebarNav view={view} onNavigate={navigateToView} count={userPatterns.length} isPro={isPro} onAddPattern={(e)=>{if(tier.atCap){setShowPaywall(true);return;}if(addMenuOpen){setAddMenuOpen(false);setMenuAnchor(null);return;}const r=e?.currentTarget?.getBoundingClientRect();if(r)setMenuAnchor({top:r.bottom+8,left:r.left});setAddMenuOpen(true);}} onSignOut={handleSignOut} onUpgrade={()=>setShowProModal(true)} userPatterns={userPatterns} allPatterns={allPatterns}/>
+      <SidebarNav view={view} onNavigate={navigateToView} count={userPatterns.length} isPro={isPro} onAddPattern={(e)=>{if(tier.atCap){setShowPaywall(true);return;}if(addMenuOpen){setAddMenuOpen(false);setMenuAnchor(null);return;}const r=e?.currentTarget?.getBoundingClientRect();if(r)setMenuAnchor({top:r.bottom+8,left:r.left});setAddMenuOpen(true);}} onSignOut={handleSignOut} onUpgrade={()=>openProGate("locked_nav")} userPatterns={userPatterns} allPatterns={allPatterns}/>
       <div style={{flex:1,minWidth:0,overflowY:"auto",display:"flex",flexDirection:"column",background:"transparent"}}>
         <WelcomeBanner visible={showWelcomeBanner}/>
         {showEmailBanner&&!showWelcomeBanner&&<EmailConfirmBanner onDismiss={handleDismissEmailBanner} onResend={handleResendEmail}/>}
@@ -2229,12 +2277,12 @@ export default function Wovely() {
           {view==="wip"&&<div style={{padding:"24px 0 80px"}}><button onClick={()=>navigateToView("collection")} style={{background:"none",border:"none",color:T.terra,cursor:"pointer",fontSize:13,fontWeight:600,padding:0,marginBottom:20,display:"flex",alignItems:"center",gap:6}}>← Back</button>{inProgress.length===0?<div style={{textAlign:"center",padding:"80px 20px"}}><div style={{fontSize:48,marginBottom:14}}>🪡</div><div style={{fontFamily:T.serif,fontSize:20,fontWeight:600,color:"#2D2D4E",marginBottom:8}}>Nothing in progress</div><div style={{fontSize:14,color:"#6B6B8A",lineHeight:1.6}}>Open a pattern and start checking off rows.</div></div>:<div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:20}}>{inProgress.map((p,i)=><PatternCard key={p.id} p={p} delay={i*.06} onClick={()=>openDetail(p)} pct={pct} catFallbackPhoto={catFallbackPhoto} Photo={Photo} Bar={Bar} Stars={Stars}/>)}</div>}</div>}
           {view==="detail"&&selected&&<div style={{margin:"0 -40px"}}><Detail p={selected} onBack={()=>{setPendingScrollToRow(null);detailOnBack();}} onSave={detailOnSave} pct={pct} estYards={estYards} estSkeins={estSkeins} pdfThumbUrl={pdfThumbUrl} CSS={CSS} Bar={Bar} Photo={Photo} Stars={Stars} WireframeViewer={WireframeViewer} Btn={Btn} scrollToRow={pendingScrollToRow}/></div>}
           {view==="browse"&&<BrowseSitesView onImportUrl={handleImportUrl}/>}
-          {view==="stash"&&<div style={{paddingTop:24}}><YarnStash/></div>}
+          {view==="stash"&&<div style={{paddingTop:24}}><YarnStash gateAction={gateAction}/></div>}
           {view==="calculator"&&<div style={{paddingTop:24}}><Calculators/></div>}
-          {view==="stitch-check"&&<div style={{paddingTop:24}}><StitchCheck/></div>}
-          {view==="stitch-vision"&&<div style={{paddingTop:24}}><StitchVision isPro={isPro} onUpgrade={()=>setShowProModal(true)}/></div>}
-          {view==="shopping"&&<div style={{paddingTop:24}}><ShoppingList/></div>}
-          {view==="profile"&&<ProfileSettingsView isPro={isPro} onOpenProModal={()=>setShowProModal(true)} onGoHome={()=>navigate("/")} onEmailConfirmed={()=>setShowEmailBanner(false)}/>}
+          {view==="stitch-check"&&<div style={{paddingTop:24}}><StitchCheck gateAction={gateAction}/></div>}
+          {view==="stitch-vision"&&<div style={{paddingTop:24}}><StitchVision isPro={isPro} isAnon={!authed} onUpgrade={()=>openProGate("stitch_vision")} onRequireAccount={(limitReached)=>gateAction({ intent: limitReached?"stitch_vision_limit":"stitch_vision", title: limitReached?"You've used your free scan":"Create a free account", subtitle: limitReached?"Sign up for unlimited Stitch-O-Vision — free forever with a Wovely account.":"Takes 10 seconds. No credit card." }, ()=>{})}/></div>}
+          {view==="shopping"&&<div style={{paddingTop:24}}><ShoppingList gateAction={gateAction}/></div>}
+          {view==="profile"&&<ProfileSettingsView isPro={isPro} authed={authed} gateAction={gateAction} onOpenProModal={()=>openProGate("profile_upgrade_pill")} onGoHome={()=>navigate("/")} onEmailConfirmed={()=>setShowEmailBanner(false)}/>}
           {view==="privacy"&&<PrivacyPolicy/>}
           {view==="terms"&&<TermsOfService/>}
           {location.pathname.startsWith("/stitch/")&&<div style={{paddingTop:24}}><StitchResultPage/></div>}
@@ -2251,7 +2299,7 @@ export default function Wovely() {
       {showOnboarding&&<OnboardingScreen onComplete={()=>{setShowOnboarding(false);setJustCompletedOnboarding(true);localStorage.removeItem("yh_welcome_dismissed");navigate("/profile");}} onBackToAuth={async()=>{setShowOnboarding(false);await supabaseAuth.signOut();setAuthed(false);setIsPro(false);setUserPatterns([]);}}/>}
       <WelcomeToast visible={showWelcomeToast}/>
       {upgradeToast&&<div style={{position:"fixed",top:16,left:"50%",transform:"translateX(-50%)",zIndex:999,background:upgradeToast==="success"?"#5B9B6B":"#6B6B8A",color:"#fff",borderRadius:14,padding:"12px 24px",fontSize:14,fontWeight:600,boxShadow:"0 8px 32px rgba(0,0,0,.2)",animation:"modalPop .3s ease both",textAlign:"center"}}>{upgradeToast==="success"?"Welcome to Wovely Pro!":"No worries — you can upgrade anytime"}</div>}
-      <NavPanel open={navOpen} onClose={()=>setNavOpen(false)} view={view} onNavigate={navigateToView} count={userPatterns.length} isPro={isPro} onSignOut={handleSignOut} onUpgrade={()=>setShowProModal(true)}/>
+      <NavPanel open={navOpen} onClose={()=>setNavOpen(false)} view={view} onNavigate={navigateToView} count={userPatterns.length} isPro={isPro} onSignOut={handleSignOut} onUpgrade={()=>openProGate("locked_nav")}/>
       {showPaywall&&<PaywallGate patternCount={userPatterns.length} onClose={()=>setShowPaywall(false)} onUpgrade={()=>setShowPaywall(false)}/>}
       {showProModal&&<ProInfoModal onClose={()=>setShowProModal(false)}/>}
       {(addOpen||addMinimized)&&<AddPatternModal onClose={()=>{setAddOpen(false);setAddMinimized(false);setPendingImportUrl(null);setPendingMethod(null);}} onSave={handleAddPattern} isPro={isPro} patternCount={userPatterns.length} Btn={Btn} Photo={Photo} Bar={Bar} WireframeViewer={WireframeViewer} onUpgrade={()=>setShowProModal(true)} initialMethod={pendingImportUrl?"url":pendingMethod||undefined} initialUrl={pendingImportUrl||undefined} minimized={addMinimized} onMinimize={()=>{setAddOpen(false);setAddMinimized(true);}} onExpand={()=>{setAddMinimized(false);setAddOpen(true);}}/>}
@@ -2269,18 +2317,18 @@ export default function Wovely() {
           <button onClick={()=>{if(tier.atCap){setShowPaywall(true);return;}setAddMenuOpen(v=>!v);}} style={{background:T.terra,border:"none",borderRadius:9999,width:34,height:34,cursor:"pointer",color:"#fff",fontSize:20,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 10px rgba(155,126,200,.4)"}}>+</button>
         </div>
       </div>
-      {addMenuOpen&&<><div onClick={()=>setAddMenuOpen(false)} style={{position:"fixed",inset:0,zIndex:49,background:"rgba(28,23,20,.4)"}}/><div style={{position:"fixed",bottom:0,left:0,right:0,zIndex:50,background:"#fff",borderRadius:"20px 20px 0 0",padding:"12px 0 24px",boxShadow:"0 -8px 32px rgba(45,45,78,.12)",fontFamily:"Inter,sans-serif"}}><div style={{width:36,height:3,background:T.border,borderRadius:99,margin:"0 auto 16px"}}/>{[{icon:"📄",label:"Add PDF",sub:"Upload & extract",action:()=>{setAddMenuOpen(false);openAddModal("pdf");}},{icon:"📸",label:"Add from photos",sub:"Screenshots, scans, photos",action:()=>{setAddMenuOpen(false);setImageImportOpen(true);}},{icon:"🔗",label:"Paste a URL",sub:"Any pattern link",action:()=>{setAddMenuOpen(false);openAddModal("url");}},{icon:"🌐",label:"Explore free patterns",sub:"AllFreeCrochet, Drops & more",action:()=>{setAddMenuOpen(false);navigateToView("browse");}},{icon:"🔍",label:"Identify a Stitch",sub:"Photo to stitch name",action:()=>{setAddMenuOpen(false);navigateToView("stitch-vision");}}].map(item=>(<div key={item.label} onClick={item.action} style={{display:"flex",alignItems:"center",gap:14,padding:"12px 22px",cursor:"pointer"}}><span style={{fontSize:22,width:28,textAlign:"center"}}>{item.icon}</span><div><div style={{fontSize:14,fontWeight:600,color:T.ink}}>{item.label}</div><div style={{fontSize:12,color:T.ink3}}>{item.sub}</div></div></div>))}</div></>}
+      {addMenuOpen&&<><div onClick={()=>setAddMenuOpen(false)} style={{position:"fixed",inset:0,zIndex:49,background:"rgba(28,23,20,.4)"}}/><div style={{position:"fixed",bottom:0,left:0,right:0,zIndex:50,background:"#fff",borderRadius:"20px 20px 0 0",padding:"12px 0 24px",boxShadow:"0 -8px 32px rgba(45,45,78,.12)",fontFamily:"Inter,sans-serif"}}><div style={{width:36,height:3,background:T.border,borderRadius:99,margin:"0 auto 16px"}}/>{[{icon:"📄",label:"Add PDF",sub:"Upload & extract",action:()=>{setAddMenuOpen(false);openAddModal("pdf");}},{icon:"📸",label:"Add from photos",sub:"Screenshots, scans, photos",action:()=>{setAddMenuOpen(false);openImageImport();}},{icon:"🔗",label:"Paste a URL",sub:"Any pattern link",action:()=>{setAddMenuOpen(false);openAddModal("url");}},{icon:"🌐",label:"Explore free patterns",sub:"AllFreeCrochet, Drops & more",action:()=>{setAddMenuOpen(false);navigateToView("browse");}},{icon:"🔍",label:"Identify a Stitch",sub:"Photo to stitch name",action:()=>{setAddMenuOpen(false);navigateToView("stitch-vision");}}].map(item=>(<div key={item.label} onClick={item.action} style={{display:"flex",alignItems:"center",gap:14,padding:"12px 22px",cursor:"pointer"}}><span style={{fontSize:22,width:28,textAlign:"center"}}>{item.icon}</span><div><div style={{fontSize:14,fontWeight:600,color:T.ink}}>{item.label}</div><div style={{fontSize:12,color:T.ink3}}>{item.sub}</div></div></div>))}</div></>}
       <div style={{flex:1,overflowY:"auto",paddingBottom:100,minHeight:"100vh"}}>
         {view==="collection"&&<CollectionView userPatterns={userPatterns} starterPatterns={starterPatterns} cat={cat} setCat={setCat} search={search} setSearch={setSearch} openDetail={openDetail} onAddPattern={()=>{if(tier.atCap){setShowPaywall(true);return;}setAddMenuOpen(v=>!v);}} isPro={isPro} tier={tier} onNavigate={navigateToView} onPark={handleParkPattern} onUnpark={handleUnparkPattern} onDelete={handleDeletePattern} onCoverChange={handleCoverChange} onRename={handleRenamePattern} pct={pct} catFallbackPhoto={catFallbackPhoto} Photo={Photo} Bar={Bar} Stars={Stars} CATS={CATS} TIER_CONFIG={TIER_CONFIG}/>}
         {view==="wip"&&<div style={{padding:"16px 18px 80px"}}>{inProgress.length===0?<div style={{textAlign:"center",padding:"60px 20px"}}><div style={{fontSize:48,marginBottom:14}}>🪡</div><div style={{fontFamily:T.serif,fontSize:18,fontWeight:600,color:"#2D2D4E",marginBottom:8}}>Nothing in progress</div><div style={{fontSize:14,color:"#6B6B8A",lineHeight:1.6}}>Open a pattern and start checking off rows.</div></div>:<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>{inProgress.map((p,i)=><PatternCard key={p.id} p={p} delay={i*.06} onClick={()=>openDetail(p)} pct={pct} catFallbackPhoto={catFallbackPhoto} Photo={Photo} Bar={Bar} Stars={Stars}/>)}</div>}</div>}
         {view==="detail"&&selected&&<Detail p={selected} onBack={()=>{setPendingScrollToRow(null);detailOnBack();}} onSave={detailOnSave} pct={pct} estYards={estYards} estSkeins={estSkeins} pdfThumbUrl={pdfThumbUrl} CSS={CSS} Bar={Bar} Photo={Photo} Stars={Stars} WireframeViewer={WireframeViewer} Btn={Btn} scrollToRow={pendingScrollToRow}/>}
         {view==="browse"&&<BrowseSitesView onImportUrl={handleImportUrl}/>}
-        {view==="stash"&&<div style={{paddingTop:18}}><YarnStash/></div>}
+        {view==="stash"&&<div style={{paddingTop:18}}><YarnStash gateAction={gateAction}/></div>}
         {view==="calculator"&&<div style={{paddingTop:18}}><Calculators/></div>}
-        {view==="stitch-check"&&<div style={{paddingTop:18}}><StitchCheck/></div>}
-        {view==="stitch-vision"&&<div style={{paddingTop:18}}><StitchVision isPro={isPro} onUpgrade={()=>setShowProModal(true)}/></div>}
-        {view==="shopping"&&<div style={{paddingTop:18}}><ShoppingList/></div>}
-        {view==="profile"&&<ProfileSettingsView isPro={isPro} onOpenProModal={()=>setShowProModal(true)} onGoHome={()=>navigate("/")} onEmailConfirmed={()=>setShowEmailBanner(false)}/>}
+        {view==="stitch-check"&&<div style={{paddingTop:18}}><StitchCheck gateAction={gateAction}/></div>}
+        {view==="stitch-vision"&&<div style={{paddingTop:18}}><StitchVision isPro={isPro} isAnon={!authed} onUpgrade={()=>openProGate("stitch_vision")} onRequireAccount={(limitReached)=>gateAction({ intent: limitReached?"stitch_vision_limit":"stitch_vision", title: limitReached?"You've used your free scan":"Create a free account", subtitle: limitReached?"Sign up for unlimited Stitch-O-Vision — free forever with a Wovely account.":"Takes 10 seconds. No credit card." }, ()=>{})}/></div>}
+        {view==="shopping"&&<div style={{paddingTop:18}}><ShoppingList gateAction={gateAction}/></div>}
+        {view==="profile"&&<ProfileSettingsView isPro={isPro} authed={authed} gateAction={gateAction} onOpenProModal={()=>openProGate("profile_upgrade_pill")} onGoHome={()=>navigate("/")} onEmailConfirmed={()=>setShowEmailBanner(false)}/>}
         {view==="privacy"&&<PrivacyPolicy/>}
         {view==="terms"&&<TermsOfService/>}
         {location.pathname.startsWith("/stitch/")&&<div style={{paddingTop:18}}><StitchResultPage/></div>}
