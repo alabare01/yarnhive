@@ -141,7 +141,7 @@ export default async function handler(req, res) {
         },
         body: JSON.stringify({
           model: "claude-haiku-4-5-20251001",
-          max_tokens: 8192,
+          max_tokens: 32768,
           messages: [{
             role: "user",
             content: [
@@ -232,7 +232,7 @@ export default async function handler(req, res) {
             type: "document",
             source: { type: "base64", media_type: "application/pdf", data: pdfBase64 }
           }],
-          simplePrompt
+          fullPrompt
         );
         providerUsed = "claude";
         console.log("[extract-pattern-vision] Claude fallback succeeded for PDF URL path");
@@ -338,7 +338,7 @@ export default async function handler(req, res) {
   } catch (geminiErr) {
     console.error("[extract-pattern-vision] Gemini failed for images path, trying Claude:", geminiErr.message);
     try {
-      result = await callClaudeVision(claudeImageContents, simplePrompt);
+      result = await callClaudeVision(claudeImageContents, fullPrompt);
       providerUsed = "claude";
       console.log("[extract-pattern-vision] Claude fallback succeeded for images path");
     } catch (claudeErr) {
