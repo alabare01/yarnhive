@@ -218,7 +218,7 @@ Extract every row/round as its own entry. Keep instruction text exactly as writt
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt + "\n\nPATTERN TEXT:\n" + pdfText }] }],
-            generationConfig: { temperature: 0.1, maxOutputTokens: maxTokens },
+            generationConfig: { temperature: 0.1, maxOutputTokens: maxTokens, thinkingConfig: { thinkingBudget: 0 } },
           }),
           signal: controller.signal,
         }
@@ -663,7 +663,7 @@ async function handleBevCheck(req, res, _url, _key, _t0) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt + "\n\nPATTERN TEXT:\n" + text }] }],
-            generationConfig: { temperature: 0, maxOutputTokens: 65536 },
+            generationConfig: { temperature: 0, maxOutputTokens: 65536, thinkingConfig: { thinkingBudget: 0 } },
           }),
           signal: controller.signal,
         }

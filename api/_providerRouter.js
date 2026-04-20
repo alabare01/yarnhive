@@ -25,7 +25,7 @@ async function probeGemini(geminiKey) {
         signal: controller.signal,
         body: JSON.stringify({
           contents: [{ parts: [{ text: 'respond with the word OK' }] }],
-          generationConfig: { maxOutputTokens: 5 },
+          generationConfig: { maxOutputTokens: 5, thinkingConfig: { thinkingBudget: 0 } },
         }),
       }
     );
