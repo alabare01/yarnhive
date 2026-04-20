@@ -93,6 +93,7 @@ export default async function handler(req, res) {
 
   const { images, pageCount, fileName, pdfUrl, filename } = req.body || {};
   const GEMINI_KEY = process.env.GEMINI_API_KEY;
+  const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
   if (!GEMINI_KEY) return res.status(500).json({ error: "API key not configured on server" });
 
   const callGemini = async (parts, maxTokens) => {
@@ -122,6 +123,59 @@ export default async function handler(req, res) {
     try { return parseGeminiJson(text); } catch (parseErr) {
       console.error("[extract-pattern-vision] JSON parse failed, text starts:", text.substring(0, 300));
       throw new Error("JSON parse failed: " + parseErr.message);
+    }
+  };
+
+  const callClaudeVision = async (imageContents, prompt) => {
+    if (!ANTHROPIC_KEY) throw new Error("Anthropic API key not configured");
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 55000);
+    let r;
+    try {
+      r = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": ANTHROPIC_KEY,
+          "anthropic-version": "2023-06-01",
+        },
+        body: JSON.stringify({
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 8192,
+          messages: [{
+            role: "user",
+            content: [
+              ...imageContents,
+              { type: "text", text: prompt }
+            ]
+          }],
+        }),
+        signal: controller.signal,
+      });
+    } catch (fetchErr) {
+      clearTimeout(timeout);
+      if (fetchErr.name === "AbortError") throw new Error("Claude timeout after 55s");
+      throw fetchErr;
+    }
+    clearTimeout(timeout);
+    if (!r.ok) {
+      const errBody = await r.text();
+      console.error("[extract-pattern-vision] Claude HTTP error:", r.status, errBody.substring(0, 500));
+      throw new Error(`Claude API error ${r.status}: ${errBody.substring(0, 300)}`);
+    }
+    const data = await r.json();
+    const raw = data.content?.[0]?.text || "";
+    if (!raw) throw new Error("Claude returned empty response");
+    const cleaned = raw.replace(/```json/gi, "").replace(/```/g, "").trim();
+    try {
+      return JSON.parse(cleaned);
+    } catch {
+      const match = cleaned.match(/\{[\s\S]*\}/);
+      if (match) {
+        try { return JSON.parse(match[0]); }
+        catch (pe) { throw new Error("Claude returned unparseable JSON: " + cleaned.substring(0, 200)); }
+      }
+      throw new Error("Claude returned no JSON object: " + cleaned.substring(0, 200));
     }
   };
 
@@ -163,18 +217,38 @@ export default async function handler(req, res) {
     const pdfBase64 = Buffer.from(pdfBuffer).toString("base64");
     console.log("[extract-pattern-vision] Vision API [URL path]: PDF fetched, size:", pdfBuffer.byteLength, "bytes");
 
-    const result = await runWithRetry((prompt) => [
-      { inline_data: { mime_type: "application/pdf", data: pdfBase64 } },
-      { text: prompt },
-    ]);
+    let result;
+    let providerUsed = "gemini";
+    try {
+      result = await runWithRetry((prompt) => [
+        { inline_data: { mime_type: "application/pdf", data: pdfBase64 } },
+        { text: prompt },
+      ]);
+    } catch (geminiErr) {
+      console.error("[extract-pattern-vision] Gemini failed for PDF URL path, trying Claude:", geminiErr.message);
+      try {
+        result = await callClaudeVision(
+          [{
+            type: "document",
+            source: { type: "base64", media_type: "application/pdf", data: pdfBase64 }
+          }],
+          simplePrompt
+        );
+        providerUsed = "claude";
+        console.log("[extract-pattern-vision] Claude fallback succeeded for PDF URL path");
+      } catch (claudeErr) {
+        console.error("[extract-pattern-vision] Claude fallback also failed:", claudeErr.message);
+        throw new Error("All 3 attempts failed. Gemini: " + geminiErr.message.substring(0, 100) + " | Claude: " + claudeErr.message.substring(0, 100));
+      }
+    }
     if (_url && _key) {
       await fetch(`${_url}/rest/v1/vercel_logs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'apikey': _key, 'Authorization': `Bearer ${_key}`, 'Prefer': 'return=minimal' },
-        body: JSON.stringify({ timestamp: new Date().toISOString(), level: 'info', message: `POST /api/extract-pattern-vision → 200 pdf-url (${Date.now() - _t0}ms)`, source: 'serverless', request_path: '/api/extract-pattern-vision', request_method: 'POST', status_code: 200, project_id: 'wovely' })
+        body: JSON.stringify({ timestamp: new Date().toISOString(), level: 'info', message: `POST /api/extract-pattern-vision → 200 pdf-url ${providerUsed} (${Date.now() - _t0}ms)`, source: 'serverless', request_path: '/api/extract-pattern-vision', request_method: 'POST', status_code: 200, project_id: 'wovely' })
       }).catch(() => {});
     }
-    return res.status(200).json(result);
+    return res.status(200).json({ ...result, provider: providerUsed });
   }
 
   // ── IMAGES ARRAY PATH: upload each image to Gemini Files API ──
@@ -241,18 +315,45 @@ export default async function handler(req, res) {
     fileUris.push({ uri, mimeType });
   }
 
-  const result = await runWithRetry((prompt) => [
-    ...fileUris.map(f => ({ file_data: { mime_type: f.mimeType, file_uri: f.uri } })),
-    { text: prompt },
-  ]);
+  const claudeImageContents = images.map(base64Data => {
+    const raw = base64Data.includes(",") ? base64Data.split(",")[1] : base64Data;
+    let mimeType = "image/jpeg";
+    if (base64Data.startsWith("data:")) {
+      const match = base64Data.match(/^data:(image\/[^;]+);/);
+      if (match) mimeType = match[1];
+    }
+    return {
+      type: "image",
+      source: { type: "base64", media_type: mimeType, data: raw }
+    };
+  });
+
+  let result;
+  let providerUsed = "gemini";
+  try {
+    result = await runWithRetry((prompt) => [
+      ...fileUris.map(f => ({ file_data: { mime_type: f.mimeType, file_uri: f.uri } })),
+      { text: prompt },
+    ]);
+  } catch (geminiErr) {
+    console.error("[extract-pattern-vision] Gemini failed for images path, trying Claude:", geminiErr.message);
+    try {
+      result = await callClaudeVision(claudeImageContents, simplePrompt);
+      providerUsed = "claude";
+      console.log("[extract-pattern-vision] Claude fallback succeeded for images path");
+    } catch (claudeErr) {
+      console.error("[extract-pattern-vision] Claude fallback also failed:", claudeErr.message);
+      throw new Error("All 3 attempts failed. Gemini: " + geminiErr.message.substring(0, 100) + " | Claude: " + claudeErr.message.substring(0, 100));
+    }
+  }
   if (_url && _key) {
     await fetch(`${_url}/rest/v1/vercel_logs`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'apikey': _key, 'Authorization': `Bearer ${_key}`, 'Prefer': 'return=minimal' },
-      body: JSON.stringify({ timestamp: new Date().toISOString(), level: 'info', message: `POST /api/extract-pattern-vision → 200 images (${Date.now() - _t0}ms)`, source: 'serverless', request_path: '/api/extract-pattern-vision', request_method: 'POST', status_code: 200, project_id: 'wovely' })
+      body: JSON.stringify({ timestamp: new Date().toISOString(), level: 'info', message: `POST /api/extract-pattern-vision → 200 images ${providerUsed} (${Date.now() - _t0}ms)`, source: 'serverless', request_path: '/api/extract-pattern-vision', request_method: 'POST', status_code: 200, project_id: 'wovely' })
     }).catch(() => {});
   }
-  return res.status(200).json(result);
+  return res.status(200).json({ ...result, provider: providerUsed });
 
   } catch (err) {
     console.error("[extract-pattern-vision] UNHANDLED ERROR:", err.message, err.stack);
