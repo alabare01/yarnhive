@@ -6,32 +6,39 @@ Last migrated from master doc API: 2026-04-16
 
 ---
 
-# WOVELY MASTER DOC v97
+# WOVELY MASTER DOC v98
 
 ## CURRENT PRODUCTION STATE
-Live on wovely.app — Session 56 shipped AND merged to main at 9ea3da3. Launch day + anonymous-mode pivot, largest single-session behavior change to date. Try-before-signup now live: unauthed visitors browse the full app shell and only hit the AuthWallModal when they try a gated action. Gating hierarchy locked in (anon → AuthWall → Pro paywall → proceed) via central gateAction helper; direct setShowProModal calls retired. Apple OAuth button removed (provider not enabled in Supabase, was throwing validation_failed from Facebook in-app browser). Email confirmation disabled entirely in Supabase dashboard — no more confirmation email, no more "Check your email" screen, no more dead EmailConfirmBanner rendered against email_confirmed_at=null (all plumbing ripped out). Starter patterns removed from default app state (DEFAULT_STARTERS is now an empty array client-side; 1 starter row cascaded out of DB). AuthWallModal session hydration hardened with retry loop + Supabase signup response shape normalization (flat vs nested depending on email-confirm config). Welcome banner copy refreshed ("Bev's got a space ready for your first pattern"). BevCheck preview "Upgrade to Pro" button rewired from dead tooltip to openProGate. Facebook launch posts drove 78 unique users / 974 events on April 19 (~7x baseline). 19 test accounts purged from auth.users; 16 real users remain.
+Live on wovely.app — Session 57 shipped AND merged to main at 7f5871b. Photo import hotfix marathon + Stitch-O-Vision printed-pattern refusal path, four merges in one session. Gemini 2.5 Flash thinking tokens disabled across all 5 server callsites (merge 39da402) — photo import no longer silently returns empty on dense patterns. Claude Haiku 4.5 vision fallback added to /api/extract-pattern-vision, reusing existing ANTHROPIC_API_KEY, 55s timeout, response now includes a "provider" field ("gemini" or "claude") for fallback-rate observability. Claude fallback upgraded from simplePrompt to fullPrompt and max_tokens bumped 8192 → 32768 (Haiku 3.5-era default → Haiku 4.5 actual budget) — merge 612c3ad — extraction quality now matches Gemini (abbreviations map, gauge, finished_size, multiple components, stitch_count all populated on Claude path). Stitch-O-Vision server prompt gained Scenario C for printed patterns; JSON contract gained not_stitch and content_type fields; client renders Bev-toned refusal screen with "Import as a pattern instead" CTA wired to openImageImport() in both desktop and mobile render sites — merge 7f5871b. Guard-order bug fixed pre-merge (74d38d4) so not_stitch evaluates before the generic !stitch_name fallback. Verified on wovely.app.
 
 ## FIRST THING NEXT SESSION
-1. Welcome re-engagement email — add SUPABASE_SERVICE_ROLE_KEY + RESEND_API_KEY to .env.local, run `node scripts/send-welcome-emails.mjs --test=alabare@gmail.com`, verify iPhone rendering, then `--send`. Script self-deletes after successful --send. 3 segments, 13 recipients, Supabase magic links per user. (15 min)
-2. Activation check: did any of today's 8 new signups add patterns overnight? Query patterns WHERE created_at >= 2026-04-19 AND user_id NOT IN (Dani, Adam, Dani2).
-3. Welcome banner still uses 🐍 emoji instead of Bev image — violates design system rule, flagged during Session 56. Swap to bev_neutral.png inline.
-4. Facebook post follow-up comment announcing anonymous mode shipped (so early bouncers who hit the old auth wall know to come back).
-5. Carry-forward from S55 (never ran as focused session, launch day superseded it): move client-side Gemini server-side, delete VITE_GEMINI_API_KEY from Vercel, Stripe support email, CORS audit, RLS audit, Collections build, yearly pricing.
+1. BUG: Stitch-O-Vision result screens don't reset scroll to top on stage transition — all four variants affected (identified, not_stitch, not_crochet, couldn't_identify). Fix is `window.scrollTo(0,0)` in a useEffect keyed on stage change, but needs iOS Safari testing.
+2. BUG: Collection view lands mid-page on first load for new members since free-patterns section was removed. Same class of bug as above, different component — scroll restoration logic or lack thereof is landing users below the fold.
+3. Welcome re-engagement email — still pending execution. Add SUPABASE_SERVICE_ROLE_KEY + RESEND_API_KEY to .env.local, run `node scripts/send-welcome-emails.mjs --test=alabare@gmail.com`, verify iPhone rendering, then `--send`. (Carry from S56; 15 min.)
+4. Client-side Gemini key exposure STILL open — VITE_GEMINI_API_KEY bundled in `/assets/index-BODWmizx.js` (stale StitchBox-era key). Move extractPatternFromPDF + callGeminiVision server-side, then delete the Vercel env var. (Carry from S55+.)
+5. Activation cohort check: did S56 anonymous-mode signups come back and add a pattern? Set benchmark for anon conversion quality.
 
-## SESSION 57 PRIORITY ORDER
-1. Welcome email blast — `.env.local` keys + --test + --send (15 min, script pre-built scripts/send-welcome-emails.mjs)
-2. Activation cohort check — did S56 signups come back and add a pattern? Set benchmark for anon-mode conversion quality.
-3. Fix welcome banner 🐍 → bev_neutral.png (design system violation flagged S56)
-4. Facebook follow-up comment on anonymous-mode shipment so early-launch bouncers know to retry
+## SESSION 58 PRIORITY ORDER
+1. Stitch-O-Vision scroll-to-top fix on stage transitions (all 4 result variants, iOS Safari testing) — flagged S57
+2. Collection view scroll-restoration fix — lands mid-page on first load since free-patterns section was removed — flagged S57
+3. Welcome email blast — `.env.local` keys + --test + --send (carry from S56, script pre-built scripts/send-welcome-emails.mjs)
+4. Activation cohort check — did S56 signups come back and add a pattern?
 5. Move client-side Gemini to /api/snap-vision server endpoint (carry from S55 — close confirmed key-leak vector)
 6. Delete VITE_GEMINI_API_KEY env var from Vercel after server-side move
-7. Update Stripe support email to support@wovely.app
-8. CORS audit — all serverless functions
-9. RLS full table audit
-10. Background functions + import queue system (with RLS on import_jobs from day one)
-11. Collections build — naturally extends queue system
-12. Yearly pricing ($9.99)
-13. Pattern Share / Trophy Case
+7. Designer/title watermark filter on photo import — Claude fallback occasionally treats Instagram-style watermarks as designer name (low priority polish; user can edit post-import)
+8. Stitch-O-Vision Claude fallback max_tokens audit — PROMPT is short so probably fine, verify
+9. Welcome banner 🐍 → bev_neutral.png swap + Profile page 🧶 emoji + stale YarnHive banner replacement (carry from S56)
+10. Landing page 🐍 emoji replacement (carry from S56)
+11. Facebook follow-up comment on anonymous-mode shipment (carry from S56)
+12. Founders dashboard rebuild — prompt written and ready to run
+13. Update Stripe support email to support@wovely.app
+14. CORS audit — all serverless functions
+15. RLS full table audit
+16. git config user.name on Adam's machine — current cristhian1989 attribution on all Vercel deployment metadata is harmless but should be corrected (`git config --global user.name "Adam LaBare"`)
+17. Background functions + import queue system (with RLS on import_jobs from day one)
+18. Collections build — naturally extends queue system
+19. Yearly pricing ($9.99)
+20. Pattern Share / Trophy Case
 
 ## SECURITY AUDIT (from Reddit AI codebase review — Session 50)
 Source: Solo founder built SaaS in 6 months with AI. Code review revealed systemic invisible-layer gaps.
@@ -121,6 +128,29 @@ Wovely findings mapped:
 - Security audit revision
   - STRIPE_WEBHOOK_SECRET confirmed set in Vercel since Mar 30. Signature verification has been working. Prior master doc's "four-session carry" claim was a Stripe/Supabase conflation error.
 
+## WHAT SHIPPED SESSION 57 (April 20, 2026 — Photo import hotfix marathon + Stitch-O-Vision refusal path)
+Session opened late night with photo import returning HTTP 500 on production. Root-caused, shipped three hotfixes to restore and upgrade photo import, then shipped a product-integrity fix for Stitch-O-Vision misclassifying printed pattern pages as stitches. Four merges to main in one session.
+- Gemini 2.5 Flash thinking tokens disabled across 5 server callsites (merge 39da402, component commit 24278de on fix-gemini-thinking-tokens)
+  - Files touched: api/extract-pattern-vision.js, api/extract-pattern.js (text extract + bevcheck = 2 callsites), api/stitch-vision.js, api/_providerRouter.js (health probe was also silently broken)
+  - Root cause: Gemini 2.5 Flash consumes output token budget on internal reasoning before emitting content. Dense pattern image + full prompt returned empty or truncated responses → threw → retry path also failed → HTTP 500. Verified via direct API call that `thinkingConfig: { thinkingBudget: 0 }` produces clean JSON on the same input that previously returned nothing.
+- Claude Haiku 4.5 vision fallback added to /api/extract-pattern-vision (same merge 39da402, component 60a9f03)
+  - Model: claude-haiku-4-5-20251001. Reuses existing ANTHROPIC_API_KEY (already set for BevCheck). 55s timeout on the Anthropic call. Response now includes a `provider` field ("gemini" or "claude") so we can observe fallback rate in logs.
+  - Stitch-O-Vision endpoint already had a Claude Haiku fallback in place from a prior session — no work needed there, just confirmed.
+- Claude fallback upgraded from simplePrompt → fullPrompt (merge 612c3ad, component b3b0215 on branch claude-fullprompt)
+  - max_tokens bumped 8192 → 32768 (Haiku 3.5-era default → Haiku 4.5 actual budget)
+  - Both fallback paths (PDF URL and images-array) now pass fullPrompt instead of simplePrompt
+  - Verified on production: extraction quality matches Gemini's — abbreviations map populated, gauge populated, finished_size populated, multiple components detected, stitch_count populated on several rows.
+- Stitch-O-Vision refuses printed-pattern inputs and routes users to Photo Import (merge 7f5871b, branch sov-printed-pattern-refusal, key commits a8740bc and 74d38d4)
+  - Server prompt gained Scenario C ("Printed pattern or instructional document"). JSON contract gained `not_stitch` and `content_type` fields.
+  - Client renders a refusal screen: Bev image, Playfair heading "That looks like a pattern, not a stitch," body copy, primary lavender CTA "Import as a pattern instead," secondary "Try a different photo."
+  - Tapping the primary CTA calls `openImageImport()` (wired from App.jsx in both desktop and mobile render sites).
+  - Ordering bug fixed as commit 74d38d4 on the same branch before merge — the `not_stitch` guard must evaluate before the generic `!stitch_name` fallback or the specific branch is unreachable.
+
+Production state at session close:
+- wovely.app photo import: working, Gemini primary with Claude Haiku 4.5 fallback, fullPrompt on both paths
+- wovely.app Stitch-O-Vision: working, correctly refuses printed-pattern inputs, routes to Photo Import on refusal
+- All four session merges verified live via direct curl to /api/extract-pattern-vision and /api/stitch-vision
+
 ## WHAT SHIPPED SESSION 56 (April 19-20, 2026 — Launch day + anonymous mode)
 - Apple OAuth sign-in button removed (provider not enabled in Supabase, Facebook in-app browser triggered Unsupported provider validation_failed errors)
 - Email confirmation disabled entirely in Supabase dashboard
@@ -152,6 +182,13 @@ Launch day metrics (PostHog, April 19):
 - 5 pattern uploads from 3 users, 6 pro_paywall_shown, 1 upgrade click
 - 7 new Facebook signups in the single day window
 - Anonymous mode shipped ~2 hours into launch day, so early bouncers pre-dated the fix
+
+## KEY LEARNINGS SESSION 57
+- Gemini 2.5 Flash thinking tokens are now a known gotcha. Any server call to gemini-2.5-flash that matters must include `thinkingConfig: { thinkingBudget: 0 }` in generationConfig, otherwise short maxOutputTokens budgets get consumed by invisible reasoning and responses come back empty. The silent-fail mode is especially insidious — the health probe in _providerRouter.js was also broken for the same reason without anyone noticing.
+- Claude Haiku 4.5 supports up to 64K output tokens. Do not leave max_tokens at the 8192 Haiku-3.5-era default — dense pattern extractions need the full budget to return complete JSON.
+- Claude Haiku 4.5 vision accepts base64 image blocks (`type: "image"`, `source: { type: "base64", media_type, data }`) for images and document content blocks for PDFs. The same PROMPT that works for Gemini works for Claude with no modification.
+- Render-order matters for React refusal branches. If a generic "couldn't identify" fallback checks `!result.stitch_name` and a new refusal branch (like `not_stitch`) sets stitch_name to null, the generic fallback catches first and the new branch is unreachable. Order specific refusal cases before generic ones.
+- Branch name + Vercel alias slug together must stay under 63 characters (DNS label limit) or the branch alias URL won't resolve. Use short branch names like "claude-fullprompt" not "upgrade-claude-fallback-prompt-with-full-extraction-prompt."
 
 ## KEY LEARNINGS SESSION 56
 - Supabase signup endpoint returns session in TWO shapes — nested `{ session: { access_token, ... } }` when email confirmation is ON, flat `{ access_token, refresh_token, ... }` when OFF. The client must normalize both or session never lands in localStorage on signup. This bit us immediately after disabling email confirmation because the signUp handler checked only `data.session`.
@@ -449,7 +486,7 @@ Master doc status:
 
 ## CLAUDE RULES
 Fetch master doc first, no exceptions
-Next session = 57
+Next session = 58
 Danielle feedback overrides everything
 ONE complete Claude Code prompt per task
 Never push direct to main
