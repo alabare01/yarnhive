@@ -1,5 +1,5 @@
 # WOVELY_CONTEXT.md
-**Version:** 99
+**Version:** 100
 **Last updated:** Session 58 close
 **Next session:** 59
 
@@ -60,12 +60,7 @@ Danielle (co-founder, north star user) tests primarily on iPhone Safari. Her acc
 
 ## Session 59 opening priorities
 
-In this order:
-
-1. **Test pattern import on test/claude-primary-vision.** Adam needs to verify the Mandalorian 9-image extraction works on the Claude-primary pipeline. This is the bug that started Session 58 and was never validated. Preview URL: https://wovely-git-test-claude-primary-vision-alabare-8435s-projects.vercel.app
-2. **Decision point on Stitch-O-Vision branch.** If pattern import works and Dani has time to review the two overcorrection cases, iterate prompt OR soften Rule A. If not, leave branch unmerged and proceed to Collections.
-3. **Collections build** — trial user turttlesong expires May 3. Background processing + multi-pattern episodic import. Highest retention priority.
-4. **Eval harness** (after Collections). Build labeled test set of 15-20 stitch images with Dani's ground-truth labels. Measure prompt iterations against ground truth instead of flying blind.
+Session 59 opening priorities moved to end of file — see Session 58 late-night addendum section for current priorities.
 
 ---
 
@@ -232,3 +227,65 @@ In this order:
 - Rotate PostHog Personal API Key. Previous key (prefix `phx_ExuBKg…`, suffix `…rKYnw`, full value in v98 git history on public repo) — assume compromised. Generate new key at https://us.posthog.com/settings/user-api-keys, store in 1Password, add to Vercel env as POSTHOG_PERSONAL_API_KEY. Remove the old key from PostHog once new key confirmed working.
 - Audit WOVELY_CONTEXT.md v98 and earlier for other secrets (master doc password `Dani2673!@#` is also in git history — consider rotating and moving reference to 1Password only).
 - Repeat pattern going forward: no live credentials in the master doc. Reference by name + storage location only.
+
+---
+
+## Session 58 late-night addendum (post-9pm verification)
+
+After initial close at ~9pm, Adam ran the deferred Mandalorian pattern import test before bed. This changed the session's conclusions materially.
+
+**Test 1 result — initial failure:**
+- User flow: 9 Mandalorian images uploaded via Import Pattern on test/claude-primary-vision preview
+- Client showed: "Couldn't read these photos — Server extraction failed: timeout"
+- Server log revealed: `POST /api/extract-pattern-vision → 200 images claude (61758ms)` — extraction actually SUCCEEDED server-side in 61.7s
+- Root cause: client-side AbortController in src/ImageImportModal.jsx:129 fired at 55000ms, discarding the response 6.7s before server completed
+
+**Fix applied (commit 70f486f):**
+- Raised client-side fetch abort from 55s → 240s in src/ImageImportModal.jsx
+- Raised server-side Claude call abort from 55s → 240s in api/extract-pattern-vision.js callClaudeVision
+- Error message text updated to match new 240s window
+- Both under Vercel Pro 300s maxDuration ceiling already configured on this endpoint
+- stitch-vision timeout left at 55s (appropriate for single-image classification)
+
+**Test 2 result — success:**
+- Same 9 Mandalorian images, same preview, post-fix
+- Completed successfully at 9:38pm with structured pattern on screen
+- Extracted: title "The Mandalorian", hook E/4 (3.5mm), light worsted yarn, 65 rows total across 8 components
+- Components correctly identified: HEAD AND BODY (38 rows, rounds), ARMS MAKE 2 × 2 (7 rows), LEFT/RIGHT SHOULDER ARMOR (3 rows each), HELMET SIDE SECTIONS MAKE 2 × 2 (2 rows), CLOAK (8 rows, flat ROW labels), SHOULDER STRAP (1 row), ASSEMBLY & FINISHING (3 rows with STEP/action_item labels)
+- Make counts populated correctly for components marked (MAKE 2)
+- Round vs. row distinction correctly detected per component (rounds for amigurumi head/body, rows for flat cloak/panels)
+- Row-level notes attached as row.note field rather than separate row entries (per prompt spec)
+- BevCheck ran automatically and flagged "Stitch count math" — not verified whether true positive or false positive
+- UI rendered "Looks good — save pattern" + "Try different photos" fallback CTAs cleanly
+
+**What remains verified vs. unverified:**
+- ✅ Claude primary pattern extraction pipeline works end-to-end on multi-image pattern
+- ✅ Structural extraction (components, rows, labels, make_counts, action_items) is correct at summary level
+- ✅ Round/row distinction working per prompt spec
+- ✅ Row-level notes vs. standalone rows distinction working per prompt spec
+- ❓ Row-level text accuracy on rows 2+ of each component (user saw summary view; "+35 more" on HEAD AND BODY not spot-checked)
+- ❓ Cross-reference expansion (e.g. "Repeat R32") — pattern may not have contained any, so prompt instruction not exercised
+- ❓ Abbreviations map completeness
+- ❓ BevCheck's "Stitch count math" flag — true positive or false positive
+
+**Merge decision:**
+Adam elected NOT to merge test/claude-primary-vision at session close. Rationale: wants spot-check of row-level extraction accuracy against source images, and Dani's review of extraction quality, before merging. Branch stays alive. This is the correct call — structural verification is solid, but row-level accuracy spot-check should happen with fresh eyes and domain-expert input.
+
+**Session 58 final accomplishments (amended):**
+- Claude Haiku 4.5 primary on both vision endpoints with Gemini fallback
+- Three-dimensional stitch schema
+- Reasoning-first Stitch-O-Vision prompt with Dani's decision tree (known overcorrection issue on Rule A)
+- **Pattern extraction Claude-primary pipeline VERIFIED WORKING on 9-image Mandalorian** (originally thought untested at 9pm close)
+- Client+server timeout alignment at 240s
+- Security hygiene gap discovered and partial remediation (Personal API key redacted from master doc; rotation required in Session 59)
+
+---
+
+**Session 59 opening priorities (AMENDED FROM INITIAL v99):**
+
+1. **FIRST thing: spot-check Mandalorian extraction row-level accuracy on test/claude-primary-vision.** Open HEAD AND BODY component, compare 3-5 random rounds to source pattern images. Verify abbreviations map captured correctly. Review BevCheck "Stitch count math" flag for true vs. false positive. Get Dani's take on extraction quality.
+2. **Decision on branch merge** based on spot-check. If row-level accuracy is good → merge the whole branch to main (Stitch-O-Vision + pattern extraction + timeout fixes ship together). If row-level accuracy has issues → identify specific gaps and decide whether to fix-then-merge or split the commits.
+3. **Security cleanup (mandatory before any new feature work):** Rotate PostHog Personal API Key (old key `phx_ExuBKg…rKYnw` compromised via v98 in public repo). Rotate master doc password `Dani2673!@#` and update /api/master-doc + /api/update-master-doc endpoints. Consider flipping repo to private. Audit git history for any other leaked credentials in older master doc versions.
+4. **Stitch-O-Vision Rule A overcorrection** — if time permits after above, iterate prompt to soften linen stitch default; add front-post / back-post stitch awareness. Defer if eval harness / stitch library path takes priority.
+5. **Collections build** (trial user May 3).
+6. **Text-extraction timeout parity** — three 55s Claude timeouts in api/extract-pattern.js (lines 286, 395, 691) mirror the bug we just fixed on the vision path. Not urgent (no production failures observed on text path), but queue for when vision work is stable.
