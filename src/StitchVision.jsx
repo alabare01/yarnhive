@@ -247,6 +247,7 @@ const StitchVision = ({ isPro, isAnon, onUpgrade, onRequireAccount, onImportAsPa
 
     const diffColor = DIFF_COLORS[result.difficulty] || T.ink3;
     const isLowConf = result.confidence === "low" || !result.description || !result.description.trim();
+    const showDebug = new URLSearchParams(window.location.search).has('debug');
 
     // ── LOW CONFIDENCE / UNSURE STATE ──
     if (isLowConf) return (
@@ -297,6 +298,24 @@ const StitchVision = ({ isPro, isAnon, onUpgrade, onRequireAccount, onImportAsPa
           <div style={{ marginBottom: 16 }}>
             <div style={{ fontSize: 10, color: T.ink3, textTransform: "uppercase", letterSpacing: ".1em", marginBottom: 4 }}>Why Bev thinks this</div>
             <div style={{ fontSize: 13, color: T.ink2, lineHeight: 1.6, fontStyle: "italic" }}>{result.confidence_reasoning}</div>
+          </div>
+        )}
+
+        {showDebug && (result.observation_notes || result.candidate_analysis) && (
+          <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(155, 126, 200, 0.06)', borderRadius: '12px', border: '1px dashed rgba(155, 126, 200, 0.3)' }}>
+            <div style={{ fontSize: '0.7rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#2D3A7C', opacity: 0.7, marginBottom: '0.5rem' }}>Debug: Reasoning Trace</div>
+            {result.observation_notes && (
+              <div style={{ marginBottom: '0.75rem' }}>
+                <strong style={{ fontSize: '0.85rem' }}>Observations:</strong>
+                <div style={{ fontSize: '0.85rem', fontStyle: 'italic', opacity: 0.85, marginTop: '0.25rem' }}>{result.observation_notes}</div>
+              </div>
+            )}
+            {result.candidate_analysis && (
+              <div>
+                <strong style={{ fontSize: '0.85rem' }}>Candidate analysis:</strong>
+                <div style={{ fontSize: '0.85rem', fontStyle: 'italic', opacity: 0.85, marginTop: '0.25rem', whiteSpace: 'pre-wrap' }}>{result.candidate_analysis}</div>
+              </div>
+            )}
           </div>
         )}
 
