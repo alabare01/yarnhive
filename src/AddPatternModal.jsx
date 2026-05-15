@@ -1351,11 +1351,22 @@ const PDFUploadForm = ({onSave,onClose,Btn,isPro,onUpgrade,onMinimize,onExtracti
               <div style={{fontSize:11,color:"#6B6B8A",marginBottom:10}}>Bev couldn't check this one — try again</div>
               <button onClick={()=>{setBevCheckFailed(false);setValidating(true);const valText=bevCheckTextRef.current;if(!valText){setBevCheckFailed(true);setValidating(false);return;}(async()=>{try{const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),90000);const vr=await fetch("/api/extract-pattern",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({mode:"bevcheck",patternText:valText}),signal:controller.signal});clearTimeout(timeout);const data=await vr.json();if(vr.ok&&!data.error){setValidationReport(data);}else{setBevCheckFailed(true);}}catch(e){console.warn("[Wovely] BevCheck retry failed:",e);setBevCheckFailed(true);}setValidating(false);})();}} style={{background:T.terra,color:"#fff",border:"none",borderRadius:99,padding:"6px 16px",fontSize:11,fontWeight:600,cursor:"pointer"}}>Retry BevCheck</button>
             </div>
-          ):validationReport?(()=>{const scState=deriveState(validationReport);const allChecks=Array.isArray(validationReport.checks)?validationReport.checks:[];const scFailed=allChecks.filter(c=>c&&c.status&&c.status!=="pass").slice(0,3);return isPro?(
+          ):validationReport?(()=>{const scState=deriveState(validationReport);const allChecks=Array.isArray(validationReport.checks)?validationReport.checks:[];const scFailed=allChecks.filter(c=>c&&c.status&&c.status!=="pass").slice(0,3);
+            // Direct-save CTA copy. hasIssues matches the existing "any check
+            // not passing" definition used in the full-report overlay (line
+            // ~1395) so the two surfaces agree. Pure-clean reports get the
+            // affirming "Save to my library →"; flagged ones get the more
+            // honest "Save anyway →".
+            const hasIssues=allChecks.some(c=>c&&(c.status==="fail"||c.status==="warning"||c.status==="warn"));
+            return isPro?(
             <div style={{background:T.surface,borderRadius:16,padding:20,boxShadow:"0 4px 20px rgba(155,126,200,.08)",border:`1px solid ${T.border}`,textAlign:"center"}}>
               <BevGauge variant="compact" state={scState} />
               {scFailed.length>0&&<div style={{textAlign:"left",marginTop:8}}>{scFailed.map((c,i)=>(<div key={c.id||i} style={{display:"flex",gap:6,alignItems:"flex-start",marginBottom:4}}><span style={{fontSize:11,color:c.status==="fail"?"#C0544A":"#C9A84C",flexShrink:0}}>{c.status==="fail"?"✕":"⚠"}</span><span style={{fontSize:11,color:"#6B6B8A"}}>{sentenceCase(c.label||"Check")}</span></div>))}</div>}
               <button onClick={()=>setShowFullReport(true)} style={{background:"none",border:"none",color:T.terra,cursor:"pointer",fontSize:11,fontWeight:600,padding:0,marginTop:6,textDecoration:"underline"}}>Full Report →</button>
+              {/* Direct save from BevCheck. Reuses the same handleSave that the
+                  review-stage big button uses (constructs the payload from
+                  current state; parent's handleSave dismisses the modal). */}
+              <button onClick={handleSave} style={{marginTop:14,width:"100%",background:hasIssues?"#fff":T.terra,color:hasIssues?T.terra:"#fff",border:hasIssues?`1.5px solid ${T.terra}`:"none",borderRadius:99,padding:"12px",fontSize:13,fontWeight:600,cursor:"pointer",boxShadow:hasIssues?"none":"0 4px 16px rgba(155,126,200,.3)"}}>{hasIssues?"Save anyway →":"Save to my library →"}</button>
             </div>
           ):(
             <div style={{background:T.surface,borderRadius:16,padding:20,boxShadow:"0 4px 20px rgba(155,126,200,.08)",border:`1px solid ${T.border}`,textAlign:"center"}}>
