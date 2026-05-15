@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { T, useBreakpoint } from "../theme.jsx";
 import { useImportJobPolling } from "../hooks/useImportJobPolling.js";
+import { REASSURANCE_LINE, pickPhaseCopy } from "../utils/importPhaseCopy.js";
 
 // Floating import status pill. Mounts at App.jsx so it persists across navigation.
 // Reads/writes sessionStorage key 'wovely_active_import_job' (string job id).
@@ -22,46 +23,6 @@ import { useImportJobPolling } from "../hooks/useImportJobPolling.js";
 
 const SESSION_KEY = "wovely_active_import_job";
 const PROMINENT_DURATION_MS = 5000;
-
-// Phase-driven copy pools. One random line is picked when the phase
-// transitions; within a phase the copy stays stable so users aren't visually
-// shuffled every poll. Pool slugs must align with PHASE_* in the worker
-// (api/cron/process-queue.js).
-const PHASE_COPY_POOLS = {
-  analyzing: [
-    "Sizing up your pattern...",
-    "Taking a quick look...",
-    "Getting the lay of the land...",
-  ],
-  reading: [
-    "Reading every word...",
-    "Cracking open the PDF...",
-    "Going page by page...",
-  ],
-  extracting: [
-    "Counting your stitches...",
-    "Untangling the rounds...",
-    "Making sense of the pattern...",
-  ],
-  validating: [
-    "Double-checking the math...",
-    "Making sure it all adds up...",
-    "Running the numbers...",
-  ],
-  finalizing: [
-    "Packing it up for your hive...",
-    "Almost ready to show you...",
-    "Wrapping things up...",
-  ],
-};
-
-const REASSURANCE_LINE = "Bev's working in the background. Feel free to navigate away — I'll let you know when she's done.";
-
-function pickPhaseCopy(phase) {
-  const pool = phase && PHASE_COPY_POOLS[phase];
-  if (!pool || pool.length === 0) return null;
-  return pool[Math.floor(Math.random() * pool.length)];
-}
 
 const PROMINENT_STYLE = {
   background: "linear-gradient(135deg, rgba(155,126,200,0.95), rgba(216,234,216,0.95))",

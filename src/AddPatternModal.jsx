@@ -6,6 +6,7 @@ import { CHECK_ICON, extractFirstRowNumber } from "./StitchCheck.jsx";
 import BevGauge, { deriveState, sentenceCase, checkTier } from "./components/BevGauge.jsx";
 import { setActiveImportJob } from "./components/ImportPill.jsx";
 import { useImportJobPolling } from "./hooks/useImportJobPolling.js";
+import { REASSURANCE_LINE, pickPhaseCopy } from "./utils/importPhaseCopy.js";
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
 
@@ -907,6 +908,20 @@ const PDFUploadForm = ({onSave,onClose,Btn,isPro,onUpgrade,onMinimize,onExtracti
   const intv2Ref=useRef(null);
   const intv3Ref=useRef(null);
   const polling=useImportJobPolling(pollingJobId);
+  // Phase-driven extracting copy. Mirrors ImportPill — pick a new line each
+  // time polling.currentPhase changes, stable within a phase. Both surfaces
+  // pull from src/utils/importPhaseCopy.js so the modal and the pill speak
+  // with one voice. Legacy synchronous extraction path leaves phaseCopy null
+  // and falls back to stageText.
+  const [phaseCopy,setPhaseCopy]=useState(null);
+  const lastPickedPhaseRef=useRef(null);
+  useEffect(()=>{
+    if(!polling.currentPhase) return;
+    if(polling.currentPhase===lastPickedPhaseRef.current) return;
+    const next=pickPhaseCopy(polling.currentPhase);
+    if(next) setPhaseCopy(next);
+    lastPickedPhaseRef.current=polling.currentPhase;
+  },[polling.currentPhase]);
   useEffect(()=>{
     if(!pollingJobId) return;
     if(polling.isComplete){
@@ -1024,12 +1039,14 @@ const PDFUploadForm = ({onSave,onClose,Btn,isPro,onUpgrade,onMinimize,onExtracti
         console.warn("[Wovely] renderPDFCoverImage returned null — canvas render likely failed");
       }
       setFileInfo({url:uploaded.url,name:uploaded.filename,type:uploaded.type,coverUrl:coverCloudinaryUrl});setProgress(33);
-      // Stage 2: Extract — text mode for PDFs (fast), base64 for images
-      const EXTRACT_MSGS=["Reading your pattern...","Identifying components...","Extracting rows and rounds...","Almost there..."];
-      let extractMsgIdx=0;
-      setStage("extracting");setStageText(EXTRACT_MSGS[0]);
+      // Stage 2: Extract — copy now driven by polling.currentPhase via the
+      // phaseCopy effect above. stageText keeps an initial value for the brief
+      // window before the worker claims (and for the legacy sync path which
+      // never starts polling). The static 4-string rotation was removed in
+      // S1.5.3 so the modal and ImportPill never disagree.
+      setStage("extracting");setStageText("Reading your pattern...");
       const intv2=setInterval(()=>setProgress(p=>Math.min(p+1,62)),300);
-      const intv3=setInterval(()=>{extractMsgIdx=(extractMsgIdx+1)%EXTRACT_MSGS.length;setStageText(EXTRACT_MSGS[extractMsgIdx]);},8000);
+      const intv3=null;
       intv2Ref.current=intv2;intv3Ref.current=intv3;
       let result;let extractedText=null;
       try{
@@ -1214,17 +1231,24 @@ const PDFUploadForm = ({onSave,onClose,Btn,isPro,onUpgrade,onMinimize,onExtracti
         <div style={{position:"absolute",inset:0,borderRadius:"50%",border:"4px solid transparent",borderTopColor:"#9B7EC8",animation:"spinLoader 1s linear infinite"}}/>
         <img src="/bev_neutral.png" style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:40,height:40,objectFit:"contain"}} alt="Bev"/>
       </div>
-      <div style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:600,color:"#2D2D4E",marginBottom:8,lineHeight:1.4}}>{loadingInfo.headline}</div>
-      {loadingInfo.sub&&(
-        <div style={{fontSize:14,fontFamily:"Inter,sans-serif",fontWeight:400,color:"#6B6B8A",lineHeight:1.7,marginBottom:16,maxWidth:300}}>
-          {loadingInfo.sub}
-        </div>
-      )}
-      {stage==="extracting"&&(
-        <div key={stageText} style={{fontSize:13,fontFamily:"Inter,sans-serif",fontWeight:400,color:"#9B7EC8",marginTop:loadingInfo.sub?0:8,animation:"fadeInMsg .4s ease both"}}>
-          {stageText}
-        </div>
-      )}
+      {(() => {
+        // Queue-driven: phaseCopy populated once polling.currentPhase reports
+        // a phase. Legacy/synchronous fallback: phaseCopy stays null, title
+        // falls back to loadingInfo.headline (stageText or complexity hint).
+        const queueDriven = !!pollingJobId;
+        const titleText = phaseCopy || loadingInfo.headline;
+        const subText = queueDriven ? REASSURANCE_LINE : loadingInfo.sub;
+        return (
+          <>
+            <div key={titleText} style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:600,color:"#2D2D4E",marginBottom:8,lineHeight:1.4,animation:"fadeInMsg .4s ease both"}}>{titleText}</div>
+            {subText && (
+              <div style={{fontSize:13,fontFamily:"Inter,sans-serif",fontWeight:400,color:"#6B6B8A",lineHeight:1.6,marginTop:2,maxWidth:320}}>
+                {subText}
+              </div>
+            )}
+          </>
+        );
+      })()}
       <style>{`@keyframes fadeInMsg{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}`}</style>
     </div>
   );
